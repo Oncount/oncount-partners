@@ -103,7 +103,7 @@ def menu_partner(registered_for_event: bool = False) -> InlineKeyboardMarkup:
         kb.append([InlineKeyboardButton(text="📅 Регистрация на мастер-класс 21.05", callback_data="event:register")])
     kb.extend([
         [InlineKeyboardButton(text="🤝 Партнёрство с ONCOUNT", callback_data="partner:intro")],
-        [InlineKeyboardButton(text="📍 Передать клиента", callback_data="partner:transfer")],
+        [InlineKeyboardButton(text="💰 Передать клиента", callback_data="partner:transfer")],
         [InlineKeyboardButton(text="🌐 Открыть кабинет", callback_data="partner:open-lk")],
     ])
     return InlineKeyboardMarkup(inline_keyboard=kb)
@@ -528,7 +528,7 @@ PARTNER_COMMANDS = [
     BotCommand(command="menu", description="🏠 Главное меню"),
     BotCommand(command="links", description="🔗 Мои реф-ссылки"),
     BotCommand(command="stats", description="📊 Моя статистика"),
-    BotCommand(command="transfer", description="📍 Передать клиента"),
+    BotCommand(command="transfer", description="💰 Передать клиента"),
     BotCommand(command="products", description="📦 Тарифы и сервисы"),
     BotCommand(command="messages", description="📨 Тексты рассылок"),
     BotCommand(command="faq", description="❓ Частые вопросы"),

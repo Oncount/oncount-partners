@@ -20,7 +20,7 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN") or "8368308511:AAEBnyB59RNXTLG70yb8ijoOS
 
 COMMANDS = [
     {"command": "start",     "description": "🏠 Главное меню"},
-    {"command": "transfer",  "description": "📍 Передать клиента"},
+    {"command": "transfer",  "description": "💰 Передать клиента"},
     {"command": "links",     "description": "🔗 Мои реферальные ссылки"},
     {"command": "stats",     "description": "📊 Моя статистика"},
     {"command": "products",  "description": "📦 Тарифы и сервисы"},
