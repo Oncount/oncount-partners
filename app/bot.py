@@ -15,7 +15,7 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
-from aiogram.filters import Command, CommandStart
+from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -43,7 +43,7 @@ from app.messages_text import (
     WELCOME_PARTNER,
     WELCOME_REGISTERED_FOR_EVENT,
 )
-from app.models import Base, EventRegistration, FaqItem, Lead, Partner, ProductBlock
+from app.models import Base, EventRegistration, FaqItem, Lead, LoginSession, Partner, ProductBlock
 from app.refgen import generate_ref_slug
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s — %(message)s")
@@ -115,6 +115,54 @@ def menu_event_registered() -> InlineKeyboardMarkup:
 
 
 # ─────────────── /start ─────────────────────────────────────────────────────
+
+
+@dp.message(CommandStart(deep_link=True))
+async def cmd_start_with_payload(msg: Message, command: CommandObject) -> None:
+    """Handle /start with deep-link payload (login_<state> or ref_<slug>)."""
+    payload = (command.args or "").strip()
+    with SessionLocal() as session:
+        partner = get_or_create_partner(session, msg)
+
+        if payload.startswith("login_"):
+            state = payload[len("login_"):]
+            login_session = session.get(LoginSession, state)
+            if login_session is not None and login_session.consumed_at is None:
+                login_session.telegram_id = msg.from_user.id
+                session.commit()
+                url = f"{settings.WEBAPP_URL}/auth/bot-callback?state={state}"
+                kb = InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(text="🌐 Войти в личный кабинет", url=url)],
+                ])
+                await msg.answer(
+                    "Готово! Жми кнопку — откроется кабинет партнёра в браузере.",
+                    reply_markup=kb,
+                )
+                return
+            else:
+                await msg.answer(
+                    "Ссылка для входа истекла или уже использована.\n"
+                    "Открой /login на сайте ещё раз."
+                )
+                return
+
+        if payload.startswith("ref_"):
+            ref_slug = payload[len("ref_"):]
+            # запишем приход партнёра по реф-ссылке (если ref_slug валиден)
+            from app.models import Referral
+            owner = session.query(Partner).filter_by(ref_slug=ref_slug).first()
+            if owner and owner.id != partner.id:
+                session.add(Referral(
+                    partner_id=owner.id,
+                    ref_slug=ref_slug,
+                    source="tg",
+                    visitor_meta={"telegram_id": msg.from_user.id},
+                ))
+                session.commit()
+            # fall through to normal welcome
+
+    # default greeting (no recognised payload or ref handled)
+    await cmd_start(msg)
 
 
 @dp.message(CommandStart())

@@ -1,6 +1,7 @@
 import asyncio
 import logging
-from datetime import datetime
+import secrets
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Form, HTTPException, Request, status
@@ -13,7 +14,6 @@ from app.auth import (
     COOKIE_NAME,
     current_partner,
     issue_jwt,
-    verify_telegram_auth,
 )
 from app.config import settings
 from app.db import SessionLocal, engine, get_session
@@ -21,6 +21,7 @@ from app.models import (
     Base,
     FaqItem,
     Lead,
+    LoginSession,
     MessageTemplate,
     Partner,
     ProductBlock,
@@ -28,6 +29,8 @@ from app.models import (
 )
 from app.refgen import generate_ref_slug
 from app.seed import seed_if_empty
+
+LOGIN_SESSION_TTL = timedelta(minutes=10)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "app" / "templates"))
@@ -84,24 +87,34 @@ def login_page(request: Request, session: Session = Depends(get_session)) -> HTM
     partner = current_partner(request, session)
     if partner:
         return RedirectResponse("/dashboard", status_code=302)
-    return templates.TemplateResponse("login.html", _ctx(request, None))
+    state = secrets.token_urlsafe(24)
+    session.add(LoginSession(state=state))
+    session.commit()
+    return templates.TemplateResponse("login.html", _ctx(request, None, state=state))
 
 
-@app.get("/auth/callback")
-def auth_callback(request: Request, session: Session = Depends(get_session)):
-    payload = {k: v for k, v in request.query_params.items()}
-    if not verify_telegram_auth(payload):
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid Telegram signature")
+@app.get("/auth/bot-callback")
+def auth_bot_callback(state: str, session: Session = Depends(get_session)):
+    """Завершение deep-link авторизации. Бот уже записал telegram_id для state."""
+    rec = session.get(LoginSession, state)
+    if rec is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Login session not found")
+    if rec.consumed_at is not None:
+        raise HTTPException(status.HTTP_410_GONE, "Login session already used")
+    if rec.telegram_id is None:
+        raise HTTPException(status.HTTP_425_TOO_EARLY, "Click the button inside the bot first")
+    if datetime.utcnow() - rec.created_at > LOGIN_SESSION_TTL:
+        raise HTTPException(status.HTTP_410_GONE, "Login session expired, /login again")
 
-    telegram_id = int(payload["id"])
+    telegram_id = rec.telegram_id
+    rec.consumed_at = datetime.utcnow()
+    session.commit()
+
     partner = session.query(Partner).filter_by(telegram_id=telegram_id).first()
     if not partner:
+        # бот к этому моменту уже создал партнёра в БД, но на всякий случай
         partner = Partner(
             telegram_id=telegram_id,
-            username=payload.get("username"),
-            first_name=payload.get("first_name"),
-            last_name=payload.get("last_name"),
-            photo_url=payload.get("photo_url"),
             ref_slug=generate_ref_slug(),
             status="pending",
         )

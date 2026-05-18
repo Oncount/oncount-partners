@@ -107,6 +107,16 @@ class FaqItem(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
+class LoginSession(Base):
+    """Однократный токен для входа в ЛК через бота (deep-link auth)."""
+    __tablename__ = "login_sessions"
+
+    state: Mapped[str] = mapped_column(String(64), primary_key=True)
+    telegram_id: Mapped[int | None] = mapped_column(BigInteger)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    consumed_at: Mapped[datetime | None] = mapped_column(DateTime)
+
+
 class EventRegistration(Base):
     """Регистрации на мастер-классы и события — наследник telegram-bot-2brain."""
     __tablename__ = "event_registrations"

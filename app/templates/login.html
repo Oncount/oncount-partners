@@ -8,16 +8,16 @@
     <h1>Кабинет партнёра</h1>
     <p>Войди через Telegram — без паролей и регистраций.</p>
 
-    <script async src="https://telegram.org/js/telegram-widget.js?22"
-            data-telegram-login="{{ bot_username }}"
-            data-size="large"
-            data-radius="10"
-            data-auth-url="{{ webapp_url }}/auth/callback"
-            data-request-access="write"></script>
+    <p style="margin: 28px 0 16px;">
+      <a class="btn btn-primary" style="padding: 14px 28px; font-size: 16px;"
+         href="https://t.me/{{ bot_username }}?start=login_{{ state }}">
+        💬 Войти через Telegram-бота
+      </a>
+    </p>
 
     <p class="login-hint">
-      Нет аккаунта в Telegram? Открой <a href="https://t.me/{{ bot_username }}" target="_blank">бота @{{ bot_username }}</a>
-      и нажми /start — получишь приглашение.
+      После нажатия откроется бот <b>@{{ bot_username }}</b>. В нём появится кнопка
+      «Войти в кабинет» — нажми её, и ты вернёшься сюда уже авторизованным.
     </p>
   </div>
 </div>
