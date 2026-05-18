@@ -240,6 +240,27 @@ MCLASS_TEXT_TPL = (
     "Код партнёра: {slug}"
 )
 
+# Невидимая метка в WA/TG-сообщении: код партнёра, закодированный
+# zero-width Unicode. Переживает удаление видимого «Код партнёра: …».
+# Парсер на стороне inbox-intercom-backend (см. encode_slug_invisible ниже):
+#   1) найти подстроку между ZW_START и ZW_END
+#   2) каждый ZW_ZERO → '0', ZW_ONE → '1'
+#   3) собрать байты по 8 бит, ord→chr → slug
+ZW_ZERO = "​"   # zero-width space
+ZW_ONE = "‌"    # zero-width non-joiner
+ZW_START = "‍"  # zero-width joiner
+ZW_END = "⁠"    # word joiner
+
+
+def encode_slug_invisible(slug: str) -> str:
+    bits = "".join(format(ord(c), "08b") for c in slug)
+    body = "".join(ZW_ZERO if b == "0" else ZW_ONE for b in bits)
+    return ZW_START + body + ZW_END
+
+
+def _build_text(template: str, slug: str) -> str:
+    return template.format(slug=slug) + encode_slug_invisible(slug)
+
 
 def _redirect_to_chat(channel: str, text: str) -> RedirectResponse:
     encoded = quote(text)
@@ -254,22 +275,22 @@ def _redirect_to_chat(channel: str, text: str) -> RedirectResponse:
 
 @app.get("/ct/{slug}")
 def short_consult_tg(slug: str) -> RedirectResponse:
-    return _redirect_to_chat("tg", CONSULT_TEXT_TPL.format(slug=slug))
+    return _redirect_to_chat("tg", _build_text(CONSULT_TEXT_TPL, slug))
 
 
 @app.get("/cw/{slug}")
 def short_consult_wa(slug: str) -> RedirectResponse:
-    return _redirect_to_chat("wa", CONSULT_TEXT_TPL.format(slug=slug))
+    return _redirect_to_chat("wa", _build_text(CONSULT_TEXT_TPL, slug))
 
 
 @app.get("/mt/{slug}")
 def short_mclass_tg(slug: str) -> RedirectResponse:
-    return _redirect_to_chat("tg", MCLASS_TEXT_TPL.format(slug=slug))
+    return _redirect_to_chat("tg", _build_text(MCLASS_TEXT_TPL, slug))
 
 
 @app.get("/mw/{slug}")
 def short_mclass_wa(slug: str) -> RedirectResponse:
-    return _redirect_to_chat("wa", MCLASS_TEXT_TPL.format(slug=slug))
+    return _redirect_to_chat("wa", _build_text(MCLASS_TEXT_TPL, slug))
 
 
 @app.get("/p/{slug}")
