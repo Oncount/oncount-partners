@@ -82,6 +82,16 @@ def index(request: Request, session: Session = Depends(get_session)) -> HTMLResp
     return RedirectResponse("/login", status_code=302)
 
 
+@app.get("/join")
+def join_partner_program() -> RedirectResponse:
+    """Marketing-friendly URL: oncount-partners-production.up.railway.app/join
+    → opens Telegram bot with the `partner` deep-link payload."""
+    return RedirectResponse(
+        f"https://t.me/{settings.BOT_USERNAME}?start=partner",
+        status_code=302,
+    )
+
+
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
     partner = current_partner(request, session)

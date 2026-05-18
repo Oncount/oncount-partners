@@ -59,6 +59,15 @@ dp = Dispatcher(storage=MemoryStorage())
 # ─────────────── helpers ────────────────────────────────────────────────────
 
 
+def issue_login_url(session: Session, telegram_id: int) -> str:
+    """Create LoginSession pre-bound to telegram_id; return one-click URL to /auth/bot-callback."""
+    import secrets as _secrets
+    state = _secrets.token_urlsafe(24)
+    session.add(LoginSession(state=state, telegram_id=telegram_id))
+    session.commit()
+    return f"{settings.WEBAPP_URL}/auth/bot-callback?state={state}"
+
+
 def get_or_create_partner(session: Session, msg: Message) -> Partner:
     partner = session.query(Partner).filter_by(telegram_id=msg.from_user.id).first()
     if partner:
@@ -97,7 +106,7 @@ def menu_partner(registered_for_event: bool = False) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text="📦 Тарифы и сервисы", callback_data="partner:products")],
         [InlineKeyboardButton(text="📍 Передать клиента", callback_data="partner:transfer")],
         [InlineKeyboardButton(text="❓ FAQ", callback_data="partner:faq")],
-        [InlineKeyboardButton(text="🌐 Открыть ЛК в браузере", url=settings.WEBAPP_URL + "/login")],
+        [InlineKeyboardButton(text="🌐 Открыть кабинет в браузере", callback_data="partner:open-lk")],
     ])
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
@@ -123,6 +132,21 @@ async def cmd_start_with_payload(msg: Message, command: CommandObject) -> None:
     payload = (command.args or "").strip()
     with SessionLocal() as session:
         partner = get_or_create_partner(session, msg)
+
+        if payload == "partner":
+            # прямая регистрационная ссылка — сразу активируем и даём вход в ЛК
+            partner.status = "active"
+            session.commit()
+            login_url = issue_login_url(session, msg.from_user.id)
+            kb = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="🌐 Открыть мой кабинет", url=login_url)],
+                [InlineKeyboardButton(text="🔗 Получить мои ссылки", callback_data="partner:links")],
+            ])
+            await msg.answer(
+                PARTNER_ONBOARDING_INTRO + "\n\n✅ Ты — партнёр OnCount. Жми кнопку для входа в кабинет.",
+                reply_markup=kb,
+            )
+            return
 
         if payload.startswith("login_"):
             state = payload[len("login_"):]
@@ -236,11 +260,23 @@ async def cb_partner_intro(call) -> None:
         if partner and partner.status != "active":
             partner.status = "active"
             session.commit()
+        login_url = issue_login_url(session, call.from_user.id)
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🌐 Открыть кабинет", url=settings.WEBAPP_URL + "/login")],
+        [InlineKeyboardButton(text="🌐 Открыть мой кабинет", url=login_url)],
         [InlineKeyboardButton(text="🔗 Получить мои ссылки", callback_data="partner:links")],
     ])
     await call.message.answer(PARTNER_ONBOARDING_INTRO, reply_markup=kb)
+    await call.answer()
+
+
+@dp.callback_query(F.data == "partner:open-lk")
+async def cb_partner_open_lk(call) -> None:
+    with SessionLocal() as session:
+        login_url = issue_login_url(session, call.from_user.id)
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🌐 Войти в кабинет", url=login_url)],
+    ])
+    await call.message.answer("Жми кнопку — откроется твой кабинет:", reply_markup=kb)
     await call.answer()
 
 
