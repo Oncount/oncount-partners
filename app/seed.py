@@ -7,8 +7,8 @@ from sqlalchemy.orm import Session
 from app.models import FaqItem, MessageTemplate, ProductBlock
 
 
-PRICE_RU = "https://oncount.com/ru/price"
-PRICE_EN = "https://oncount.com/price"
+PRICE_RU = "https://drive.google.com/file/d/1q9shmtKtsNWSgl0DoH0bkEBq-Rjk9e8w/view?usp=drive_link"
+PRICE_EN = "https://drive.google.com/file/d/1fs1vJi5X6AgARmv7B0NOtaYE5Y69wqOs/view?usp=drive_link"
 
 
 PRODUCTS = [
