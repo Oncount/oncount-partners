@@ -84,8 +84,13 @@ def main_menu_new() -> InlineKeyboardMarkup:
     ])
 
 
-def menu_partner() -> InlineKeyboardMarkup:
-    kb = [
+def menu_partner(registered_for_event: bool = False) -> InlineKeyboardMarkup:
+    kb = []
+    if registered_for_event:
+        kb.append([InlineKeyboardButton(text="✅ Ты на мастер-классе 21.05", callback_data="event:show")])
+    else:
+        kb.append([InlineKeyboardButton(text="📅 Регистрация на мастер-класс 21.05", callback_data="event:register")])
+    kb.extend([
         [InlineKeyboardButton(text="🔗 Мои ссылки", callback_data="partner:links")],
         [InlineKeyboardButton(text="📨 Тексты рассылок", callback_data="partner:messages")],
         [InlineKeyboardButton(text="📊 Моя статистика", callback_data="partner:stats")],
@@ -93,8 +98,14 @@ def menu_partner() -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text="📍 Передать клиента", callback_data="partner:transfer")],
         [InlineKeyboardButton(text="❓ FAQ", callback_data="partner:faq")],
         [InlineKeyboardButton(text="🌐 Открыть ЛК в браузере", url=settings.WEBAPP_URL + "/login")],
-    ]
+    ])
     return InlineKeyboardMarkup(inline_keyboard=kb)
+
+
+def _is_registered_for_event(session, telegram_id: int) -> bool:
+    return session.query(EventRegistration).filter_by(
+        telegram_id=telegram_id, event_slug=EVENT_SLUG
+    ).first() is not None
 
 
 def menu_event_registered() -> InlineKeyboardMarkup:
@@ -110,20 +121,16 @@ def menu_event_registered() -> InlineKeyboardMarkup:
 async def cmd_start(msg: Message) -> None:
     with SessionLocal() as session:
         partner = get_or_create_partner(session, msg)
+        registered = _is_registered_for_event(session, msg.from_user.id)
         # уже партнёр (active)?
         if partner.status == "active":
             await msg.answer(
                 WELCOME_PARTNER.format(first_name=msg.from_user.first_name or ""),
-                reply_markup=menu_partner(),
+                reply_markup=menu_partner(registered_for_event=registered),
             )
             return
-        # зарегистрирован на мастер-класс?
-        evt = (
-            session.query(EventRegistration)
-            .filter_by(telegram_id=msg.from_user.id, event_slug=EVENT_SLUG)
-            .first()
-        )
-        if evt:
+        # зарегистрирован на мастер-класс, но ещё не партнёр?
+        if registered:
             await msg.answer(
                 WELCOME_REGISTERED_FOR_EVENT.format(first_name=msg.from_user.first_name or ""),
                 reply_markup=menu_event_registered(),
@@ -147,6 +154,7 @@ async def cb_event_register(call) -> None:
             .filter_by(telegram_id=call.from_user.id, event_slug=EVENT_SLUG)
             .first()
         )
+        was_already = exists is not None
         if not exists:
             session.add(EventRegistration(
                 telegram_id=call.from_user.id,
@@ -158,9 +166,16 @@ async def cb_event_register(call) -> None:
             session.commit()
     await call.message.answer(
         EVENT_REGISTERED.format(first_name=call.from_user.first_name or ""),
-        reply_markup=menu_event_registered(),
     )
-    await call.answer("Зарегистрирован/-а!")
+    await call.answer("Уже было записано" if was_already else "Зарегистрирован/-а!")
+
+
+@dp.callback_query(F.data == "event:show")
+async def cb_event_show(call) -> None:
+    await call.message.answer(
+        EVENT_REGISTERED.format(first_name=call.from_user.first_name or ""),
+    )
+    await call.answer()
 
 
 # ─────────────── partner: onboarding & menu ─────────────────────────────────
