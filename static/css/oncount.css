@@ -300,6 +300,45 @@ details.faq-item[open] summary { margin-bottom: 12px; }
 .link-card details { margin-top: 8px; font-size: 14px; }
 .link-card details summary { cursor: pointer; color: var(--sage); font-weight: 600; margin-bottom: 8px; }
 
+/* Reference link rows (короткие ссылки с иконкой "копировать") */
+.ref-hint { color: var(--sage); font-size: 14px; margin: 4px 0 12px; }
+.ref-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+}
+.ref-row:first-of-type { border-top: 0; padding-top: 4px; }
+.ref-row-text { flex: 1; min-width: 0; }
+.ref-row-title { font-weight: 600; color: var(--charcoal); margin-bottom: 4px; font-size: 15px; }
+.ref-row-url {
+  display: block;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: var(--deep-green);
+  text-decoration: underline;
+  word-break: break-all;
+}
+.ref-row-url:hover { color: var(--orange); }
+.icon-btn {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: white;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--deep-green);
+  transition: all 120ms;
+}
+.icon-btn:hover { border-color: var(--orange); color: var(--orange); }
+.icon-btn:active { transform: scale(0.95); }
+.icon-btn.copied { background: var(--deep-green); border-color: var(--deep-green); color: white; }
+
 /* Messages list */
 .msg-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
 .msg-card .seg { font-size: 11px; text-transform: uppercase; color: var(--orange); letter-spacing: 0.08em; font-weight: 600; }
