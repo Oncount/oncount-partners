@@ -78,12 +78,18 @@ PARTNER_ONBOARDING_INTRO = (
 )
 
 PARTNER_LINKS = (
-    "🔗 <b>Твои реферальные ссылки:</b>\n\n"
-    "<b>Для приглашения в бот:</b>\n"
-    "<code>{bot_link}</code>\n\n"
-    "<b>Для размещения на сайте:</b>\n"
-    "<code>{site_link}</code>\n\n"
-    "Все ссылки + QR-код — в личном кабинете."
+    "🔗 <b>Твои реферальные ссылки</b>\n"
+    "Код партнёра: <code>{ref_slug}</code>\n\n"
+    "💼 <b>Бесплатная консультация с бухгалтером</b>\n"
+    "Telegram: <code>{link_consult_tg}</code>\n"
+    "WhatsApp: <code>{link_consult_wa}</code>\n\n"
+    "🎓 <b>Мастер-класс с бухгалтером</b>\n"
+    "Telegram: <code>{link_mclass_tg}</code>\n"
+    "WhatsApp: <code>{link_mclass_wa}</code>\n\n"
+    "🤝 <b>Партнёрская ссылка в бот ONCOUNT Community</b>\n"
+    "10% от агентских вознаграждений приглашённых партнёров.\n"
+    "<code>{link_partner_bot}</code>\n\n"
+    "Открыть со всеми кнопками «Скопировать» и QR-кодами: {webapp_url}/links"
 )
 
 TRANSFER_INTRO = (

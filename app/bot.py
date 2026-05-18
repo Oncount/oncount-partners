@@ -302,9 +302,17 @@ async def cmd_links(event) -> None:
         partner = session.query(Partner).filter_by(telegram_id=user_id).first()
         if not partner:
             partner = get_or_create_partner(session, event)
-    bot_link = f"https://t.me/{settings.BOT_USERNAME}?start=ref_{partner.ref_slug}"
-    site_link = f"https://oncount.com/?ref={partner.ref_slug}"
-    await msg.answer(PARTNER_LINKS.format(bot_link=bot_link, site_link=site_link))
+        ref = partner.ref_slug
+    base = settings.WEBAPP_URL.rstrip("/")
+    await msg.answer(PARTNER_LINKS.format(
+        ref_slug=ref,
+        link_consult_tg=f"{base}/ct/{ref}",
+        link_consult_wa=f"{base}/cw/{ref}",
+        link_mclass_tg=f"{base}/mt/{ref}",
+        link_mclass_wa=f"{base}/mw/{ref}",
+        link_partner_bot=f"{base}/p/{ref}",
+        webapp_url=base,
+    ))
     if not isinstance(event, Message):
         await event.answer()
 
