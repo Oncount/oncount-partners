@@ -415,7 +415,7 @@ async def cmd_transfer(event, state: FSMContext) -> None:
 async def transfer_name(msg: Message, state: FSMContext) -> None:
     await state.update_data(client_name=msg.text.strip())
     await state.set_state(TransferStates.phone)
-    await msg.answer("Телефон, Telegram или WhatsApp клиента (можно пропустить — отправь «-»):")
+    await msg.answer("Телефон, Telegram или WhatsApp клиента:")
 
 
 @dp.message(TransferStates.phone)
