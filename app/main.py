@@ -1,3 +1,5 @@
+import asyncio
+import logging
 from datetime import datetime
 from pathlib import Path
 
@@ -34,11 +36,23 @@ app = FastAPI(title="OnCount Partner Platform")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
 
+log = logging.getLogger("oncount.startup")
+
+
 @app.on_event("startup")
-def on_startup() -> None:
+async def on_startup() -> None:
     Base.metadata.create_all(engine)
     with SessionLocal() as session:
         seed_if_empty(session)
+
+    # Run the Telegram bot as an asyncio task in the same process as uvicorn.
+    # Free Railway plan caps the number of services, so we co-locate web + bot.
+    if settings.BOT_TOKEN:
+        from app.bot import main as bot_main  # local import to avoid circular issues
+        log.info("Launching bot polling as background task")
+        asyncio.create_task(bot_main())
+    else:
+        log.info("BOT_TOKEN empty -> bot polling skipped, web only")
 
 
 @app.get("/healthz")
