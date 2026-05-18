@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Добро пожаловать — ONCOUNT Partners{% endblock %}
+{% block heading %}Добро пожаловать в ONCOUNT{% endblock %}
+
+{% block content %}
+<div class="card">
+  <p style="font-size: 16px;">Привет, {{ partner.first_name or 'партнёр' }}! Нужно 30 секунд, чтобы настроить твой кабинет — расскажи кратко о себе:</p>
+</div>
+
+{% if message %}
+  <div class="alert" style="background: rgba(236, 100, 66, 0.12); color: var(--orange); border: 1px solid var(--orange);">
+    {{ message }}
+  </div>
+{% endif %}
+
+<div class="card">
+  <form class="form" method="POST" action="/onboarding">
+    <label>Кто ты по основной деятельности? *</label>
+    <select name="segment" required>
+      <option value="">— выбери —</option>
+      {% for slug, label in segments %}
+        <option value="{{ slug }}">{{ label }}</option>
+      {% endfor %}
+    </select>
+
+    <label>Телефон или WhatsApp *</label>
+    <input type="text" name="phone" required placeholder="+971 58 ...">
+
+    <label>Email для актов и выплат *</label>
+    <input type="email" name="email" required placeholder="you@example.com">
+
+    <button type="submit" class="btn btn-primary" style="margin-top: 8px;">Готово — открыть кабинет</button>
+  </form>
+</div>
+
+<div class="card">
+  <h3 style="margin-bottom: 8px;">Зачем эти данные</h3>
+  <ul style="margin: 0; padding-left: 18px; color: var(--charcoal);">
+    <li><b>Сегмент</b> — присылаем шаблоны рассылок именно под твою аудиторию.</li>
+    <li><b>Телефон / WhatsApp</b> — менеджер ONCOUNT свяжется с тобой по новым лидам.</li>
+    <li><b>Email</b> — туда уйдут договор-оферта, акты и подтверждение комиссионных выплат.</li>
+  </ul>
+</div>
+{% endblock %}

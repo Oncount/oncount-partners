@@ -40,10 +40,25 @@
   </div>
 </div>
 
-<div class="card">
-  <h3>Что делать дальше</h3>
-  <p>1. Открой <a href="/links">«Реферальные ссылки»</a> — скопируй личную ссылку с QR-кодом.</p>
-  <p>2. Возьми готовый <a href="/messages">текст рассылки</a> под свой сегмент клиентов.</p>
-  <p>3. Передавай клиентов через <a href="/transfer">«Передать клиента»</a> — или прямо из Telegram-бота.</p>
+{% if show_checklist %}
+<div class="card" id="checklist">
+  <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
+    <h3 style="margin: 0;">🚀 Сделай эти 3 шага, чтобы заработать первую комиссию</h3>
+    <form method="POST" action="/checklist/dismiss" style="margin: 0;">
+      <button type="submit" class="btn btn-ghost" style="padding: 4px 12px; font-size: 12px;" title="Скрыть чек-лист">✕</button>
+    </form>
+  </div>
+  <div style="margin-top: 16px;">
+    {% for step in checklist_steps %}
+    <a href="{{ step.href }}" style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border); color: var(--charcoal);">
+      <span style="font-size: 22px; line-height: 1; min-width: 28px;">
+        {% if step.done %}✅{% else %}⚪{% endif %}
+      </span>
+      <span style="flex: 1; {% if step.done %}text-decoration: line-through; color: var(--sage);{% endif %}">{{ step.label }}</span>
+      <span style="color: var(--sage); font-size: 18px;">›</span>
+    </a>
+    {% endfor %}
+  </div>
 </div>
+{% endif %}
 {% endblock %}

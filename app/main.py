@@ -51,6 +51,14 @@ async def on_startup() -> None:
     from sqlalchemy import text
     with engine.begin() as conn:
         conn.execute(text("ALTER TABLE product_blocks ALTER COLUMN price_aed TYPE TEXT"))
+        # Онбординг-поля партнёра — добавляются при первом деплое после изменения модели.
+        for col in (
+            "onboarded_at",
+            "links_viewed_at",
+            "products_viewed_at",
+            "checklist_dismissed_at",
+        ):
+            conn.execute(text(f"ALTER TABLE partners ADD COLUMN IF NOT EXISTS {col} TIMESTAMP"))
     with SessionLocal() as session:
         seed_if_empty(session)
 
@@ -184,11 +192,90 @@ def logout() -> RedirectResponse:
     return response
 
 
+SEGMENTS = [
+    ("lawyer", "Юрист / юр. фирма"),
+    ("freezone", "Free-zone agent"),
+    ("banker", "Банкир / RM"),
+    ("coworking", "Коворкинг / бизнес-сервис"),
+    ("accountant", "Бухгалтер-фрилансер"),
+    ("entrepreneur", "Предприниматель"),
+    ("other", "Другое"),
+]
+
+
+@app.get("/onboarding", response_class=HTMLResponse)
+def onboarding_page(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
+    partner = current_partner(request, session)
+    if not partner:
+        return RedirectResponse("/login", status_code=302)
+    if partner.onboarded_at:
+        return RedirectResponse("/dashboard", status_code=302)
+    return templates.TemplateResponse(
+        "onboarding.html",
+        _ctx(request, partner, segments=SEGMENTS, message=None),
+    )
+
+
+@app.post("/onboarding", response_class=HTMLResponse)
+def onboarding_submit(
+    request: Request,
+    segment: str = Form(...),
+    phone: str = Form(...),
+    email: str = Form(...),
+    session: Session = Depends(get_session),
+) -> HTMLResponse:
+    partner = current_partner(request, session)
+    if not partner:
+        return RedirectResponse("/login", status_code=302)
+
+    segment = (segment or "").strip().lower()
+    phone = (phone or "").strip()
+    email = (email or "").strip().lower()
+
+    if segment not in {s[0] for s in SEGMENTS}:
+        return templates.TemplateResponse(
+            "onboarding.html",
+            _ctx(request, partner, segments=SEGMENTS, message="Выбери сегмент из списка."),
+            status_code=400,
+        )
+    if not phone or len(phone) < 5:
+        return templates.TemplateResponse(
+            "onboarding.html",
+            _ctx(request, partner, segments=SEGMENTS, message="Укажи телефон или WhatsApp."),
+            status_code=400,
+        )
+    if "@" not in email or "." not in email:
+        return templates.TemplateResponse(
+            "onboarding.html",
+            _ctx(request, partner, segments=SEGMENTS, message="Email указан некорректно."),
+            status_code=400,
+        )
+
+    partner.segment = segment
+    partner.phone = phone
+    partner.email = email
+    partner.onboarded_at = datetime.utcnow()
+    session.commit()
+    return RedirectResponse("/dashboard", status_code=302)
+
+
+@app.post("/checklist/dismiss")
+def checklist_dismiss(request: Request, session: Session = Depends(get_session)):
+    partner = current_partner(request, session)
+    if not partner:
+        return RedirectResponse("/login", status_code=302)
+    partner.checklist_dismissed_at = datetime.utcnow()
+    session.commit()
+    return RedirectResponse("/dashboard", status_code=302)
+
+
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
     partner = current_partner(request, session)
     if not partner:
         return RedirectResponse("/login", status_code=302)
+    if not partner.onboarded_at:
+        return RedirectResponse("/onboarding", status_code=302)
 
     leads_q = session.query(Lead).filter_by(partner_id=partner.id)
     leads_count = leads_q.count()
@@ -198,6 +285,28 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
     conversion = round(successful / leads_count * 100, 1) if leads_count else 0.0
 
     total_aed = sum((l.amount_aed or 0) for l in leads_q.filter(Lead.status == "won").all())
+
+    checklist_steps = [
+        {
+            "label": "Скопируй свою реф-ссылку",
+            "done": partner.links_viewed_at is not None,
+            "href": "/links",
+        },
+        {
+            "label": "Передай первого клиента",
+            "done": leads_count > 0,
+            "href": "/transfer",
+        },
+        {
+            "label": "Изучи тарифы и комиссии",
+            "done": partner.products_viewed_at is not None,
+            "href": "/products",
+        },
+    ]
+    show_checklist = (
+        partner.checklist_dismissed_at is None
+        and not all(s["done"] for s in checklist_steps)
+    )
 
     return templates.TemplateResponse(
         "dashboard.html",
@@ -212,6 +321,8 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
                 "in_progress": in_progress,
                 "earned_aed": float(total_aed),
             },
+            checklist_steps=checklist_steps,
+            show_checklist=show_checklist,
         ),
     )
 
@@ -306,6 +417,9 @@ def links(request: Request, session: Session = Depends(get_session)) -> HTMLResp
     partner = current_partner(request, session)
     if not partner:
         return RedirectResponse("/login", status_code=302)
+    if partner.links_viewed_at is None:
+        partner.links_viewed_at = datetime.utcnow()
+        session.commit()
 
     ref = partner.ref_slug
     base = str(request.base_url).rstrip("/")
@@ -371,6 +485,9 @@ def products(request: Request, session: Session = Depends(get_session)) -> HTMLR
     partner = current_partner(request, session)
     if not partner:
         return RedirectResponse("/login", status_code=302)
+    if partner.products_viewed_at is None:
+        partner.products_viewed_at = datetime.utcnow()
+        session.commit()
     items = (
         session.query(ProductBlock)
         .filter_by(is_active=True)

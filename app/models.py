@@ -33,6 +33,10 @@ class Partner(Base):
     status: Mapped[str] = mapped_column(String(16), default="pending", index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime)
+    onboarded_at: Mapped[datetime | None] = mapped_column(DateTime)
+    links_viewed_at: Mapped[datetime | None] = mapped_column(DateTime)
+    products_viewed_at: Mapped[datetime | None] = mapped_column(DateTime)
+    checklist_dismissed_at: Mapped[datetime | None] = mapped_column(DateTime)
 
     referrals: Mapped[list["Referral"]] = relationship(back_populates="partner")
     leads: Mapped[list["Lead"]] = relationship(back_populates="partner")
