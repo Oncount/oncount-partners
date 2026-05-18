@@ -95,13 +95,14 @@ def main_menu_new() -> InlineKeyboardMarkup:
 
 
 def menu_partner(registered_for_event: bool = False) -> InlineKeyboardMarkup:
-    """3-кнопочное меню партнёра. Остальные функции — через команды и через ЛК."""
+    """Меню партнёра. Остальные функции — через команды и через ЛК."""
     kb = []
     if registered_for_event:
         kb.append([InlineKeyboardButton(text="✅ Ты на мастер-классе 21.05", callback_data="event:show")])
     else:
         kb.append([InlineKeyboardButton(text="📅 Регистрация на мастер-класс 21.05", callback_data="event:register")])
     kb.extend([
+        [InlineKeyboardButton(text="🤝 Партнёрство с ONCOUNT", callback_data="partner:intro")],
         [InlineKeyboardButton(text="📍 Передать клиента", callback_data="partner:transfer")],
         [InlineKeyboardButton(text="🌐 Открыть кабинет", callback_data="partner:open-lk")],
     ])
