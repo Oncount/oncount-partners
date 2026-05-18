@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}FAQ — OnCount Partners{% endblock %}
+{% block heading %}Часто задаваемые вопросы{% endblock %}
+
+{% block content %}
+{% for category, items in categories.items() %}
+  <div class="faq-category">{{ category }}</div>
+  {% for item in items %}
+  <details class="faq-item">
+    <summary>{{ item.question }}</summary>
+    <div style="white-space: pre-wrap; margin-top: 8px;">{{ item.answer_md }}</div>
+  </details>
+  {% endfor %}
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Реферальные ссылки — OnCount Partners{% endblock %}
+{% block heading %}Реферальные ссылки{% endblock %}
+
+{% block content %}
+<div class="card">
+  <p>Привлекайте клиентов и партнёров через персональную ссылку. Все, кто перейдёт по ней, закрепятся за вами, и при первой сделке вы получите вознаграждение.</p>
+</div>
+
+<div class="link-card">
+  <h3>🤖 Для приглашения в наш Telegram-бот</h3>
+  <p>Партнёры и клиенты переходят в бот, видят свою привязку к вам, проходят онбординг.</p>
+  <code id="bot-link">{{ bot_deep_link }}</code>
+  <button class="btn btn-primary copy-btn" onclick="navigator.clipboard.writeText('{{ bot_deep_link }}'); this.textContent='Скопировано ✓'">Скопировать ссылку</button>
+</div>
+
+<div class="link-card">
+  <h3>🌐 Для размещения на вашем сайте / соцсетях</h3>
+  <p>Клиент попадает на сайт OnCount с вашим реф-кодом.</p>
+  <code id="site-link">{{ site_link }}</code>
+  <button class="btn btn-primary copy-btn" onclick="navigator.clipboard.writeText('{{ site_link }}'); this.textContent='Скопировано ✓'">Скопировать ссылку</button>
+</div>
+{% endblock %}

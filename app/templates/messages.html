@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Тексты рассылок — OnCount Partners{% endblock %}
+{% block heading %}Тексты рассылок{% endblock %}
+
+{% block content %}
+<div class="card">
+  <p>Готовые тексты для рассылки своим клиентам и контактам. Жми «Скопировать» — текст уйдёт в буфер обмена.</p>
+</div>
+
+{% for item in items %}
+<div class="msg-card">
+  {% if item.segment %}<div class="seg">{{ item.segment }}</div>{% endif %}
+  <h3>{{ item.title }}</h3>
+  <div class="body" id="msg-{{ item.id }}">{{ item.body_md }}</div>
+  <button class="btn btn-primary copy-btn"
+          onclick="navigator.clipboard.writeText(document.getElementById('msg-{{ item.id }}').innerText); this.textContent='Скопировано ✓'">
+    Скопировать
+  </button>
+</div>
+{% endfor %}
+{% endblock %}

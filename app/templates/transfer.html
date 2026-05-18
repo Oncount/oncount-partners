@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Передать клиента — OnCount Partners{% endblock %}
+{% block heading %}Передать клиента{% endblock %}
+
+{% block content %}
+{% if message %}
+  <div class="alert alert-success">{{ message }}</div>
+{% endif %}
+
+<div class="card">
+  <form class="form" method="POST" action="/transfer">
+    <div class="form-grid">
+      <div>
+        <label>ФИО клиента *</label>
+        <input type="text" name="client_name" required>
+      </div>
+      <div>
+        <label>Название компании</label>
+        <input type="text" name="company_name">
+      </div>
+      <div>
+        <label>Телефон / WhatsApp</label>
+        <input type="text" name="client_phone" placeholder="+971...">
+      </div>
+      <div>
+        <label>Telegram клиента</label>
+        <input type="text" name="client_telegram" placeholder="@username">
+      </div>
+    </div>
+    <label>Задача клиента</label>
+    <textarea name="task_description" rows="4" placeholder="Открытие компании, бухгалтерия с такого-то месяца, VAT-отчёт, и т.п."></textarea>
+    <button type="submit" class="btn btn-primary">Передать клиента</button>
+  </form>
+</div>
+
+<div class="card">
+  <h3>Что произойдёт после</h3>
+  <ol>
+    <li>Карточка создастся в нашей CRM с вашим именем как агента.</li>
+    <li>Менеджер свяжется с клиентом в течение 24 часов.</li>
+    <li>Вы получите уведомление о каждом шаге в этом ЛК и в Telegram-боте.</li>
+  </ol>
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Все заявки — OnCount Partners{% endblock %}
+{% block heading %}Все заявки{% endblock %}
+
+{% block content %}
+{% if not rows %}
+  <div class="card">
+    <p>Пока пусто. <a href="/transfer">Передай первого клиента</a>, и он появится в этой таблице.</p>
+  </div>
+{% else %}
+<table class="list">
+  <thead>
+    <tr>
+      <th>Клиент</th>
+      <th>Контакт</th>
+      <th>Компания</th>
+      <th>Создано</th>
+      <th>Статус</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      <td><strong>{{ row.client_name }}</strong></td>
+      <td>{{ row.client_phone or row.client_telegram or '—' }}</td>
+      <td>{{ row.company_name or '—' }}</td>
+      <td>{{ row.created_at.strftime('%d.%m.%Y') }}</td>
+      <td><span class="status-pill status-{{ row.status }}">{{ row.status }}</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

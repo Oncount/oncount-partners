@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Тарифы и сервисы — OnCount Partners{% endblock %}
+{% block heading %}Тарифы и сервисы{% endblock %}
+
+{% block content %}
+<div class="card">
+  <p>Все продукты OnCount, которые ты можешь рекомендовать своим клиентам. Жми «Подробнее» — там полное описание, которое можно скопировать в свою рассылку.</p>
+</div>
+
+<div class="product-grid">
+  {% for item in items %}
+  <div class="product-card">
+    <h3>{{ item.title }}</h3>
+    {% if item.price_aed %}<div class="price">{{ item.price_aed }}</div>{% endif %}
+    <div class="summary">{{ item.summary_md }}</div>
+    <details>
+      <summary>Подробнее</summary>
+      <div style="margin-top: 12px; white-space: pre-wrap;">{{ item.full_md }}</div>
+    </details>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

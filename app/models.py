@@ -1,0 +1,122 @@
+from datetime import datetime
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Integer,
+    JSON,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+)
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.db import Base
+
+
+class Partner(Base):
+    __tablename__ = "partners"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
+    username: Mapped[str | None] = mapped_column(String(64))
+    first_name: Mapped[str | None] = mapped_column(String(128))
+    last_name: Mapped[str | None] = mapped_column(String(128))
+    photo_url: Mapped[str | None] = mapped_column(String(512))
+    email: Mapped[str | None] = mapped_column(String(255))
+    phone: Mapped[str | None] = mapped_column(String(32))
+    segment: Mapped[str | None] = mapped_column(String(32))
+    ref_slug: Mapped[str] = mapped_column(String(16), unique=True, index=True)
+    tier: Mapped[str] = mapped_column(String(16), default="bronze")
+    status: Mapped[str] = mapped_column(String(16), default="pending", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime)
+
+    referrals: Mapped[list["Referral"]] = relationship(back_populates="partner")
+    leads: Mapped[list["Lead"]] = relationship(back_populates="partner")
+
+
+class Referral(Base):
+    __tablename__ = "referrals"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    partner_id: Mapped[int] = mapped_column(ForeignKey("partners.id"), index=True)
+    ref_slug: Mapped[str] = mapped_column(String(16), index=True)
+    source: Mapped[str] = mapped_column(String(16))
+    visitor_meta: Mapped[dict | None] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    partner: Mapped[Partner] = relationship(back_populates="referrals")
+
+
+class Lead(Base):
+    __tablename__ = "leads"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    partner_id: Mapped[int] = mapped_column(ForeignKey("partners.id"), index=True)
+    client_name: Mapped[str] = mapped_column(String(255))
+    client_phone: Mapped[str | None] = mapped_column(String(32))
+    client_telegram: Mapped[str | None] = mapped_column(String(64))
+    client_email: Mapped[str | None] = mapped_column(String(255))
+    company_name: Mapped[str | None] = mapped_column(String(255))
+    task_description: Mapped[str | None] = mapped_column(Text)
+    kommo_lead_id: Mapped[int | None] = mapped_column(BigInteger)
+    status: Mapped[str] = mapped_column(String(32), default="new", index=True)
+    amount_aed: Mapped[float | None] = mapped_column(Numeric(12, 2))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    partner: Mapped[Partner] = relationship(back_populates="leads")
+
+
+class MessageTemplate(Base):
+    __tablename__ = "message_templates"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slug: Mapped[str] = mapped_column(String(64), unique=True)
+    segment: Mapped[str | None] = mapped_column(String(32))
+    title: Mapped[str] = mapped_column(String(255))
+    body_md: Mapped[str] = mapped_column(Text)
+    order_index: Mapped[int] = mapped_column(Integer, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class ProductBlock(Base):
+    __tablename__ = "product_blocks"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slug: Mapped[str] = mapped_column(String(64), unique=True)
+    title: Mapped[str] = mapped_column(String(255))
+    price_aed: Mapped[str | None] = mapped_column(String(64))
+    summary_md: Mapped[str] = mapped_column(Text)
+    full_md: Mapped[str] = mapped_column(Text)
+    order_index: Mapped[int] = mapped_column(Integer, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class FaqItem(Base):
+    __tablename__ = "faq_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    category: Mapped[str] = mapped_column(String(32), index=True)
+    question: Mapped[str] = mapped_column(String(500))
+    answer_md: Mapped[str] = mapped_column(Text)
+    order_index: Mapped[int] = mapped_column(Integer, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class EventRegistration(Base):
+    """Регистрации на мастер-классы и события — наследник telegram-bot-2brain."""
+    __tablename__ = "event_registrations"
+    __table_args__ = (UniqueConstraint("telegram_id", "event_slug", name="uq_event_per_user"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    telegram_id: Mapped[int] = mapped_column(BigInteger, index=True)
+    event_slug: Mapped[str] = mapped_column(String(64), index=True)
+    first_name: Mapped[str | None] = mapped_column(String(128))
+    username: Mapped[str | None] = mapped_column(String(64))
+    registered_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    attended: Mapped[bool] = mapped_column(Boolean, default=False)
+    meta: Mapped[dict | None] = mapped_column(JSON)

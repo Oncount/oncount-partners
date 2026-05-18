@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Дашборд — OnCount Partners{% endblock %}
+{% block heading %}Дашборд{% endblock %}
+
+{% block content %}
+<div class="balance">
+  <div class="balance-item">
+    <span class="balance-item-label">Заработано:</span>
+    <span class="balance-item-value">{{ '%.0f'|format(kpi.earned_aed) }} AED</span>
+  </div>
+  <div class="balance-item">
+    <span class="balance-item-label">Ваш реф-код:</span>
+    <span class="balance-item-value">{{ partner.ref_slug }}</span>
+  </div>
+  <div style="margin-left: auto;">
+    <a class="btn btn-primary" href="/transfer">+ Передать клиента</a>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi">
+    <div class="kpi-label">Конверсия</div>
+    <div class="kpi-value accent">{{ kpi.conversion }}%</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Заявки</div>
+    <div class="kpi-value">{{ kpi.leads }}</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Успешные</div>
+    <div class="kpi-value">{{ kpi.successful }}</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Отказы</div>
+    <div class="kpi-value">{{ kpi.rejected }}</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">В работе</div>
+    <div class="kpi-value">{{ kpi.in_progress }}</div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Что делать дальше</h3>
+  <p>1. Открой <a href="/links">«Реферальные ссылки»</a> — скопируй личную ссылку с QR-кодом.</p>
+  <p>2. Возьми готовый <a href="/messages">текст рассылки</a> под свой сегмент клиентов.</p>
+  <p>3. Передавай клиентов через <a href="/transfer">«Передать клиента»</a> — или прямо из Telegram-бота.</p>
+</div>
+{% endblock %}

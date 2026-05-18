@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}OnCount Partners{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Raleway:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/oncount.css">
+  <link rel="icon" href="/static/img/logo.png">
+</head>
+<body>
+{% if partner %}
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="/static/img/logo.png" alt="OnCount">
+    </div>
+
+    <div class="sidebar-section">Главное</div>
+    <a class="menu-item {% if request.url.path == '/dashboard' %}active{% endif %}" href="/dashboard">🏠 Дашборд</a>
+    <a class="menu-item {% if request.url.path == '/leads' %}active{% endif %}" href="/leads">📋 Все заявки</a>
+
+    <div class="sidebar-section">Создать заявку</div>
+    <a class="menu-item {% if request.url.path == '/transfer' %}active{% endif %}" href="/transfer">➡️ Передать клиента</a>
+
+    <div class="sidebar-section">Инструменты</div>
+    <a class="menu-item {% if request.url.path == '/links' %}active{% endif %}" href="/links">🔗 Реферальные ссылки</a>
+
+    <div class="sidebar-section">База знаний</div>
+    <a class="menu-item {% if request.url.path == '/messages' %}active{% endif %}" href="/messages">📨 Тексты рассылок</a>
+    <a class="menu-item {% if '/products' in request.url.path %}active{% endif %}" href="/products">📦 Тарифы и сервисы</a>
+    <a class="menu-item {% if '/faq' in request.url.path %}active{% endif %}" href="/faq">❓ FAQ</a>
+
+    <div class="spacer"></div>
+    <div class="sidebar-bottom">
+      <a href="https://t.me/{{ bot_username }}" target="_blank">💬 ТГ</a>
+      <a href="/logout">↩️ Выход</a>
+    </div>
+  </aside>
+
+  <main class="content">
+    <header class="page-header">
+      <h1>{% block heading %}{% endblock %}</h1>
+      <div class="user-pill">
+        {% if partner.first_name %}{{ partner.first_name }}{% else %}@{{ partner.username or partner.telegram_id }}{% endif %}
+      </div>
+    </header>
+    {% block content %}{% endblock %}
+  </main>
+</div>
+{% else %}
+{% block anonymous %}{% endblock %}
+{% endif %}
+</body>
+</html>
