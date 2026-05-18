@@ -14,7 +14,7 @@ import time
 from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi import Cookie, HTTPException, Request, status
+from fastapi import HTTPException, Request, status
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
@@ -66,13 +66,9 @@ def decode_jwt(token: str) -> Optional[int]:
         return None
 
 
-def current_partner(
-    request: Request,
-    session: Session,
-    session_cookie: Optional[str] = Cookie(default=None, alias=COOKIE_NAME),
-) -> Optional[Partner]:
+def current_partner(request: Request, session: Session) -> Optional[Partner]:
     """Возвращает Partner или None — НЕ кидает 401, шаблоны сами решают."""
-    token = session_cookie or request.cookies.get(COOKIE_NAME)
+    token = request.cookies.get(COOKIE_NAME)
     if not token:
         return None
     partner_id = decode_jwt(token)
