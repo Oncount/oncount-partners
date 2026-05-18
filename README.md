@@ -1,6 +1,6 @@
-# OnCount Partner Platform
+# ONCOUNT Partner Platform
 
-Партнёрская платформа OnCount: личный кабинет партнёра + Telegram-бот «Community Business Experts» на единой БД.
+Партнёрская платформа ONCOUNT: личный кабинет партнёра + Telegram-бот «Community Business Experts» на единой БД.
 
 План реализации: [`../plans/2026-05-18-partner-platform-railway.md`](../plans/2026-05-18-partner-platform-railway.md).
 

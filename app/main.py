@@ -36,7 +36,7 @@ LOGIN_SESSION_TTL = timedelta(minutes=10)
 BASE_DIR = Path(__file__).resolve().parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "app" / "templates"))
 
-app = FastAPI(title="OnCount Partner Platform")
+app = FastAPI(title="ONCOUNT Partner Platform")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
 
@@ -233,10 +233,10 @@ def leads(request: Request, session: Session = Depends(get_session)) -> HTMLResp
 
 CONSULT_TEXT_TPL = (
     "Здравствуйте! Хочу записаться на бесплатную консультацию "
-    "с бухгалтером OnCount. Код партнёра: {slug}"
+    "с бухгалтером ONCOUNT. Код партнёра: {slug}"
 )
 MCLASS_TEXT_TPL = (
-    "Здравствуйте! Хочу попасть на мастер-класс с бухгалтером OnCount. "
+    "Здравствуйте! Хочу попасть на мастер-класс с бухгалтером ONCOUNT. "
     "Код партнёра: {slug}"
 )
 

@@ -1,4 +1,4 @@
-"""Telegram-бот OnCount Partners + Community.
+"""Telegram-бот ONCOUNT Partners + Community.
 
 Один токен @community_oncount_bot обслуживает:
 1. Регистрацию на мастер-класс «AI 2-й мозг» 21.05.2026.
@@ -117,7 +117,7 @@ def _is_registered_for_event(session, telegram_id: int) -> bool:
 
 def menu_event_registered() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🤝 Стать партнёром OnCount", callback_data="partner:intro")],
+        [InlineKeyboardButton(text="🤝 Стать партнёром ONCOUNT", callback_data="partner:intro")],
     ])
 
 
@@ -141,7 +141,7 @@ async def cmd_start_with_payload(msg: Message, command: CommandObject) -> None:
                 [InlineKeyboardButton(text="🔗 Получить мои ссылки", callback_data="partner:links")],
             ])
             await msg.answer(
-                PARTNER_ONBOARDING_INTRO + "\n\n✅ Ты — партнёр OnCount. Жми кнопку для входа в кабинет.",
+                PARTNER_ONBOARDING_INTRO + "\n\n✅ Ты — партнёр ONCOUNT. Жми кнопку для входа в кабинет.",
                 reply_markup=kb,
             )
             return
@@ -347,7 +347,7 @@ async def cmd_products(event) -> None:
             .order_by(ProductBlock.order_index)
             .all()
         )
-    text = "📦 <b>Тарифы и сервисы OnCount</b>\n\n"
+    text = "📦 <b>Тарифы и сервисы ONCOUNT</b>\n\n"
     for item in items:
         text += f"<b>{item.title}</b> — {item.price_aed or ''}\n{item.summary_md}\n\n"
     text += f"Подробности — в ЛК: {settings.WEBAPP_URL}/products"
