@@ -40,11 +40,6 @@ PRODUCTS = [
             "<p><strong>Цена:</strong> от $1 500.</p>"
             "<h4>Комиссия партнёру</h4>"
             "<p><strong>$300 с клиента.</strong></p>"
-            "<h4>Прайс</h4>"
-            "<ul>"
-            f"<li><a href=\"{PRICE_RU}\" target=\"_blank\" rel=\"noopener\">Price RU</a></li>"
-            f"<li><a href=\"{PRICE_EN}\" target=\"_blank\" rel=\"noopener\">Price EN</a></li>"
-            "</ul>"
         ),
         "order_index": 2,
     },
@@ -61,11 +56,6 @@ PRODUCTS = [
             "<p>Стоимость — индивидуально по объёму периода и количеству операций.</p>"
             "<h4>Комиссия партнёру</h4>"
             "<p><strong>30% от суммы сделки</strong> (диапазон $500–1 000 на клиента).</p>"
-            "<h4>Прайс</h4>"
-            "<ul>"
-            f"<li><a href=\"{PRICE_RU}\" target=\"_blank\" rel=\"noopener\">Price RU</a></li>"
-            f"<li><a href=\"{PRICE_EN}\" target=\"_blank\" rel=\"noopener\">Price EN</a></li>"
-            "</ul>"
         ),
         "order_index": 3,
     },
@@ -81,11 +71,6 @@ PRODUCTS = [
             "<p>Стоимость — индивидуально по типу отчёта и объёму операций.</p>"
             "<h4>Комиссия партнёру</h4>"
             "<p><strong>30% от суммы сделки</strong> (диапазон $500–1 000 на клиента).</p>"
-            "<h4>Прайс</h4>"
-            "<ul>"
-            f"<li><a href=\"{PRICE_RU}\" target=\"_blank\" rel=\"noopener\">Price RU</a></li>"
-            f"<li><a href=\"{PRICE_EN}\" target=\"_blank\" rel=\"noopener\">Price EN</a></li>"
-            "</ul>"
         ),
         "order_index": 4,
     },
@@ -99,11 +84,6 @@ PRODUCTS = [
             "<p><strong>Цена:</strong> от $350.</p>"
             "<h4>Комиссия партнёру</h4>"
             "<p><strong>$100 с клиента.</strong></p>"
-            "<h4>Прайс</h4>"
-            "<ul>"
-            f"<li><a href=\"{PRICE_RU}\" target=\"_blank\" rel=\"noopener\">Price RU</a></li>"
-            f"<li><a href=\"{PRICE_EN}\" target=\"_blank\" rel=\"noopener\">Price EN</a></li>"
-            "</ul>"
         ),
         "order_index": 5,
     },
@@ -116,11 +96,6 @@ PRODUCTS = [
             "<p>Открытие или закрытие компании фри зона или мейнленд.</p>"
             "<h4>Комиссия партнёру</h4>"
             "<p><strong>$1 000 с клиента.</strong></p>"
-            "<h4>Прайс</h4>"
-            "<ul>"
-            f"<li><a href=\"{PRICE_RU}\" target=\"_blank\" rel=\"noopener\">Price RU</a></li>"
-            f"<li><a href=\"{PRICE_EN}\" target=\"_blank\" rel=\"noopener\">Price EN</a></li>"
-            "</ul>"
         ),
         "order_index": 6,
     },
@@ -133,11 +108,6 @@ PRODUCTS = [
             "<p>Открытие корпоративного или личного счёта НЕ резидента в банке ОАЭ.</p>"
             "<h4>Комиссия партнёру</h4>"
             "<p><strong>$1 000 с клиента.</strong></p>"
-            "<h4>Прайс</h4>"
-            "<ul>"
-            f"<li><a href=\"{PRICE_RU}\" target=\"_blank\" rel=\"noopener\">Price RU</a></li>"
-            f"<li><a href=\"{PRICE_EN}\" target=\"_blank\" rel=\"noopener\">Price EN</a></li>"
-            "</ul>"
         ),
         "order_index": 7,
     },
@@ -150,11 +120,6 @@ PRODUCTS = [
             "<p>Оформление резидентской визы ОАЭ, включая золотую визу на 10 лет.</p>"
             "<h4>Комиссия партнёру</h4>"
             "<p><strong>$300–1 000 с клиента</strong> в зависимости от типа визы.</p>"
-            "<h4>Прайс</h4>"
-            "<ul>"
-            f"<li><a href=\"{PRICE_RU}\" target=\"_blank\" rel=\"noopener\">Price RU</a></li>"
-            f"<li><a href=\"{PRICE_EN}\" target=\"_blank\" rel=\"noopener\">Price EN</a></li>"
-            "</ul>"
         ),
         "order_index": 8,
     },
