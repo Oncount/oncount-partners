@@ -138,7 +138,6 @@ async def cmd_start_with_payload(msg: Message, command: CommandObject) -> None:
             login_url = issue_login_url(session, msg.from_user.id)
             kb = InlineKeyboardMarkup(inline_keyboard=[
                 [InlineKeyboardButton(text="🌐 Открыть мой кабинет", url=login_url)],
-                [InlineKeyboardButton(text="🔗 Получить мои ссылки", callback_data="partner:links")],
             ])
             await msg.answer(
                 PARTNER_ONBOARDING_INTRO + "\n\n✅ Ты — партнёр ONCOUNT. Жми кнопку для входа в кабинет.",
@@ -261,7 +260,6 @@ async def cb_partner_intro(call) -> None:
         login_url = issue_login_url(session, call.from_user.id)
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🌐 Открыть мой кабинет", url=login_url)],
-        [InlineKeyboardButton(text="🔗 Получить мои ссылки", callback_data="partner:links")],
     ])
     await call.message.answer(PARTNER_ONBOARDING_INTRO, reply_markup=kb)
     await call.answer()
