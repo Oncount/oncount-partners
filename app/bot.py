@@ -52,7 +52,7 @@ log = logging.getLogger("bot")
 EVENT_SLUG = "ai-2brain-2026-05-21"
 TZ = "Asia/Dubai"
 
-bot = Bot(token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.MARKDOWN))
+bot = Bot(token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher(storage=MemoryStorage())
 
 
@@ -218,11 +218,11 @@ async def cmd_stats(event) -> None:
         in_progress = leads_q.filter(Lead.status.in_(["new", "in_progress"])).count()
     conversion = round(won / total * 100, 1) if total else 0
     await msg.answer(
-        f"📊 *Твоя статистика:*\n\n"
-        f"• Передано клиентов: *{total}*\n"
-        f"• Успешных: *{won}*\n"
-        f"• В работе: *{in_progress}*\n"
-        f"• Конверсия: *{conversion}%*\n\n"
+        f"📊 <b>Твоя статистика:</b>\n\n"
+        f"• Передано клиентов: <b>{total}</b>\n"
+        f"• Успешных: <b>{won}</b>\n"
+        f"• В работе: <b>{in_progress}</b>\n"
+        f"• Конверсия: <b>{conversion}%</b>\n\n"
         f"Полный дашборд: {settings.WEBAPP_URL}/dashboard"
     )
     if not isinstance(event, Message):
@@ -240,9 +240,9 @@ async def cmd_products(event) -> None:
             .order_by(ProductBlock.order_index)
             .all()
         )
-    text = "📦 *Тарифы и сервисы OnCount*\n\n"
+    text = "📦 <b>Тарифы и сервисы OnCount</b>\n\n"
     for item in items:
-        text += f"*{item.title}* — {item.price_aed or ''}\n{item.summary_md}\n\n"
+        text += f"<b>{item.title}</b> — {item.price_aed or ''}\n{item.summary_md}\n\n"
     text += f"Подробности — в ЛК: {settings.WEBAPP_URL}/products"
     await msg.answer(text)
     if not isinstance(event, Message):
@@ -261,13 +261,13 @@ async def cmd_faq(event) -> None:
             .limit(10)
             .all()
         )
-    text = "❓ *Частые вопросы*\n\n"
+    text = "❓ <b>Частые вопросы</b>\n\n"
     last_cat = None
     for item in items:
         if item.category != last_cat:
-            text += f"\n_*{item.category}*_\n"
+            text += f"\n<b><i>{item.category}</i></b>\n"
             last_cat = item.category
-        text += f"\n*Q:* {item.question}\n*A:* {item.answer_md}\n"
+        text += f"\n<b>Q:</b> {item.question}\n<b>A:</b> {item.answer_md}\n"
     text += f"\nПолный FAQ: {settings.WEBAPP_URL}/faq"
     await msg.answer(text)
     if not isinstance(event, Message):
@@ -277,7 +277,7 @@ async def cmd_faq(event) -> None:
 @dp.callback_query(F.data == "partner:messages")
 async def cb_messages(call) -> None:
     await call.message.answer(
-        "📨 *Тексты рассылок* — 5 готовых шаблонов под разные сегменты.\n\n"
+        "📨 <b>Тексты рассылок</b> — 5 готовых шаблонов под разные сегменты.\n\n"
         f"Полный список с кнопкой «Скопировать» — в ЛК:\n{settings.WEBAPP_URL}/messages"
     )
     await call.answer()
@@ -341,7 +341,7 @@ async def transfer_task(msg: Message, state: FSMContext) -> None:
         await bot.send_message(
             settings.ADMIN_TG_ID,
             f"🆕 Партнёр {msg.from_user.full_name} (@{msg.from_user.username or '—'}) "
-            f"передал клиента *{data['client_name']}*\n"
+            f"передал клиента <b>{data['client_name']}</b>\n"
             f"Телефон: {data.get('client_phone') or '—'}\n"
             f"Задача: {msg.text.strip()}",
         )
