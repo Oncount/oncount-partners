@@ -38,8 +38,7 @@ EVENT_REGISTERED = (
     "🎤 Этап 5. Голосовой ввод + скриншоты — ~10 мин\n"
     "🤖 Этап 6. Запускаем агента — ~10–20 мин\n\n"
     "📄 <b>Пошаговая инструкция:</b>\n"
-    "https://docs.google.com/document/d/18rpKrqfDK1dIBIz5Psf7W8aRF3aW2_vuW2KBG3FsTcs/edit?usp=sharing\n\n"
-    "Вопросы — Николь напрямую: https://wa.me/971589217784"
+    "https://docs.google.com/document/d/18rpKrqfDK1dIBIz5Psf7W8aRF3aW2_vuW2KBG3FsTcs/edit?usp=sharing"
 )
 
 EVENT_REMINDER_24H = (
