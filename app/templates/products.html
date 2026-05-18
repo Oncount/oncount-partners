@@ -15,7 +15,7 @@
     <div class="summary">{{ item.summary_md }}</div>
     <details>
       <summary>Подробнее</summary>
-      <div style="margin-top: 12px; white-space: pre-wrap;">{{ item.full_md }}</div>
+      <div class="product-details" style="margin-top: 12px;">{{ item.full_md | safe }}</div>
     </details>
   </div>
   {% endfor %}
