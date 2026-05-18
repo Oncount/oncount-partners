@@ -63,6 +63,37 @@
     </header>
     {% block content %}{% endblock %}
   </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <div class="footer-col footer-col-brand">
+        <img class="footer-logo" src="/static/img/logo.png" alt="ONCOUNT">
+        <p class="footer-tagline">We Count, You Succeed.</p>
+      </div>
+
+      <div class="footer-col">
+        <div class="footer-title">Связаться</div>
+        <a href="tel:+971589217784">📞 +971 58 921 77 84</a>
+        <a href="https://wa.me/971589217784" target="_blank" rel="noopener">💬 WhatsApp +971 58 921 77 84</a>
+        <a href="https://oncount.com" target="_blank" rel="noopener">🌐 oncount.com</a>
+      </div>
+
+      <div class="footer-col">
+        <div class="footer-title">Соцсети</div>
+        <a href="https://www.linkedin.com/company/oncount" target="_blank" rel="noopener">in&nbsp;·&nbsp;LinkedIn OnCount</a>
+      </div>
+
+      <div class="footer-col footer-col-legal">
+        <div class="footer-title">Лицензия</div>
+        <p>Trade Licence №37408</p>
+        <p>PADVICE ACCOUNTING AND MANAGEMENT — FZCO</p>
+        <p>Office 30, 24th floor, The One Tower, Sheikh Zayed Rd, Dubai</p>
+      </div>
+    </div>
+    <div class="site-footer-bottom">
+      © {{ current_year or 2026 }} ONCOUNT. All rights reserved.
+    </div>
+  </footer>
 </div>
 {% else %}
 {% block anonymous %}{% endblock %}
