@@ -89,7 +89,7 @@ class ProductBlock(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     slug: Mapped[str] = mapped_column(String(64), unique=True)
     title: Mapped[str] = mapped_column(String(255))
-    price_aed: Mapped[str | None] = mapped_column(String(64))
+    price_aed: Mapped[str | None] = mapped_column(Text)
     summary_md: Mapped[str] = mapped_column(Text)
     full_md: Mapped[str] = mapped_column(Text)
     order_index: Mapped[int] = mapped_column(Integer, default=0)

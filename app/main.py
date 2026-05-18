@@ -46,6 +46,11 @@ log = logging.getLogger("oncount.startup")
 @app.on_event("startup")
 async def on_startup() -> None:
     Base.metadata.create_all(engine)
+    # One-off DDL: расширяем price_aed с VARCHAR(64) до TEXT — туда теперь идёт HTML.
+    # Идемпотентно: если колонка уже TEXT, ALTER пройдёт без эффекта.
+    from sqlalchemy import text
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE product_blocks ALTER COLUMN price_aed TYPE TEXT"))
     with SessionLocal() as session:
         seed_if_empty(session)
 
@@ -226,6 +231,55 @@ def leads(request: Request, session: Session = Depends(get_session)) -> HTMLResp
     return templates.TemplateResponse("leads.html", _ctx(request, partner, rows=rows))
 
 
+CONSULT_TEXT_TPL = (
+    "Здравствуйте! Хочу записаться на бесплатную консультацию "
+    "с бухгалтером OnCount. Код партнёра: {slug}"
+)
+MCLASS_TEXT_TPL = (
+    "Здравствуйте! Хочу попасть на мастер-класс с бухгалтером OnCount. "
+    "Код партнёра: {slug}"
+)
+
+
+def _redirect_to_chat(channel: str, text: str) -> RedirectResponse:
+    encoded = quote(text)
+    if channel == "tg":
+        url = f"https://t.me/{settings.CONTACT_TG_USERNAME}?text={encoded}"
+    elif channel == "wa":
+        url = f"https://wa.me/{settings.CONTACT_WA_NUMBER}?text={encoded}"
+    else:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Unknown channel")
+    return RedirectResponse(url, status_code=302)
+
+
+@app.get("/ct/{slug}")
+def short_consult_tg(slug: str) -> RedirectResponse:
+    return _redirect_to_chat("tg", CONSULT_TEXT_TPL.format(slug=slug))
+
+
+@app.get("/cw/{slug}")
+def short_consult_wa(slug: str) -> RedirectResponse:
+    return _redirect_to_chat("wa", CONSULT_TEXT_TPL.format(slug=slug))
+
+
+@app.get("/mt/{slug}")
+def short_mclass_tg(slug: str) -> RedirectResponse:
+    return _redirect_to_chat("tg", MCLASS_TEXT_TPL.format(slug=slug))
+
+
+@app.get("/mw/{slug}")
+def short_mclass_wa(slug: str) -> RedirectResponse:
+    return _redirect_to_chat("wa", MCLASS_TEXT_TPL.format(slug=slug))
+
+
+@app.get("/p/{slug}")
+def short_partner_bot(slug: str) -> RedirectResponse:
+    return RedirectResponse(
+        f"https://t.me/{settings.BOT_USERNAME}?start=ref_{slug}",
+        status_code=302,
+    )
+
+
 @app.get("/links", response_class=HTMLResponse)
 def links(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
     partner = current_partner(request, session)
@@ -233,36 +287,19 @@ def links(request: Request, session: Session = Depends(get_session)) -> HTMLResp
         return RedirectResponse("/login", status_code=302)
 
     ref = partner.ref_slug
-    bot_deep_link = f"https://t.me/{settings.BOT_USERNAME}?start=ref_{ref}"
-
-    consult_text = (
-        f"Здравствуйте! Хочу записаться на бесплатную консультацию "
-        f"с бухгалтером OnCount. Код партнёра: {ref}"
-    )
-    mclass_text = (
-        f"Здравствуйте! Хочу попасть на мастер-класс с бухгалтером OnCount. "
-        f"Код партнёра: {ref}"
-    )
-
-    tg_user = settings.CONTACT_TG_USERNAME
-    wa_num = settings.CONTACT_WA_NUMBER
-
-    consult_tg = f"https://t.me/{tg_user}?text={quote(consult_text)}"
-    consult_wa = f"https://wa.me/{wa_num}?text={quote(consult_text)}"
-    mclass_tg = f"https://t.me/{tg_user}?text={quote(mclass_text)}"
-    mclass_wa = f"https://wa.me/{wa_num}?text={quote(mclass_text)}"
+    base = str(request.base_url).rstrip("/")
 
     return templates.TemplateResponse(
         "links.html",
         _ctx(
             request,
             partner,
-            bot_deep_link=bot_deep_link,
-            consult_tg=consult_tg,
-            consult_wa=consult_wa,
-            mclass_tg=mclass_tg,
-            mclass_wa=mclass_wa,
             ref_slug=ref,
+            link_consult_tg=f"{base}/ct/{ref}",
+            link_consult_wa=f"{base}/cw/{ref}",
+            link_mclass_tg=f"{base}/mt/{ref}",
+            link_mclass_wa=f"{base}/mw/{ref}",
+            link_partner_bot=f"{base}/p/{ref}",
         ),
     )
 
