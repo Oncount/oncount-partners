@@ -4,14 +4,14 @@
 
 {% block content %}
 <div class="card">
-  <p>Все продукты OnCount, которые ты можешь рекомендовать своим клиентам. Жми «Подробнее» — там полное описание, которое можно скопировать в свою рассылку.</p>
+  <p>Все продукты OnCount, которые Вы можете рекомендовать своим клиентам. Жмите «Подробнее» — там полное описание, которое можно скопировать в свою рассылку.</p>
 </div>
 
 <div class="product-grid">
   {% for item in items %}
   <div class="product-card">
     <h3>{{ item.title }}</h3>
-    {% if item.price_aed %}<div class="price">{{ item.price_aed }}</div>{% endif %}
+    {% if item.price_aed %}<div class="meta-block">{{ item.price_aed | safe }}</div>{% endif %}
     <div class="summary">{{ item.summary_md }}</div>
     <details>
       <summary>Подробнее</summary>

@@ -268,6 +268,10 @@ details.faq-item[open] summary { margin-bottom: 12px; }
 .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
 .product-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
 .product-card .price { font-family: 'Outfit', sans-serif; font-size: 22px; color: var(--orange); font-weight: 600; margin: 8px 0; }
+.product-card .meta-block { margin: 10px 0 14px; }
+.product-card .meta-row { font-size: 15px; color: var(--deep-green); margin: 4px 0; line-height: 1.4; }
+.product-card .meta-row .meta-label { color: var(--sage); font-weight: 500; margin-right: 4px; }
+.product-card .meta-row strong { color: var(--orange); font-weight: 600; }
 .product-card .summary { color: var(--sage); font-size: 14px; margin-bottom: 12px; }
 .product-card details { font-size: 14px; }
 .product-card details summary { cursor: pointer; color: var(--deep-green); font-weight: 600; }
