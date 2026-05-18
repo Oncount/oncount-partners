@@ -10,34 +10,20 @@
 
 <div class="link-card">
   <h3>💼 Бесплатная консультация с бухгалтером</h3>
-  <p>Клиент пишет Николь Хилтон и называет ваш код партнёра <code>{{ ref_slug }}</code> — лид автоматически закрепится за вами.</p>
+  <p>Скопируйте ссылку и отправьте клиенту.</p>
   <div class="link-actions">
-    <a class="btn btn-primary" href="{{ consult_tg }}" target="_blank" rel="noopener">📨 Telegram</a>
-    <a class="btn btn-primary" href="{{ consult_wa }}" target="_blank" rel="noopener">💬 WhatsApp</a>
+    <button class="btn btn-primary" onclick="navigator.clipboard.writeText('{{ consult_tg }}'); this.textContent='Скопировано ✓'">📨 Скопировать Telegram-ссылку</button>
+    <button class="btn btn-primary" onclick="navigator.clipboard.writeText('{{ consult_wa }}'); this.textContent='Скопировано ✓'">💬 Скопировать WhatsApp-ссылку</button>
   </div>
-  <details>
-    <summary>Скопировать готовые ссылки</summary>
-    <code>{{ consult_tg }}</code>
-    <button class="btn btn-primary copy-btn" onclick="navigator.clipboard.writeText('{{ consult_tg }}'); this.textContent='Скопировано ✓'">Скопировать Telegram</button>
-    <code>{{ consult_wa }}</code>
-    <button class="btn btn-primary copy-btn" onclick="navigator.clipboard.writeText('{{ consult_wa }}'); this.textContent='Скопировано ✓'">Скопировать WhatsApp</button>
-  </details>
 </div>
 
 <div class="link-card">
   <h3>🎓 Мастер-класс с бухгалтером</h3>
-  <p>Бесплатный мастер-класс по бухучёту и налогам в ОАЭ от команды OnCount. Клиент пишет Николь Хилтон с кодом партнёра <code>{{ ref_slug }}</code> — мы свяжемся и пришлём детали.</p>
+  <p>Скопируйте ссылку и отправьте клиенту.</p>
   <div class="link-actions">
-    <a class="btn btn-primary" href="{{ mclass_tg }}" target="_blank" rel="noopener">📨 Telegram</a>
-    <a class="btn btn-primary" href="{{ mclass_wa }}" target="_blank" rel="noopener">💬 WhatsApp</a>
+    <button class="btn btn-primary" onclick="navigator.clipboard.writeText('{{ mclass_tg }}'); this.textContent='Скопировано ✓'">📨 Скопировать Telegram-ссылку</button>
+    <button class="btn btn-primary" onclick="navigator.clipboard.writeText('{{ mclass_wa }}'); this.textContent='Скопировано ✓'">💬 Скопировать WhatsApp-ссылку</button>
   </div>
-  <details>
-    <summary>Скопировать готовые ссылки</summary>
-    <code>{{ mclass_tg }}</code>
-    <button class="btn btn-primary copy-btn" onclick="navigator.clipboard.writeText('{{ mclass_tg }}'); this.textContent='Скопировано ✓'">Скопировать Telegram</button>
-    <code>{{ mclass_wa }}</code>
-    <button class="btn btn-primary copy-btn" onclick="navigator.clipboard.writeText('{{ mclass_wa }}'); this.textContent='Скопировано ✓'">Скопировать WhatsApp</button>
-  </details>
 </div>
 
 <div class="link-card">
