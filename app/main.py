@@ -3,6 +3,7 @@ import logging
 import secrets
 from datetime import datetime, timedelta
 from pathlib import Path
+from urllib.parse import quote
 
 from fastapi import Depends, FastAPI, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -206,15 +207,38 @@ def links(request: Request, session: Session = Depends(get_session)) -> HTMLResp
     partner = current_partner(request, session)
     if not partner:
         return RedirectResponse("/login", status_code=302)
-    bot_deep_link = f"https://t.me/{settings.BOT_USERNAME}?start=ref_{partner.ref_slug}"
-    site_link = f"https://oncount.com/?ref={partner.ref_slug}"
+
+    ref = partner.ref_slug
+    bot_deep_link = f"https://t.me/{settings.BOT_USERNAME}?start=ref_{ref}"
+
+    consult_text = (
+        f"Здравствуйте! Хочу записаться на бесплатную консультацию "
+        f"с бухгалтером OnCount. Код партнёра: {ref}"
+    )
+    mclass_text = (
+        f"Здравствуйте! Хочу попасть на мастер-класс с бухгалтером OnCount. "
+        f"Код партнёра: {ref}"
+    )
+
+    tg_user = settings.CONTACT_TG_USERNAME
+    wa_num = settings.CONTACT_WA_NUMBER
+
+    consult_tg = f"https://t.me/{tg_user}?text={quote(consult_text)}"
+    consult_wa = f"https://wa.me/{wa_num}?text={quote(consult_text)}"
+    mclass_tg = f"https://t.me/{tg_user}?text={quote(mclass_text)}"
+    mclass_wa = f"https://wa.me/{wa_num}?text={quote(mclass_text)}"
+
     return templates.TemplateResponse(
         "links.html",
         _ctx(
             request,
             partner,
             bot_deep_link=bot_deep_link,
-            site_link=site_link,
+            consult_tg=consult_tg,
+            consult_wa=consult_wa,
+            mclass_tg=mclass_tg,
+            mclass_wa=mclass_wa,
+            ref_slug=ref,
         ),
     )
 

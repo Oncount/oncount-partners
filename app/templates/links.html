@@ -4,20 +4,46 @@
 
 {% block content %}
 <div class="card">
-  <p>Привлекайте клиентов и партнёров через персональную ссылку. Все, кто перейдёт по ней, закрепятся за вами, и при первой сделке вы получите вознаграждение.</p>
+  <p>Привлекайте клиентов и партнёров через персональную ссылку. Все, кто перейдёт по ней, закрепятся за вами, и при первой оплате вы получите вознаграждение.</p>
+  <p>Ваш код партнёра: <code>{{ ref_slug }}</code></p>
 </div>
 
 <div class="link-card">
-  <h3>🤖 Для приглашения в наш Telegram-бот</h3>
-  <p>Партнёры и клиенты переходят в бот, видят свою привязку к вам, проходят онбординг.</p>
-  <code id="bot-link">{{ bot_deep_link }}</code>
+  <h3>💼 Бесплатная консультация с бухгалтером</h3>
+  <p>Клиент пишет Николь Хилтон и называет ваш код партнёра <code>{{ ref_slug }}</code> — лид автоматически закрепится за вами.</p>
+  <div class="link-actions">
+    <a class="btn btn-primary" href="{{ consult_tg }}" target="_blank" rel="noopener">📨 Telegram</a>
+    <a class="btn btn-primary" href="{{ consult_wa }}" target="_blank" rel="noopener">💬 WhatsApp</a>
+  </div>
+  <details>
+    <summary>Скопировать готовые ссылки</summary>
+    <code>{{ consult_tg }}</code>
+    <button class="btn btn-primary copy-btn" onclick="navigator.clipboard.writeText('{{ consult_tg }}'); this.textContent='Скопировано ✓'">Скопировать Telegram</button>
+    <code>{{ consult_wa }}</code>
+    <button class="btn btn-primary copy-btn" onclick="navigator.clipboard.writeText('{{ consult_wa }}'); this.textContent='Скопировано ✓'">Скопировать WhatsApp</button>
+  </details>
+</div>
+
+<div class="link-card">
+  <h3>🎓 Мастер-класс с бухгалтером</h3>
+  <p>Бесплатный мастер-класс по бухучёту и налогам в ОАЭ от команды OnCount. Клиент пишет Николь Хилтон с кодом партнёра <code>{{ ref_slug }}</code> — мы свяжемся и пришлём детали.</p>
+  <div class="link-actions">
+    <a class="btn btn-primary" href="{{ mclass_tg }}" target="_blank" rel="noopener">📨 Telegram</a>
+    <a class="btn btn-primary" href="{{ mclass_wa }}" target="_blank" rel="noopener">💬 WhatsApp</a>
+  </div>
+  <details>
+    <summary>Скопировать готовые ссылки</summary>
+    <code>{{ mclass_tg }}</code>
+    <button class="btn btn-primary copy-btn" onclick="navigator.clipboard.writeText('{{ mclass_tg }}'); this.textContent='Скопировано ✓'">Скопировать Telegram</button>
+    <code>{{ mclass_wa }}</code>
+    <button class="btn btn-primary copy-btn" onclick="navigator.clipboard.writeText('{{ mclass_wa }}'); this.textContent='Скопировано ✓'">Скопировать WhatsApp</button>
+  </details>
+</div>
+
+<div class="link-card">
+  <h3>🤝 Партнёрская ссылка в бот OnCount Community</h3>
+  <p>Приглашайте новых партнёров в наше сообщество. С каждой сделки приведённого партнёра вы получите <strong>10% от его агентского вознаграждения</strong>.</p>
+  <code>{{ bot_deep_link }}</code>
   <button class="btn btn-primary copy-btn" onclick="navigator.clipboard.writeText('{{ bot_deep_link }}'); this.textContent='Скопировано ✓'">Скопировать ссылку</button>
-</div>
-
-<div class="link-card">
-  <h3>🌐 Для размещения на вашем сайте / соцсетях</h3>
-  <p>Клиент попадает на сайт OnCount с вашим реф-кодом.</p>
-  <code id="site-link">{{ site_link }}</code>
-  <button class="btn btn-primary copy-btn" onclick="navigator.clipboard.writeText('{{ site_link }}'); this.textContent='Скопировано ✓'">Скопировать ссылку</button>
 </div>
 {% endblock %}

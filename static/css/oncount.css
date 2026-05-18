@@ -292,6 +292,9 @@ details.faq-item[open] summary { margin-bottom: 12px; }
   margin-bottom: 12px;
 }
 .copy-btn { font-size: 13px; padding: 6px 14px; }
+.link-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+.link-card details { margin-top: 8px; font-size: 14px; }
+.link-card details summary { cursor: pointer; color: var(--sage); font-weight: 600; margin-bottom: 8px; }
 
 /* Messages list */
 .msg-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }

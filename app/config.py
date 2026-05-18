@@ -19,6 +19,8 @@ class Settings:
     KOMMO_TOKEN: str = os.getenv("KOMMO_TOKEN", "")
     KOMMO_PIPELINE_ID: str = os.getenv("KOMMO_PIPELINE_ID", "")
     ADMIN_TG_ID: int = int(os.getenv("ADMIN_TG_ID", "6634813047"))
+    CONTACT_TG_USERNAME: str = os.getenv("CONTACT_TG_USERNAME", "nikol_hillton")
+    CONTACT_WA_NUMBER: str = os.getenv("CONTACT_WA_NUMBER", "971589217784")
 
 
 settings = Settings()
