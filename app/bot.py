@@ -20,6 +20,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import (
+    BotCommand,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     Message,
@@ -94,19 +95,15 @@ def main_menu_new() -> InlineKeyboardMarkup:
 
 
 def menu_partner(registered_for_event: bool = False) -> InlineKeyboardMarkup:
+    """3-кнопочное меню партнёра. Остальные функции — через команды и через ЛК."""
     kb = []
     if registered_for_event:
         kb.append([InlineKeyboardButton(text="✅ Ты на мастер-классе 21.05", callback_data="event:show")])
     else:
         kb.append([InlineKeyboardButton(text="📅 Регистрация на мастер-класс 21.05", callback_data="event:register")])
     kb.extend([
-        [InlineKeyboardButton(text="🔗 Мои ссылки", callback_data="partner:links")],
-        [InlineKeyboardButton(text="📨 Тексты рассылок", callback_data="partner:messages")],
-        [InlineKeyboardButton(text="📊 Моя статистика", callback_data="partner:stats")],
-        [InlineKeyboardButton(text="📦 Тарифы и сервисы", callback_data="partner:products")],
         [InlineKeyboardButton(text="📍 Передать клиента", callback_data="partner:transfer")],
-        [InlineKeyboardButton(text="❓ FAQ", callback_data="partner:faq")],
-        [InlineKeyboardButton(text="🌐 Открыть кабинет в браузере", callback_data="partner:open-lk")],
+        [InlineKeyboardButton(text="🌐 Открыть кабинет", callback_data="partner:open-lk")],
     ])
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
@@ -269,6 +266,16 @@ async def cb_partner_intro(call) -> None:
     await call.answer()
 
 
+@dp.message(Command("lk"))
+async def cmd_open_lk(msg: Message) -> None:
+    with SessionLocal() as session:
+        login_url = issue_login_url(session, msg.from_user.id)
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🌐 Войти в кабинет", url=login_url)],
+    ])
+    await msg.answer("Жми кнопку — откроется твой кабинет:", reply_markup=kb)
+
+
 @dp.callback_query(F.data == "partner:open-lk")
 async def cb_partner_open_lk(call) -> None:
     with SessionLocal() as session:
@@ -373,13 +380,16 @@ async def cmd_faq(event) -> None:
         await event.answer()
 
 
+@dp.message(Command("messages"))
 @dp.callback_query(F.data == "partner:messages")
-async def cb_messages(call) -> None:
-    await call.message.answer(
+async def cmd_messages(event) -> None:
+    msg = event if isinstance(event, Message) else event.message
+    await msg.answer(
         "📨 <b>Тексты рассылок</b> — 5 готовых шаблонов под разные сегменты.\n\n"
         f"Полный список с кнопкой «Скопировать» — в ЛК:\n{settings.WEBAPP_URL}/messages"
     )
-    await call.answer()
+    if not isinstance(event, Message):
+        await event.answer()
 
 
 # ─────────────── partner: transfer (FSM) ────────────────────────────────────
@@ -507,9 +517,22 @@ def start_scheduler() -> AsyncIOScheduler:
 # ─────────────── entry point ────────────────────────────────────────────────
 
 
+PARTNER_COMMANDS = [
+    BotCommand(command="menu", description="🏠 Главное меню"),
+    BotCommand(command="links", description="🔗 Мои реф-ссылки"),
+    BotCommand(command="stats", description="📊 Моя статистика"),
+    BotCommand(command="transfer", description="📍 Передать клиента"),
+    BotCommand(command="products", description="📦 Тарифы и сервисы"),
+    BotCommand(command="messages", description="📨 Тексты рассылок"),
+    BotCommand(command="faq", description="❓ Частые вопросы"),
+    BotCommand(command="lk", description="🌐 Открыть кабинет в браузере"),
+]
+
+
 async def main() -> None:
     Base.metadata.create_all(engine)
     scheduler = start_scheduler()
+    await bot.set_my_commands(PARTNER_COMMANDS)
     log.info("Bot polling start, bot=@%s, time=%s", settings.BOT_USERNAME, datetime.utcnow())
     try:
         await dp.start_polling(bot)
