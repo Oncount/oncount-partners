@@ -20,6 +20,7 @@ from app.config import settings
 from app.db import SessionLocal, engine, get_session
 from app.models import (
     Base,
+    EventRegistration,
     FaqItem,
     Lead,
     LoginSession,
@@ -75,6 +76,24 @@ async def on_startup() -> None:
 @app.get("/healthz")
 def healthz() -> dict:
     return {"ok": True, "ts": datetime.utcnow().isoformat()}
+
+
+@app.get("/debug/event-stats")
+def debug_event_stats(session: Session = Depends(get_session)) -> dict:
+    from sqlalchemy import func
+    rows = (
+        session.query(EventRegistration.event_slug, func.count(EventRegistration.id))
+        .group_by(EventRegistration.event_slug)
+        .all()
+    )
+    by_event = {slug: count for slug, count in rows}
+    total = sum(by_event.values())
+    from_lending = (
+        session.query(func.count(EventRegistration.id))
+        .filter(EventRegistration.meta["source"].as_string() == "lending")
+        .scalar()
+    )
+    return {"total": total, "by_event": by_event, "from_lending": from_lending}
 
 
 def _ctx(request: Request, partner: Partner | None, **extra) -> dict:
