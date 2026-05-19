@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#10463E"/>
+  <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle"
+        font-family="'Outfit', 'Arial Black', sans-serif" font-weight="800"
+        font-size="26" fill="#EC6442" letter-spacing="-1">ON</text>
+</svg>
