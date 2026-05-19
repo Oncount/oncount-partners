@@ -4,11 +4,19 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+_JWT_SECRET = os.getenv("JWT_SECRET", "")
+if not _JWT_SECRET or _JWT_SECRET == "dev-secret-change-me":
+    raise RuntimeError(
+        "JWT_SECRET env var must be set to a non-default value. "
+        "Set it in Railway → Variables before deploying."
+    )
+
+
 class Settings:
     BOT_TOKEN: str = os.getenv("BOT_TOKEN", "")
     BOT_USERNAME: str = os.getenv("BOT_USERNAME", "community_oncount_bot")
     WEBAPP_URL: str = os.getenv("WEBAPP_URL", "http://localhost:8000")
-    JWT_SECRET: str = os.getenv("JWT_SECRET", "dev-secret-change-me")
+    JWT_SECRET: str = _JWT_SECRET
     JWT_ALGO: str = "HS256"
     JWT_TTL_DAYS: int = 30
     DATABASE_URL: str = os.getenv(

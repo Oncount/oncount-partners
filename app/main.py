@@ -77,30 +77,6 @@ def healthz() -> dict:
     return {"ok": True, "ts": datetime.utcnow().isoformat()}
 
 
-@app.get("/debug/products")
-def debug_products(session: Session = Depends(get_session)) -> dict:
-    """TEMP: проверка что нового сидинга. Удалить после отладки."""
-    rows = (
-        session.query(ProductBlock)
-        .order_by(ProductBlock.order_index)
-        .all()
-    )
-    return {
-        "count": len(rows),
-        "items": [
-            {
-                "order": r.order_index,
-                "slug": r.slug,
-                "title": r.title,
-                "price": r.price_aed,
-                "active": r.is_active,
-                "summary_head": (r.summary_md or "")[:80],
-            }
-            for r in rows
-        ],
-    }
-
-
 def _ctx(request: Request, partner: Partner | None, **extra) -> dict:
     return {
         "request": request,
@@ -179,6 +155,7 @@ def auth_bot_callback(state: str, session: Session = Depends(get_session)):
         COOKIE_NAME,
         token,
         httponly=True,
+        secure=True,
         samesite="lax",
         max_age=settings.JWT_TTL_DAYS * 86400,
     )
