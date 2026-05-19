@@ -145,6 +145,33 @@ async def cmd_start_with_payload(msg: Message, command: CommandObject) -> None:
             )
             return
 
+        if payload == "lending":
+            # пришёл с лендинга мастер-класса — мгновенная регистрация на ивент
+            existing = (
+                session.query(EventRegistration)
+                .filter_by(telegram_id=msg.from_user.id, event_slug=EVENT_SLUG)
+                .first()
+            )
+            if existing is None:
+                session.add(EventRegistration(
+                    telegram_id=msg.from_user.id,
+                    event_slug=EVENT_SLUG,
+                    first_name=msg.from_user.first_name,
+                    username=msg.from_user.username,
+                    meta={
+                        "source": "lending",
+                        "reminder_24h_sent": False,
+                        "zoom_link_sent": False,
+                        "start_1h_sent": False,
+                    },
+                ))
+                session.commit()
+            await msg.answer(
+                EVENT_REGISTERED.format(first_name=msg.from_user.first_name or ""),
+                reply_markup=menu_event_registered(),
+            )
+            return
+
         if payload.startswith("login_"):
             state = payload[len("login_"):]
             login_session = session.get(LoginSession, state)
