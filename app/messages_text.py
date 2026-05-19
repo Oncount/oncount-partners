@@ -37,8 +37,8 @@ EVENT_REGISTERED = (
     "⚙️ Этап 4. Ставим Claude Code и настраиваем — ~15 мин\n"
     "🎤 Этап 5. Голосовой ввод + скриншоты — ~10 мин\n"
     "🤖 Этап 6. Запускаем агента — ~10–20 мин\n\n"
-    "📄 <b>Пошаговая инструкция:</b>\n"
-    "https://docs.google.com/document/d/18rpKrqfDK1dIBIz5Psf7W8aRF3aW2_vuW2KBG3FsTcs/edit?usp=sharing"
+    "📄 <a href=\"https://docs.google.com/document/d/18rpKrqfDK1dIBIz5Psf7W8aRF3aW2_vuW2KBG3FsTcs/edit?usp=sharing\">Пошаговая инструкция</a>\n\n"
+    "Если не настроишь, не страшно, сделаешь позже."
 )
 
 EVENT_REMINDER_24H = (
