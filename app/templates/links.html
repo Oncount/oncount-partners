@@ -1,23 +1,23 @@
 {% extends "base.html" %}
-{% block title %}Реферальные ссылки — ONCOUNT Partners{% endblock %}
-{% block heading %}Реферальные ссылки{% endblock %}
+{% block title %}{{ 'Referral links' if lang == 'en' else 'Реферальные ссылки' }} — ONCOUNT Partners{% endblock %}
+{% block heading %}{{ 'Referral links' if lang == 'en' else 'Реферальные ссылки' }}{% endblock %}
 
 {% block content %}
 <div class="card">
-  <p>Привлекайте клиентов и партнёров через персональную ссылку. Все, кто перейдёт по ней, закрепятся за вами, и при первой оплате вы получите вознаграждение.</p>
-  <p>Ваш код партнёра: <code>{{ ref_slug }}</code></p>
+  <p>{% if lang == 'en' %}Attract clients and partners through your personal link. Everyone who follows it is tied to you, and on their first payment you earn a reward.{% else %}Привлекайте клиентов и партнёров через персональную ссылку. Все, кто перейдёт по ней, закрепятся за вами, и при первой оплате вы получите вознаграждение.{% endif %}</p>
+  <p>{{ 'Your partner code:' if lang == 'en' else 'Ваш код партнёра:' }} <code>{{ ref_slug }}</code></p>
 </div>
 
 <div class="card">
-  <h3>💼 Бесплатная консультация с бухгалтером</h3>
-  <p class="ref-hint">Скопируйте ссылку и отправьте клиенту.</p>
+  <h3>💼 {{ 'Free consultation with an accountant' if lang == 'en' else 'Бесплатная консультация с бухгалтером' }}</h3>
+  <p class="ref-hint">{{ 'Copy the link and send it to your client.' if lang == 'en' else 'Скопируйте ссылку и отправьте клиенту.' }}</p>
 
   <div class="ref-row">
     <div class="ref-row-text">
       <div class="ref-row-title">Telegram</div>
       <a class="ref-row-url" href="{{ link_consult_tg }}" target="_blank" rel="noopener">{{ link_consult_tg }}</a>
     </div>
-    <button class="icon-btn" title="Скопировать" onclick="copyLink(this, '{{ link_consult_tg }}')">
+    <button class="icon-btn" title="{{ 'Copy' if lang == 'en' else 'Скопировать' }}" onclick="copyLink(this, '{{ link_consult_tg }}')">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
     </button>
   </div>
@@ -27,22 +27,22 @@
       <div class="ref-row-title">WhatsApp</div>
       <a class="ref-row-url" href="{{ link_consult_wa }}" target="_blank" rel="noopener">{{ link_consult_wa }}</a>
     </div>
-    <button class="icon-btn" title="Скопировать" onclick="copyLink(this, '{{ link_consult_wa }}')">
+    <button class="icon-btn" title="{{ 'Copy' if lang == 'en' else 'Скопировать' }}" onclick="copyLink(this, '{{ link_consult_wa }}')">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
     </button>
   </div>
 </div>
 
 <div class="card">
-  <h3>🎓 Мастер-класс с бухгалтером</h3>
-  <p class="ref-hint">Скопируйте ссылку и отправьте клиенту.</p>
+  <h3>🎓 {{ 'Masterclass with an accountant' if lang == 'en' else 'Мастер-класс с бухгалтером' }}</h3>
+  <p class="ref-hint">{{ 'Copy the link and send it to your client.' if lang == 'en' else 'Скопируйте ссылку и отправьте клиенту.' }}</p>
 
   <div class="ref-row">
     <div class="ref-row-text">
       <div class="ref-row-title">Telegram</div>
       <a class="ref-row-url" href="{{ link_mclass_tg }}" target="_blank" rel="noopener">{{ link_mclass_tg }}</a>
     </div>
-    <button class="icon-btn" title="Скопировать" onclick="copyLink(this, '{{ link_mclass_tg }}')">
+    <button class="icon-btn" title="{{ 'Copy' if lang == 'en' else 'Скопировать' }}" onclick="copyLink(this, '{{ link_mclass_tg }}')">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
     </button>
   </div>
@@ -52,22 +52,22 @@
       <div class="ref-row-title">WhatsApp</div>
       <a class="ref-row-url" href="{{ link_mclass_wa }}" target="_blank" rel="noopener">{{ link_mclass_wa }}</a>
     </div>
-    <button class="icon-btn" title="Скопировать" onclick="copyLink(this, '{{ link_mclass_wa }}')">
+    <button class="icon-btn" title="{{ 'Copy' if lang == 'en' else 'Скопировать' }}" onclick="copyLink(this, '{{ link_mclass_wa }}')">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
     </button>
   </div>
 </div>
 
 <div class="card">
-  <h3>🤝 Партнёрская ссылка в бот ONCOUNT Community</h3>
-  <p class="ref-hint">Приглашайте новых партнёров — получайте <strong>10% от их агентских вознаграждений</strong>.</p>
+  <h3>🤝 {{ 'Partner link to the ONCOUNT Community bot' if lang == 'en' else 'Партнёрская ссылка в бот ONCOUNT Community' }}</h3>
+  <p class="ref-hint">{% if lang == 'en' %}Invite new partners — earn <strong>10% of their agent rewards</strong>.{% else %}Приглашайте новых партнёров — получайте <strong>10% от их агентских вознаграждений</strong>.{% endif %}</p>
 
   <div class="ref-row">
     <div class="ref-row-text">
-      <div class="ref-row-title">Telegram-бот сообщества</div>
+      <div class="ref-row-title">{{ 'Community Telegram bot' if lang == 'en' else 'Telegram-бот сообщества' }}</div>
       <a class="ref-row-url" href="{{ link_partner_bot }}" target="_blank" rel="noopener">{{ link_partner_bot }}</a>
     </div>
-    <button class="icon-btn" title="Скопировать" onclick="copyLink(this, '{{ link_partner_bot }}')">
+    <button class="icon-btn" title="{{ 'Copy' if lang == 'en' else 'Скопировать' }}" onclick="copyLink(this, '{{ link_partner_bot }}')">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
     </button>
   </div>

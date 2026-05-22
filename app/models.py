@@ -85,6 +85,10 @@ class MessageTemplate(Base):
     body_md: Mapped[str] = mapped_column(Text)
     order_index: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # EN-версии (рендерятся при lang=en, fallback на русское поле). Пусто → русский.
+    segment_en: Mapped[str | None] = mapped_column(String(64))
+    title_en: Mapped[str | None] = mapped_column(String(255))
+    body_md_en: Mapped[str | None] = mapped_column(Text)
 
 
 class ProductBlock(Base):
@@ -98,6 +102,11 @@ class ProductBlock(Base):
     full_md: Mapped[str] = mapped_column(Text)
     order_index: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # EN-версии (рендерятся при lang=en, fallback на русское поле). Пусто → русский.
+    title_en: Mapped[str | None] = mapped_column(String(255))
+    price_aed_en: Mapped[str | None] = mapped_column(Text)
+    summary_md_en: Mapped[str | None] = mapped_column(Text)
+    full_md_en: Mapped[str | None] = mapped_column(Text)
 
 
 class FaqItem(Base):
@@ -109,6 +118,10 @@ class FaqItem(Base):
     answer_md: Mapped[str] = mapped_column(Text)
     order_index: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # EN-версии (рендерятся при lang=en, fallback на русское поле). Пусто → русский.
+    category_en: Mapped[str | None] = mapped_column(String(64))
+    question_en: Mapped[str | None] = mapped_column(String(500))
+    answer_md_en: Mapped[str | None] = mapped_column(Text)
 
 
 class Course(Base):

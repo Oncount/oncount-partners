@@ -1,31 +1,31 @@
 {% extends "base.html" %}
-{% block title %}Все заявки — ONCOUNT Partners{% endblock %}
-{% block heading %}Все заявки{% endblock %}
+{% block title %}{{ 'All requests' if lang == 'en' else 'Все заявки' }} — ONCOUNT Partners{% endblock %}
+{% block heading %}{{ 'All requests' if lang == 'en' else 'Все заявки' }}{% endblock %}
 
 {% block content %}
 {% if not rows %}
   <div class="card">
-    <p>Пока пусто. <a href="/transfer">Передай первого клиента</a>, и он появится в этой таблице.</p>
+    <p>{% if lang == 'en' %}Nothing here yet. <a href="/transfer">Refer your first client</a> and they'll show up in this table.{% else %}Пока пусто. <a href="/transfer">Передай первого клиента</a>, и он появится в этой таблице.{% endif %}</p>
   </div>
 {% else %}
 <table class="list">
   <thead>
     <tr>
-      <th>Клиент</th>
-      <th>Контакт</th>
-      <th>Компания</th>
-      <th>Создано</th>
-      <th>Статус</th>
+      <th>{{ 'Client' if lang == 'en' else 'Клиент' }}</th>
+      <th>{{ 'Contact' if lang == 'en' else 'Контакт' }}</th>
+      <th>{{ 'Company' if lang == 'en' else 'Компания' }}</th>
+      <th>{{ 'Created' if lang == 'en' else 'Создано' }}</th>
+      <th>{{ 'Status' if lang == 'en' else 'Статус' }}</th>
     </tr>
   </thead>
   <tbody>
     {% for row in rows %}
     <tr>
-      <td data-label="Клиент"><strong>{{ row.client_name }}</strong></td>
-      <td data-label="Контакт">{{ row.client_phone or row.client_telegram or '—' }}</td>
-      <td data-label="Компания">{{ row.company_name or '—' }}</td>
-      <td data-label="Создано">{{ row.created_at.strftime('%d.%m.%Y') }}</td>
-      <td data-label="Статус"><span class="status-pill status-{{ row.status }}">{{ row.status }}</span></td>
+      <td data-label="{{ 'Client' if lang == 'en' else 'Клиент' }}"><strong>{{ row.client_name }}</strong></td>
+      <td data-label="{{ 'Contact' if lang == 'en' else 'Контакт' }}">{{ row.client_phone or row.client_telegram or '—' }}</td>
+      <td data-label="{{ 'Company' if lang == 'en' else 'Компания' }}">{{ row.company_name or '—' }}</td>
+      <td data-label="{{ 'Created' if lang == 'en' else 'Создано' }}">{{ row.created_at.strftime('%d.%m.%Y') }}</td>
+      <td data-label="{{ 'Status' if lang == 'en' else 'Статус' }}"><span class="status-pill status-{{ row.status }}">{{ row.status }}</span></td>
     </tr>
     {% endfor %}
   </tbody>

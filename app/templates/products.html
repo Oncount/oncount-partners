@@ -1,21 +1,22 @@
 {% extends "base.html" %}
-{% block title %}Тарифы и сервисы — ONCOUNT Partners{% endblock %}
-{% block heading %}Тарифы и сервисы{% endblock %}
+{% block title %}{{ 'Plans and services' if lang == 'en' else 'Тарифы и сервисы' }} — ONCOUNT Partners{% endblock %}
+{% block heading %}{{ 'Plans and services' if lang == 'en' else 'Тарифы и сервисы' }}{% endblock %}
 
 {% block content %}
 <div class="card">
-  <p>Все продукты ONCOUNT, которые Вы можете рекомендовать своим клиентам. Жмите «Подробнее» — там полное описание, которое можно скопировать в свою рассылку.</p>
+  <p>{% if lang == 'en' %}All ONCOUNT products you can recommend to your clients. Click “Details” for the full description, which you can copy into your own outreach.{% else %}Все продукты ONCOUNT, которые Вы можете рекомендовать своим клиентам. Жмите «Подробнее» — там полное описание, которое можно скопировать в свою рассылку.{% endif %}</p>
 </div>
 
 <div class="product-grid">
   {% for item in items %}
   <div class="product-card">
-    <h3>{{ item.title }}</h3>
-    {% if item.price_aed %}<div class="meta-block">{{ item.price_aed | safe }}</div>{% endif %}
-    <div class="summary">{{ item.summary_md }}</div>
+    <h3>{{ (item.title_en or item.title) if lang == 'en' else item.title }}</h3>
+    {% set price = (item.price_aed_en or item.price_aed) if lang == 'en' else item.price_aed %}
+    {% if price %}<div class="meta-block">{{ price | safe }}</div>{% endif %}
+    <div class="summary">{{ (item.summary_md_en or item.summary_md) if lang == 'en' else item.summary_md }}</div>
     <details>
-      <summary>Подробнее</summary>
-      <div class="product-details" style="margin-top: 12px;">{{ item.full_md | safe }}</div>
+      <summary>{{ 'Details' if lang == 'en' else 'Подробнее' }}</summary>
+      <div class="product-details" style="margin-top: 12px;">{{ ((item.full_md_en or item.full_md) if lang == 'en' else item.full_md) | safe }}</div>
     </details>
   </div>
   {% endfor %}

@@ -1,41 +1,41 @@
 {% extends "base.html" %}
-{% block title %}Дашборд — ONCOUNT Partners{% endblock %}
-{% block heading %}Дашборд{% endblock %}
+{% block title %}{{ 'Dashboard' if lang == 'en' else 'Дашборд' }} — ONCOUNT Partners{% endblock %}
+{% block heading %}{{ 'Dashboard' if lang == 'en' else 'Дашборд' }}{% endblock %}
 
 {% block content %}
 <div class="balance">
   <div class="balance-item">
-    <span class="balance-item-label">Заработано:</span>
+    <span class="balance-item-label">{{ 'Earned:' if lang == 'en' else 'Заработано:' }}</span>
     <span class="balance-item-value">{{ '%.0f'|format(kpi.earned_aed) }} AED</span>
   </div>
   <div class="balance-item">
-    <span class="balance-item-label">Ваш реф-код:</span>
+    <span class="balance-item-label">{{ 'Your ref code:' if lang == 'en' else 'Ваш реф-код:' }}</span>
     <span class="balance-item-value">{{ partner.ref_slug }}</span>
   </div>
   <div style="margin-left: auto;">
-    <a class="btn btn-primary" href="/transfer">+ Передать клиента</a>
+    <a class="btn btn-primary" href="/transfer">+ {{ 'Refer a client' if lang == 'en' else 'Передать клиента' }}</a>
   </div>
 </div>
 
 <div class="kpi-grid">
   <div class="kpi">
-    <div class="kpi-label">Конверсия</div>
+    <div class="kpi-label">{{ 'Conversion' if lang == 'en' else 'Конверсия' }}</div>
     <div class="kpi-value accent">{{ kpi.conversion }}%</div>
   </div>
   <div class="kpi">
-    <div class="kpi-label">Заявки</div>
+    <div class="kpi-label">{{ 'Requests' if lang == 'en' else 'Заявки' }}</div>
     <div class="kpi-value">{{ kpi.leads }}</div>
   </div>
   <div class="kpi">
-    <div class="kpi-label">Успешные</div>
+    <div class="kpi-label">{{ 'Won' if lang == 'en' else 'Успешные' }}</div>
     <div class="kpi-value">{{ kpi.successful }}</div>
   </div>
   <div class="kpi">
-    <div class="kpi-label">Отказы</div>
+    <div class="kpi-label">{{ 'Rejected' if lang == 'en' else 'Отказы' }}</div>
     <div class="kpi-value">{{ kpi.rejected }}</div>
   </div>
   <div class="kpi">
-    <div class="kpi-label">В работе</div>
+    <div class="kpi-label">{{ 'In progress' if lang == 'en' else 'В работе' }}</div>
     <div class="kpi-value">{{ kpi.in_progress }}</div>
   </div>
 </div>
@@ -43,9 +43,9 @@
 {% if show_checklist %}
 <div class="card" id="checklist">
   <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
-    <h3 style="margin: 0;">🚀 Сделай эти 3 шага, чтобы заработать первую комиссию</h3>
+    <h3 style="margin: 0;">🚀 {{ 'Take these 3 steps to earn your first commission' if lang == 'en' else 'Сделай эти 3 шага, чтобы заработать первую комиссию' }}</h3>
     <form method="POST" action="/checklist/dismiss" style="margin: 0;">
-      <button type="submit" class="btn btn-ghost" style="padding: 4px 12px; font-size: 12px;" title="Скрыть чек-лист">✕</button>
+      <button type="submit" class="btn btn-ghost" style="padding: 4px 12px; font-size: 12px;" title="{{ 'Hide checklist' if lang == 'en' else 'Скрыть чек-лист' }}">✕</button>
     </form>
   </div>
   <div style="margin-top: 16px;">
@@ -54,7 +54,7 @@
       <span style="font-size: 22px; line-height: 1; min-width: 28px;">
         {% if step.done %}✅{% else %}⚪{% endif %}
       </span>
-      <span style="flex: 1; {% if step.done %}text-decoration: line-through; color: var(--sage);{% endif %}">{{ step.label }}</span>
+      <span style="flex: 1; {% if step.done %}text-decoration: line-through; color: var(--sage);{% endif %}">{{ step.label_en if lang == 'en' else step.label }}</span>
       <span style="color: var(--sage); font-size: 18px;">›</span>
     </a>
     {% endfor %}
@@ -64,11 +64,19 @@
 
 {% if partner.onboarded_at %}
 <div class="card">
+  {% if lang == 'en' %}
+  <h3>What to do next</h3>
+  <p>1. Open <a href="/links">“Referral links”</a> — copy your personal link.</p>
+  <p>2. Grab a ready-made <a href="/messages">message template</a> matching your client's need.</p>
+  <p>3. Send the text and your link to the client, or refer them via the <a href="/transfer">“Refer a client”</a> section in your dashboard or straight from the Telegram bot.</p>
+  <p>4. Every month, get a report with statuses (went quiet, preparing a quote, thinking it over) or a commission payout to your details.</p>
+  {% else %}
   <h3>Что делать дальше</h3>
   <p>1. Открой <a href="/links">«Реферальные ссылки»</a> — скопируй личную ссылку.</p>
   <p>2. Возьми готовый <a href="/messages">текст рассылки</a> под запрос твоего клиента.</p>
   <p>3. Отправь текст и свою ссылку клиенту или передавай через раздел <a href="/transfer">«Передать клиента»</a> в личном кабинете или прямо из Telegram-бота.</p>
   <p>4. Получай каждый месяц отчёт со статусами (пропал, делаем КП, думает) или перевод комиссий по реквизитам.</p>
+  {% endif %}
 </div>
 {% endif %}
 {% endblock %}

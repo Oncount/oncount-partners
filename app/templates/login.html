@@ -1,23 +1,28 @@
 {% extends "base.html" %}
-{% block title %}Вход — ONCOUNT Partners{% endblock %}
+{% block title %}{{ 'Sign in' if lang == 'en' else 'Вход' }} — ONCOUNT Partners{% endblock %}
 
 {% block anonymous %}
 <div class="login-page">
   <div class="login-card">
     <img class="login-logo" src="/static/img/logo.png" alt="ONCOUNT">
-    <h1>Кабинет партнёра</h1>
-    <p>Войди через Telegram — без паролей и регистраций.</p>
+    <h1>{{ 'Partner dashboard' if lang == 'en' else 'Кабинет партнёра' }}</h1>
+    <p>{{ 'Sign in with Telegram — no passwords, no sign-ups.' if lang == 'en' else 'Войди через Telegram — без паролей и регистраций.' }}</p>
 
     <p style="margin: 28px 0 16px;">
       <a class="btn btn-primary" style="padding: 14px 28px; font-size: 16px;"
          href="https://t.me/{{ bot_username }}?start=login_{{ state }}">
-        💬 Войти через Telegram-бота
+        💬 {{ 'Sign in via the Telegram bot' if lang == 'en' else 'Войти через Telegram-бота' }}
       </a>
     </p>
 
     <p class="login-hint">
+      {% if lang == 'en' %}
+      After you click, the <b>@{{ bot_username }}</b> bot opens. A “Log in to dashboard”
+      button will appear there — tap it and you'll come back here already signed in.
+      {% else %}
       После нажатия откроется бот <b>@{{ bot_username }}</b>. В нём появится кнопка
       «Войти в кабинет» — нажми её, и ты вернёшься сюда уже авторизованным.
+      {% endif %}
     </p>
   </div>
 </div>

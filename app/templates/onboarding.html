@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Добро пожаловать — ONCOUNT Partners{% endblock %}
-{% block heading %}Добро пожаловать в ONCOUNT{% endblock %}
+{% block title %}{{ 'Welcome' if lang == 'en' else 'Добро пожаловать' }} — ONCOUNT Partners{% endblock %}
+{% block heading %}{{ 'Welcome to ONCOUNT' if lang == 'en' else 'Добро пожаловать в ONCOUNT' }}{% endblock %}
 
 {% block content %}
 <div class="card">
-  <p style="font-size: 16px;">Привет, {{ partner.first_name or 'партнёр' }}! Нужно 30 секунд, чтобы настроить твой кабинет — расскажи кратко о себе:</p>
+  <p style="font-size: 16px;">{% if lang == 'en' %}Hi, {{ partner.first_name or 'partner' }}! It takes 30 seconds to set up your dashboard — tell us a bit about yourself:{% else %}Привет, {{ partner.first_name or 'партнёр' }}! Нужно 30 секунд, чтобы настроить твой кабинет — расскажи кратко о себе:{% endif %}</p>
 </div>
 
 {% if message %}
@@ -15,30 +15,39 @@
 
 <div class="card">
   <form class="form" method="POST" action="/onboarding">
-    <label>Кто ты по основной деятельности? *</label>
+    <label>{{ 'What do you mainly do?' if lang == 'en' else 'Кто ты по основной деятельности?' }} *</label>
     <select name="segment" required>
-      <option value="">— выбери —</option>
-      {% for slug, label in segments %}
-        <option value="{{ slug }}">{{ label }}</option>
+      <option value="">{{ '— choose —' if lang == 'en' else '— выбери —' }}</option>
+      {% for slug, label_ru, label_en in segments %}
+        <option value="{{ slug }}">{{ label_en if lang == 'en' else label_ru }}</option>
       {% endfor %}
     </select>
 
-    <label>Телефон или WhatsApp *</label>
+    <label>{{ 'Phone or WhatsApp' if lang == 'en' else 'Телефон или WhatsApp' }} *</label>
     <input type="text" name="phone" required placeholder="+971 58 ...">
 
-    <label>Email для актов и выплат *</label>
+    <label>{{ 'Email for invoices and payouts' if lang == 'en' else 'Email для актов и выплат' }} *</label>
     <input type="email" name="email" required placeholder="you@example.com">
 
-    <button type="submit" class="btn btn-primary" style="margin-top: 8px;">Готово — открыть кабинет</button>
+    <button type="submit" class="btn btn-primary" style="margin-top: 8px;">{{ 'Done — open my dashboard' if lang == 'en' else 'Готово — открыть кабинет' }}</button>
   </form>
 </div>
 
 <div class="card">
+  {% if lang == 'en' %}
+  <h3 style="margin-bottom: 8px;">Why we ask for this</h3>
+  <ul style="margin: 0; padding-left: 18px; color: var(--charcoal);">
+    <li><b>Segment</b> — we send message templates tailored to your audience.</li>
+    <li><b>Phone / WhatsApp</b> — an ONCOUNT manager will reach you about new leads.</li>
+    <li><b>Email</b> — that's where the service agreement, invoices and commission payout confirmations go.</li>
+  </ul>
+  {% else %}
   <h3 style="margin-bottom: 8px;">Зачем эти данные</h3>
   <ul style="margin: 0; padding-left: 18px; color: var(--charcoal);">
     <li><b>Сегмент</b> — присылаем шаблоны рассылок именно под твою аудиторию.</li>
     <li><b>Телефон / WhatsApp</b> — менеджер ONCOUNT свяжется с тобой по новым лидам.</li>
     <li><b>Email</b> — туда уйдут договор-оферта, акты и подтверждение комиссионных выплат.</li>
   </ul>
+  {% endif %}
 </div>
 {% endblock %}

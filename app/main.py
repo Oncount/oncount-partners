@@ -72,6 +72,16 @@ async def on_startup() -> None:
             "checklist_dismissed_at",
         ):
             conn.execute(text(f"ALTER TABLE partners ADD COLUMN IF NOT EXISTS {col} TIMESTAMP"))
+        # EN-колонки контент-таблиц (план 2026-05-22). create_all не делает ALTER,
+        # а таблицы уже существуют в проде — добавляем идемпотентно.
+        en_cols = {
+            "product_blocks": ("title_en", "price_aed_en", "summary_md_en", "full_md_en"),
+            "message_templates": ("segment_en", "title_en", "body_md_en"),
+            "faq_items": ("category_en", "question_en", "answer_md_en"),
+        }
+        for tbl, cols in en_cols.items():
+            for col in cols:
+                conn.execute(text(f"ALTER TABLE {tbl} ADD COLUMN IF NOT EXISTS {col} TEXT"))
     with SessionLocal() as session:
         seed_if_empty(session)
 
@@ -108,18 +118,21 @@ def debug_event_stats(session: Session = Depends(get_session)) -> dict:
     return {"total": total, "by_event": by_event, "from_lending": from_lending}
 
 
-def _ctx(request: Request, partner: Partner | None, **extra) -> dict:
-    # lang — выбор языка интерфейса: ?lang= имеет приоритет, иначе кука lang
+def _lang(request: Request) -> str:
+    # Выбор языка интерфейса: ?lang= имеет приоритет, иначе кука lang
     # (её ставит persist_lang_cookie), иначе русский по умолчанию.
     lang_raw = request.query_params.get("lang") or request.cookies.get("lang")
-    lang = "en" if lang_raw == "en" else "ru"
+    return "en" if lang_raw == "en" else "ru"
+
+
+def _ctx(request: Request, partner: Partner | None, **extra) -> dict:
     return {
         "request": request,
         "partner": partner,
         "bot_username": settings.BOT_USERNAME,
         "webapp_url": settings.WEBAPP_URL,
         "year": datetime.utcnow().year,
-        "lang": lang,
+        "lang": _lang(request),
         **extra,
     }
 
@@ -205,14 +218,15 @@ def logout() -> RedirectResponse:
     return response
 
 
+# (slug, RU-подпись, EN-подпись) — шаблон онбординга выбирает подпись по lang.
 SEGMENTS = [
-    ("lawyer", "Юрист / юр. фирма"),
-    ("freezone", "Free-zone agent"),
-    ("banker", "Банкир / RM"),
-    ("coworking", "Коворкинг / бизнес-сервис"),
-    ("accountant", "Бухгалтер-фрилансер"),
-    ("entrepreneur", "Предприниматель"),
-    ("other", "Другое"),
+    ("lawyer", "Юрист / юр. фирма", "Lawyer / law firm"),
+    ("freezone", "Free-zone agent", "Free-zone agent"),
+    ("banker", "Банкир / RM", "Banker / RM"),
+    ("coworking", "Коворкинг / бизнес-сервис", "Coworking / business services"),
+    ("accountant", "Бухгалтер-фрилансер", "Freelance accountant"),
+    ("entrepreneur", "Предприниматель", "Entrepreneur"),
+    ("other", "Другое", "Other"),
 ]
 
 
@@ -244,23 +258,27 @@ def onboarding_submit(
     segment = (segment or "").strip().lower()
     phone = (phone or "").strip()
     email = (email or "").strip().lower()
+    en = _lang(request) == "en"
 
     if segment not in {s[0] for s in SEGMENTS}:
+        msg = "Choose a segment from the list." if en else "Выбери сегмент из списка."
         return templates.TemplateResponse(
             "onboarding.html",
-            _ctx(request, partner, segments=SEGMENTS, message="Выбери сегмент из списка."),
+            _ctx(request, partner, segments=SEGMENTS, message=msg),
             status_code=400,
         )
     if not phone or len(phone) < 5:
+        msg = "Enter your phone or WhatsApp." if en else "Укажи телефон или WhatsApp."
         return templates.TemplateResponse(
             "onboarding.html",
-            _ctx(request, partner, segments=SEGMENTS, message="Укажи телефон или WhatsApp."),
+            _ctx(request, partner, segments=SEGMENTS, message=msg),
             status_code=400,
         )
     if "@" not in email or "." not in email:
+        msg = "The email is invalid." if en else "Email указан некорректно."
         return templates.TemplateResponse(
             "onboarding.html",
-            _ctx(request, partner, segments=SEGMENTS, message="Email указан некорректно."),
+            _ctx(request, partner, segments=SEGMENTS, message=msg),
             status_code=400,
         )
 
@@ -302,16 +320,19 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
     checklist_steps = [
         {
             "label": "Скопируй свою реф-ссылку",
+            "label_en": "Copy your referral link",
             "done": partner.links_viewed_at is not None,
             "href": "/links",
         },
         {
             "label": "Передай первого клиента",
+            "label_en": "Refer your first client",
             "done": leads_count > 0,
             "href": "/transfer",
         },
         {
             "label": "Изучи тарифы и комиссии",
+            "label_en": "Explore plans and commissions",
             "done": partner.products_viewed_at is not None,
             "href": "/products",
         },
@@ -486,9 +507,14 @@ def transfer_post(
     session.add(lead)
     session.commit()
 
+    msg = (
+        "Client referred. A manager will be in touch within 24 hours."
+        if _lang(request) == "en"
+        else "Клиент передан. Менеджер свяжется в течение 24 часов."
+    )
     return templates.TemplateResponse(
         "transfer.html",
-        _ctx(request, partner, message="Клиент передан. Менеджер свяжется в течение 24 часов."),
+        _ctx(request, partner, message=msg),
     )
 
 
