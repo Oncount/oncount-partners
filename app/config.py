@@ -49,6 +49,24 @@ class Settings:
         "MASTERMIND_FOOTER",
         "Старт 26 мая. Осталось 3 места из 10.",
     )
+    # Английские версии баннера — выбираются в шаблоне при lang == 'en' (как title_en у курсов).
+    # Без них EN-витрина показывала русский текст баннера.
+    MASTERMIND_TITLE_EN: str = os.getenv(
+        "MASTERMIND_TITLE_EN",
+        "Mastermind enrollment open — June",
+    )
+    MASTERMIND_DETAILS_EN: str = os.getenv(
+        "MASTERMIND_DETAILS_EN",
+        "Competitor analysis; "
+        "Copy for broadcasts, posts and reels; "
+        "Broadcasts from CRM and Telegram bot; "
+        "TBA; "
+        "TBA",
+    )
+    MASTERMIND_FOOTER_EN: str = os.getenv(
+        "MASTERMIND_FOOTER_EN",
+        "Starts May 26. 3 of 10 seats left.",
+    )
 
 
 settings = Settings()

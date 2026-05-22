@@ -3,15 +3,18 @@
 {% block heading %}{{ 'Courses' if lang == 'en' else 'Курсы' }}{% endblock %}
 
 {% block content %}
-{% if mastermind_title %}
+{% set mm_title = mastermind_title_en if lang == 'en' else mastermind_title %}
+{% set mm_details = mastermind_details_en if lang == 'en' else mastermind_details %}
+{% set mm_footer = mastermind_footer_en if lang == 'en' else mastermind_footer %}
+{% if mm_title %}
 <div class="course-banner">
   <div class="course-banner-body">
-    <div class="course-banner-title">{{ mastermind_title }}</div>
-    {% if mastermind_details %}
-    <div class="course-banner-text">{{ '5 AI employees' if lang == 'en' else '5 AI-сотрудников' }}: {{ mastermind_details | join(', ') }}</div>
+    <div class="course-banner-title">{{ mm_title }}</div>
+    {% if mm_details %}
+    <div class="course-banner-text">{{ '5 AI employees' if lang == 'en' else '5 AI-сотрудников' }}: {{ mm_details | join(', ') }}</div>
     {% endif %}
-    {% if mastermind_footer %}
-    <div class="course-banner-foot">{{ mastermind_footer }}</div>
+    {% if mm_footer %}
+    <div class="course-banner-foot">{{ mm_footer }}</div>
     {% endif %}
   </div>
   <a class="course-banner-arrow" href="{{ mastermind_url or '#' }}" title="{{ 'Learn more' if lang == 'en' else 'Подробнее' }}" aria-label="{{ 'Learn more about Mastermind' if lang == 'en' else 'Подробнее о Mastermind' }}">→</a>

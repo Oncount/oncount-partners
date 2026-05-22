@@ -557,6 +557,9 @@ def courses(request: Request, session: Session = Depends(get_session)) -> HTMLRe
     mastermind_details = [
         p.strip() for p in settings.MASTERMIND_DETAILS.split(";") if p.strip()
     ]
+    mastermind_details_en = [
+        p.strip() for p in settings.MASTERMIND_DETAILS_EN.split(";") if p.strip()
+    ]
     return templates.TemplateResponse(
         "courses.html",
         _ctx(
@@ -566,6 +569,9 @@ def courses(request: Request, session: Session = Depends(get_session)) -> HTMLRe
             mastermind_title=settings.MASTERMIND_TITLE,
             mastermind_details=mastermind_details,
             mastermind_footer=settings.MASTERMIND_FOOTER,
+            mastermind_title_en=settings.MASTERMIND_TITLE_EN,
+            mastermind_details_en=mastermind_details_en,
+            mastermind_footer_en=settings.MASTERMIND_FOOTER_EN,
             # Стрелка ведёт на будущую страницу программы Mastermind (пока заглушка).
             mastermind_url="#",
         ),

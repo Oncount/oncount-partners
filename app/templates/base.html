@@ -61,7 +61,7 @@
       <h1>{% block heading %}{% endblock %}</h1>
       <div class="header-right">
         <a class="lang-toggle" href="?lang={{ 'ru' if lang == 'en' else 'en' }}"
-           title="Сменить язык" aria-label="Сменить язык">{{ 'RU' if lang == 'en' else 'EN' }}</a>
+           title="Сменить язык" aria-label="Сменить язык">{{ 'EN' if lang == 'en' else 'RU' }}</a>
         <div class="user-pill user-pill-desktop">
           {% if partner.first_name %}{{ partner.first_name }}{% else %}@{{ partner.username or partner.telegram_id }}{% endif %}
         </div>
