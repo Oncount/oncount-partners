@@ -619,6 +619,14 @@
               <div class="cp-video-sub" data-i18n="video.sub">Нажмите, чтобы смотреть запись</div>
             </div>
           </div>
+          <!-- Кнопки под видео: оранжевая «Смотреть видео» + «Скачать презентацию» рядом -->
+          <div class="cp-deck-actions">
+            <button class="cp-deck-btn" type="button" onclick="cpPlay()" data-i18n="video.playBtn">▶ Смотреть видео</button>
+            <a class="cp-deck-dl" id="cp-deck-dl"
+               href="https://drive.google.com/uc?export=download&id=1UK7dThNwH-W8_ijojHc_bQW-rU3vCWB4"
+               data-href-en="https://drive.google.com/uc?export=download&id=1OguqdiD2G-cJ07xh3ksr0LmBGCj7oJTM"
+               target="_blank" rel="noopener" data-i18n="deck.dl">⬇ Скачать презентацию</a>
+          </div>
           <div class="cp-caption-row">
             <button class="cp-watched-btn" id="cp-watched-btn" type="button" onclick="cpWatched()" data-i18n="video.watched">Посмотрено</button>
           </div>
@@ -665,14 +673,7 @@
             </ul>
           </details>
 
-          <!-- ===== ПРЕЗЕНТАЦИЯ (PDF из Google Drive) ===== -->
-          <div class="cp-deck-actions">
-            <button class="cp-deck-btn" id="cp-deck-btn" type="button" onclick="cpDeck()" data-i18n="deck.btn">📊 Просмотреть презентацию</button>
-            <a class="cp-deck-dl" id="cp-deck-dl"
-               href="https://drive.google.com/uc?export=download&id=1UK7dThNwH-W8_ijojHc_bQW-rU3vCWB4"
-               data-href-en="https://drive.google.com/uc?export=download&id=1OguqdiD2G-cJ07xh3ksr0LmBGCj7oJTM"
-               target="_blank" rel="noopener" data-i18n="deck.dl">⬇ Скачать презентацию</a>
-          </div>
+          <!-- ===== ПРЕЗЕНТАЦИЯ: кнопки перенесены наверх под видео; встроенный просмотр отключён ===== -->
           <div class="cp-deck" id="cp-deck" hidden>
             <div class="cp-deck-frame">
               <iframe id="cp-deck-frame"
@@ -1369,6 +1370,7 @@ company → products → audience → goals → economics → marketing → asse
 
   "deck.btn": "📊 View the presentation",
   "deck.dl": "⬇ Download the presentation",
+  "video.playBtn": "▶ Watch video",
 
   "guide.h3": "📋 Guide for today",
   "goal.title": "🎯 What you should end up with",
