@@ -561,7 +561,7 @@
               <span class="cp-lesson-mark">●</span>
               <span class="cp-lesson-text" data-i18n="cur.day2.live">Эфир Дня 2</span>
             </a>
-            <a class="cp-lesson-link" href="/courses/ai-employees-setup/day/2">
+            <a class="cp-lesson-link" id="cp-nav-guide" href="/courses/ai-employees-setup/day/2">
               <span class="cp-lesson-mark">○</span>
               <span class="cp-lesson-text" data-i18n="cur.day2.guide">Инструкция Дня 2</span>
             </a>
@@ -1623,6 +1623,13 @@ company → products → audience → goals → economics → marketing → asse
     btn.classList.add('is-done');
     btn.textContent = T[LANG].doneBtn;
     btn.disabled = true;
+    // Отмечаем пункт «Инструкция Дня» в боковом меню галочкой — как cpWatched для эфира.
+    var nav = document.getElementById('cp-nav-guide');
+    if (nav) {
+      nav.classList.add('cp-lesson-done');
+      var m = nav.querySelector('.cp-lesson-mark');
+      if (m) m.textContent = '✓';
+    }
     cpRecalcProgress();
   }
 
