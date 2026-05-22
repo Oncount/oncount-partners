@@ -33,26 +33,26 @@
       <img src="/static/img/logo.png" alt="ONCOUNT">
     </div>
 
-    <div class="sidebar-section">Главное</div>
-    <a class="menu-item {% if request.url.path == '/dashboard' %}active{% endif %}" href="/dashboard">🏠 Дашборд</a>
-    <a class="menu-item {% if request.url.path == '/leads' %}active{% endif %}" href="/leads">📋 Все заявки</a>
+    <div class="sidebar-section">{{ 'Main' if lang == 'en' else 'Главное' }}</div>
+    <a class="menu-item {% if request.url.path == '/dashboard' %}active{% endif %}" href="/dashboard">🏠 {{ 'Dashboard' if lang == 'en' else 'Дашборд' }}</a>
+    <a class="menu-item {% if request.url.path == '/leads' %}active{% endif %}" href="/leads">📋 {{ 'All requests' if lang == 'en' else 'Все заявки' }}</a>
 
-    <div class="sidebar-section">Создать заявку</div>
-    <a class="menu-item {% if request.url.path == '/transfer' %}active{% endif %}" href="/transfer">➡️ Передать клиента</a>
+    <div class="sidebar-section">{{ 'Create a request' if lang == 'en' else 'Создать заявку' }}</div>
+    <a class="menu-item {% if request.url.path == '/transfer' %}active{% endif %}" href="/transfer">➡️ {{ 'Refer a client' if lang == 'en' else 'Передать клиента' }}</a>
 
-    <div class="sidebar-section">Инструменты</div>
-    <a class="menu-item {% if request.url.path == '/links' %}active{% endif %}" href="/links">🔗 Реферальные ссылки</a>
+    <div class="sidebar-section">{{ 'Tools' if lang == 'en' else 'Инструменты' }}</div>
+    <a class="menu-item {% if request.url.path == '/links' %}active{% endif %}" href="/links">🔗 {{ 'Referral links' if lang == 'en' else 'Реферальные ссылки' }}</a>
 
-    <div class="sidebar-section">База знаний</div>
-    <a class="menu-item {% if '/courses' in request.url.path %}active{% endif %}" href="/courses">🎓 Курсы</a>
-    <a class="menu-item {% if request.url.path == '/messages' %}active{% endif %}" href="/messages">📨 Тексты рассылок</a>
-    <a class="menu-item {% if '/products' in request.url.path %}active{% endif %}" href="/products">📦 Тарифы и сервисы</a>
+    <div class="sidebar-section">{{ 'Knowledge base' if lang == 'en' else 'База знаний' }}</div>
+    <a class="menu-item {% if '/courses' in request.url.path %}active{% endif %}" href="/courses">🎓 {{ 'Courses' if lang == 'en' else 'Курсы' }}</a>
+    <a class="menu-item {% if request.url.path == '/messages' %}active{% endif %}" href="/messages">📨 {{ 'Message templates' if lang == 'en' else 'Тексты рассылок' }}</a>
+    <a class="menu-item {% if '/products' in request.url.path %}active{% endif %}" href="/products">📦 {{ 'Plans and services' if lang == 'en' else 'Тарифы и сервисы' }}</a>
     <a class="menu-item {% if '/faq' in request.url.path %}active{% endif %}" href="/faq">❓ FAQ</a>
 
     <div class="spacer"></div>
     <div class="sidebar-bottom">
-      <a href="https://t.me/{{ bot_username }}" target="_blank">💬 ТГ</a>
-      <a href="/logout">↩️ Выход</a>
+      <a href="https://t.me/{{ bot_username }}" target="_blank">💬 {{ 'TG' if lang == 'en' else 'ТГ' }}</a>
+      <a href="/logout">↩️ {{ 'Log out' if lang == 'en' else 'Выход' }}</a>
     </div>
   </aside>
 
@@ -78,19 +78,19 @@
       </div>
 
       <div class="footer-col">
-        <div class="footer-title">Связаться</div>
+        <div class="footer-title">{{ 'Contact' if lang == 'en' else 'Связаться' }}</div>
         <a href="tel:+971589217784">📞 +971 58 921 77 84</a>
         <a href="https://wa.me/971589217784" target="_blank" rel="noopener">💬 WhatsApp +971 58 921 77 84</a>
         <a href="https://oncount.com" target="_blank" rel="noopener">🌐 oncount.com</a>
       </div>
 
       <div class="footer-col">
-        <div class="footer-title">Соцсети</div>
+        <div class="footer-title">{{ 'Social' if lang == 'en' else 'Соцсети' }}</div>
         <a href="https://www.linkedin.com/company/oncount" target="_blank" rel="noopener">in&nbsp;·&nbsp;LinkedIn OnCount</a>
       </div>
 
       <div class="footer-col footer-col-legal">
-        <div class="footer-title">Лицензия</div>
+        <div class="footer-title">{{ 'License' if lang == 'en' else 'Лицензия' }}</div>
         <p>Trade Licence №37408</p>
         <p>PADVICE ACCOUNTING AND MANAGEMENT — FZCO</p>
         <p>Office 30, 24th floor, The One Tower, Sheikh Zayed Rd, Dubai</p>

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Курсы — ONCOUNT Partners{% endblock %}
-{% block heading %}Курсы{% endblock %}
+{% block title %}{{ 'Courses' if lang == 'en' else 'Курсы' }} — ONCOUNT Partners{% endblock %}
+{% block heading %}{{ 'Courses' if lang == 'en' else 'Курсы' }}{% endblock %}
 
 {% block content %}
 {% if mastermind_title %}
@@ -8,13 +8,13 @@
   <div class="course-banner-body">
     <div class="course-banner-title">{{ mastermind_title }}</div>
     {% if mastermind_details %}
-    <div class="course-banner-text">5 AI-сотрудников: {{ mastermind_details | join(', ') }}</div>
+    <div class="course-banner-text">{{ '5 AI employees' if lang == 'en' else '5 AI-сотрудников' }}: {{ mastermind_details | join(', ') }}</div>
     {% endif %}
     {% if mastermind_footer %}
     <div class="course-banner-foot">{{ mastermind_footer }}</div>
     {% endif %}
   </div>
-  <a class="course-banner-arrow" href="{{ mastermind_url or '#' }}" title="Подробнее" aria-label="Подробнее о Mastermind">→</a>
+  <a class="course-banner-arrow" href="{{ mastermind_url or '#' }}" title="{{ 'Learn more' if lang == 'en' else 'Подробнее' }}" aria-label="{{ 'Learn more about Mastermind' if lang == 'en' else 'Подробнее о Mastermind' }}">→</a>
 </div>
 {% endif %}
 
@@ -24,28 +24,31 @@
 {% set pct = (steps / total * 100) | round | int if total else 0 %}
 {% set state = 'done' if total and steps >= total else ('progress' if steps > 0 else 'start') %}
 <div class="course-card course-{{ state }}">
-  <h3>{{ item.title }}</h3>
-  {% if item.subtitle %}<div class="course-meta">{{ item.subtitle }}</div>{% endif %}
-  {% if item.outcome %}<div class="course-outcome"><span>Итог:</span> {{ item.outcome }}</div>{% endif %}
+  <h3>{{ (item.title_en or item.title) if lang == 'en' else item.title }}</h3>
+  {% set subtitle = (item.subtitle_en or item.subtitle) if lang == 'en' else item.subtitle %}
+  {% if subtitle %}<div class="course-meta">{{ subtitle }}</div>{% endif %}
+  {% set outcome = (item.outcome_en or item.outcome) if lang == 'en' else item.outcome %}
+  {% if outcome %}<div class="course-outcome"><span>{{ 'Outcome:' if lang == 'en' else 'Итог:' }}</span> {{ outcome }}</div>{% endif %}
 
   <div class="course-bar" role="progressbar" aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100">
     <div class="course-bar-fill" style="width: {{ pct }}%"></div>
   </div>
   <div class="course-bar-meta">
-    {% if total %}{{ steps }} из {{ total }} шагов · {{ pct }}%{% else %}—{% endif %}
+    {% if total %}{% if lang == 'en' %}{{ steps }} of {{ total }} steps · {{ pct }}%{% else %}{{ steps }} из {{ total }} шагов · {{ pct }}%{% endif %}{% else %}—{% endif %}
   </div>
 
   <div class="course-cta">
     {% if state == 'start' %}
-    <a class="btn btn-primary" href="/courses/{{ item.slug }}">Начать</a>
+    <a class="btn btn-primary" href="/courses/{{ item.slug }}">{{ 'Start' if lang == 'en' else 'Начать' }}</a>
     {% elif state == 'progress' %}
-    <a class="btn btn-primary" href="/courses/{{ item.slug }}">Продолжить</a>
+    <a class="btn btn-primary" href="/courses/{{ item.slug }}">{{ 'Continue' if lang == 'en' else 'Продолжить' }}</a>
     {% else %}
-    <a class="btn btn-ghost" href="/courses/{{ item.slug }}">{{ item.done_label or 'Завершено' }}</a>
+    {% set done_label = (item.done_label_en or item.done_label) if lang == 'en' else item.done_label %}
+    <a class="btn btn-ghost" href="/courses/{{ item.slug }}">{{ done_label or ('Done' if lang == 'en' else 'Завершено') }}</a>
     {% endif %}
   </div>
 </div>
 {% else %}
-<div class="card"><p>Курсы скоро появятся.</p></div>
+<div class="card"><p>{{ 'Courses coming soon.' if lang == 'en' else 'Курсы скоро появятся.' }}</p></div>
 {% endfor %}
 {% endblock %}
