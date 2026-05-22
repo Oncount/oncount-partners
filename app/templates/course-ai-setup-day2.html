@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}День 2 — 2 АИ-сотрудника · Практикум «AI-сотрудники» — ONCOUNT{% endblock %}
-{% block heading %}Практикум «AI-сотрудники»{% endblock %}
+{% block heading %}{{ 'AI Employees Workshop' if lang == 'en' else 'Практикум «AI-сотрудники»' }}{% endblock %}
 {% block head %}{% raw %}
 <style>
     /* ===== Course player (cp-*) — ONCOUNT colors ===== */
@@ -1533,7 +1533,14 @@ company → products → audience → goals → economics → marketing → asse
   };
 
   // Текущий язык: ?lang=en → en, иначе ru (по умолчанию)
-  var LANG = (new URLSearchParams(location.search).get('lang') === 'en') ? 'en' : 'ru';
+  // Язык: ?lang= имеет приоритет, иначе кука lang (её ставит сервер), иначе ru.
+  // Так контент урока совпадает с языком оболочки даже при переходе по ссылке без ?lang.
+  var LANG = (function () {
+    var q = (new URLSearchParams(location.search)).get('lang');
+    if (q === 'en' || q === 'ru') return q;
+    var c = document.cookie.match(/(?:^|;\s*)lang=(en|ru)/);
+    return c ? c[1] : 'ru';
+  })();
 
   function applyLang(lang) {
     if (lang === 'en') {

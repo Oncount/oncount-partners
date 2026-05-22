@@ -42,6 +42,17 @@ app = FastAPI(title="ONCOUNT Partner Platform")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
 
+@app.middleware("http")
+async def persist_lang_cookie(request: Request, call_next):
+    """Делает выбор языка «липким»: ?lang=en|ru → кука lang на год. Без этого язык
+    терялся при первом же переходе по ссылке (ссылки не таскают ?lang)."""
+    response = await call_next(request)
+    q = request.query_params.get("lang")
+    if q in ("en", "ru"):
+        response.set_cookie("lang", q, max_age=60 * 60 * 24 * 365, samesite="lax")
+    return response
+
+
 log = logging.getLogger("oncount.startup")
 
 
@@ -98,9 +109,10 @@ def debug_event_stats(session: Session = Depends(get_session)) -> dict:
 
 
 def _ctx(request: Request, partner: Partner | None, **extra) -> dict:
-    # lang — выбор языка интерфейса из ?lang=. Пока «только вид»: подсвечивает
-    # переключатель RU/EN, реального перевода UI ещё нет (отдельная фича).
-    lang = "en" if request.query_params.get("lang") == "en" else "ru"
+    # lang — выбор языка интерфейса: ?lang= имеет приоритет, иначе кука lang
+    # (её ставит persist_lang_cookie), иначе русский по умолчанию.
+    lang_raw = request.query_params.get("lang") or request.cookies.get("lang")
+    lang = "en" if lang_raw == "en" else "ru"
     return {
         "request": request,
         "partner": partner,
