@@ -463,7 +463,7 @@
       color: var(--sage);
     }
     .cp-deck-placeholder .big { font-size: 30px; }
-    .cp-deck-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    .cp-deck-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
     .cp-deck-btn {
       display: inline-block;
       background: var(--orange);
@@ -480,6 +480,25 @@
     }
     .cp-deck-btn:hover { opacity: 0.92; }
     .cp-deck-btn:active { transform: translateY(1px); }
+    /* В ряду кнопок презентации убираем нижний отступ оранжевой кнопки */
+    .cp-deck-actions .cp-deck-btn { margin: 0; }
+    /* «Скачать презентацию» — зелёная обводка, прозрачный фон */
+    .cp-deck-dl {
+      display: inline-block;
+      background: transparent;
+      color: var(--deep-green);
+      border: 2px solid var(--deep-green);
+      border-radius: 10px;
+      padding: 12px 28px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 16px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 120ms, color 120ms, transform 120ms;
+    }
+    .cp-deck-dl:hover { background: var(--deep-green); color: #fff; }
+    .cp-deck-dl:active { transform: translateY(1px); }
 
     /* --- Чек-поинт «Готово» --- */
     .cp-done-bar {
@@ -592,7 +611,7 @@
 
           <!-- ===== ВИДЕО ЭФИРА (YouTube, скрытое) ===== -->
           <!-- ID ролика на YouTube вписан в data-yt. Заменить — если перезальёте видео. -->
-          <div class="cp-video" id="cp-video" data-yt="TEozLml9tIA">
+          <div class="cp-video" id="cp-video" data-yt="TEozLml9tIA" data-yt-en="8G1acnzhMZ8">
             <div class="cp-video-poster" onclick="cpPlay()">
               <span class="cp-video-tag" data-i18n="video.tag">Запись эфира · YouTube</span>
               <div class="cp-video-play">▶</div>
@@ -611,7 +630,7 @@
               <span class="cp-tc-title" data-i18n="tc.title">🕐 Тайм-коды эфира</span>
               <span class="cp-tc-hint" data-i18n="tc.hint">нажмите, чтобы развернуть</span>
             </summary>
-            <ul class="cp-tc-list">
+            <ul class="cp-tc-list cp-tc-ru">
               <li><a href="https://youtu.be/TEozLml9tIA?t=0" target="_blank" rel="noopener">00:00</a><span data-i18n="tc.1">Нетворкинг: знакомство участников клуба</span></li>
               <li><a href="https://youtu.be/TEozLml9tIA?t=540" target="_blank" rel="noopener">09:00</a><span data-i18n="tc.2">ONCOUNT и партнёрская программа: 3 уровня заработка</span></li>
               <li><a href="https://youtu.be/TEozLml9tIA?t=780" target="_blank" rel="noopener">13:00</a><span data-i18n="tc.3">Личный кабинет клиента и партнёрский портал (за 6 часов)</span></li>
@@ -635,14 +654,30 @@
               <li><a href="https://youtu.be/TEozLml9tIA?t=6420" target="_blank" rel="noopener">107:00</a><span data-i18n="tc.21">Telegram-бот через BotFather + Railway</span></li>
               <li><a href="https://youtu.be/TEozLml9tIA?t=6600" target="_blank" rel="noopener">110:00</a><span data-i18n="tc.22">Итоги и план следующей встречи</span></li>
             </ul>
+            <!-- Тайм-коды английской версии (показываются при lang=en, ведут на английский ролик) -->
+            <ul class="cp-tc-list cp-tc-en" hidden>
+              <li><a href="https://youtu.be/8G1acnzhMZ8?t=0" target="_blank" rel="noopener">00:00</a><span>ONCOUNT and the 3 partnership levels</span></li>
+              <li><a href="https://youtu.be/8G1acnzhMZ8?t=421" target="_blank" rel="noopener">07:01</a><span>Claude — four ways to use it</span></li>
+              <li><a href="https://youtu.be/8G1acnzhMZ8?t=827" target="_blank" rel="noopener">13:47</a><span>Voice input, skills &amp; Opus mode</span></li>
+              <li><a href="https://youtu.be/8G1acnzhMZ8?t=1175" target="_blank" rel="noopener">19:35</a><span>Memory, API &amp; what you can build in 1–3 hours</span></li>
+              <li><a href="https://youtu.be/8G1acnzhMZ8?t=1593" target="_blank" rel="noopener">26:33</a><span>Set up your own AI — step by step</span></li>
+              <li><a href="https://youtu.be/8G1acnzhMZ8?t=1906" target="_blank" rel="noopener">31:46</a><span>Second brain: skills, MCP, bots &amp; the mastermind</span></li>
+            </ul>
           </details>
 
           <!-- ===== ПРЕЗЕНТАЦИЯ (PDF из Google Drive) ===== -->
-          <button class="cp-deck-btn" id="cp-deck-btn" type="button" onclick="cpDeck()" data-i18n="deck.btn">📊 Просмотреть презентацию</button>
+          <div class="cp-deck-actions">
+            <button class="cp-deck-btn" id="cp-deck-btn" type="button" onclick="cpDeck()" data-i18n="deck.btn">📊 Просмотреть презентацию</button>
+            <a class="cp-deck-dl" id="cp-deck-dl"
+               href="https://drive.google.com/uc?export=download&id=1UK7dThNwH-W8_ijojHc_bQW-rU3vCWB4"
+               data-href-en="https://drive.google.com/uc?export=download&id=1OguqdiD2G-cJ07xh3ksr0LmBGCj7oJTM"
+               target="_blank" rel="noopener" data-i18n="deck.dl">⬇ Скачать презентацию</a>
+          </div>
           <div class="cp-deck" id="cp-deck" hidden>
             <div class="cp-deck-frame">
               <iframe id="cp-deck-frame"
                 data-src="https://drive.google.com/file/d/1UK7dThNwH-W8_ijojHc_bQW-rU3vCWB4/preview"
+                data-src-en="https://drive.google.com/file/d/1OguqdiD2G-cJ07xh3ksr0LmBGCj7oJTM/preview"
                 allow="fullscreen" title="Презентация Дня 2 — AI-команда для бизнеса"></iframe>
             </div>
           </div>
@@ -1333,6 +1368,7 @@ company → products → audience → goals → economics → marketing → asse
   "tc.22": "Summary and plan for the next session",
 
   "deck.btn": "📊 View the presentation",
+  "deck.dl": "⬇ Download the presentation",
 
   "guide.h3": "📋 Guide for today",
   "goal.title": "🎯 What you should end up with",
@@ -1550,14 +1586,24 @@ company → products → audience → goals → economics → marketing → asse
         var k = el.getAttribute('data-i18n');
         if (I18N[k] !== undefined) el.innerHTML = I18N[k];
       });
+      // EN-версия: показать английские тайм-коды (под англ. видео), скрыть русские
+      var tcRu = document.querySelector('.cp-tc-ru'); if (tcRu) tcRu.hidden = true;
+      var tcEn = document.querySelector('.cp-tc-en'); if (tcEn) tcEn.hidden = false;
     }
   }
   applyLang(LANG);
 
+  // Кнопка «Скачать презентацию»: EN-версия качает английский PDF
+  (function () {
+    var dl = document.getElementById('cp-deck-dl');
+    if (dl && LANG === 'en' && dl.getAttribute('data-href-en')) dl.href = dl.getAttribute('data-href-en');
+  })();
+
   // Видео-постер → YouTube-плеер (грузим iframe только по клику)
   function cpPlay() {
     var wrap = document.getElementById('cp-video');
-    var id = (wrap.getAttribute('data-yt') || '').trim();
+    // EN-версия урока показывает английский ролик, RU — оригинальную запись эфира
+    var id = ((LANG === 'en' && wrap.getAttribute('data-yt-en')) || wrap.getAttribute('data-yt') || '').trim();
     if (!id) {
       var sub = wrap.querySelector('.cp-video-sub');
       if (sub) sub.textContent = T[LANG].noVideo;
@@ -1572,7 +1618,7 @@ company → products → audience → goals → economics → marketing → asse
   function cpDeck() {
     var deck = document.getElementById('cp-deck');
     var frame = document.getElementById('cp-deck-frame');
-    if (frame && !frame.src) frame.src = frame.getAttribute('data-src');
+    if (frame && !frame.src) frame.src = ((LANG === 'en' && frame.getAttribute('data-src-en')) || frame.getAttribute('data-src'));
     if (deck) deck.hidden = false;
     var btn = document.getElementById('cp-deck-btn');
     if (btn) btn.style.display = 'none';
