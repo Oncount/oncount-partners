@@ -59,7 +59,6 @@ h3 { font-size: 18px; }
   border-bottom: 1px solid rgba(243, 249, 248, 0.1);
 }
 .sidebar-logo img { max-width: 160px; height: auto; }
-.sidebar-section-first { padding-top: 4px; }
 .sidebar-section {
   padding: 16px 24px 8px;
   font-size: 11px;

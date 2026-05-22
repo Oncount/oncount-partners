@@ -29,8 +29,11 @@
 <div class="app">
   <aside class="sidebar">
     <button class="drawer-close" type="button" aria-label="Закрыть меню" onclick="document.body.classList.remove('drawer-open')">×</button>
+    <div class="sidebar-logo">
+      <img src="/static/img/logo.png" alt="ONCOUNT">
+    </div>
 
-    <div class="sidebar-section sidebar-section-first">{{ 'Main' if lang == 'en' else 'Главное' }}</div>
+    <div class="sidebar-section">{{ 'Main' if lang == 'en' else 'Главное' }}</div>
     <a class="menu-item {% if request.url.path == '/dashboard' %}active{% endif %}" href="/dashboard">🏠 {{ 'Dashboard' if lang == 'en' else 'Дашборд' }}</a>
     <a class="menu-item {% if request.url.path == '/leads' %}active{% endif %}" href="/leads">📋 {{ 'All requests' if lang == 'en' else 'Все заявки' }}</a>
 
