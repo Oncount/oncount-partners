@@ -20,6 +20,7 @@ from app.config import settings
 from app.db import SessionLocal, engine, get_session
 from app.models import (
     Base,
+    Course,
     EventRegistration,
     FaqItem,
     Lead,
@@ -97,12 +98,16 @@ def debug_event_stats(session: Session = Depends(get_session)) -> dict:
 
 
 def _ctx(request: Request, partner: Partner | None, **extra) -> dict:
+    # lang — выбор языка интерфейса из ?lang=. Пока «только вид»: подсвечивает
+    # переключатель RU/EN, реального перевода UI ещё нет (отдельная фича).
+    lang = "en" if request.query_params.get("lang") == "en" else "ru"
     return {
         "request": request,
         "partner": partner,
         "bot_username": settings.BOT_USERNAME,
         "webapp_url": settings.WEBAPP_URL,
         "year": datetime.utcnow().year,
+        "lang": lang,
         **extra,
     }
 
@@ -523,3 +528,68 @@ def faq(request: Request, session: Session = Depends(get_session)) -> HTMLRespon
     for item in items:
         categories.setdefault(item.category, []).append(item)
     return templates.TemplateResponse("faq.html", _ctx(request, partner, categories=categories))
+
+
+@app.get("/courses", response_class=HTMLResponse)
+@app.get("/kb/courses", response_class=HTMLResponse)
+def courses(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
+    partner = current_partner(request, session)
+    if not partner:
+        return RedirectResponse("/login", status_code=302)
+    items = (
+        session.query(Course)
+        .filter_by(is_active=True)
+        .order_by(Course.order_index)
+        .all()
+    )
+    mastermind_details = [
+        p.strip() for p in settings.MASTERMIND_DETAILS.split(";") if p.strip()
+    ]
+    return templates.TemplateResponse(
+        "courses.html",
+        _ctx(
+            request,
+            partner,
+            items=items,
+            mastermind_title=settings.MASTERMIND_TITLE,
+            mastermind_details=mastermind_details,
+            mastermind_footer=settings.MASTERMIND_FOOTER,
+            # Стрелка ведёт на будущую страницу программы Mastermind (пока заглушка).
+            mastermind_url="#",
+        ),
+    )
+
+
+# Богатые страницы уроков курса. Контент — редакторский (этапы, промпты, тайм-коды),
+# поэтому живёт в отдельных Jinja-шаблонах, а не в БД (гибрид, план
+# 2026-05-22-kabinet-kursy-uroki-i18n). Маппинг (slug, день) → шаблон. Незнакомая пара
+# → редирект на витрину, чтобы не плодить 404 на «локед»/будущих днях.
+LESSON_TEMPLATES: dict[tuple[str, int], str] = {
+    ("ai-employees-setup", 1): "course-ai-setup-day1.html",
+    ("ai-employees-setup", 2): "course-ai-setup-day2.html",
+}
+
+
+@app.get("/courses/{slug}", response_class=HTMLResponse)
+def course_entry(slug: str, request: Request, session: Session = Depends(get_session)):
+    """CTA «Начать/Продолжить» ведёт сюда → редирект на первый день, если у курса
+    есть уроки; иначе обратно на витрину (slug в шаблоне не хардкодим — решает роут)."""
+    partner = current_partner(request, session)
+    if not partner:
+        return RedirectResponse("/login", status_code=302)
+    if any(s == slug for (s, _d) in LESSON_TEMPLATES):
+        return RedirectResponse(f"/courses/{slug}/day/1", status_code=302)
+    return RedirectResponse("/courses", status_code=302)
+
+
+@app.get("/courses/{slug}/day/{day}", response_class=HTMLResponse)
+def course_lesson(
+    slug: str, day: int, request: Request, session: Session = Depends(get_session)
+):
+    partner = current_partner(request, session)
+    if not partner:
+        return RedirectResponse("/login", status_code=302)
+    template = LESSON_TEMPLATES.get((slug, day))
+    if not template:
+        return RedirectResponse("/courses", status_code=302)
+    return templates.TemplateResponse(template, _ctx(request, partner))

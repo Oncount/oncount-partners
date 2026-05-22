@@ -1,0 +1,1635 @@
+{% extends "base.html" %}
+{% block title %}День 2 — 2 АИ-сотрудника · Практикум «AI-сотрудники» — ONCOUNT{% endblock %}
+{% block heading %}Практикум «AI-сотрудники»{% endblock %}
+{% block head %}{% raw %}
+<style>
+    /* ===== Course player (cp-*) — ONCOUNT colors ===== */
+    .cp-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    /* --- Левая навигация программы --- */
+    .cp-curriculum {
+      background: var(--deep-green);
+      color: var(--cream);
+      border-radius: 16px;
+      padding: 20px 0 12px;
+      position: sticky;
+      top: 24px;
+      overflow: hidden;
+    }
+    .cp-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 20px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(243, 249, 248, 0.75);
+    }
+    .cp-back:hover { color: var(--orange); }
+
+    .cp-progress { padding: 0 20px 18px; border-bottom: 1px solid rgba(243, 249, 248, 0.1); }
+    .cp-progress-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+    .cp-progress-label {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--sage);
+      font-weight: 600;
+    }
+    .cp-progress-pct {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--cream);
+    }
+    .cp-progress-bar {
+      height: 8px;
+      background: rgba(243, 249, 248, 0.12);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .cp-progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--orange), var(--coral));
+    }
+
+    /* --- День (аккордеон) --- */
+    .cp-day { border-bottom: 1px solid rgba(243, 249, 248, 0.07); }
+    .cp-day > summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 20px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--cream);
+      transition: background 120ms;
+    }
+    .cp-day > summary::-webkit-details-marker { display: none; }
+    .cp-day > summary:hover { background: rgba(243, 249, 248, 0.05); }
+    .cp-day-caret {
+      flex-shrink: 0;
+      width: 14px;
+      color: var(--sage);
+      font-size: 11px;
+      transition: transform 150ms ease;
+    }
+    .cp-day[open] .cp-day-caret { transform: rotate(90deg); }
+    .cp-day-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cp-day-count {
+      flex-shrink: 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--sage);
+      font-family: 'Outfit', sans-serif;
+    }
+    .cp-day.cp-day-done .cp-day-count { color: var(--coral); }
+
+    /* --- Урок --- */
+    .cp-lessons { padding: 0 12px 10px; }
+    .cp-lesson-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-size: 13.5px;
+      color: rgba(243, 249, 248, 0.7);
+      font-weight: 500;
+    }
+    .cp-lesson-link:hover { background: rgba(243, 249, 248, 0.06); color: var(--cream); }
+    .cp-lesson-mark {
+      flex-shrink: 0;
+      width: 18px;
+      text-align: center;
+      font-size: 13px;
+    }
+    .cp-lesson-done .cp-lesson-mark { color: var(--coral); }
+    .cp-lesson-done .cp-lesson-text { color: rgba(243, 249, 248, 0.5); }
+    .cp-lesson-locked .cp-lesson-mark { color: rgba(243, 249, 248, 0.3); }
+
+    .cp-lesson-active {
+      background: rgba(236, 100, 66, 0.16);
+      border: 1px solid rgba(236, 100, 66, 0.55);
+      color: var(--cream);
+    }
+    .cp-lesson-active:hover { background: rgba(236, 100, 66, 0.22); color: var(--cream); }
+    .cp-lesson-active .cp-lesson-mark { color: var(--orange); }
+    .cp-lesson-active .cp-lesson-text { color: var(--cream); font-weight: 600; }
+
+    /* ===== Контент урока ===== */
+    .cp-lesson-head { margin-bottom: 4px; }
+    .cp-lesson-badge {
+      display: inline-block;
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 8px;
+    }
+    .cp-lesson-head h2 { margin-bottom: 10px; }
+    .cp-lesson-meta { color: var(--sage); font-size: 14px; }
+    .cp-lesson-meta b { color: var(--deep-green); }
+
+    .cp-prose h3 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 24px 0 12px;
+      font-size: 18px;
+    }
+    .cp-prose p { margin: 0 0 14px; color: var(--charcoal); }
+    .cp-prose ul { margin: 0 0 16px; padding-left: 0; list-style: none; }
+    .cp-prose ul li {
+      position: relative;
+      padding: 6px 0 6px 28px;
+      color: var(--charcoal);
+    }
+    .cp-prose ul li::before {
+      content: "▸";
+      position: absolute;
+      left: 6px;
+      color: var(--orange);
+      font-weight: 700;
+    }
+    .cp-stage {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      color: var(--deep-green);
+      font-size: 16px;
+      margin: 22px 0 10px;
+    }
+
+    /* --- Этапы (сворачиваемые блоки с кнопкой «Готово») --- */
+    .cp-etap {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin: 0 0 14px;
+      overflow: hidden;
+    }
+    .cp-etap > summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--deep-green);
+      transition: background 120ms;
+    }
+    .cp-etap > summary::-webkit-details-marker { display: none; }
+    .cp-etap > summary:hover { background: rgba(16, 70, 62, 0.04); }
+    .cp-etap-caret { flex-shrink: 0; width: 14px; color: var(--orange); font-size: 12px; transition: transform 150ms ease; }
+    .cp-etap[open] .cp-etap-caret { transform: rotate(90deg); }
+    .cp-etap-title { flex: 1; min-width: 0; }
+    .cp-etap-status { flex-shrink: 0; font-family: 'Raleway', sans-serif; font-weight: 600; font-size: 13px; color: var(--sage); }
+    .cp-etap[open] .cp-etap-status { display: none; }
+    .cp-etap-body { padding: 2px 20px 18px; }
+    .cp-etap-body > p:first-child, .cp-etap-body > .cp-substage:first-child { margin-top: 4px; }
+    .cp-etap-done-bar { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
+    .cp-etap-done-btn {
+      background: var(--orange);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 30px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: opacity 120ms, transform 120ms, background 150ms;
+    }
+    .cp-etap-done-btn:hover { opacity: 0.92; }
+    .cp-etap-done-btn:active { transform: translateY(1px); }
+    /* состояние «выполнено» — этап меняет цвет */
+    .cp-etap.is-done { border-color: var(--sage); background: rgba(84, 124, 118, 0.09); }
+    .cp-etap.is-done > summary { color: var(--sage); }
+    .cp-etap.is-done .cp-etap-caret { color: var(--sage); }
+    .cp-etap.is-done .cp-etap-status { display: inline; color: var(--sage); }
+    .cp-etap.is-done .cp-etap-done-btn { background: var(--deep-green); cursor: default; }
+    .cp-callout {
+      background: rgba(84, 124, 118, 0.08);
+      border-left: 3px solid var(--sage);
+      border-radius: 0 8px 8px 0;
+      padding: 12px 16px;
+      font-size: 14px;
+      color: var(--charcoal);
+      margin: 0 0 16px;
+    }
+    .cp-callout.cp-warn { background: rgba(236, 100, 66, 0.08); border-left-color: var(--orange); }
+    .cp-prose ul.cp-plan { margin-bottom: 16px; }
+    .cp-prose ul.cp-plan li { padding-left: 4px; }
+    .cp-prose ul.cp-plan li::before { content: none; }
+    .cp-soon { color: var(--sage); font-size: 14px; font-style: italic; margin: 2px 0 16px; }
+    .cp-substage { font-family: 'Outfit', sans-serif; font-weight: 600; color: var(--charcoal); font-size: 15px; margin: 18px 0 8px; }
+    .cp-prose code { font-family: 'Courier New', monospace; background: var(--cream); padding: 2px 6px; border-radius: 5px; font-size: 13px; }
+    .cp-cmd { display: block; font-family: 'Courier New', monospace; background: #0c2f2a; color: var(--cream); padding: 12px 14px; border-radius: 8px; font-size: 13px; margin: 0 0 16px; overflow-x: auto; }
+    .cp-prose ul.cp-check-done { margin: 8px 0 14px; }
+    .cp-prose ul.cp-check-done li { padding-left: 30px; }
+    .cp-prose ul.cp-check-done li::before { content: "✓"; color: var(--charcoal); font-weight: 700; left: 4px; }
+
+    /* --- Блок «Промпт для агента» --- */
+    .cp-prompt {
+      background: var(--deep-green);
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin: 16px 0 20px;
+    }
+    .cp-prompt-top {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .cp-prompt-label { display: none; }
+    .cp-prompt-copy {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--sage);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-family: 'Raleway', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 120ms, transform 120ms;
+    }
+    .cp-prompt-copy:hover { background: #6b948c; }
+    .cp-prompt-copy:active { transform: translateY(1px); }
+    .cp-prompt-body {
+      color: rgba(243, 249, 248, 0.92);
+      font-size: 14px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+    }
+    .cp-prompt-body .ph { color: var(--coral); }
+
+    /* --- Чек-лист дня --- */
+    .cp-checklist {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 22px;
+      margin: 16px 0;
+    }
+    .cp-checklist-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      color: var(--deep-green);
+      font-size: 16px;
+      margin-bottom: 14px;
+    }
+    .cp-check-list { list-style: none; margin: 0 0 14px; padding: 0; }
+    .cp-check-list li {
+      position: relative;
+      padding: 7px 0 7px 30px;
+      font-size: 14px;
+      color: var(--charcoal);
+      border-top: 1px solid var(--border);
+    }
+    .cp-check-list li:first-child { border-top: none; }
+    .cp-check-list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 9px;
+      width: 18px;
+      height: 18px;
+      border-radius: 5px;
+      border: 1.5px solid var(--sage);
+    }
+    .cp-checklist-foot {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 70, 62, 0.08);
+      color: var(--deep-green);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .cp-checklist-foot::before { content: "✅"; }
+
+    /* --- Низ урока: материалы + переход --- */
+    .cp-materials { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+    .cp-lesson-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    /* --- Видео урока (адаптив 16:9) --- */
+    .cp-video {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #0c2f2a;
+      margin: 4px 0 8px;
+    }
+    .cp-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+    .cp-video-poster {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      cursor: pointer;
+      text-align: center;
+      padding: 24px;
+      color: var(--cream);
+      background: radial-gradient(circle at 50% 32%, rgba(84, 124, 118, 0.5), rgba(16, 70, 62, 0.96));
+    }
+    .cp-video-tag {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: var(--coral);
+    }
+    .cp-video-play {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: var(--orange);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      padding-left: 4px;
+      box-shadow: 0 8px 28px rgba(236, 100, 66, 0.45);
+      transition: transform 150ms ease;
+    }
+    .cp-video-poster:hover .cp-video-play { transform: scale(1.07); }
+    .cp-video-title { font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 18px; }
+    .cp-video-sub { font-size: 13px; color: rgba(243, 249, 248, 0.78); }
+    .cp-caption { font-size: 13px; color: var(--sage); margin: 0 0 18px; }
+    .cp-caption-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 0 0 18px; }
+    .cp-caption-row .cp-caption { margin: 0; }
+    .cp-watched-btn { background: #fff; color: var(--deep-green); border: 1px solid var(--border); border-radius: 8px; padding: 7px 16px; font-family: 'Raleway', sans-serif; font-weight: 600; font-size: 13px; cursor: pointer; white-space: nowrap; transition: all 120ms; }
+    .cp-watched-btn:hover { border-color: var(--orange); color: var(--orange); }
+    .cp-watched-btn.is-done { background: var(--deep-green); color: #fff; border-color: var(--deep-green); cursor: default; }
+
+    /* --- Тайм-коды эфира (сворачиваемые) --- */
+    .cp-timecodes {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin: 0 0 18px;
+      overflow: hidden;
+    }
+    .cp-timecodes > summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--deep-green);
+    }
+    .cp-timecodes > summary::-webkit-details-marker { display: none; }
+    .cp-timecodes > summary:hover { background: rgba(16, 70, 62, 0.04); }
+    .cp-tc-caret { flex-shrink: 0; width: 12px; color: var(--orange); font-size: 11px; transition: transform 150ms ease; }
+    .cp-timecodes[open] .cp-tc-caret { transform: rotate(90deg); }
+    .cp-tc-title { flex: 1; }
+    .cp-tc-hint { font-family: 'Raleway', sans-serif; font-weight: 500; font-size: 12px; color: var(--sage); }
+    .cp-timecodes[open] .cp-tc-hint { display: none; }
+    .cp-tc-list { list-style: none; margin: 0; padding: 0 18px 14px; }
+    .cp-tc-list li {
+      padding: 7px 0;
+      font-size: 14px;
+      color: var(--charcoal);
+      border-top: 1px solid var(--border);
+      line-height: 1.5;
+    }
+    .cp-tc-list li:first-child { border-top: none; }
+    .cp-tc-list a {
+      display: inline-block;
+      min-width: 56px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      color: var(--orange);
+      margin-right: 10px;
+    }
+    .cp-tc-list a:hover { text-decoration: underline; }
+
+    /* --- Презентация --- */
+    .cp-deck { margin: 8px 0 16px; }
+    .cp-deck-frame {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--cream);
+    }
+    .cp-deck-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+    .cp-deck-placeholder {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 6px; text-align: center; padding: 24px;
+      color: var(--sage);
+    }
+    .cp-deck-placeholder .big { font-size: 30px; }
+    .cp-deck-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    .cp-deck-btn {
+      display: inline-block;
+      background: var(--orange);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 14px 36px;
+      margin: 0 0 18px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: opacity 120ms, transform 120ms;
+    }
+    .cp-deck-btn:hover { opacity: 0.92; }
+    .cp-deck-btn:active { transform: translateY(1px); }
+
+    /* --- Чек-поинт «Готово» --- */
+    .cp-done-bar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+    .cp-done-btn {
+      background: var(--orange);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 14px 36px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: opacity 120ms, transform 120ms, background 150ms;
+    }
+    .cp-done-btn:hover { opacity: 0.92; }
+    .cp-done-btn:active { transform: translateY(1px); }
+    .cp-done-btn.is-done { background: var(--deep-green); cursor: default; }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 1100px) {
+      .cp-layout { grid-template-columns: 1fr; }
+      .cp-curriculum { position: static; }
+    }
+    @media (max-width: 900px) {
+      .cp-prompt-top { flex-direction: column; align-items: flex-start; }
+      .cp-prompt-copy { width: 100%; justify-content: center; }
+      .cp-lesson-nav { flex-direction: column; }
+      .cp-lesson-nav .btn { width: 100%; text-align: center; }
+    }
+  </style>
+{% endraw %}{% endblock %}
+{% block content %}{% raw %}
+    <div class="cp-layout">
+
+      <!-- ===== Левая навигация программы ===== -->
+      <aside class="cp-curriculum">
+        <a class="cp-back" href="/courses" data-i18n="cur.back">← К программе</a>
+
+        <div class="cp-progress">
+          <div class="cp-progress-row">
+            <span class="cp-progress-label" data-i18n="cur.progress">Прогресс</span>
+            <span class="cp-progress-pct">33%</span>
+          </div>
+          <div class="cp-progress-bar">
+            <div class="cp-progress-fill" style="width: 33%"></div>
+          </div>
+        </div>
+
+        <!-- День 1 — пройден -->
+        <details class="cp-day cp-day-done">
+          <summary>
+            <span class="cp-day-caret">▶</span>
+            <span class="cp-day-title" data-i18n="cur.day1">День 1 — Настройка</span>
+            <span class="cp-day-count">2/2</span>
+          </summary>
+          <div class="cp-lessons">
+            <a class="cp-lesson-link cp-lesson-done" href="/courses/ai-employees-setup/day/1"><span class="cp-lesson-mark">✓</span><span class="cp-lesson-text" data-i18n="cur.day1.live">Эфир Дня 1</span></a>
+            <a class="cp-lesson-link cp-lesson-done" href="/courses/ai-employees-setup/day/1"><span class="cp-lesson-mark">✓</span><span class="cp-lesson-text" data-i18n="cur.day1.guide">Инструкция Дня 1</span></a>
+          </div>
+        </details>
+
+        <!-- День 2 — текущий -->
+        <details class="cp-day" open>
+          <summary>
+            <span class="cp-day-caret">▶</span>
+            <span class="cp-day-title" data-i18n="cur.day2">День 2 — 2 АИ-сотрудника: скиллы, папки</span>
+            <span class="cp-day-count">0/2</span>
+          </summary>
+          <div class="cp-lessons">
+            <a class="cp-lesson-link cp-lesson-active" href="/courses/ai-employees-setup/day/2">
+              <span class="cp-lesson-mark">●</span>
+              <span class="cp-lesson-text" data-i18n="cur.day2.live">Эфир Дня 2</span>
+            </a>
+            <a class="cp-lesson-link" href="/courses/ai-employees-setup/day/2">
+              <span class="cp-lesson-mark">○</span>
+              <span class="cp-lesson-text" data-i18n="cur.day2.guide">Инструкция Дня 2</span>
+            </a>
+          </div>
+        </details>
+
+        <!-- День 3 -->
+        <details class="cp-day">
+          <summary>
+            <span class="cp-day-caret">▶</span>
+            <span class="cp-day-title" data-i18n="cur.day3">День 3 — Результат: сайт + презентация</span>
+            <span class="cp-day-count">0/2</span>
+          </summary>
+          <div class="cp-lessons">
+            <a class="cp-lesson-link cp-lesson-locked" href="#"><span class="cp-lesson-mark">○</span><span class="cp-lesson-text" data-i18n="cur.day3.live">Эфир Дня 3</span></a>
+            <a class="cp-lesson-link cp-lesson-locked" href="#"><span class="cp-lesson-mark">○</span><span class="cp-lesson-text" data-i18n="cur.day3.guide">Инструкция Дня 3</span></a>
+          </div>
+        </details>
+      </aside>
+
+      <!-- ===== Контент урока ===== -->
+      <div>
+        <article class="card cp-prose">
+          <div class="cp-lesson-head">
+            <span class="cp-lesson-badge" data-i18n="lesson.badge">День 2</span>
+            <h2 data-i18n="lesson.h2">2 АИ-сотрудника: скиллы, папки</h2>
+          </div>
+
+          <!-- ===== ВИДЕО ЭФИРА (YouTube, скрытое) ===== -->
+          <!-- ID ролика на YouTube вписан в data-yt. Заменить — если перезальёте видео. -->
+          <div class="cp-video" id="cp-video" data-yt="TEozLml9tIA">
+            <div class="cp-video-poster" onclick="cpPlay()">
+              <span class="cp-video-tag" data-i18n="video.tag">Запись эфира · YouTube</span>
+              <div class="cp-video-play">▶</div>
+              <div class="cp-video-title" data-i18n="video.title">Эфир Дня 2 — 2 АИ-сотрудника</div>
+              <div class="cp-video-sub" data-i18n="video.sub">Нажмите, чтобы смотреть запись</div>
+            </div>
+          </div>
+          <div class="cp-caption-row">
+            <button class="cp-watched-btn" id="cp-watched-btn" type="button" onclick="cpWatched()" data-i18n="video.watched">Посмотрено</button>
+          </div>
+
+          <!-- ===== ТАЙМ-КОДЫ ЭФИРА (сворачиваемые) ===== -->
+          <details class="cp-timecodes">
+            <summary>
+              <span class="cp-tc-caret">▶</span>
+              <span class="cp-tc-title" data-i18n="tc.title">🕐 Тайм-коды эфира</span>
+              <span class="cp-tc-hint" data-i18n="tc.hint">нажмите, чтобы развернуть</span>
+            </summary>
+            <ul class="cp-tc-list">
+              <li><a href="https://youtu.be/TEozLml9tIA?t=0" target="_blank" rel="noopener">00:00</a><span data-i18n="tc.1">Нетворкинг: знакомство участников клуба</span></li>
+              <li><a href="https://youtu.be/TEozLml9tIA?t=540" target="_blank" rel="noopener">09:00</a><span data-i18n="tc.2">ONCOUNT и партнёрская программа: 3 уровня заработка</span></li>
+              <li><a href="https://youtu.be/TEozLml9tIA?t=780" target="_blank" rel="noopener">13:00</a><span data-i18n="tc.3">Личный кабинет клиента и партнёрский портал (за 6 часов)</span></li>
+              <li><a href="https://youtu.be/TEozLml9tIA?t=1080" target="_blank" rel="noopener">18:00</a><span data-i18n="tc.4">Telegram-бот для партнёров</span></li>
+              <li><a href="https://youtu.be/TEozLml9tIA?t=1200" target="_blank" rel="noopener">20:00</a><span data-i18n="tc.5">Четыре «Клода»: чат, Coworker, Claude Code, Claude в Chrome</span></li>
+              <li><a href="https://youtu.be/TEozLml9tIA?t=1440" target="_blank" rel="noopener">24:00</a><span data-i18n="tc.6">Папки как «второй мозг», скиллы и MD-файлы</span></li>
+              <li><a href="https://youtu.be/TEozLml9tIA?t=1800" target="_blank" rel="noopener">30:00</a><span data-i18n="tc.7">Голосовой ввод и Gamma: презентация за секунды</span></li>
+              <li><a href="https://youtu.be/TEozLml9tIA?t=1860" target="_blank" rel="noopener">31:00</a><span data-i18n="tc.8">Анализ возражений из 100 звонков</span></li>
+              <li><a href="https://youtu.be/TEozLml9tIA?t=1920" target="_blank" rel="noopener">32:00</a><span data-i18n="tc.9">Claude в Chrome: авто-коннекты в LinkedIn</span></li>
+              <li><a href="https://youtu.be/TEozLml9tIA?t=2340" target="_blank" rel="noopener">39:00</a><span data-i18n="tc.10">Claude вместо системного администратора</span></li>
+              <li><a href="https://youtu.be/TEozLml9tIA?t=2520" target="_blank" rel="noopener">42:00</a><span data-i18n="tc.11">MD-файлы как память; подключение CRM, Zoom, Slack</span></li>
+              <li><a href="https://youtu.be/TEozLml9tIA?t=2700" target="_blank" rel="noopener">45:00</a><span data-i18n="tc.12">Instagram: автоответы и анализ виральных Reels</span></li>
+              <li><a href="https://youtu.be/TEozLml9tIA?t=3240" target="_blank" rel="noopener">54:00</a><span data-i18n="tc.13">Практика: ставим VSCode + Claude Code с нуля</span></li>
+              <li><a href="https://youtu.be/TEozLml9tIA?t=3840" target="_blank" rel="noopener">64:00</a><span data-i18n="tc.14">Голосовой ввод (Whisper) и звуковые уведомления</span></li>
+              <li><a href="https://youtu.be/TEozLml9tIA?t=3960" target="_blank" rel="noopener">66:00</a><span data-i18n="tc.15">Безопасность: .env и секретные файлы</span></li>
+              <li><a href="https://youtu.be/TEozLml9tIA?t=4260" target="_blank" rel="noopener">71:00</a><span data-i18n="tc.16">Структура папок «второго мозга»</span></li>
+              <li><a href="https://youtu.be/TEozLml9tIA?t=4380" target="_blank" rel="noopener">73:00</a><span data-i18n="tc.17">CLAUDE.md — правила и память агента</span></li>
+              <li><a href="https://youtu.be/TEozLml9tIA?t=4920" target="_blank" rel="noopener">82:00</a><span data-i18n="tc.18">План по фазам и проверочный цикл из 5 ходов</span></li>
+              <li><a href="https://youtu.be/TEozLml9tIA?t=5160" target="_blank" rel="noopener">86:00</a><span data-i18n="tc.19">Скиллы: bulletproof, skill-creator, frontend-design + безопасность</span></li>
+              <li><a href="https://youtu.be/TEozLml9tIA?t=6180" target="_blank" rel="noopener">103:00</a><span data-i18n="tc.20">MCP-серверы и субагенты</span></li>
+              <li><a href="https://youtu.be/TEozLml9tIA?t=6420" target="_blank" rel="noopener">107:00</a><span data-i18n="tc.21">Telegram-бот через BotFather + Railway</span></li>
+              <li><a href="https://youtu.be/TEozLml9tIA?t=6600" target="_blank" rel="noopener">110:00</a><span data-i18n="tc.22">Итоги и план следующей встречи</span></li>
+            </ul>
+          </details>
+
+          <!-- ===== ПРЕЗЕНТАЦИЯ (PDF из Google Drive) ===== -->
+          <button class="cp-deck-btn" id="cp-deck-btn" type="button" onclick="cpDeck()" data-i18n="deck.btn">📊 Просмотреть презентацию</button>
+          <div class="cp-deck" id="cp-deck" hidden>
+            <div class="cp-deck-frame">
+              <iframe id="cp-deck-frame"
+                data-src="https://drive.google.com/file/d/1UK7dThNwH-W8_ijojHc_bQW-rU3vCWB4/preview"
+                allow="fullscreen" title="Презентация Дня 2 — AI-команда для бизнеса"></iframe>
+            </div>
+          </div>
+
+          <!-- ===== Инструкция дня ===== -->
+          <h3 data-i18n="guide.h3">📋 Инструкция дня</h3>
+
+          <div class="cp-stage" data-i18n="goal.title">🎯 Что должно получиться</div>
+          <p data-i18n="goal.p1">К концу этой инструкции у тебя есть полностью оснащённое рабочее место для вайб-кодинга и полностью настроенный «мозг» твоего проекта, который агент будет читать перед каждым действием. Завтра, на Дне 3, ты по этому мозгу соберёшь работающий сайт.</p>
+          <p data-i18n="goal.p2"><b>Время:</b> 90–120 минут. Большую часть делает Claude, ты только говоришь ему, что делать.</p>
+          <div class="cp-callout cp-warn" data-i18n="goal.warn"><b>Главное правило сегодня:</b> ничего не делай руками. Не создавай папки кнопкой «New Folder», не пиши код в файлах вручную. Всё — через Claude Code. Учишься управлять, а не исполнять.</div>
+
+          <!-- Карта инструкции -->
+          <h3 data-i18n="plan.h3">📅 План дня 2</h3>
+          <p data-i18n="plan.intro">Чтобы ты не утонул, инструкция разбита на этапы. Делай по порядку, не перепрыгивай. После каждого этапа можешь сделать перерыв.</p>
+          <ul class="cp-plan">
+            <li data-i18n="plan.1">🔒 Этап 1. Безопасность Claude Code и звуковые уведомления — ~10 мин</li>
+            <li data-i18n="plan.2">🧠 Этап 2. Папка .business/ — мозг бизнеса — ~25 мин</li>
+            <li data-i18n="plan.3">📋 Этап 3. CLAUDE.md, папка plans/ и критика плана — ~20 мин</li>
+            <li data-i18n="plan.4">✅ Этап 4. Проверочный цикл, 7 правил, «10 причин обосраться» — ~15 мин</li>
+            <li data-i18n="plan.5">🛠 Этап 5. Скиллы: Skill Creator, Frontend Design, PDF, Smithery — ~20 мин</li>
+            <li data-i18n="plan.6">🌐 Этап 6. Playwright — Claude управляет браузером — ~15 мин</li>
+          </ul>
+
+          <!-- Этап 1 -->
+          <details class="cp-etap">
+            <summary>
+              <span class="cp-etap-caret">▶</span>
+              <span class="cp-etap-title" data-i18n="s1.title">🔒 Этап 1. Безопасность Claude Code и звуковые уведомления</span>
+              <span class="cp-etap-status" data-i18n="etap.expand">развернуть</span>
+            </summary>
+            <div class="cp-etap-body">
+          <p data-i18n="s1.p1">Прежде чем подпускать агента к проекту — подкрутим две важные настройки: звуковой пинг и базовые запреты.</p>
+
+          <div class="cp-substage" data-i18n="s1.sub1">Шаг 1.1. Звуковые уведомления (hooks)</div>
+          <p data-i18n="s1.p2"><b>Проблема:</b> ты запустил задачу, ушёл за чаем, Claude закончил через 2 минуты и ждёт твоего ответа — а ты думаешь, что он ещё работает. Полчаса потеряно.</p>
+          <p data-i18n="s1.p3"><b>Решение — hooks:</b> звук при завершении задачи и при запросе разрешения. Открой VS Code, открой Claude Code в любой папке (если нет — создай папку <code>moy-proekt</code> через File → Open Folder, дальше всё сделает Claude). В чат:</p>
+          <div class="cp-prompt">
+            <div class="cp-prompt-top">
+              <span class="cp-prompt-label" data-i18n="prompt.label">Промпт для агента</span>
+              <button class="cp-prompt-copy" type="button" onclick="cpCopy(this)">📋 <span data-i18n="prompt.copy">Копировать</span></button>
+            </div>
+            <div class="cp-prompt-body" data-i18n="s1.prompt1">Настрой мне в .claude/settings.json звуковые уведомления (hooks):
+
+1. Звук при завершении задачи (Stop hook) — чтобы я слышал, когда ты закончил работу.
+2. Звук при запросе разрешения (Notification hook) — чтобы я слышал, когда ты ждёшь моего «да/нет».
+
+Используй системный звук моей операционной системы. Покажи итоговый файл .claude/settings.json и объясни, что ты добавил.</div>
+          </div>
+          <p data-i18n="s1.p4"><b>Проверка:</b> задай ему любую задачу («посчитай 2+2 и заверши работу»). Должен пикнуть.</p>
+
+          <div class="cp-substage" data-i18n="s1.sub2">Шаг 1.2. Базовые правила безопасности</div>
+          <p data-i18n="s1.p5">Агент — мощный инструмент. Без рамок он может случайно удалить файлы, прочитать секреты, отправить твои данные наружу. Поставим четыре жёстких запрета:</p>
+          <ul>
+            <li data-i18n="s1.li1"><code>rm -rf *</code> — удаление диска</li>
+            <li data-i18n="s1.li2"><code>export + curl</code> — утечка секретов наружу</li>
+            <li data-i18n="s1.li3">доступ к <code>.env</code> — API-ключи и пароли в целости</li>
+            <li data-i18n="s1.li4"><code>wget</code> с переменными — экспорт твоих данных</li>
+          </ul>
+          <div class="cp-prompt">
+            <div class="cp-prompt-top">
+              <span class="cp-prompt-label" data-i18n="prompt.label">Промпт для агента</span>
+              <button class="cp-prompt-copy" type="button" onclick="cpCopy(this)">📋 <span data-i18n="prompt.copy">Копировать</span></button>
+            </div>
+            <div class="cp-prompt-body" data-i18n="s1.prompt2">Настрой мне в .claude/settings.json правила безопасности. ЗАПРЕТИ:
+
+1. Команды вида `rm -rf` и любое массовое удаление файлов или папок без явного подтверждения от меня.
+2. Связку `export` + `curl` — любую отправку переменных окружения наружу через curl.
+3. Чтение файлов .env и любых файлов с секретами, ключами, паролями.
+4. `wget` с подставленными переменными — любую отправку моих данных наружу через wget.
+
+Используй секцию permissions.deny (или эквивалентную секцию в актуальной версии Claude Code).
+
+После изменения — покажи итоговый файл .claude/settings.json и объясни каждое правило одной строкой.</div>
+          </div>
+          <p data-i18n="s1.p6">Готово. Теперь даже если ты случайно скажешь «удали всё» — агент остановится и переспросит.</p>
+
+              <div class="cp-etap-done-bar">
+                <button class="cp-etap-done-btn" type="button" onclick="cpEtapDone(this)" data-i18n="etap.done">Готово</button>
+              </div>
+            </div>
+          </details>
+
+          <!-- Этап 2 -->
+          <details class="cp-etap">
+            <summary>
+              <span class="cp-etap-caret">▶</span>
+              <span class="cp-etap-title" data-i18n="s2.title">🧠 Этап 2. Папка .business/ — мозг бизнеса</span>
+              <span class="cp-etap-status" data-i18n="etap.expand">развернуть</span>
+            </summary>
+            <div class="cp-etap-body">
+          <p data-i18n="s2.p1">Это главный концепт Дня 2. Если ты сделаешь только этот этап и больше ничего — уже будешь сильно впереди.</p>
+          <p data-i18n="s2.p2"><b>Зачем.</b> Без бизнес-контекста Claude каждый раз начинает с нуля — не знает твою аудиторию, цены, цели, дизайн. Результат — слабый, шаблонный, «как у всех». С папкой .business/ Claude знает про тебя всё и работает как член твоей команды.</p>
+          <p data-i18n="s2.p3">Папка с точкой — это значит скрытая. Она автоматически попадает в .gitignore и не утекает в публичный репозиторий. Внутри лежат твои секретные знания про бизнес.</p>
+
+          <div class="cp-substage" data-i18n="s2.sub1">Шаг 2.1. Архитектура папки .business/</div>
+          <p data-i18n="s2.p4">Это пример, не догма. У тебя может быть любая структура — главное, чтобы внутри лежала вся информация про твой бизнес, а INDEX.md объяснял, что где искать.</p>
+          <code class="cp-cmd">.business/
+├── INDEX.md            ← оглавление, входная точка
+├── company/            ← about, team, values, legal
+├── products/           ← overview, pricing, product-1, product-2…
+├── audience/           ← avatar, segments, objections, journey
+├── goals/              ← annual, quarterly, monthly, kpi
+├── economics/          ← unit-economics, revenue, costs, forecast
+├── marketing/          ← channels, funnel, competitors, content
+└── assets/             ← brand-guidelines, logo/, testimonials</code>
+          <p data-i18n="s2.p5"><b>INDEX.md</b> — карта бизнес-папки. Claude читает её первой, перед любой задачей, связанной с бизнесом. Здесь название проекта, ссылки на все файлы и правило «не загружай всё сразу».</p>
+          <p><b>company/</b></p>
+          <ul>
+            <li data-i18n="s2.company.1"><b>about.md</b> — кто мы, миссия в одно предложение, год основания, формат (соло / команда)</li>
+            <li data-i18n="s2.company.2"><b>team.md</b> — кто чем занимается, зоны ответственности, контакты</li>
+            <li data-i18n="s2.company.3"><b>values.md</b> — 3–5 ценностей, которыми руководствуемся при принятии решений</li>
+            <li data-i18n="s2.company.4"><b>legal.md</b> — юр. форма, реквизиты, страна, режим налогообложения</li>
+          </ul>
+          <p><b>products/</b></p>
+          <ul>
+            <li data-i18n="s2.products.1"><b>overview.md</b> — что мы продаём в принципе, одной картиной</li>
+            <li data-i18n="s2.products.2"><b>pricing.md</b> — все тарифы, что входит в каждый, цены, скидки</li>
+            <li data-i18n="s2.products.3"><b>product-1.md</b> — описание конкретного продукта: задача, фичи, как работает, на каком этапе</li>
+          </ul>
+          <p><b>audience/</b></p>
+          <ul>
+            <li data-i18n="s2.audience.1"><b>avatar.md</b> — портрет идеального клиента: возраст, город, доход, занятие</li>
+            <li data-i18n="s2.audience.2"><b>segments.md</b> — какие сегменты ЦА у нас есть и чем они отличаются</li>
+            <li data-i18n="s2.audience.3"><b>objections.md</b> — главные возражения и страхи при покупке + как мы их закрываем</li>
+            <li data-i18n="s2.audience.4"><b>journey.md</b> — путь клиента: как узнал → как пришёл → как купил → как остался</li>
+          </ul>
+          <p><b>goals/</b></p>
+          <ul>
+            <li data-i18n="s2.goals.1"><b>annual.md</b> — большая цель на год (выручка, аудитория, продукт)</li>
+            <li data-i18n="s2.goals.2"><b>quarterly.md</b> — три-четыре цели на квартал</li>
+            <li data-i18n="s2.goals.3"><b>monthly.md</b> — фокус месяца, 1–3 пункта максимум</li>
+            <li data-i18n="s2.goals.4"><b>kpi.md</b> — какие метрики мы измеряем еженедельно или ежемесячно</li>
+          </ul>
+          <p><b>economics/</b></p>
+          <ul>
+            <li data-i18n="s2.econ.1"><b>unit-economics.md</b> — сколько стоит привлечь клиента, сколько он приносит, маржа</li>
+            <li data-i18n="s2.econ.2"><b>revenue.md</b> — структура доходов (откуда деньги)</li>
+            <li data-i18n="s2.econ.3"><b>costs.md</b> — структура расходов (куда уходят деньги)</li>
+            <li data-i18n="s2.econ.4"><b>forecast.md</b> — прогноз на ближайшие 3–6 месяцев</li>
+          </ul>
+          <p><b>marketing/</b></p>
+          <ul>
+            <li data-i18n="s2.mkt.1"><b>channels.md</b> — все каналы привлечения и их состояние (работает / тестируем / умер)</li>
+            <li data-i18n="s2.mkt.2"><b>funnel.md</b> — воронка: показы → клики → лиды → продажи → удержание</li>
+            <li data-i18n="s2.mkt.3"><b>competitors.md</b> — 3–5 главных конкурентов, чем мы отличаемся</li>
+            <li data-i18n="s2.mkt.4"><b>content.md</b> — контент-план и тон коммуникации</li>
+          </ul>
+          <p><b>assets/</b></p>
+          <ul>
+            <li data-i18n="s2.assets.1"><b>brand-guidelines.md</b> — цвета, шрифты, тон</li>
+            <li data-i18n="s2.assets.2"><b>logo/</b> — файлы лого (svg, png)</li>
+            <li data-i18n="s2.assets.3"><b>testimonials.md</b> — отзывы клиентов, кейсы, цифры</li>
+          </ul>
+
+          <div class="cp-substage" data-i18n="s2.sub2">Шаг 2.2. Создаём .business/ за один прогон</div>
+          <p data-i18n="s2.p6">Это самый ценный промпт во всей инструкции. Скопируй его целиком, открой Claude Code в папке твоего проекта, вставь, ответь на вопросы по очереди — и в конце у тебя будет полностью заполненная папка .business/ под твою идею. Никаких «создай папку», «теперь файл» — один промпт делает всё.</p>
+          <div class="cp-prompt">
+            <div class="cp-prompt-top">
+              <span class="cp-prompt-label" data-i18n="prompt.label">Промпт для агента</span>
+              <button class="cp-prompt-copy" type="button" onclick="cpCopy(this)">📋 <span data-i18n="prompt.copy">Копировать</span></button>
+            </div>
+            <div class="cp-prompt-body" data-i18n="s2.prompt">Ты помогаешь мне создать папку .business/ для моего проекта по методологии вайб-кодинга. Это скрытая папка с бизнес-контекстом, которую ты потом будешь читать перед каждой задачей, связанной с бизнесом.
+
+МОЯ ИДЕЯ В ОДНОМ ПРЕДЛОЖЕНИИ:
+<span class="ph">[ВПИШИ СЮДА СВОЮ ИДЕЮ]</span>
+
+ДЕЙСТВУЙ ПО ШАГАМ:
+
+ШАГ 1. Создай в корне проекта папку .business/ и подпапки:
+company/, products/, audience/, goals/, economics/, marketing/, assets/.
+Создай INDEX.md в корне .business/ с заголовком «Бизнес-контекст проекта» и пустым оглавлением (заполнишь в конце).
+Добавь .business/ в .gitignore (создай .gitignore, если его нет).
+
+ШАГ 2. Возьми у меня интервью по семи блокам в таком порядке:
+company → products → audience → goals → economics → marketing → assets.
+
+ПРАВИЛА ИНТЕРВЬЮ:
+- Иди ПО ОДНОМУ блоку за раз. Закончил блок — записал файлы — перешёл к следующему.
+- В каждом блоке задавай вопросы ПО ОДНОМУ.
+- К КАЖДОМУ вопросу сразу предлагай 3-4 варианта ответа на основе моей идеи. Я выберу номер, или скажу «свой вариант: …», или скажу «не знаю».
+- Если я говорю «не знаю» — предложи свой вариант, который ты считаешь лучшим для моей идеи, и спроси, согласен ли я.
+- Если я даю короткий ответ — задай 1-2 уточняющих вопроса с вариантами.
+- Не задавай больше 4-5 вопросов на блок. Не превращай это в допрос.
+
+ШАГ 3. После каждого блока СРАЗУ записывай результат в соответствующие файлы внутри подпапки (например, company/about.md, company/team.md и т.д.). Структура файлов внутри подпапок:
+- company: about, team, values, legal
+- products: overview, pricing, product-1
+- audience: avatar, segments, objections, journey
+- goals: annual, quarterly, monthly, kpi
+- economics: unit-economics, revenue, costs, forecast
+- marketing: channels, funnel, competitors, content
+- assets: brand-guidelines, testimonials
+
+Если у меня в блоке мало данных — создай файл с заголовком и пометкой «заполнить позже», но не пропускай.
+
+ШАГ 4. После всех семи блоков обнови INDEX.md так, чтобы он содержал:
+- название проекта одной строкой,
+- одно предложение «о чём проект»,
+- список всех файлов с одной строкой описания каждого,
+- правило: «при работе читай только нужный файл, не загружай всё сразу».
+
+ШАГ 5. В самом конце покажи мне дерево созданной .business/ и спроси, что добавить или изменить.
+
+ВАЖНО:
+- Всегда отвечай мне на русском.
+- Не пиши код, не делай ничего, кроме создания файлов и интервью.
+- Не задавай все вопросы сразу — только по одному.
+
+Начинай с ШАГА 1, потом сразу переходи к ШАГУ 2 и блоку company.</div>
+          </div>
+          <div class="cp-callout" data-i18n="s2.callout">💡 Отвечай агенту вдумчиво. Чем подробнее ответы — тем умнее завтра будет Claude, когда ты будешь собирать сайт.</div>
+
+              <div class="cp-etap-done-bar">
+                <button class="cp-etap-done-btn" type="button" onclick="cpEtapDone(this)" data-i18n="etap.done">Готово</button>
+              </div>
+            </div>
+          </details>
+
+          <!-- Этап 3 -->
+          <details class="cp-etap">
+            <summary>
+              <span class="cp-etap-caret">▶</span>
+              <span class="cp-etap-title" data-i18n="s3.title">📋 Этап 3. Файл CLAUDE.md и папка plans/</span>
+              <span class="cp-etap-status" data-i18n="etap.expand">развернуть</span>
+            </summary>
+            <div class="cp-etap-body">
+          <p data-i18n="s3.p1">.business/ — это знания. Теперь поставим правила: как Claude должен с этими знаниями работать.</p>
+
+          <div class="cp-substage" data-i18n="s3.sub1">Шаг 3.1. Создать CLAUDE.md — мозг проекта</div>
+          <p data-i18n="s3.p2">CLAUDE.md — главный файл, который Claude читает перед каждым действием в этом проекте. В нём — оглавление, правила работы и ссылки на .business/.</p>
+          <div class="cp-callout cp-warn" data-i18n="s3.warn">⚠️ Не больше 200 строк — иначе сжигаешь токены каждый запрос.</div>
+          <p data-i18n="s3.p3">Скопируйте этот промт целиком и вставьте в окно Клоду:</p>
+          <div class="cp-prompt">
+            <div class="cp-prompt-top">
+              <span class="cp-prompt-label" data-i18n="prompt.label">Промпт для агента</span>
+              <button class="cp-prompt-copy" type="button" onclick="cpCopy(this)">📋 <span data-i18n="prompt.copy">Копировать</span></button>
+            </div>
+            <div class="cp-prompt-body" data-i18n="s3.prompt1">Создай в корне проекта файл CLAUDE.md по этому шаблону:
+
+# <span class="ph">[НАЗВАНИЕ ПРОЕКТА]</span> — навигация по проекту
+
+Карта проекта. Читай в начале каждой сессии: где что лежит и как с этим работать.
+
+## Что это за проект
+**<span class="ph">[НАЗВАНИЕ]</span>** — <span class="ph">[одно предложение: что это и для кого]</span>.
+Подробности — в `.business/INDEX.md`.
+
+## Структура репозитория
+[НАЗВАНИЕ]/
+├── CLAUDE.md             ← этот файл, навигация
+├── .business/            ← бизнес-контекст (скрытая папка, не в git)
+│   ├── INDEX.md          ← оглавление, входная точка
+│   ├── company/  products/  audience/
+│   └── goals/  economics/  marketing/  assets/
+├── plans/                ← технические планы (один план = одна функция)
+└── (код проекта появится позже)
+
+### Где что искать
+| Что нужно | Куда смотреть |
+|---|---|
+| Бизнес-логика, для кого | `.business/INDEX.md` |
+| Аудитория, боли | `.business/audience/` |
+| Продукт, тарифы, цены | `.business/products/` |
+| Цели и метрики | `.business/goals/` |
+| Экономика | `.business/economics/` |
+| Каналы, контент, активы | `.business/marketing/` |
+| Брендинг (лого, цвета) | `.business/assets/` |
+| Технические планы | `plans/` |
+
+## Ключевые принципы
+1. <span class="ph">[ПРИНЦИП 1]</span>
+2. <span class="ph">[ПРИНЦИП 2]</span>
+3. <span class="ph">[ПРИНЦИП 3]</span>
+
+## Стек
+<span class="ph">[ВСТАВЬ СТЕК — например: Next.js 14, React, Tailwind CSS, TypeScript]</span>.
+
+## Как работать
+- Перед задачей читай этот файл, затем нужные файлы из `.business/` и `plans/`.
+- Меняется бизнес-логика → обнови `.business/INDEX.md`. Меняется план → обнови файл в `plans/`. Появилась важная папка → обнови этот CLAUDE.md.
+
+## ВАЖНО: план для каждой новой функции
+Любая функция оформляется планом в папке `plans/`.
+1. Один план = одна функция.
+2. Имя файла: `YYYY-MM-DD-название-функции.md`.
+3. План делится на фазы со статусом `[ ]` / `[x]`.
+4. В конце плана — итог: реализован целиком или нет, что осталось.
+5. Любой агент актуализирует план после каждой сессии.
+
+## ВАЖНО: завершение каждого чата
+В конце сессии пиши рефлексию в `.business/история/YYYY-MM-DD-краткое-название.md` (создавай папку при необходимости):
+1. Какая задача. 2. Как решал. 3. Решил — да / нет / частично. 4. Что можно было лучше. 5. Как было и как стало.
+
+## Язык
+Всегда отвечай мне на русском.
+
+Действуй так:
+
+1. Прочитай .business/INDEX.md и все файлы внутри .business/, чтобы понять, что за проект мы делаем.
+2. Заполни в шаблоне все поля в квадратных скобках [ВСТАВЬ ...] на основе моих ответов из .business/.
+3. Если каких-то данных не хватает (например, я не указал стек) — задай мне уточняющие вопросы по одному за раз с 3-4 вариантами ответа.
+4. Проверь, что итоговый CLAUDE.md не больше 200 строк. Если больше — сократи, убирая воду, но НЕ удаляй разделы про план для каждой функции и про рефлексию.
+5. Покажи мне итоговый файл и спроси, что доработать.
+
+Всегда отвечай на русском.</div>
+          </div>
+          <div class="cp-callout" data-i18n="s3.callout1">⚠️ В шаблоне уже зашиты два важных правила: «план для каждой новой функции» и «рефлексия в конце каждого чата». После создания этого файла Claude будет следовать им автоматически — потому что читает CLAUDE.md перед каждым действием.</div>
+
+          <div class="cp-substage" data-i18n="s3.sub2">Шаг 3.2. Создать папку plans/</div>
+          <p data-i18n="s3.p4">plans/ — папка для технических планов реализации. Один план = одна функция. Завтра, на Дне 3, когда ты скажешь «сделай мне такую-то фичу» — Claude сначала напишет план в plans/, разобьёт его на фазы со статусами [ ] / [x], потом по нему пойдёт и будет отмечать сделанное. Новый чат не помнит, что было сделано. План — помнит.</p>
+          <div class="cp-prompt">
+            <div class="cp-prompt-top">
+              <span class="cp-prompt-label" data-i18n="prompt.label">Промпт для агента</span>
+              <button class="cp-prompt-copy" type="button" onclick="cpCopy(this)">📋 <span data-i18n="prompt.copy">Копировать</span></button>
+            </div>
+            <div class="cp-prompt-body" data-i18n="s3.prompt2">Создай в корне моего проекта папку plans/. Внутри создай файл README.md, в котором коротко (10-15 строк) опиши:
+
+1. Что такое папка plans/ — это место для технических планов реализации функций.
+2. Правило: один план = одна функция.
+3. Формат имени файла плана: YYYY-MM-DD-название-функции.md
+4. Каждый план делится на фазы. У каждой фазы статус [ ] или [x].
+5. В конце плана — итоговый блок: реализован целиком или нет, что осталось.
+6. Любой агент, работающий с планом, обязан его актуализировать: отмечать сделанные фазы, дописывать что сделал.
+
+После создания покажи дерево корня проекта (CLAUDE.md, .business/, plans/), чтобы я убедился, что всё на месте.</div>
+          </div>
+
+          <div class="cp-substage" data-i18n="s3.sub3">Шаг 3.3. Критика плана — ключевая фишка методологии</div>
+          <p data-i18n="s3.p5">Это самое важное место в дне. Любой план, который написал Claude — сырой. Он написан «в один проход», без вопросов, без критики. Правильный цикл:</p>
+          <ul>
+            <li data-i18n="s3.cycle.1">Claude пишет первичный план в plans/YYYY-MM-DD-название.md.</li>
+            <li data-i18n="s3.cycle.2">Ты копируешь ссылку на этот файл, открываешь новый чат.</li>
+            <li data-i18n="s3.cycle.3">В новом чате просишь провести глубокое исследование и критику плана через параллельных агентов.</li>
+            <li data-i18n="s3.cycle.4">Возвращаешься к исходному плану и обновляешь его с учётом критики.</li>
+            <li data-i18n="s3.cycle.5">Только после этого — реализация.</li>
+          </ul>
+          <div class="cp-prompt">
+            <div class="cp-prompt-top">
+              <span class="cp-prompt-label" data-i18n="prompt.label">Промпт для агента</span>
+              <button class="cp-prompt-copy" type="button" onclick="cpCopy(this)">📋 <span data-i18n="prompt.copy">Копировать</span></button>
+            </div>
+            <div class="cp-prompt-body" data-i18n="s3.prompt3">У меня есть первичный план реализации: <span class="ph">[путь к файлу, например plans/2026-04-24-landing.md]</span>.
+
+Задача:
+1. Прочитай план целиком.
+2. Прочитай .business/INDEX.md и связанные файлы, чтобы понять контекст проекта.
+3. Запусти 3 параллельных субагента на глубокое исследование:
+   - агент 1: проверь техническую реализуемость каждой фазы, найди риски и подводные камни
+   - агент 2: проверь соответствие плана бизнес-целям из .business/, найди пробелы и противоречия
+   - агент 3: сделай ревью UX/пользовательского сценария — где пользователь может застрять, что непонятно
+4. Собери их выводы в один отчёт с конкретными правками: что добавить, что убрать, что переформулировать.
+5. Покажи мне отчёт. Я решу, какие правки принять, и попрошу тебя обновить файл плана.
+
+Всегда отвечай на русском.</div>
+          </div>
+          <div class="cp-callout" data-i18n="s3.callout2">💡 Почему это работает: один агент в одном чате не может «посмотреть на свою работу со стороны». Новый чат + параллельные субагенты — это и есть «взгляд со стороны», который ловит 80% проблем до того, как ты начал кодить.</div>
+
+              <div class="cp-etap-done-bar">
+                <button class="cp-etap-done-btn" type="button" onclick="cpEtapDone(this)" data-i18n="etap.done">Готово</button>
+              </div>
+            </div>
+          </details>
+
+          <!-- Этап 4 -->
+          <details class="cp-etap">
+            <summary>
+              <span class="cp-etap-caret">▶</span>
+              <span class="cp-etap-title" data-i18n="s4.title">✅ Этап 4. Проверочный цикл и правила работы</span>
+              <span class="cp-etap-status" data-i18n="etap.expand">развернуть</span>
+            </summary>
+            <div class="cp-etap-body">
+          <p data-i18n="s4.p1">Самый важный этап. Прямо сейчас проверим, что вся машина работает.</p>
+
+          <div class="cp-substage" data-i18n="s4.sub1">Шаг 4.1. Тест-цикл</div>
+          <p data-i18n="s4.p2">Дай Claude микро-задачу и проверь, что он читает CLAUDE.md и .business/INDEX.md перед началом, создаёт план в plans/, а в конце пишет рефлексию.</p>
+          <div class="cp-prompt">
+            <div class="cp-prompt-top">
+              <span class="cp-prompt-label" data-i18n="prompt.label">Промпт для агента</span>
+              <button class="cp-prompt-copy" type="button" onclick="cpCopy(this)">📋 <span data-i18n="prompt.copy">Копировать</span></button>
+            </div>
+            <div class="cp-prompt-body" data-i18n="s4.prompt1">Тест-задача: создай в корне проекта файл HELLO.md с одной строкой «Привет от [подставь название проекта из .business/INDEX.md]».
+
+Действуй полностью по правилам из CLAUDE.md:
+
+1. Сначала прочитай CLAUDE.md и .business/INDEX.md.
+2. Создай план в plans/ с фазами и статусами (даже для такой простой задачи).
+3. Выполни задачу.
+4. Обнови план — отметь фазы как [x].
+5. В конце сессии запиши рефлексию в .business/история/ по формату из CLAUDE.md.
+
+Если что-то непонятно — спроси.</div>
+          </div>
+          <p data-i18n="s4.p3">После выполнения проверь руками: появился ли HELLO.md в корне? появился ли план в plans/? появился ли файл рефлексии в .business/история/? Если что-то не появилось — значит, CLAUDE.md написан плохо. Попроси Claude доработать его и повтори тест.</p>
+
+          <div class="cp-substage" data-i18n="s4.sub2">Шаг 4.2. Семь правил работы с агентом</div>
+          <p data-i18n="s4.p4">Выучи эти семь правил как мантру. Это разница между тем, кто бьётся 5 часов с одной фичей, и тем, кто делает её за 30 минут.</p>
+          <ul>
+            <li data-i18n="s4.rule.1"><b>Один чат — одна задача.</b> Закончил → закрой чат → открой новый. Очищает контекст и твою «оперативку».</li>
+            <li data-i18n="s4.rule.2"><b>Контекст ≤ 60%.</b> Если окно заполнено больше — выполни /compact или /clear. Иначе агент тупит.</li>
+            <li data-i18n="s4.rule.3"><b>Ошибки чини в том же чате</b>, в котором писал функцию. Не открывай новый — потеряешь контекст.</li>
+            <li data-i18n="s4.rule.4"><b>Долго думает (5–10 мин) — НЕ перезапускай сразу.</b> Подожди. Если совсем висит — /clear и сформулируй задачу короче.</li>
+            <li data-i18n="s4.rule.5"><b>Ничего не делай руками.</b> Папки, файлы, команды — всё через Claude.</li>
+            <li data-i18n="s4.rule.6"><b>Каждая функция = план в plans/</b> (уже зашито в CLAUDE.md).</li>
+            <li data-i18n="s4.rule.7"><b>Каждый чат заканчивается рефлексией</b> в .business/история/ (тоже зашито в CLAUDE.md).</li>
+          </ul>
+
+          <div class="cp-substage" data-i18n="s4.sub3">Шаг 4.3. «10 причин обосраться» — убийственный промпт</div>
+          <p data-i18n="s4.p5">Это любимый стресс-тест. Запускай его перед каждым крупным шагом: перед эфиром, перед деплоем, перед запуском продаж. Находит дыры, которые ты сам не увидишь. Прямо сейчас прогони через него свой CLAUDE.md и .business/:</p>
+          <div class="cp-prompt">
+            <div class="cp-prompt-top">
+              <span class="cp-prompt-label" data-i18n="prompt.label">Промпт для агента</span>
+              <button class="cp-prompt-copy" type="button" onclick="cpCopy(this)">📋 <span data-i18n="prompt.copy">Копировать</span></button>
+            </div>
+            <div class="cp-prompt-body" data-i18n="s4.prompt2">Сейчас у меня есть CLAUDE.md и папка .business/. Завтра я буду собирать по ним лендинг моего проекта.
+
+Твоя задача — стресс-тест. Найди 10 причин, из-за которых мы обосрёмся:
+
+- где в CLAUDE.md двусмысленности, которые ты как агент можешь понять неправильно
+- где в .business/ пробелы, из-за которых решения придётся выдумывать
+- где бизнес-логика противоречит сама себе
+- где стек или принципы противоречат реальности моей идеи
+- где я переоцениваю объём одного дня (типа «соберём маркетплейс за день»)
+
+Не стесняйся. Критикуй жёстко. Я хочу найти эти 10 причин сейчас, а не в проде.
+
+В конце дай список конкретных правок: что и в каком файле исправить, чтобы этих причин не было.</div>
+          </div>
+          <div class="cp-callout" data-i18n="s4.callout">💡 Этот же промпт применяй к любому крупному решению: план фичи, оффер на лендинге, структура воронки, схема деплоя.</div>
+
+              <div class="cp-etap-done-bar">
+                <button class="cp-etap-done-btn" type="button" onclick="cpEtapDone(this)" data-i18n="etap.done">Готово</button>
+              </div>
+            </div>
+          </details>
+
+          <!-- Этап 5 -->
+          <details class="cp-etap">
+            <summary>
+              <span class="cp-etap-caret">▶</span>
+              <span class="cp-etap-title" data-i18n="s5.title">🛠 Этап 5. Скиллы</span>
+              <span class="cp-etap-status" data-i18n="etap.expand">развернуть</span>
+            </summary>
+            <div class="cp-etap-body">
+          <p data-i18n="s5.p1">Скилл — это папка с инструкцией, которую Claude подтягивает сам, когда видит подходящий триггер. Один скилл умеет делать дизайн, другой — парсить PDF, третий — проводить 12-этапный воркфлоу от ресёрча до деплоя.</p>
+          <p data-i18n="s5.p2">Скилл — это папка в <code>.claude/skills/название-скилла/</code>. Внутри: <b>SKILL.md</b> (сохранённый промпт-инструкция + триггер) и опциональные файлы (шаблоны, примеры, скрипты). Когда ты пишешь задачу под триггер — Claude сам подгружает содержимое скилла.</p>
+          <p data-i18n="s5.p3">Два уровня установки: <b>глобальные</b> (<code>~/.claude/skills/</code>) — во всех проектах; <b>локальные</b> (<code>.claude/skills/</code> в корне проекта) — только в этом проекте.</p>
+          <div class="cp-callout" data-i18n="s5.callout1">🎯 Правило: ставь локально, если скилл нужен конкретному проекту. Глобально — только то, чем реально пользуешься везде. Чем меньше скиллов — тем меньше токенов на их триггеры.</div>
+
+          <div class="cp-callout cp-warn" data-i18n="s5.warn">⚠️ <b>Безопасность скиллов.</b> Скилл — исполняемая инструкция от автора. Плохой может прочитать твой .env, отправить ключи на внешний URL, удалить файлы. Перед установкой ЛЮБОГО скилла: открой репозиторий → прочитай README и SKILL.md → поищи опасные паттерны (curl, wget, .env, rm -rf) → проверь звёзды и автора. Ставь от Anthropic или из крупных проверенных каталогов (Smithery).</div>
+          <div class="cp-prompt">
+            <div class="cp-prompt-top">
+              <span class="cp-prompt-label" data-i18n="s5.auditLabel">Промпт-аудит любого скилла</span>
+              <button class="cp-prompt-copy" type="button" onclick="cpCopy(this)">📋 <span data-i18n="prompt.copy">Копировать</span></button>
+            </div>
+            <div class="cp-prompt-body" data-i18n="s5.prompt1">Я хочу установить скилл по ссылке <span class="ph">[ВСТАВЬ URL РЕПОЗИТОРИЯ]</span>. Скачай его исходники, прочитай содержимое (README.md, SKILL.md, все .md и .sh файлы) и проверь, нет ли там опасных операций:
+
+- чтения .env или других файлов с секретами
+- отправки данных на внешние URL (curl, wget, fetch)
+- удаления файлов (rm, unlink)
+- запуска внешних бинарников
+- подмены существующих файлов проекта
+
+Дай вердикт: безопасно / подозрительно / опасно — и объясни почему по пунктам. Если опасно — НЕ ставь.</div>
+          </div>
+
+          <div class="cp-substage" data-i18n="s5.sub1">Шаг 5.1. Skill Creator от Anthropic — скилл для создания скиллов</div>
+          <p data-i18n="s5.p4">Один раз установил — дальше любой повторяющийся промпт за 5 минут превращаешь в скилл.</p>
+          <div class="cp-prompt">
+            <div class="cp-prompt-top">
+              <span class="cp-prompt-label" data-i18n="prompt.label">Промпт для агента</span>
+              <button class="cp-prompt-copy" type="button" onclick="cpCopy(this)">📋 <span data-i18n="prompt.copy">Копировать</span></button>
+            </div>
+            <div class="cp-prompt-body" data-i18n="s5.prompt2">Установи skill-creator от Anthropic в мой текущий проект (.claude/skills/, не глобально).
+
+1. Найди официальный репозиторий Anthropic со skill-creator (на github.com/anthropics).
+2. Проведи аудит безопасности (чтение .env, curl/wget наружу, rm).
+3. Если безопасно — установи ЛОКАЛЬНО в .claude/skills/skill-creator/.
+4. Покажи, как теперь создать свой первый скилл: какой триггер, какая команда.</div>
+          </div>
+          <p data-i18n="s5.p5">Попробуй сразу создать свой первый скилл — например, «ежедневный отчёт по проекту»:</p>
+          <div class="cp-prompt">
+            <div class="cp-prompt-top">
+              <span class="cp-prompt-label" data-i18n="prompt.label">Промпт для агента</span>
+              <button class="cp-prompt-copy" type="button" onclick="cpCopy(this)">📋 <span data-i18n="prompt.copy">Копировать</span></button>
+            </div>
+            <div class="cp-prompt-body" data-i18n="s5.prompt3">Используй skill-creator от Anthropic. Помоги мне создать свой личный скилл с названием "daily-report".
+
+Суть скилла: когда я говорю «собери отчёт за день» — скилл должен:
+1. Прочитать последние коммиты в git
+2. Прочитать .business/история/ за сегодня
+3. Прочитать plans/ и отметить, какие фазы были закрыты сегодня
+4. Сформировать короткий отчёт в формате «сделано / в процессе / заблокировано»
+5. Вывести его в консоль
+
+Задай мне уточняющие вопросы по одному. После создания — протестируй скилл прямо здесь.</div>
+          </div>
+
+          <div class="cp-substage" data-i18n="s5.sub2">Шаг 5.2. Frontend Design — скилл для «не-ИИшного» дизайна</div>
+          <p data-i18n="s5.p6">Самый частый вопрос: «Как сделать, чтобы сайт не выглядел как ИИшный?» Ответ — frontend-design от Anthropic: нормальная типографика, сетки, отступы, современная эстетика.</p>
+          <div class="cp-prompt">
+            <div class="cp-prompt-top">
+              <span class="cp-prompt-label" data-i18n="prompt.label">Промпт для агента</span>
+              <button class="cp-prompt-copy" type="button" onclick="cpCopy(this)">📋 <span data-i18n="prompt.copy">Копировать</span></button>
+            </div>
+            <div class="cp-prompt-body" data-i18n="s5.prompt4">Установи skill frontend-design от Anthropic в мой текущий проект (.claude/skills/, не глобально).
+
+1. Найди официальный репозиторий Anthropic с этим скиллом.
+2. Аудит безопасности.
+3. Если безопасно — поставь локально.
+4. Покажи, как его триггерить: по каким ключевым словам Claude сам поймёт, что пора использовать этот скилл.</div>
+          </div>
+          <div class="cp-callout" data-i18n="s5.callout2">🎨 На Дне 3 при сборке лендинга Claude сам подтянет этот скилл, как только ты скажешь «сделай красиво» или «собери лендинг по brand-guidelines».</div>
+
+          <div class="cp-substage" data-i18n="s5.sub3">Шаг 5.3. PDF-скилл от Anthropic (опционально)</div>
+          <p data-i18n="s5.p7">Если в твоём бизнесе есть документы (договоры, прайсы, отчёты, чеки) — поставь PDF skill: читает PDF, генерирует PDF из шаблонов, извлекает данные из сканов.</p>
+          <div class="cp-prompt">
+            <div class="cp-prompt-top">
+              <span class="cp-prompt-label" data-i18n="prompt.label">Промпт для агента</span>
+              <button class="cp-prompt-copy" type="button" onclick="cpCopy(this)">📋 <span data-i18n="prompt.copy">Копировать</span></button>
+            </div>
+            <div class="cp-prompt-body" data-i18n="s5.prompt5">Установи skill pdf от Anthropic в мой текущий проект (.claude/skills/, не глобально). Аудит безопасности → установка → покажи как пользоваться.</div>
+          </div>
+
+          <div class="cp-substage" data-i18n="s5.sub4">Шаг 5.4. Smithery — выбери один скилл под свою задачу</div>
+          <p data-i18n="s5.p8">Smithery (smithery.ai) — крупнейший каталог скиллов и MCP-серверов. Выбери <b>один</b> под свою идею: лендинг → Frontend Design / UI; клиенты → CRM / Email / Slack; парсинг → Browser / Scraping; аналитика → Google Sheets / Notion / Airtable; контент → Content / Marketing. Не ставь всё подряд — каждый лишний скилл жрёт токены. Используй те же два промпта (аудит → установка локально).</p>
+
+          <div class="cp-substage" data-i18n="s5.sub5">Шаг 5.5. Финальная проверка</div>
+          <div class="cp-prompt">
+            <div class="cp-prompt-top">
+              <span class="cp-prompt-label" data-i18n="prompt.label">Промпт для агента</span>
+              <button class="cp-prompt-copy" type="button" onclick="cpCopy(this)">📋 <span data-i18n="prompt.copy">Копировать</span></button>
+            </div>
+            <div class="cp-prompt-body" data-i18n="s5.prompt6">Покажи мне дерево папки .claude/skills/ в текущем проекте и список всех скиллов, доступных Claude в этой сессии. Подтверди, что ничего из них не попало в мою глобальную ~/.claude/.
+
+Для каждого установленного скилла коротко (1 строка) напиши, по какому триггеру он активируется.</div>
+          </div>
+
+              <div class="cp-etap-done-bar">
+                <button class="cp-etap-done-btn" type="button" onclick="cpEtapDone(this)" data-i18n="etap.done">Готово</button>
+              </div>
+            </div>
+          </details>
+
+          <!-- Этап 6 -->
+          <details class="cp-etap">
+            <summary>
+              <span class="cp-etap-caret">▶</span>
+              <span class="cp-etap-title" data-i18n="s6.title">🌐 Этап 6. Playwright — Claude управляет браузером</span>
+              <span class="cp-etap-status" data-i18n="etap.expand">развернуть</span>
+            </summary>
+            <div class="cp-etap-body">
+          <p data-i18n="s6.p1">Playwright MCP — одна из главных «вау»-фишек вайб-кодинга. Claude открывает у тебя настоящий браузер и сам тыкает на кнопки, заполняет формы, делает скриншоты, проверяет мобильную вёрстку: проверяет твой лендинг, тестирует чужой сайт, гоняет регрессию после правок.</p>
+          <div class="cp-callout cp-warn" data-i18n="s6.warn">⚠️ У некоторых Playwright работает нестабильно, у других — идеально. Если полезут странности — не зависай, поставь альтернативу (Chrome DevTools MCP) и иди дальше.</div>
+          <div class="cp-prompt">
+            <div class="cp-prompt-top">
+              <span class="cp-prompt-label" data-i18n="s6.installLabel">Промпт для агента — установка</span>
+              <button class="cp-prompt-copy" type="button" onclick="cpCopy(this)">📋 <span data-i18n="prompt.copy">Копировать</span></button>
+            </div>
+            <div class="cp-prompt-body" data-i18n="s6.prompt1">Установи Playwright MCP в мой текущий проект Claude Code.
+
+1. Найди официальный пакет (Microsoft Playwright MCP или @modelcontextprotocol/playwright).
+2. Проведи аудит безопасности — это браузер с полным доступом, важно понять, что он делает.
+3. Если безопасно — установи ЛОКАЛЬНО для этого проекта (в .mcp.json или настройки проекта, НЕ глобально).
+4. После установки покажи, как его вызывать, какие команды доступны (navigate, click, screenshot, fill и т.д.).
+5. Сделай проверочный прогон: открой google.com, сделай скриншот, покажи мне.</div>
+          </div>
+          <p data-i18n="s6.p2">Как только у тебя будет лендинг (на Дне 3), попробуй первый автотест:</p>
+          <div class="cp-prompt">
+            <div class="cp-prompt-top">
+              <span class="cp-prompt-label" data-i18n="s6.autotestLabel">Промпт для агента — автотест</span>
+              <button class="cp-prompt-copy" type="button" onclick="cpCopy(this)">📋 <span data-i18n="prompt.copy">Копировать</span></button>
+            </div>
+            <div class="cp-prompt-body" data-i18n="s6.prompt2">Используй Playwright MCP. Открой мой локальный сайт по адресу http://localhost:3000.
+
+1. Сделай скриншот первого экрана.
+2. Прокрути страницу вниз до конца — сделай скриншот каждого блока.
+3. Найди главную форму (кнопка «Купить» / «Оставить заявку»), заполни её тестовыми данными (имя: Тест, email: test@example.com), нажми кнопку.
+4. Что произошло после отправки? Скриншот результата.
+5. Переключи viewport на мобилку (iPhone 14). Повтори прогон.
+6. Собери отчёт: что работает, где баги, какие блоки выглядят плохо на мобилке.</div>
+          </div>
+
+              <div class="cp-etap-done-bar">
+                <button class="cp-etap-done-btn" type="button" onclick="cpEtapDone(this)" data-i18n="etap.done">Готово</button>
+              </div>
+            </div>
+          </details>
+
+          <div class="cp-substage" data-i18n="not.title">Чего ты сегодня и завтра НЕ делаешь</div>
+          <ul>
+            <li data-i18n="not.1">Маркетплейсы, магазины, сложный SaaS</li>
+            <li data-i18n="not.2">Авторизация пользователей</li>
+            <li data-i18n="not.3">Приём платежей</li>
+            <li data-i18n="not.4">Деплой на свой сервер, БД</li>
+            <li data-i18n="not.5">Мобильные приложения</li>
+          </ul>
+          <div class="cp-callout" data-i18n="not.callout">День 3 = одна страница + одна форма. Не пытайся охватить весь мир.</div>
+
+          <!-- ===== Итог дня 2 ===== -->
+          <h3 data-i18n="sum.h3">✅ Итог дня 2</h3>
+          <p data-i18n="sum.p1">У тебя получилось всё, что было в этапах:</p>
+          <ul class="cp-check-done">
+            <li data-i18n="sum.li1">Этап 1. Включены звуковые уведомления и правила безопасности</li>
+            <li data-i18n="sum.li2">Этап 2. Создана папка .business/ — мозг бизнеса</li>
+            <li data-i18n="sum.li3">Этап 3. Готовы CLAUDE.md и папка plans/</li>
+            <li data-i18n="sum.li4">Этап 4. Пройден проверочный цикл, усвоены 7 правил</li>
+            <li data-i18n="sum.li5">Этап 5. Установлены скиллы</li>
+            <li data-i18n="sum.li6">Этап 6. Подключён Playwright</li>
+          </ul>
+          <p data-i18n="sum.p2">Если всё готово — нажимай кнопку «Готово».</p>
+
+          <!-- ===== Чек-поинт «Готово» ===== -->
+          <div class="cp-done-bar">
+            <button class="cp-done-btn" id="cp-done-btn" type="button" onclick="cpDone()" data-i18n="sum.doneBtn">Готов день 2</button>
+          </div>
+        </article>
+      </div>
+
+    </div>
+{% endraw %}{% endblock %}
+{% block scripts %}{% raw %}
+<!-- ===== Словарь EN (B2, простой международный английский). JSON безопасно несёт кавычки, переносы и обратные кавычки. ===== -->
+<script type="application/json" id="i18n-en">
+{
+  "_title": "Day 2 — 2 AI employees · AI Employees Workshop — ONCOUNT",
+
+  "nav.main": "Main",
+  "nav.dashboard": "🏠 Dashboard",
+  "nav.leads": "📋 All requests",
+  "nav.createSection": "Create a request",
+  "nav.transfer": "➡️ Refer a client",
+  "nav.tools": "Tools",
+  "nav.links": "🔗 Referral links",
+  "nav.kb": "Knowledge base",
+  "nav.courses": "🎓 Courses",
+  "nav.messages": "📨 Message templates",
+  "nav.products": "📦 Plans and services",
+  "nav.faq": "❓ FAQ",
+  "nav.tg": "💬 TG",
+  "nav.logout": "↩️ Log out",
+
+  "page.title": "AI Employees Workshop",
+
+  "cur.back": "← Back to program",
+  "cur.progress": "Progress",
+  "cur.day1": "Day 1 — Setup",
+  "cur.day1.live": "Day 1 Live Session",
+  "cur.day1.guide": "Day 1 Guide",
+  "cur.day2": "Day 2 — 2 AI employees: skills, folders",
+  "cur.day2.live": "Day 2 Live Session",
+  "cur.day2.guide": "Day 2 Guide",
+  "cur.day3": "Day 3 — Result: website + presentation",
+  "cur.day3.live": "Day 3 Live Session",
+  "cur.day3.guide": "Day 3 Guide",
+
+  "lesson.badge": "Day 2",
+  "lesson.h2": "2 AI employees: skills, folders",
+
+  "video.tag": "Live recording · YouTube",
+  "video.title": "Day 2 Live — 2 AI employees",
+  "video.sub": "Click to watch the recording",
+  "video.watched": "Watched",
+
+  "tc.title": "🕐 Live timecodes",
+  "tc.hint": "click to expand",
+  "tc.1": "Networking: club members get to know each other",
+  "tc.2": "ONCOUNT and the partner program: 3 levels of income",
+  "tc.3": "Client dashboard and partner portal (built in 6 hours)",
+  "tc.4": "Telegram bot for partners",
+  "tc.5": "Four “Claudes”: chat, Coworker, Claude Code, Claude in Chrome",
+  "tc.6": "Folders as your “second brain”, skills and MD files",
+  "tc.7": "Voice input and Gamma: a presentation in seconds",
+  "tc.8": "Analysis of objections from 100 calls",
+  "tc.9": "Claude in Chrome: auto-connects on LinkedIn",
+  "tc.10": "Claude instead of a system administrator",
+  "tc.11": "MD files as memory; connecting CRM, Zoom, Slack",
+  "tc.12": "Instagram: auto-replies and analysis of viral Reels",
+  "tc.13": "Practice: install VS Code + Claude Code from scratch",
+  "tc.14": "Voice input (Whisper) and sound notifications",
+  "tc.15": "Security: .env and secret files",
+  "tc.16": "Folder structure of the “second brain”",
+  "tc.17": "CLAUDE.md — the agent's rules and memory",
+  "tc.18": "Phased plan and the 5-step check cycle",
+  "tc.19": "Skills: bulletproof, skill-creator, frontend-design + security",
+  "tc.20": "MCP servers and subagents",
+  "tc.21": "Telegram bot via BotFather + Railway",
+  "tc.22": "Summary and plan for the next session",
+
+  "deck.btn": "📊 View the presentation",
+
+  "guide.h3": "📋 Guide for today",
+  "goal.title": "🎯 What you should end up with",
+  "goal.p1": "By the end of this guide you have a fully equipped workplace for vibe coding and a fully set up “brain” for your project, which the agent will read before every action. Tomorrow, on Day 3, you will use this brain to build a working website.",
+  "goal.p2": "<b>Time:</b> 90–120 minutes. Claude does most of it, you just tell it what to do.",
+  "goal.warn": "<b>The main rule today:</b> do nothing by hand. Don't create folders with the “New Folder” button, don't write code in files manually. Everything goes through Claude Code. You learn to manage, not to do the work yourself.",
+
+  "plan.h3": "📅 Day 2 plan",
+  "plan.intro": "So you don't get lost, the guide is split into stages. Do them in order, don't skip. You can take a break after each stage.",
+  "plan.1": "🔒 Stage 1. Claude Code security and sound notifications — ~10 min",
+  "plan.2": "🧠 Stage 2. The .business/ folder — the brain of your business — ~25 min",
+  "plan.3": "📋 Stage 3. CLAUDE.md, the plans/ folder and plan critique — ~20 min",
+  "plan.4": "✅ Stage 4. The check cycle, 7 rules, “10 ways to fail” — ~15 min",
+  "plan.5": "🛠 Stage 5. Skills: Skill Creator, Frontend Design, PDF, Smithery — ~20 min",
+  "plan.6": "🌐 Stage 6. Playwright — Claude controls the browser — ~15 min",
+
+  "prompt.label": "Prompt for the agent",
+  "prompt.copy": "Copy",
+  "etap.expand": "expand",
+  "etap.done": "Done",
+
+  "s1.title": "🔒 Stage 1. Claude Code security and sound notifications",
+  "s1.p1": "Before we let the agent near the project, let's tune two important settings: a sound ping and basic restrictions.",
+  "s1.sub1": "Step 1.1. Sound notifications (hooks)",
+  "s1.p2": "<b>The problem:</b> you start a task, go to make tea, Claude finishes in 2 minutes and waits for your answer — but you think it is still working. Half an hour lost.",
+  "s1.p3": "<b>The fix — hooks:</b> a sound when a task is done and when permission is requested. Open VS Code, open Claude Code in any folder (if there is none — create a folder <code>moy-proekt</code> via File → Open Folder, Claude does the rest). In the chat:",
+  "s1.prompt1": "Set up sound notifications (hooks) for me in .claude/settings.json:\n\n1. A sound when a task is finished (Stop hook) — so I can hear when you finished the work.\n2. A sound when permission is requested (Notification hook) — so I can hear when you are waiting for my “yes/no”.\n\nUse the system sound of my operating system. Show the final .claude/settings.json file and explain what you added.",
+  "s1.p4": "<b>Check:</b> give it any task (“count 2+2 and finish the work”). It should beep.",
+  "s1.sub2": "Step 1.2. Basic security rules",
+  "s1.p5": "The agent is a powerful tool. Without limits it can accidentally delete files, read secrets, send your data out. Let's set four hard restrictions:",
+  "s1.li1": "<code>rm -rf *</code> — wiping the disk",
+  "s1.li2": "<code>export + curl</code> — leaking secrets out",
+  "s1.li3": "access to <code>.env</code> — keep API keys and passwords safe",
+  "s1.li4": "<code>wget</code> with variables — sending your data out",
+  "s1.prompt2": "Set up security rules for me in .claude/settings.json. FORBID:\n\n1. Commands like `rm -rf` and any mass deletion of files or folders without my explicit confirmation.\n2. The `export` + `curl` combination — any sending of environment variables out through curl.\n3. Reading .env files and any files with secrets, keys or passwords.\n4. `wget` with substituted variables — any sending of my data out through wget.\n\nUse the permissions.deny section (or the equivalent section in the current version of Claude Code).\n\nAfter the change, show the final .claude/settings.json file and explain each rule in one line.",
+  "s1.p6": "Done. Now even if you accidentally say “delete everything”, the agent will stop and ask again.",
+
+  "s2.title": "🧠 Stage 2. The .business/ folder — the brain of your business",
+  "s2.p1": "This is the main concept of Day 2. If you do only this stage and nothing else, you will already be far ahead.",
+  "s2.p2": "<b>Why.</b> Without business context, Claude starts from zero every time — it doesn't know your audience, prices, goals, design. The result is weak, generic, “like everyone else”. With the .business/ folder, Claude knows everything about you and works like a member of your team.",
+  "s2.p3": "A folder with a dot means hidden. It automatically goes into .gitignore and does not leak into a public repository. Inside it is your secret knowledge about the business.",
+  "s2.sub1": "Step 2.1. Architecture of the .business/ folder",
+  "s2.p4": "This is an example, not a rule. You can have any structure — the main thing is that all the information about your business is inside, and INDEX.md explains where to find what.",
+  "s2.p5": "<b>INDEX.md</b> — the map of the business folder. Claude reads it first, before any business task. Here are the project name, links to all files and the rule “don't load everything at once”.",
+  "s2.company.1": "<b>about.md</b> — who we are, the mission in one sentence, the founding year, the format (solo / team)",
+  "s2.company.2": "<b>team.md</b> — who does what, areas of responsibility, contacts",
+  "s2.company.3": "<b>values.md</b> — 3–5 values we follow when making decisions",
+  "s2.company.4": "<b>legal.md</b> — legal form, details, country, tax mode",
+  "s2.products.1": "<b>overview.md</b> — what we sell in general, in one picture",
+  "s2.products.2": "<b>pricing.md</b> — all plans, what each one includes, prices, discounts",
+  "s2.products.3": "<b>product-1.md</b> — description of a specific product: the job, features, how it works, what stage it is at",
+  "s2.audience.1": "<b>avatar.md</b> — the portrait of the ideal client: age, city, income, occupation",
+  "s2.audience.2": "<b>segments.md</b> — what audience segments we have and how they differ",
+  "s2.audience.3": "<b>objections.md</b> — the main objections and fears when buying + how we handle them",
+  "s2.audience.4": "<b>journey.md</b> — the client's path: how they learned about us → how they came → how they bought → how they stayed",
+  "s2.goals.1": "<b>annual.md</b> — the big goal for the year (revenue, audience, product)",
+  "s2.goals.2": "<b>quarterly.md</b> — three or four goals for the quarter",
+  "s2.goals.3": "<b>monthly.md</b> — the focus of the month, 1–3 points maximum",
+  "s2.goals.4": "<b>kpi.md</b> — which metrics we measure weekly or monthly",
+  "s2.econ.1": "<b>unit-economics.md</b> — how much it costs to get a client, how much they bring, the margin",
+  "s2.econ.2": "<b>revenue.md</b> — the income structure (where the money comes from)",
+  "s2.econ.3": "<b>costs.md</b> — the cost structure (where the money goes)",
+  "s2.econ.4": "<b>forecast.md</b> — a forecast for the next 3–6 months",
+  "s2.mkt.1": "<b>channels.md</b> — all acquisition channels and their state (working / testing / dead)",
+  "s2.mkt.2": "<b>funnel.md</b> — the funnel: views → clicks → leads → sales → retention",
+  "s2.mkt.3": "<b>competitors.md</b> — 3–5 main competitors, how we are different",
+  "s2.mkt.4": "<b>content.md</b> — the content plan and the tone of communication",
+  "s2.assets.1": "<b>brand-guidelines.md</b> — colors, fonts, tone",
+  "s2.assets.2": "<b>logo/</b> — logo files (svg, png)",
+  "s2.assets.3": "<b>testimonials.md</b> — client reviews, cases, numbers",
+  "s2.sub2": "Step 2.2. Create .business/ in one run",
+  "s2.p6": "This is the most valuable prompt in the whole guide. Copy it in full, open Claude Code in your project folder, paste it, answer the questions one by one — and at the end you will have a fully filled .business/ folder for your idea. No “create a folder”, “now a file” — one prompt does it all.",
+  "s2.prompt": "You are helping me create a .business/ folder for my project, using the vibe coding method. This is a hidden folder with business context that you will later read before every business task.\n\nMY IDEA IN ONE SENTENCE:\n<span class=\"ph\">[WRITE YOUR IDEA HERE]</span>\n\nACT STEP BY STEP:\n\nSTEP 1. In the project root create a .business/ folder and the subfolders:\ncompany/, products/, audience/, goals/, economics/, marketing/, assets/.\nCreate INDEX.md in the root of .business/ with the title “Project business context” and an empty table of contents (you will fill it at the end).\nAdd .business/ to .gitignore (create .gitignore if it is not there).\n\nSTEP 2. Interview me on seven blocks in this order:\ncompany → products → audience → goals → economics → marketing → assets.\n\nINTERVIEW RULES:\n- Go ONE block at a time. Finished a block — wrote the files — moved to the next.\n- In each block ask questions ONE at a time.\n- For EACH question, right away offer 3-4 answer options based on my idea. I will pick a number, or say “my option: …”, or say “I don't know”.\n- If I say “I don't know” — offer your own option that you think is best for my idea, and ask if I agree.\n- If I give a short answer — ask 1-2 follow-up questions with options.\n- Don't ask more than 4-5 questions per block. Don't turn it into an interrogation.\n\nSTEP 3. After each block, RIGHT AWAY write the result into the matching files inside the subfolder (for example, company/about.md, company/team.md and so on). The file structure inside the subfolders:\n- company: about, team, values, legal\n- products: overview, pricing, product-1\n- audience: avatar, segments, objections, journey\n- goals: annual, quarterly, monthly, kpi\n- economics: unit-economics, revenue, costs, forecast\n- marketing: channels, funnel, competitors, content\n- assets: brand-guidelines, testimonials\n\nIf I have little data in a block — create the file with a title and a “fill in later” note, but don't skip it.\n\nSTEP 4. After all seven blocks, update INDEX.md so that it contains:\n- the project name in one line,\n- one sentence “what the project is about”,\n- a list of all files with a one-line description of each,\n- the rule: “when working, read only the file you need, don't load everything at once”.\n\nSTEP 5. At the very end show me the tree of the created .business/ and ask what to add or change.\n\nIMPORTANT:\n- Always answer me in Russian.\n- Don't write code, don't do anything except creating files and the interview.\n- Don't ask all the questions at once — only one at a time.\n\nStart with STEP 1, then move straight to STEP 2 and the company block.",
+  "s2.callout": "💡 Answer the agent thoughtfully. The more detailed your answers, the smarter Claude will be tomorrow when you build the website.",
+
+  "s3.title": "📋 Stage 3. The CLAUDE.md file and the plans/ folder",
+  "s3.p1": ".business/ is the knowledge. Now let's set the rules: how Claude should work with this knowledge.",
+  "s3.sub1": "Step 3.1. Create CLAUDE.md — the brain of the project",
+  "s3.p2": "CLAUDE.md is the main file that Claude reads before every action in this project. It has the table of contents, the work rules and links to .business/.",
+  "s3.warn": "⚠️ No more than 200 lines — otherwise you burn tokens on every request.",
+  "s3.p3": "Copy this prompt in full and paste it into the Claude window:",
+  "s3.prompt1": "Create a CLAUDE.md file in the project root using this template:\n\n# <span class=\"ph\">[PROJECT NAME]</span> — project navigation\n\nProject map. Read it at the start of each session: where everything is and how to work with it.\n\n## What this project is\n**<span class=\"ph\">[NAME]</span>** — <span class=\"ph\">[one sentence: what it is and for whom]</span>.\nDetails — in `.business/INDEX.md`.\n\n## Repository structure\n[NAME]/\n├── CLAUDE.md             ← this file, navigation\n├── .business/            ← business context (hidden folder, not in git)\n│   ├── INDEX.md          ← table of contents, entry point\n│   ├── company/  products/  audience/\n│   └── goals/  economics/  marketing/  assets/\n├── plans/                ← technical plans (one plan = one feature)\n└── (project code will appear later)\n\n### Where to find what\n| What you need | Where to look |\n|---|---|\n| Business logic, for whom | `.business/INDEX.md` |\n| Audience, pains | `.business/audience/` |\n| Product, plans, prices | `.business/products/` |\n| Goals and metrics | `.business/goals/` |\n| Economics | `.business/economics/` |\n| Channels, content, assets | `.business/marketing/` |\n| Branding (logo, colors) | `.business/assets/` |\n| Technical plans | `plans/` |\n\n## Key principles\n1. <span class=\"ph\">[PRINCIPLE 1]</span>\n2. <span class=\"ph\">[PRINCIPLE 2]</span>\n3. <span class=\"ph\">[PRINCIPLE 3]</span>\n\n## Stack\n<span class=\"ph\">[INSERT THE STACK — for example: Next.js 14, React, Tailwind CSS, TypeScript]</span>.\n\n## How to work\n- Before a task, read this file, then the needed files from `.business/` and `plans/`.\n- Business logic changes → update `.business/INDEX.md`. A plan changes → update the file in `plans/`. An important folder appears → update this CLAUDE.md.\n\n## IMPORTANT: a plan for every new feature\nEvery feature is written up as a plan in the `plans/` folder.\n1. One plan = one feature.\n2. File name: `YYYY-MM-DD-feature-name.md`.\n3. The plan is split into phases with status `[ ]` / `[x]`.\n4. At the end of the plan — a summary: fully built or not, what is left.\n5. Any agent keeps the plan up to date after each session.\n\n## IMPORTANT: ending every chat\nAt the end of a session, write a reflection in `.business/история/YYYY-MM-DD-short-name.md` (create the folder if needed):\n1. What the task was. 2. How you solved it. 3. Solved — yes / no / partly. 4. What could be better. 5. How it was and how it is now.\n\n## Language\nAlways answer me in Russian.\n\nAct like this:\n\n1. Read .business/INDEX.md and all files inside .business/ to understand what project we are building.\n2. Fill in all the fields in square brackets [INSERT ...] in the template based on my answers from .business/.\n3. If some data is missing (for example, I didn't specify the stack) — ask me follow-up questions one at a time with 3-4 answer options.\n4. Check that the final CLAUDE.md is no more than 200 lines. If it is more — shorten it by cutting the fluff, but do NOT remove the sections about the plan for every feature and about the reflection.\n5. Show me the final file and ask what to improve.\n\nAlways answer in Russian.",
+  "s3.callout1": "⚠️ The template already has two important rules built in: “a plan for every new feature” and “a reflection at the end of every chat”. After this file is created, Claude will follow them automatically — because it reads CLAUDE.md before every action.",
+  "s3.sub2": "Step 3.2. Create the plans/ folder",
+  "s3.p4": "plans/ is a folder for technical implementation plans. One plan = one feature. Tomorrow, on Day 3, when you say “build me such-and-such feature”, Claude will first write a plan in plans/, split it into phases with statuses [ ] / [x], then follow it and mark off what is done. A new chat does not remember what was done. The plan does.",
+  "s3.prompt2": "Create a plans/ folder in the root of my project. Inside it create a README.md file where you briefly (10-15 lines) describe:\n\n1. What the plans/ folder is — it is the place for technical implementation plans of features.\n2. The rule: one plan = one feature.\n3. The plan file name format: YYYY-MM-DD-feature-name.md\n4. Each plan is split into phases. Each phase has status [ ] or [x].\n5. At the end of the plan — a summary block: fully built or not, what is left.\n6. Any agent working with the plan must keep it up to date: mark off done phases, write down what was done.\n\nAfter creating it, show the tree of the project root (CLAUDE.md, .business/, plans/) so I can make sure everything is in place.",
+  "s3.sub3": "Step 3.3. Plan critique — the key trick of the method",
+  "s3.p5": "This is the most important place in the day. Any plan that Claude wrote is raw. It is written “in one pass”, with no questions, no critique. The right cycle:",
+  "s3.cycle.1": "Claude writes the first plan in plans/YYYY-MM-DD-name.md.",
+  "s3.cycle.2": "You copy the link to this file and open a new chat.",
+  "s3.cycle.3": "In the new chat you ask for deep research and a critique of the plan through parallel agents.",
+  "s3.cycle.4": "You go back to the original plan and update it based on the critique.",
+  "s3.cycle.5": "Only after that — implementation.",
+  "s3.prompt3": "I have a first implementation plan: <span class=\"ph\">[path to the file, for example plans/2026-04-24-landing.md]</span>.\n\nThe task:\n1. Read the whole plan.\n2. Read .business/INDEX.md and the related files to understand the project context.\n3. Run 3 parallel subagents for deep research:\n   - agent 1: check the technical feasibility of each phase, find risks and pitfalls\n   - agent 2: check that the plan matches the business goals from .business/, find gaps and contradictions\n   - agent 3: review the UX/user scenario — where the user can get stuck, what is unclear\n4. Gather their findings into one report with concrete edits: what to add, what to remove, what to reword.\n5. Show me the report. I will decide which edits to accept, and ask you to update the plan file.\n\nAlways answer in Russian.",
+  "s3.callout2": "💡 Why this works: one agent in one chat cannot “look at its own work from the outside”. A new chat + parallel subagents is that “outside view”, which catches 80% of the problems before you start coding.",
+
+  "s4.title": "✅ Stage 4. The check cycle and work rules",
+  "s4.p1": "The most important stage. Right now we will check that the whole machine works.",
+  "s4.sub1": "Step 4.1. Test cycle",
+  "s4.p2": "Give Claude a micro-task and check that it reads CLAUDE.md and .business/INDEX.md before starting, creates a plan in plans/, and writes a reflection at the end.",
+  "s4.prompt1": "Test task: create a HELLO.md file in the project root with one line “Hello from [insert the project name from .business/INDEX.md]”.\n\nAct fully by the rules from CLAUDE.md:\n\n1. First read CLAUDE.md and .business/INDEX.md.\n2. Create a plan in plans/ with phases and statuses (even for such a simple task).\n3. Do the task.\n4. Update the plan — mark the phases as [x].\n5. At the end of the session write a reflection in .business/история/ in the format from CLAUDE.md.\n\nIf something is unclear — ask.",
+  "s4.p3": "After it is done, check by hand: did HELLO.md appear in the root? did a plan appear in plans/? did a reflection file appear in .business/история/? If something did not appear — that means CLAUDE.md is written badly. Ask Claude to improve it and repeat the test.",
+  "s4.sub2": "Step 4.2. Seven rules for working with the agent",
+  "s4.p4": "Learn these seven rules like a mantra. This is the difference between someone who struggles 5 hours with one feature and someone who does it in 30 minutes.",
+  "s4.rule.1": "<b>One chat — one task.</b> Finished → close the chat → open a new one. It clears the context and your own “RAM”.",
+  "s4.rule.2": "<b>Context ≤ 60%.</b> If the window is more full — run /compact or /clear. Otherwise the agent gets dumb.",
+  "s4.rule.3": "<b>Fix errors in the same chat</b> where you wrote the feature. Don't open a new one — you will lose the context.",
+  "s4.rule.4": "<b>Thinking for a long time (5–10 min) — do NOT restart right away.</b> Wait. If it is really stuck — /clear and state the task more briefly.",
+  "s4.rule.5": "<b>Do nothing by hand.</b> Folders, files, commands — everything through Claude.",
+  "s4.rule.6": "<b>Every feature = a plan in plans/</b> (already built into CLAUDE.md).",
+  "s4.rule.7": "<b>Every chat ends with a reflection</b> in .business/история/ (also built into CLAUDE.md).",
+  "s4.sub3": "Step 4.3. “10 ways to fail” — the killer prompt",
+  "s4.p5": "This is a favorite stress test. Run it before every big step: before a live session, before a deploy, before a sales launch. It finds holes you won't see yourself. Run it on your CLAUDE.md and .business/ right now:",
+  "s4.prompt2": "Right now I have CLAUDE.md and a .business/ folder. Tomorrow I will use them to build the landing page of my project.\n\nYour task is a stress test. Find 10 reasons why we will fail:\n\n- where in CLAUDE.md there are ambiguities that you as an agent could understand wrongly\n- where in .business/ there are gaps that force you to make up decisions\n- where the business logic contradicts itself\n- where the stack or principles contradict the reality of my idea\n- where I overestimate the scope of one day (like “let's build a marketplace in a day”)\n\nDon't hold back. Criticize hard. I want to find these 10 reasons now, not in production.\n\nAt the end give a list of concrete edits: what to fix and in which file, so that these reasons go away.",
+  "s4.callout": "💡 Apply this same prompt to any big decision: a feature plan, a landing page offer, a funnel structure, a deploy scheme.",
+
+  "s5.title": "🛠 Stage 5. Skills",
+  "s5.p1": "A skill is a folder with an instruction that Claude pulls in by itself when it sees a matching trigger. One skill can do design, another can parse PDF, a third can run a 12-step workflow from research to deploy.",
+  "s5.p2": "A skill is a folder in <code>.claude/skills/skill-name/</code>. Inside: <b>SKILL.md</b> (the saved instruction prompt + trigger) and optional files (templates, examples, scripts). When you write a task that matches the trigger, Claude loads the skill content by itself.",
+  "s5.p3": "Two install levels: <b>global</b> (<code>~/.claude/skills/</code>) — in all projects; <b>local</b> (<code>.claude/skills/</code> in the project root) — only in this project.",
+  "s5.callout1": "🎯 The rule: install locally if a skill is needed for a specific project. Globally — only what you really use everywhere. The fewer skills, the fewer tokens on their triggers.",
+  "s5.warn": "⚠️ <b>Skill security.</b> A skill is an executable instruction from the author. A bad one can read your .env, send keys to an external URL, delete files. Before installing ANY skill: open the repository → read README and SKILL.md → look for dangerous patterns (curl, wget, .env, rm -rf) → check the stars and the author. Install from Anthropic or from big trusted catalogs (Smithery).",
+  "s5.auditLabel": "Prompt to audit any skill",
+  "s5.prompt1": "I want to install a skill from this link <span class=\"ph\">[INSERT THE REPOSITORY URL]</span>. Download its sources, read the contents (README.md, SKILL.md, all .md and .sh files) and check whether there are any dangerous operations:\n\n- reading .env or other files with secrets\n- sending data to external URLs (curl, wget, fetch)\n- deleting files (rm, unlink)\n- running external binaries\n- replacing existing project files\n\nGive a verdict: safe / suspicious / dangerous — and explain why, point by point. If it is dangerous — do NOT install it.",
+  "s5.sub1": "Step 5.1. Skill Creator by Anthropic — a skill for creating skills",
+  "s5.p4": "Install it once — and after that you turn any repeated prompt into a skill in 5 minutes.",
+  "s5.prompt2": "Install skill-creator by Anthropic into my current project (.claude/skills/, not globally).\n\n1. Find the official Anthropic repository with skill-creator (on github.com/anthropics).\n2. Run a security audit (reading .env, curl/wget out, rm).\n3. If it is safe — install it LOCALLY in .claude/skills/skill-creator/.\n4. Show me how to create my first skill now: which trigger, which command.",
+  "s5.p5": "Try to create your first skill right away — for example, a “daily project report”:",
+  "s5.prompt3": "Use skill-creator by Anthropic. Help me create my own personal skill named \"daily-report\".\n\nWhat the skill does: when I say “gather the report for the day”, the skill should:\n1. Read the latest git commits\n2. Read .business/история/ for today\n3. Read plans/ and mark which phases were closed today\n4. Form a short report in the format “done / in progress / blocked”\n5. Print it to the console\n\nAsk me follow-up questions one at a time. After creating it — test the skill right here.",
+  "s5.sub2": "Step 5.2. Frontend Design — a skill for a “non-AI-looking” design",
+  "s5.p6": "The most common question: “How do I make the site not look AI-made?” The answer is frontend-design by Anthropic: proper typography, grids, spacing, modern aesthetics.",
+  "s5.prompt4": "Install the frontend-design skill by Anthropic into my current project (.claude/skills/, not globally).\n\n1. Find the official Anthropic repository with this skill.\n2. Security audit.\n3. If it is safe — install it locally.\n4. Show me how to trigger it: which keywords make Claude understand by itself that it is time to use this skill.",
+  "s5.callout2": "🎨 On Day 3, when building the landing page, Claude will pull in this skill by itself as soon as you say “make it nice” or “build a landing page by the brand-guidelines”.",
+  "s5.sub3": "Step 5.3. PDF skill by Anthropic (optional)",
+  "s5.p7": "If your business has documents (contracts, price lists, reports, receipts) — install the PDF skill: it reads PDF, generates PDF from templates, extracts data from scans.",
+  "s5.prompt5": "Install the pdf skill by Anthropic into my current project (.claude/skills/, not globally). Security audit → install → show how to use it.",
+  "s5.sub4": "Step 5.4. Smithery — pick one skill for your task",
+  "s5.p8": "Smithery (smithery.ai) is the largest catalog of skills and MCP servers. Pick <b>one</b> for your idea: landing page → Frontend Design / UI; clients → CRM / Email / Slack; parsing → Browser / Scraping; analytics → Google Sheets / Notion / Airtable; content → Content / Marketing. Don't install everything — each extra skill eats tokens. Use the same two prompts (audit → install locally).",
+  "s5.sub5": "Step 5.5. Final check",
+  "s5.prompt6": "Show me the tree of the .claude/skills/ folder in the current project and the list of all skills available to Claude in this session. Confirm that none of them ended up in my global ~/.claude/.\n\nFor each installed skill, write in one line which trigger activates it.",
+
+  "s6.title": "🌐 Stage 6. Playwright — Claude controls the browser",
+  "s6.p1": "Playwright MCP is one of the main “wow” features of vibe coding. Claude opens a real browser on your machine and clicks buttons, fills forms, takes screenshots, checks the mobile layout: it checks your landing page, tests someone else's site, runs regression after edits.",
+  "s6.warn": "⚠️ For some people Playwright works unstably, for others — perfectly. If strange things come up — don't get stuck, install an alternative (Chrome DevTools MCP) and move on.",
+  "s6.installLabel": "Prompt for the agent — install",
+  "s6.prompt1": "Install Playwright MCP into my current Claude Code project.\n\n1. Find the official package (Microsoft Playwright MCP or @modelcontextprotocol/playwright).\n2. Run a security audit — this is a browser with full access, it is important to understand what it does.\n3. If it is safe — install it LOCALLY for this project (in .mcp.json or the project settings, NOT globally).\n4. After installing, show how to call it, which commands are available (navigate, click, screenshot, fill and so on).\n5. Do a test run: open google.com, take a screenshot, show it to me.",
+  "s6.p2": "As soon as you have a landing page (on Day 3), try your first auto-test:",
+  "s6.autotestLabel": "Prompt for the agent — auto-test",
+  "s6.prompt2": "Use Playwright MCP. Open my local site at http://localhost:3000.\n\n1. Take a screenshot of the first screen.\n2. Scroll the page down to the end — take a screenshot of each block.\n3. Find the main form (a “Buy” / “Leave a request” button), fill it with test data (name: Test, email: test@example.com), click the button.\n4. What happened after submitting? A screenshot of the result.\n5. Switch the viewport to mobile (iPhone 14). Repeat the run.\n6. Gather a report: what works, where the bugs are, which blocks look bad on mobile.",
+
+  "not.title": "What you do NOT do today and tomorrow",
+  "not.1": "Marketplaces, shops, complex SaaS",
+  "not.2": "User authentication",
+  "not.3": "Accepting payments",
+  "not.4": "Deploy to your own server, a database",
+  "not.5": "Mobile apps",
+  "not.callout": "Day 3 = one page + one form. Don't try to cover the whole world.",
+
+  "sum.h3": "✅ Day 2 summary",
+  "sum.p1": "You have done everything from the stages:",
+  "sum.li1": "Stage 1. Sound notifications and security rules turned on",
+  "sum.li2": "Stage 2. The .business/ folder created — the brain of the business",
+  "sum.li3": "Stage 3. CLAUDE.md and the plans/ folder are ready",
+  "sum.li4": "Stage 4. The check cycle passed, the 7 rules learned",
+  "sum.li5": "Stage 5. Skills installed",
+  "sum.li6": "Stage 6. Playwright connected",
+  "sum.p2": "If everything is ready — click the “Done” button.",
+  "sum.doneBtn": "Day 2 done",
+
+  "foot.contact": "Contact",
+  "foot.social": "Social",
+  "foot.license": "License"
+}
+</script>
+
+<script>
+  // ===== i18n: словарь EN читаем из JSON-блока (безопасно несёт кавычки, переносы, обратные кавычки) =====
+  var I18N = JSON.parse(document.getElementById('i18n-en').textContent);
+
+  // Динамические подписи кнопок — зависят от языка
+  var T = {
+    ru: {
+      watched: 'Посмотрено ✓',
+      copied: 'Скопировано ✓',
+      copy: 'Копировать',
+      etapDoneStatus: '✓ Выполнено',
+      doneBtn: 'Выполнено ✓',
+      noVideo: 'Видео ещё не загружено на YouTube — добавьте ID ролика в data-yt'
+    },
+    en: {
+      watched: 'Watched ✓',
+      copied: 'Copied ✓',
+      copy: 'Copy',
+      etapDoneStatus: '✓ Done',
+      doneBtn: 'Done ✓',
+      noVideo: 'The video is not on YouTube yet — add the video ID to data-yt'
+    }
+  };
+
+  // Текущий язык: ?lang=en → en, иначе ru (по умолчанию)
+  var LANG = (new URLSearchParams(location.search).get('lang') === 'en') ? 'en' : 'ru';
+
+  function applyLang(lang) {
+    if (lang === 'en') {
+      document.documentElement.lang = 'en';
+      document.title = I18N['_title'];
+      document.querySelectorAll('[data-i18n]').forEach(function (el) {
+        var k = el.getAttribute('data-i18n');
+        if (I18N[k] !== undefined) el.innerHTML = I18N[k];
+      });
+    }
+  }
+  applyLang(LANG);
+
+  // Видео-постер → YouTube-плеер (грузим iframe только по клику)
+  function cpPlay() {
+    var wrap = document.getElementById('cp-video');
+    var id = (wrap.getAttribute('data-yt') || '').trim();
+    if (!id) {
+      var sub = wrap.querySelector('.cp-video-sub');
+      if (sub) sub.textContent = T[LANG].noVideo;
+      return;
+    }
+    wrap.innerHTML = '<iframe src="https://www.youtube.com/embed/' + id +
+      '?autoplay=1&rel=0" allow="autoplay; fullscreen; picture-in-picture" ' +
+      'allowfullscreen title="Day 2 Live"></iframe>';
+  }
+
+  // Кнопка «Просмотреть презентацию» → показывает встроенную презентацию (грузим iframe по клику)
+  function cpDeck() {
+    var deck = document.getElementById('cp-deck');
+    var frame = document.getElementById('cp-deck-frame');
+    if (frame && !frame.src) frame.src = frame.getAttribute('data-src');
+    if (deck) deck.hidden = false;
+    var btn = document.getElementById('cp-deck-btn');
+    if (btn) btn.style.display = 'none';
+  }
+
+  // Кнопка «Посмотрено» под видео → отмечает «Эфир Дня 2» пройденным
+  function cpWatched() {
+    var btn = document.getElementById('cp-watched-btn');
+    btn.classList.add('is-done');
+    btn.textContent = T[LANG].watched;
+    btn.disabled = true;
+    var ef = document.querySelector('.cp-lesson-active');
+    if (ef) {
+      ef.classList.remove('cp-lesson-active');
+      ef.classList.add('cp-lesson-done');
+      var m = ef.querySelector('.cp-lesson-mark');
+      if (m) m.textContent = '✓';
+    }
+  }
+
+  // Копирование текста любого промпта (берёт .cp-prompt-body внутри своего блока)
+  function cpCopy(btn) {
+    var body = btn.closest('.cp-prompt').querySelector('.cp-prompt-body');
+    navigator.clipboard.writeText(body.innerText);
+    var lbl = btn.querySelector('span');
+    if (lbl) lbl.textContent = T[LANG].copied;
+  }
+
+  // Прогресс курса. Курс = CP_DAYS дней, каждый день = равная доля.
+  // Этапы заполняют долю текущего дня; нижняя кнопка «Готов день» = день закрыт целиком.
+  var CP_DAY = 2, CP_DAYS = 3;
+  function cpRecalcProgress() {
+    var etaps = document.querySelectorAll('.cp-etap');
+    var done = document.querySelectorAll('.cp-etap.is-done').length;
+    var finalBtn = document.getElementById('cp-done-btn');
+    var finalDone = finalBtn && finalBtn.classList.contains('is-done');
+    var frac = finalDone ? 1 : (etaps.length ? done / etaps.length : 0);
+    var per = 100 / CP_DAYS;
+    var pct = Math.round((CP_DAY - 1) * per + frac * per);
+    var pctEl = document.querySelector('.cp-progress-pct');
+    var fillEl = document.querySelector('.cp-progress-fill');
+    if (pctEl) pctEl.textContent = pct + '%';
+    if (fillEl) fillEl.style.width = pct + '%';
+  }
+
+  function cpDone() {
+    var btn = document.getElementById('cp-done-btn');
+    btn.classList.add('is-done');
+    btn.textContent = T[LANG].doneBtn;
+    btn.disabled = true;
+    cpRecalcProgress();
+  }
+
+  // Кнопка «Готово» внутри этапа → отмечает этап выполненным, меняет цвет и сворачивает
+  function cpEtapDone(btn) {
+    var d = btn.closest('.cp-etap');
+    if (!d) return;
+    d.classList.add('is-done');
+    btn.textContent = T[LANG].doneBtn;
+    btn.disabled = true;
+    var st = d.querySelector('.cp-etap-status');
+    if (st) st.textContent = T[LANG].etapDoneStatus;
+    d.open = false;
+    cpRecalcProgress();
+  }
+</script>
+{% endraw %}{% endblock %}

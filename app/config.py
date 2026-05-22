@@ -29,6 +29,26 @@ class Settings:
     ADMIN_TG_ID: int = int(os.getenv("ADMIN_TG_ID", "6634813047"))
     CONTACT_TG_USERNAME: str = os.getenv("CONTACT_TG_USERNAME", "nikol_hillton")
     CONTACT_WA_NUMBER: str = os.getenv("CONTACT_WA_NUMBER", "971589217784")
+    # Баннер набора на Mastermind в разделе «Курсы». Меняется по месяцам — из конфига,
+    # не хардкодом в шаблоне (правило репо №1). Пустой MASTERMIND_TITLE — баннер скрыт.
+    MASTERMIND_TITLE: str = os.getenv(
+        "MASTERMIND_TITLE",
+        "Открыт набор на Mastermind — Июнь",
+    )
+    # Программа: 5 AI-сотрудников, по пунктам через «;» (в баннере — через запятую).
+    # Пункты 4–5 — заглушки до уточнения.
+    MASTERMIND_DETAILS: str = os.getenv(
+        "MASTERMIND_DETAILS",
+        "Анализ конкурентов; "
+        "Тексты для рассылок, постов и рилсов; "
+        "Рассылки из CRM и Telegram-бота; "
+        "Уточняется; "
+        "Уточняется",
+    )
+    MASTERMIND_FOOTER: str = os.getenv(
+        "MASTERMIND_FOOTER",
+        "Старт 26 мая. Осталось 3 места из 10.",
+    )
 
 
 settings = Settings()

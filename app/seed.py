@@ -4,7 +4,7 @@
 """
 from sqlalchemy.orm import Session
 
-from app.models import FaqItem, MessageTemplate, ProductBlock
+from app.models import Course, FaqItem, MessageTemplate, ProductBlock
 
 
 PRICE_RU = "https://drive.google.com/file/d/1q9shmtKtsNWSgl0DoH0bkEBq-Rjk9e8w/view?usp=drive_link"
@@ -258,6 +258,32 @@ FAQ = [
 ]
 
 
+# progress_steps — «только вид» (фиксированный прогресс из данных), не пер-партнёрский
+# трекинг. 0 = кнопка «Начать». Поменяй число, чтобы показать «Продолжить»/done.
+COURSES = [
+    {
+        "slug": "ai-employees-setup",
+        "title": "Настройка 2 АИ-сотрудников",
+        "subtitle": "⏱ 2 часа · 3 шага",
+        "outcome": "сайты и презентации делают AI-сотрудники",
+        "total_steps": 3,
+        "progress_steps": 0,
+        "done_label": "Завершено",
+        "order_index": 1,
+    },
+    {
+        "slug": "partner-course",
+        "title": "Курс партнёра ONCOUNT",
+        "subtitle": "5 шагов к первым $2 500 комиссии",
+        "outcome": None,
+        "total_steps": 5,
+        "progress_steps": 0,
+        "done_label": "Материалы программы",
+        "order_index": 2,
+    },
+]
+
+
 def seed_if_empty(session: Session) -> None:
     # ProductBlock и MessageTemplate — force-reseed на каждом старте, чтобы правки
     # в коде гарантированно доехали до прода. FK на эти таблицы нет, удаление безопасно.
@@ -267,4 +293,8 @@ def seed_if_empty(session: Session) -> None:
     session.add_all([MessageTemplate(**t) for t in TEMPLATES])
     session.query(FaqItem).delete()
     session.add_all([FaqItem(**f) for f in FAQ])
+    # Course — тоже force-reseed: прогресс хранится отдельно (course_progress) по slug,
+    # без FK на courses.id, поэтому пересоздание строк Course его не затрагивает.
+    session.query(Course).delete()
+    session.add_all([Course(**c) for c in COURSES])
     session.commit()

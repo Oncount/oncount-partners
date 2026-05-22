@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Raleway:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/oncount.css">
   <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
+  {% block head %}{% endblock %}
 </head>
 <body>
 {% if partner %}
@@ -43,6 +44,7 @@
     <a class="menu-item {% if request.url.path == '/links' %}active{% endif %}" href="/links">🔗 Реферальные ссылки</a>
 
     <div class="sidebar-section">База знаний</div>
+    <a class="menu-item {% if '/courses' in request.url.path %}active{% endif %}" href="/courses">🎓 Курсы</a>
     <a class="menu-item {% if request.url.path == '/messages' %}active{% endif %}" href="/messages">📨 Тексты рассылок</a>
     <a class="menu-item {% if '/products' in request.url.path %}active{% endif %}" href="/products">📦 Тарифы и сервисы</a>
     <a class="menu-item {% if '/faq' in request.url.path %}active{% endif %}" href="/faq">❓ FAQ</a>
@@ -57,8 +59,12 @@
   <main class="content">
     <header class="page-header">
       <h1>{% block heading %}{% endblock %}</h1>
-      <div class="user-pill user-pill-desktop">
-        {% if partner.first_name %}{{ partner.first_name }}{% else %}@{{ partner.username or partner.telegram_id }}{% endif %}
+      <div class="header-right">
+        <a class="lang-toggle" href="?lang={{ 'ru' if lang == 'en' else 'en' }}"
+           title="Сменить язык" aria-label="Сменить язык">{{ 'RU' if lang == 'en' else 'EN' }}</a>
+        <div class="user-pill user-pill-desktop">
+          {% if partner.first_name %}{{ partner.first_name }}{% else %}@{{ partner.username or partner.telegram_id }}{% endif %}
+        </div>
       </div>
     </header>
     {% block content %}{% endblock %}
@@ -98,5 +104,6 @@
 {% else %}
 {% block anonymous %}{% endblock %}
 {% endif %}
+{% block scripts %}{% endblock %}
 </body>
 </html>

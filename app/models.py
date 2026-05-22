@@ -111,6 +111,38 @@ class FaqItem(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
+class Course(Base):
+    """Обучающий курс для партнёра в ЛК (раздел «Курсы»).
+
+    Карточка-витрина: заголовок, подзаголовок (длительность/шаги), строка «Итог»,
+    полоса прогресса и одна CTA-кнопка. Контент редактируется через seed
+    (force-reseed, как ProductBlock/FaqItem).
+
+    Прогресс пока «только вид»: progress_steps — фиксированное значение из данных,
+    не пер-партнёрский трекинг. Статус кнопки выводится из progress_steps/total_steps:
+    0 → «Начать», 0<x<total → «Продолжить», x>=total → done_label.
+    """
+    __tablename__ = "courses"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slug: Mapped[str] = mapped_column(String(64), unique=True)
+    title: Mapped[str] = mapped_column(String(255))
+    subtitle: Mapped[str | None] = mapped_column(String(255))
+    outcome: Mapped[str | None] = mapped_column(Text)
+    total_steps: Mapped[int] = mapped_column(Integer, default=0)
+    progress_steps: Mapped[int] = mapped_column(Integer, default=0)
+    done_label: Mapped[str] = mapped_column(String(64), default="Завершено")
+    order_index: Mapped[int] = mapped_column(Integer, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Английские версии полей витрины (рендерятся при lang=en). Заложены заранее,
+    # чтобы таблица создалась сразу со всеми колонками: create_all НЕ умеет ALTER.
+    # Пусто → шаблон откатывается на русское поле (graceful fallback).
+    title_en: Mapped[str | None] = mapped_column(String(255))
+    subtitle_en: Mapped[str | None] = mapped_column(String(255))
+    outcome_en: Mapped[str | None] = mapped_column(Text)
+    done_label_en: Mapped[str | None] = mapped_column(String(64))
+
+
 class LoginSession(Base):
     """Однократный токен для входа в ЛК через бота (deep-link auth)."""
     __tablename__ = "login_sessions"

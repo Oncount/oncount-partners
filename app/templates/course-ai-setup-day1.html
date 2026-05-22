@@ -1,0 +1,1128 @@
+{% extends "base.html" %}
+{% block title %}День 1 — Настройка · Практикум «AI-сотрудники» — ONCOUNT{% endblock %}
+{% block heading %}Практикум «AI-сотрудники»{% endblock %}
+{% block head %}{% raw %}
+<style>
+    /* ===== Course player (cp-*) — ONCOUNT colors ===== */
+    .cp-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    /* --- Левая навигация программы --- */
+    .cp-curriculum {
+      background: var(--deep-green);
+      color: var(--cream);
+      border-radius: 16px;
+      padding: 20px 0 12px;
+      position: sticky;
+      top: 24px;
+      overflow: hidden;
+    }
+    .cp-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 20px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(243, 249, 248, 0.75);
+    }
+    .cp-back:hover { color: var(--orange); }
+
+    .cp-progress { padding: 0 20px 18px; border-bottom: 1px solid rgba(243, 249, 248, 0.1); }
+    .cp-progress-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+    .cp-progress-label {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--sage);
+      font-weight: 600;
+    }
+    .cp-progress-pct {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--cream);
+    }
+    .cp-progress-bar {
+      height: 8px;
+      background: rgba(243, 249, 248, 0.12);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .cp-progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--orange), var(--coral));
+    }
+
+    /* --- День (аккордеон) --- */
+    .cp-day { border-bottom: 1px solid rgba(243, 249, 248, 0.07); }
+    .cp-day > summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 20px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--cream);
+      transition: background 120ms;
+    }
+    .cp-day > summary::-webkit-details-marker { display: none; }
+    .cp-day > summary:hover { background: rgba(243, 249, 248, 0.05); }
+    .cp-day-caret {
+      flex-shrink: 0;
+      width: 14px;
+      color: var(--sage);
+      font-size: 11px;
+      transition: transform 150ms ease;
+    }
+    .cp-day[open] .cp-day-caret { transform: rotate(90deg); }
+    .cp-day-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cp-day-count {
+      flex-shrink: 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--sage);
+      font-family: 'Outfit', sans-serif;
+    }
+    .cp-day.cp-day-done .cp-day-count { color: var(--coral); }
+
+    /* --- Урок --- */
+    .cp-lessons { padding: 0 12px 10px; }
+    .cp-lesson-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-size: 13.5px;
+      color: rgba(243, 249, 248, 0.7);
+      font-weight: 500;
+    }
+    .cp-lesson-link:hover { background: rgba(243, 249, 248, 0.06); color: var(--cream); }
+    .cp-lesson-mark {
+      flex-shrink: 0;
+      width: 18px;
+      text-align: center;
+      font-size: 13px;
+    }
+    .cp-lesson-done .cp-lesson-mark { color: var(--coral); }
+    .cp-lesson-done .cp-lesson-text { color: rgba(243, 249, 248, 0.5); }
+    .cp-lesson-locked .cp-lesson-mark { color: rgba(243, 249, 248, 0.3); }
+
+    .cp-lesson-active {
+      background: rgba(236, 100, 66, 0.16);
+      border: 1px solid rgba(236, 100, 66, 0.55);
+      color: var(--cream);
+    }
+    .cp-lesson-active:hover { background: rgba(236, 100, 66, 0.22); color: var(--cream); }
+    .cp-lesson-active .cp-lesson-mark { color: var(--orange); }
+    .cp-lesson-active .cp-lesson-text { color: var(--cream); font-weight: 600; }
+
+    /* ===== Контент урока ===== */
+    .cp-lesson-head { margin-bottom: 4px; }
+    .cp-lesson-badge {
+      display: inline-block;
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 8px;
+    }
+    .cp-lesson-head h2 { margin-bottom: 10px; }
+    .cp-lesson-meta { color: var(--sage); font-size: 14px; }
+    .cp-lesson-meta b { color: var(--deep-green); }
+
+    .cp-prose h3 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 24px 0 12px;
+      font-size: 18px;
+    }
+    .cp-prose p { margin: 0 0 14px; color: var(--charcoal); }
+    .cp-prose ul { margin: 0 0 16px; padding-left: 0; list-style: none; }
+    .cp-prose ul li {
+      position: relative;
+      padding: 6px 0 6px 28px;
+      color: var(--charcoal);
+    }
+    .cp-prose ul li::before {
+      content: "▸";
+      position: absolute;
+      left: 6px;
+      color: var(--orange);
+      font-weight: 700;
+    }
+    .cp-stage {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      color: var(--deep-green);
+      font-size: 16px;
+      margin: 22px 0 10px;
+    }
+    .cp-callout {
+      background: rgba(84, 124, 118, 0.08);
+      border-left: 3px solid var(--sage);
+      border-radius: 0 8px 8px 0;
+      padding: 12px 16px;
+      font-size: 14px;
+      color: var(--charcoal);
+      margin: 0 0 16px;
+    }
+    .cp-callout.cp-warn { background: rgba(236, 100, 66, 0.08); border-left-color: var(--orange); }
+    .cp-prose ul.cp-plan { margin-bottom: 16px; }
+    .cp-prose ul.cp-plan li { padding-left: 4px; }
+    .cp-prose ul.cp-plan li::before { content: none; }
+    .cp-soon { color: var(--sage); font-size: 14px; font-style: italic; margin: 2px 0 16px; }
+    .cp-substage { font-family: 'Outfit', sans-serif; font-weight: 600; color: var(--charcoal); font-size: 15px; margin: 18px 0 8px; }
+    .cp-prose code { font-family: 'Courier New', monospace; background: var(--cream); padding: 2px 6px; border-radius: 5px; font-size: 13px; }
+    .cp-cmd { display: block; font-family: 'Courier New', monospace; background: #0c2f2a; color: var(--cream); padding: 12px 14px; border-radius: 8px; font-size: 13px; margin: 0 0 16px; overflow-x: auto; }
+    .cp-prose ul.cp-check-done { margin: 8px 0 14px; }
+    .cp-prose ul.cp-check-done li { padding-left: 30px; }
+    .cp-prose ul.cp-check-done li::before { content: "✓"; color: var(--charcoal); font-weight: 700; left: 4px; }
+
+    /* --- Блок «Промпт для агента» --- */
+    .cp-prompt {
+      background: var(--deep-green);
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin: 16px 0 20px;
+    }
+    .cp-prompt-top {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .cp-prompt-label { display: none; }
+    .cp-prompt-copy {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--sage);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-family: 'Raleway', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 120ms, transform 120ms;
+    }
+    .cp-prompt-copy:hover { background: #6b948c; }
+    .cp-prompt-copy:active { transform: translateY(1px); }
+    .cp-prompt-body {
+      color: rgba(243, 249, 248, 0.92);
+      font-size: 14px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+    }
+    .cp-prompt-body .ph { color: var(--coral); }
+
+    /* --- Чек-лист дня --- */
+    .cp-checklist {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 22px;
+      margin: 16px 0;
+    }
+    .cp-checklist-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      color: var(--deep-green);
+      font-size: 16px;
+      margin-bottom: 14px;
+    }
+    .cp-check-list { list-style: none; margin: 0 0 14px; padding: 0; }
+    .cp-check-list li {
+      position: relative;
+      padding: 7px 0 7px 30px;
+      font-size: 14px;
+      color: var(--charcoal);
+      border-top: 1px solid var(--border);
+    }
+    .cp-check-list li:first-child { border-top: none; }
+    .cp-check-list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 9px;
+      width: 18px;
+      height: 18px;
+      border-radius: 5px;
+      border: 1.5px solid var(--sage);
+    }
+    .cp-checklist-foot {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 70, 62, 0.08);
+      color: var(--deep-green);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .cp-checklist-foot::before { content: "✅"; }
+
+    /* --- Низ урока: материалы + переход --- */
+    .cp-materials { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+    .cp-lesson-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    /* --- Видео урока (адаптив 16:9) --- */
+    .cp-video {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #0c2f2a;
+      margin: 4px 0 8px;
+    }
+    .cp-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+    .cp-video-poster {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      cursor: pointer;
+      text-align: center;
+      padding: 24px;
+      color: var(--cream);
+      background: radial-gradient(circle at 50% 32%, rgba(84, 124, 118, 0.5), rgba(16, 70, 62, 0.96));
+    }
+    .cp-video-tag {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: var(--coral);
+    }
+    .cp-video-play {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: var(--orange);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      padding-left: 4px;
+      box-shadow: 0 8px 28px rgba(236, 100, 66, 0.45);
+      transition: transform 150ms ease;
+    }
+    .cp-video-poster:hover .cp-video-play { transform: scale(1.07); }
+    .cp-video-title { font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 18px; }
+    .cp-video-sub { font-size: 13px; color: rgba(243, 249, 248, 0.78); }
+    .cp-caption { font-size: 13px; color: var(--sage); margin: 0 0 18px; }
+    .cp-caption-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 0 0 18px; }
+    .cp-caption-row .cp-caption { margin: 0; }
+    .cp-watched-btn { background: #fff; color: var(--deep-green); border: 1px solid var(--border); border-radius: 8px; padding: 7px 16px; font-family: 'Raleway', sans-serif; font-weight: 600; font-size: 13px; cursor: pointer; white-space: nowrap; transition: all 120ms; }
+    .cp-watched-btn:hover { border-color: var(--orange); color: var(--orange); }
+    .cp-watched-btn.is-done { background: var(--deep-green); color: #fff; border-color: var(--deep-green); cursor: default; }
+
+    /* --- Презентация (Gamma) --- */
+    .cp-deck { margin: 8px 0 16px; }
+    .cp-deck-tabs { display: flex; gap: 8px; margin-bottom: 10px; }
+    .cp-deck-tab {
+      padding: 7px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--deep-green);
+      font-family: 'Raleway', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .cp-deck-tab.active { background: var(--deep-green); color: var(--cream); border-color: var(--deep-green); }
+    .cp-deck-frame {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--cream);
+    }
+    .cp-deck-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+    .cp-deck-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+
+    /* --- Этапы (сворачиваемые блоки с кнопкой «Готово») --- */
+    .cp-etap {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin: 0 0 14px;
+      overflow: hidden;
+    }
+    .cp-etap > summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--deep-green);
+      transition: background 120ms;
+    }
+    .cp-etap > summary::-webkit-details-marker { display: none; }
+    .cp-etap > summary:hover { background: rgba(16, 70, 62, 0.04); }
+    .cp-etap-caret { flex-shrink: 0; width: 14px; color: var(--orange); font-size: 12px; transition: transform 150ms ease; }
+    .cp-etap[open] .cp-etap-caret { transform: rotate(90deg); }
+    .cp-etap-title { flex: 1; min-width: 0; }
+    .cp-etap-status { flex-shrink: 0; font-family: 'Raleway', sans-serif; font-weight: 600; font-size: 13px; color: var(--sage); }
+    .cp-etap[open] .cp-etap-status { display: none; }
+    .cp-etap-body { padding: 2px 20px 18px; }
+    .cp-etap-body > p:first-child, .cp-etap-body > .cp-substage:first-child { margin-top: 4px; }
+    .cp-etap-done-bar { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
+    .cp-etap-done-btn {
+      background: var(--orange);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 30px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: opacity 120ms, transform 120ms, background 150ms;
+    }
+    .cp-etap-done-btn:hover { opacity: 0.92; }
+    .cp-etap-done-btn:active { transform: translateY(1px); }
+    /* состояние «выполнено» — этап меняет цвет */
+    .cp-etap.is-done { border-color: var(--sage); background: rgba(84, 124, 118, 0.09); }
+    .cp-etap.is-done > summary { color: var(--sage); }
+    .cp-etap.is-done .cp-etap-caret { color: var(--sage); }
+    .cp-etap.is-done .cp-etap-status { display: inline; color: var(--sage); }
+    .cp-etap.is-done .cp-etap-done-btn { background: var(--deep-green); cursor: default; }
+
+    /* --- Чек-поинт «Готово» --- */
+    .cp-done-bar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+    .cp-done-btn {
+      background: var(--orange);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 14px 36px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: opacity 120ms, transform 120ms, background 150ms;
+    }
+    .cp-done-btn:hover { opacity: 0.92; }
+    .cp-done-btn:active { transform: translateY(1px); }
+    .cp-done-btn.is-done { background: var(--deep-green); cursor: default; }
+    .cp-done-msg {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--deep-green);
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 1100px) {
+      .cp-layout { grid-template-columns: 1fr; }
+      .cp-curriculum { position: static; }
+    }
+    @media (max-width: 900px) {
+      .cp-prompt-top { flex-direction: column; align-items: flex-start; }
+      .cp-prompt-copy { width: 100%; justify-content: center; }
+      .cp-lesson-nav { flex-direction: column; }
+      .cp-lesson-nav .btn { width: 100%; text-align: center; }
+    }
+  </style>
+{% endraw %}{% endblock %}
+{% block content %}{% raw %}
+<div class="cp-layout">
+
+      <!-- ===== Левая навигация программы ===== -->
+      <aside class="cp-curriculum">
+        <a class="cp-back" href="/courses" data-i18n="cur.back">← К программе</a>
+
+        <div class="cp-progress">
+          <div class="cp-progress-row">
+            <span class="cp-progress-label" data-i18n="cur.progress">Прогресс</span>
+            <span class="cp-progress-pct">0%</span>
+          </div>
+          <div class="cp-progress-bar">
+            <div class="cp-progress-fill" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- День 1 — текущий -->
+        <details class="cp-day" open>
+          <summary>
+            <span class="cp-day-caret">▶</span>
+            <span class="cp-day-title" data-i18n="cur.day1">День 1 — Настройка</span>
+            <span class="cp-day-count">0/2</span>
+          </summary>
+          <div class="cp-lessons">
+            <a class="cp-lesson-link cp-lesson-active" href="/courses/ai-employees-setup/day/1">
+              <span class="cp-lesson-mark">●</span>
+              <span class="cp-lesson-text" data-i18n="cur.day1.live">Эфир Дня 1</span>
+            </a>
+            <a class="cp-lesson-link" href="/courses/ai-employees-setup/day/1">
+              <span class="cp-lesson-mark">○</span>
+              <span class="cp-lesson-text" data-i18n="cur.day1.guide">Инструкция Дня 1</span>
+            </a>
+          </div>
+        </details>
+
+        <!-- День 2 -->
+        <details class="cp-day">
+          <summary>
+            <span class="cp-day-caret">▶</span>
+            <span class="cp-day-title" data-i18n="cur.day2">День 2 — 2 АИ-сотрудника: скиллы, папки</span>
+            <span class="cp-day-count">0/2</span>
+          </summary>
+          <div class="cp-lessons">
+            <a class="cp-lesson-link cp-lesson-locked" href="/courses/ai-employees-setup/day/2"><span class="cp-lesson-mark">○</span><span class="cp-lesson-text" data-i18n="cur.day2.live">Эфир Дня 2</span></a>
+            <a class="cp-lesson-link cp-lesson-locked" href="/courses/ai-employees-setup/day/2"><span class="cp-lesson-mark">○</span><span class="cp-lesson-text" data-i18n="cur.day2.guide">Инструкция Дня 2</span></a>
+          </div>
+        </details>
+
+        <!-- День 3 -->
+        <details class="cp-day">
+          <summary>
+            <span class="cp-day-caret">▶</span>
+            <span class="cp-day-title" data-i18n="cur.day3">День 3 — Результат: сайт + презентация</span>
+            <span class="cp-day-count">0/2</span>
+          </summary>
+          <div class="cp-lessons">
+            <a class="cp-lesson-link cp-lesson-locked" href="#"><span class="cp-lesson-mark">○</span><span class="cp-lesson-text" data-i18n="cur.day3.live">Эфир Дня 3</span></a>
+            <a class="cp-lesson-link cp-lesson-locked" href="#"><span class="cp-lesson-mark">○</span><span class="cp-lesson-text" data-i18n="cur.day3.guide">Инструкция Дня 3</span></a>
+          </div>
+        </details>
+      </aside>
+
+      <!-- ===== Контент урока ===== -->
+      <div>
+        <article class="card cp-prose">
+          <div class="cp-lesson-head">
+            <span class="cp-lesson-badge" data-i18n="lesson.badge">День 1</span>
+            <h2 data-i18n="lesson.h2">Настройка: Claude Code, звук, голос</h2>
+          </div>
+
+          <!-- ===== ВИДЕО ЭФИРА (YouTube, скрытое) ===== -->
+          <!-- После загрузки записи на YouTube впишите ID ролика в data-yt ниже
+               (часть ссылки после "v=" или после "youtu.be/"). Постер сам сменится на плеер. -->
+          <div class="cp-video" id="cp-video" data-yt="j8GdF1IlK_4">
+            <div class="cp-video-poster" onclick="cpPlay()">
+              <span class="cp-video-tag" data-i18n="video.tag">Запись эфира · YouTube</span>
+              <div class="cp-video-play">▶</div>
+              <div class="cp-video-title" data-i18n="video.title">Эфир Дня 1 — «АИ — второй мозг»</div>
+              <div class="cp-video-sub" data-i18n="video.sub">Нажмите, чтобы смотреть · 1 ч 57 мин</div>
+            </div>
+          </div>
+          <div class="cp-caption-row">
+            <p class="cp-caption" data-i18n="video.caption">▶️ Смотрите целиком — это фундамент всей программы.</p>
+            <button class="cp-watched-btn" id="cp-watched-btn" type="button" onclick="cpWatched()" data-i18n="video.watched">Посмотрено</button>
+          </div>
+
+          <!-- ===== Инструкция Дня 1 ===== -->
+          <h3 data-i18n="guide.h3">📋 Инструкция дня</h3>
+          <p data-i18n="guide.time">Времени займёт <b>60–90 минут</b>. Большую часть просто ждёшь, пока что-то скачается.</p>
+          <p data-i18n="guide.intro">Инструкция разбита на 6 этапов. Делай по порядку, не перепрыгивай. После каждого этапа можешь сделать перерыв.</p>
+          <ul class="cp-plan">
+            <li data-i18n="plan.1">🖥 Этап 1. Устанавливаем VS Code — ~5 мин</li>
+            <li data-i18n="plan.2">🔐 Этап 2. Регистрируемся в Claude (с обходом блокировок для РФ) — ~20–30 мин</li>
+            <li data-i18n="plan.3">💳 Этап 3. Оплачиваем подписку — ~10 мин</li>
+            <li data-i18n="plan.4">⚙️ Этап 4. Ставим Claude Code и настраиваем на максимум — ~15 мин</li>
+            <li data-i18n="plan.5">🎤 Этап 5. Ускорители: голосовой ввод + скриншоты — ~10 мин</li>
+            <li data-i18n="plan.6">🤖 Этап 6. Запускаем агента на установку окружения — ~10–20 мин</li>
+          </ul>
+
+          <div class="cp-callout" data-i18n="callout.tools">VS Code и Claude Code — это разные программы, которые работают вместе. Через VS Code мы работаем в Claude Code.</div>
+
+          <details class="cp-etap">
+            <summary>
+              <span class="cp-etap-caret">▶</span>
+              <span class="cp-etap-title" data-i18n="s1.title">🖥 Этап 1. Устанавливаем VS Code</span>
+              <span class="cp-etap-status" data-i18n="etap.expand">развернуть</span>
+            </summary>
+            <div class="cp-etap-body">
+          <p data-i18n="s1.p1">VS Code — редактор кода, твоё главное окно на весь практикум. Бесплатный.</p>
+          <ul>
+            <li data-i18n="s1.li1">Зайди на <a href="https://code.visualstudio.com" target="_blank" rel="noopener">code.visualstudio.com</a></li>
+            <li data-i18n="s1.li2">Нажми <b>Download</b> — скачается версия под твою систему (Mac или Windows)</li>
+            <li data-i18n="s1.li3">Установи как обычную программу: двойной клик → «Далее» → «Готово»</li>
+            <li data-i18n="s1.li4">Запусти. Должно открыться окно редактора с тёмным фоном</li>
+          </ul>
+          <p data-i18n="s1.p2">Всё, VS Code готов. Идём дальше.</p>
+
+              <div class="cp-etap-done-bar">
+                <button class="cp-etap-done-btn" type="button" onclick="cpEtapDone(this)" data-i18n="etap.done">Готово</button>
+              </div>
+            </div>
+          </details>
+
+          <details class="cp-etap">
+            <summary>
+              <span class="cp-etap-caret">▶</span>
+              <span class="cp-etap-title" data-i18n="s2.title">🔐 Этап 2. Регистрируемся в Claude</span>
+              <span class="cp-etap-status" data-i18n="etap.expand">развернуть</span>
+            </summary>
+            <div class="cp-etap-body">
+          <p data-i18n="s2.p1">Claude — «мозг», который будет за тебя писать код. Сначала регистрируем аккаунт, потом (на следующем этапе) оплачиваем подписку. Если ты <b>не</b> в России или у тебя не русская симка — просто зайди на <a href="https://claude.ai" target="_blank" rel="noopener">claude.ai</a>, зарегистрируйся через Google и переходи сразу к этапу 3.</p>
+          <p data-i18n="s2.p2">Google-аккаунт тоже должен быть на почте Gmail. Если нет — заведи.</p>
+          <div class="cp-callout cp-warn" data-i18n="s2.warn">⚠️ Что <b>не</b> скармливать Claude: паспортные данные, пароли от банка, персональные данные клиентов. Claude читает твои файлы — если там лежат паспорта, они «засветятся» у Anthropic. Для идей, кода, бизнес-планов — безопасно.</div>
+
+              <div class="cp-etap-done-bar">
+                <button class="cp-etap-done-btn" type="button" onclick="cpEtapDone(this)" data-i18n="etap.done">Готово</button>
+              </div>
+            </div>
+          </details>
+
+          <details class="cp-etap">
+            <summary>
+              <span class="cp-etap-caret">▶</span>
+              <span class="cp-etap-title" data-i18n="s3.title">💳 Этап 3. Оплачиваем подписку</span>
+              <span class="cp-etap-status" data-i18n="etap.expand">развернуть</span>
+            </summary>
+            <div class="cp-etap-body">
+          <p data-i18n="s3.p1">Без платной подписки упрёшься в лимиты через 10 минут. Платить обязательно.</p>
+
+          <div class="cp-substage" data-i18n="s3.sub1">Шаг 1. Выбери тариф</div>
+          <ul>
+            <li data-i18n="s3.li1"><b>Max x5 — $100 / мес (~7 500 ₽).</b> Нормальная работа. Одного активного проекта хватит.</li>
+          </ul>
+          <div class="cp-callout" data-i18n="s3.callout">🎯 <b>Рекомендация:</b> минимум <b>Max x5</b> за $100/мес. На Pro ты сделаешь пару запросов — и встанешь в лимит на полдня.</div>
+
+          <div class="cp-substage" data-i18n="s3.sub2">Шаг 2. Оплата</div>
+          <p data-i18n="s3.p2"><b>Если карта не русская — то напрямую:</b></p>
+          <ul>
+            <li data-i18n="s3.li2">Зайди на <a href="https://claude.ai/upgrade" target="_blank" rel="noopener">claude.ai/upgrade</a></li>
+            <li data-i18n="s3.li3">Выбери тариф</li>
+            <li data-i18n="s3.li4">Оплати</li>
+          </ul>
+
+              <div class="cp-etap-done-bar">
+                <button class="cp-etap-done-btn" type="button" onclick="cpEtapDone(this)" data-i18n="etap.done">Готово</button>
+              </div>
+            </div>
+          </details>
+
+          <details class="cp-etap">
+            <summary>
+              <span class="cp-etap-caret">▶</span>
+              <span class="cp-etap-title" data-i18n="s4.title">⚙️ Этап 4. Ставим Claude Code и настраиваем на максимум</span>
+              <span class="cp-etap-status" data-i18n="etap.expand">развернуть</span>
+            </summary>
+            <div class="cp-etap-body">
+          <p data-i18n="s4.p1">Теперь подключаем Claude прямо внутрь VS Code, чтобы агент мог писать код и запускать команды в твоём редакторе.</p>
+
+          <div class="cp-substage" data-i18n="s4.sub1">Шаг 1. Установи Node.js</div>
+          <p data-i18n="s4.p2">Node.js нужен, чтобы Claude мог ставить остальные программы (pnpm, Git и т.д.).</p>
+          <ul>
+            <li data-i18n="s4.li1">Зайди на <a href="https://nodejs.org/" target="_blank" rel="noopener">nodejs.org</a></li>
+            <li data-i18n="s4.li2">Скачай версию <b>LTS</b> (с зелёной кнопкой)</li>
+            <li data-i18n="s4.li3">Установи, везде нажимая <b>«Далее»</b></li>
+          </ul>
+
+          <div class="cp-substage" data-i18n="s4.sub2">Шаг 2. Установи расширение Claude Code</div>
+          <ul>
+            <li data-i18n="s4.li4">В VS Code слева в сайдбаре найди иконку <b>Extensions</b> (четыре кубика) или нажми Cmd / Ctrl + Shift + X</li>
+            <li data-i18n="s4.li5">В поиске напиши <b>claude</b></li>
+            <li data-i18n="s4.li6">Выбери <b>официальное расширение от Anthropic</b> (с галочкой verified, миллионы установок)</li>
+            <li data-i18n="s4.li7">Нажми <b>Install</b></li>
+            <li data-i18n="s4.li8">После установки иконка Claude появится в сайдбаре — нажми на неё</li>
+            <li data-i18n="s4.li9">VS Code откроет браузер — авторизуйся в Claude-аккаунте</li>
+            <li data-i18n="s4.li10">Вернись в VS Code — в сайдбаре теперь у тебя чат с Claude Code</li>
+          </ul>
+          <p data-i18n="s4.p3"><b>Если через Extensions не пошло</b> — резервный путь через терминал. Открой его в VS Code (<b>View → Terminal</b> в верхнем меню) и вставь команду:</p>
+          <code class="cp-cmd">npm install -g @anthropic-ai/claude-code</code>
+
+          <div class="cp-substage" data-i18n="s4.sub3">Шаг 3. Настрой Claude на максимум</div>
+          <div class="cp-callout cp-warn" data-i18n="s4.warn">🚨 <b>Это самый важный шаг.</b> Без него Claude работает вполсилы — туповато и без учёта контекста.</div>
+          <p data-i18n="s4.p4">Нажми <b>шестерёнку</b> (⚙️) в панели Claude Code → выставь <b>все 5 настроек</b>:</p>
+          <ul>
+            <li data-i18n="s4.li11"><b>Permission Mode — Bypass Permissions.</b> Агент не спрашивает перед каждой командой.</li>
+            <li data-i18n="s4.li12"><b>Default Mode — Bypass Permissions.</b> Каждый новый чат открывается в этом режиме.</li>
+            <li data-i18n="s4.li13"><b>Effort — Max.</b> Думает глубже, делает качественнее.</li>
+            <li data-i18n="s4.li14"><b>Thinking — On.</b> Включает «размышление вслух» перед ответом.</li>
+            <li data-i18n="s4.li15"><b>Model — Claude Opus 4.7.</b> Самая умная модель, 1 млн токенов контекста.</li>
+          </ul>
+          <div class="cp-substage" data-i18n="s4.sub4">Если в меню нет Opus 4.7 или Bypass Permissions</div>
+          <p data-i18n="s4.p5">Значит у тебя старая версия расширения. Фикс:</p>
+          <ul>
+            <li data-i18n="s4.li16">Extensions → Claude → правая кнопка → <b>Reload</b> (или <b>Update</b>)</li>
+            <li data-i18n="s4.li17"><b>Закрой VS Code полностью</b> (Cmd / Ctrl + Q — не просто сверни)</li>
+            <li data-i18n="s4.li18">Открой заново</li>
+            <li data-i18n="s4.li19">Настройки появятся</li>
+          </ul>
+
+              <div class="cp-etap-done-bar">
+                <button class="cp-etap-done-btn" type="button" onclick="cpEtapDone(this)" data-i18n="etap.done">Готово</button>
+              </div>
+            </div>
+          </details>
+
+          <details class="cp-etap">
+            <summary>
+              <span class="cp-etap-caret">▶</span>
+              <span class="cp-etap-title" data-i18n="s5.title">🎤 Этап 5. Ускорители: голосовой ввод + скриншоты</span>
+              <span class="cp-etap-status" data-i18n="etap.expand">развернуть</span>
+            </summary>
+            <div class="cp-etap-body">
+          <p data-i18n="s5.p1">Эти два инструмента ускорят тебя в 3–5 раз. Без них практикум превратится в боль.</p>
+
+          <div class="cp-substage" data-i18n="s5.sub1">Шаг 1. Голосовой ввод</div>
+          <p data-i18n="s5.p2">Надиктовать голосом в 3 раза быстрее, чем набрать клавиатурой. Встроенная диктовка Claude с русским работает плохо — ставим отдельный инструмент.</p>
+          <p data-i18n="s5.p3"><b>Mac — любой из двух на выбор:</b></p>
+          <ul>
+            <li><b>Wispr Flow</b> — <a href="https://wisprflow.ai/" target="_blank" rel="noopener">wisprflow.ai</a></li>
+            <li><b>Super Whisper</b> — <a href="https://superwhisper.com/" target="_blank" rel="noopener">superwhisper.com</a></li>
+          </ul>
+          <p data-i18n="s5.p4"><b>Windows:</b></p>
+          <ul>
+            <li><b>Wispr Flow</b> — <a href="https://wisprflow.ai/" target="_blank" rel="noopener">wisprflow.ai</a></li>
+          </ul>
+          <p data-i18n="s5.p5"><b>Что сделать после установки:</b></p>
+          <ul>
+            <li data-i18n="s5.li1">Скачай и установи с сайта</li>
+            <li data-i18n="s5.li2">Дай программе доступ к микрофону (попросит при первом запуске)</li>
+            <li data-i18n="s5.li3">Настрой горячую клавишу: зажал → диктуешь → отпустил → текст вставляется в активное поле</li>
+            <li data-i18n="s5.li4"><b>Проверка:</b> открой Claude Code, нажми горячую клавишу, скажи «всем привет, проверка связи» — текст должен появиться в поле ввода</li>
+          </ul>
+          <p data-i18n="s5.p6"><b>Если пока не готов платить — бесплатные встроенные:</b></p>
+          <ul>
+            <li data-i18n="s5.li5">Mac: <b>System Settings → Keyboard → Dictation → On</b></li>
+            <li data-i18n="s5.li6">Windows: зажми <b>Win + H</b> в любом окне</li>
+          </ul>
+          <p data-i18n="s5.p7">Качество ощутимо хуже, но работает.</p>
+
+          <div class="cp-substage" data-i18n="s5.sub2">Шаг 2. Скриншоты в буфер обмена</div>
+          <p data-i18n="s5.p8">Чтобы показать Claude ошибку, дизайн или интерфейс — нужен скриншот, который улетает <b>сразу в буфер обмена</b> (не сохраняется на рабочий стол). Дальше Cmd / Ctrl + V в чат.</p>
+          <p data-i18n="s5.p9"><b>Mac.</b> Горячая клавиша <b>Cmd + Shift + Ctrl + 4</b> — скриншот выделенной области сразу в буфер. Если неудобная — переназначь:</p>
+          <ul>
+            <li data-i18n="s5.li7"><b>System Settings → Keyboard → Keyboard Shortcuts → Screenshots</b></li>
+            <li data-i18n="s5.li8">Найди строку <b>Copy picture of selected area to the clipboard</b></li>
+            <li data-i18n="s5.li9">Кликни на текущую комбинацию и нажми свою (например, Cmd + Shift + 4)</li>
+          </ul>
+          <p data-i18n="s5.p10"><b>Windows.</b> <b>Win + Shift + S</b> — открывает Snipping Tool. Выделяешь область → она в буфере.</p>
+          <p data-i18n="s5.p11"><b>Проверка:</b></p>
+          <ul>
+            <li data-i18n="s5.li10">Сделай скриншот любой области экрана через горячую клавишу</li>
+            <li data-i18n="s5.li11">Открой Claude Code</li>
+            <li data-i18n="s5.li12">В поле ввода нажми Cmd / Ctrl + V</li>
+            <li data-i18n="s5.li13">Скриншот должен появиться в чате</li>
+          </ul>
+          <p data-i18n="s5.p12">Если появился — всё работает. Если нет — перепроверь, что используешь именно клавишу «в буфер обмена», а не «на рабочий стол».</p>
+
+              <div class="cp-etap-done-bar">
+                <button class="cp-etap-done-btn" type="button" onclick="cpEtapDone(this)" data-i18n="etap.done">Готово</button>
+              </div>
+            </div>
+          </details>
+
+          <details class="cp-etap">
+            <summary>
+              <span class="cp-etap-caret">▶</span>
+              <span class="cp-etap-title" data-i18n="s6.title">🤖 Этап 6. Запускаем агента на установку окружения</span>
+              <span class="cp-etap-status" data-i18n="etap.expand">развернуть</span>
+            </summary>
+            <div class="cp-etap-body">
+          <p data-i18n="s6.p1">Самый классный этап — дальше за тебя всё делает Claude. Твоя задача — только подтверждать команды.</p>
+
+          <div class="cp-substage" data-i18n="s6.sub1">Шаг 1. Скопируй промпт и вставь в Claude</div>
+          <p data-i18n="s6.p2">Скопируй промпт ниже одной кнопкой, вставь в чат Claude Code, нажми Enter.</p>
+
+          <div class="cp-prompt">
+            <div class="cp-prompt-top">
+              <span class="cp-prompt-label" data-i18n="s6.promptLabel">Промпт для агента</span>
+              <button class="cp-prompt-copy" type="button" onclick="cpCopy(this)">
+                📋 <span data-i18n="s6.copy">Копировать</span>
+              </button>
+            </div>
+            <div class="cp-prompt-body" id="cp-prompt-env" data-i18n="s6.prompt">Я полный новичок в программировании, это мой первый опыт. Я прохожу практикум. Моя задача сегодня — подготовить компьютер к разработке веб-сайтов на Next.js.
+
+Пожалуйста, сделай для меня следующее:
+
+1. Проверь, какая у меня операционная система (Mac или Windows).
+2. Проверь, что уже установлено: Node.js, pnpm, Git. Покажи версии того, что нашёл.
+3. Установи то, чего не хватает:
+   - pnpm (через npm install -g pnpm)
+   - Git (если его нет)
+4. После установки проверь ещё раз: node -v, pnpm -v, git --version.
+5. Подскажи и помоги установить расширения VS Code для разработки на Next.js: ESLint, Prettier, Tailwind CSS IntelliSense, Prisma.
+
+Важные правила:
+- Перед каждой командой объясняй простыми словами, что собираешься сделать и зачем.
+- Жди моего разрешения перед запуском каждой команды.
+- Если что-то пойдёт не так — объясни ошибку человеческим языком и предложи решение.
+- В конце скажи: «Окружение готово, можно начинать практикум».</div>
+          </div>
+
+          <p data-i18n="s6.p3"><b>Что этот промпт сделает:</b></p>
+          <ul>
+            <li data-i18n="s6.li1"><b>Поймёт твою систему</b> — Mac или Windows, подберёт правильные команды</li>
+            <li data-i18n="s6.li2"><b>Проверит, что уже стоит</b> — чтобы не ставить дважды</li>
+            <li data-i18n="s6.li3"><b>Установит pnpm</b> — менеджер библиотек, скачивает кусочки проектов</li>
+            <li data-i18n="s6.li4"><b>Установит Git</b> — система обмена кодом, нужна с Дня 3</li>
+            <li data-i18n="s6.li5"><b>Подскажет расширения VS Code</b> — подсветка ошибок, автоформат, подсказки</li>
+          </ul>
+          <div class="cp-callout" data-i18n="s6.callout">Всё — твой компьютер и Claude готовы к практикуму. Если не настроишь — не страшно, увидишь на мастер-классе, как это сильно помогает экономить время и деньги.</div>
+
+              <div class="cp-etap-done-bar">
+                <button class="cp-etap-done-btn" type="button" onclick="cpEtapDone(this)" data-i18n="etap.done">Готово</button>
+              </div>
+            </div>
+          </details>
+
+          <!-- ===== Итог за сегодня ===== -->
+          <h3 data-i18n="sum.h3">✅ Итог дня 1</h3>
+          <p data-i18n="sum.p1">У тебя получилось всё, что было в этапах:</p>
+          <ul class="cp-check-done">
+            <li data-i18n="sum.li1">Этап 1. Установлен VS Code</li>
+            <li data-i18n="sum.li2">Этап 2. Зарегистрирован аккаунт Claude</li>
+            <li data-i18n="sum.li3">Этап 3. Оплачена подписка</li>
+            <li data-i18n="sum.li4">Этап 4. Установлен и настроен Claude Code</li>
+            <li data-i18n="sum.li5">Этап 5. Настроены голосовой ввод и скриншоты</li>
+            <li data-i18n="sum.li6">Этап 6. Агент установил окружение</li>
+          </ul>
+          <p data-i18n="sum.p2">Если всё готово — нажимай кнопку «Готово».</p>
+
+          <!-- ===== Чек-поинт «Готово» ===== -->
+          <div class="cp-done-bar">
+            <button class="cp-done-btn" id="cp-done-btn" type="button" onclick="cpDone()" data-i18n="sum.doneBtn">Готов день 1</button>
+          </div>
+        </article>
+      </div>
+
+    </div>
+{% endraw %}{% endblock %}
+{% block scripts %}{% raw %}
+<script>
+  // ===== Переводы EN (B2, простой международный английский) =====
+  var I18N = {
+    '_title': 'Day 1 — Setup · AI Employees Workshop — ONCOUNT',
+
+    // Сайдбар
+    'nav.main': 'Main',
+    'nav.dashboard': '🏠 Dashboard',
+    'nav.leads': '📋 All requests',
+    'nav.createSection': 'Create a request',
+    'nav.transfer': '➡️ Refer a client',
+    'nav.tools': 'Tools',
+    'nav.links': '🔗 Referral links',
+    'nav.kb': 'Knowledge base',
+    'nav.courses': '🎓 Courses',
+    'nav.messages': '📨 Message templates',
+    'nav.products': '📦 Plans and services',
+    'nav.faq': '❓ FAQ',
+    'nav.tg': '💬 TG',
+    'nav.logout': '↩️ Log out',
+
+    // Шапка
+    'page.title': 'AI Employees Workshop',
+
+    // Навигация программы
+    'cur.back': '← Back to program',
+    'cur.progress': 'Progress',
+    'cur.day1': 'Day 1 — Setup',
+    'cur.day1.live': 'Day 1 Live Session',
+    'cur.day1.guide': 'Day 1 Guide',
+    'cur.day2': 'Day 2 — 2 AI employees: skills, folders',
+    'cur.day2.live': 'Day 2 Live Session',
+    'cur.day2.guide': 'Day 2 Guide',
+    'cur.day3': 'Day 3 — Result: website + presentation',
+    'cur.day3.live': 'Day 3 Live Session',
+    'cur.day3.guide': 'Day 3 Guide',
+
+    // Урок
+    'lesson.badge': 'Day 1',
+    'lesson.h2': 'Setup: Claude Code, sound, voice',
+
+    // Видео
+    'video.tag': 'Live recording · YouTube',
+    'video.title': 'Day 1 Live — “AI as your second brain”',
+    'video.sub': 'Click to watch · 1 h 57 min',
+    'video.caption': '▶️ Watch the whole thing — this is the base of the whole program.',
+    'video.watched': 'Watched',
+
+    // Инструкция дня
+    'guide.h3': '📋 Guide for today',
+    'guide.time': 'This will take <b>60–90 minutes</b>. Most of the time you just wait while something downloads.',
+    'guide.intro': 'The guide has 6 stages. Do them in order, don’t skip. You can take a break after each stage.',
+    'plan.1': '🖥 Stage 1. Install VS Code — ~5 min',
+    'plan.2': '🔐 Stage 2. Sign up for Claude (with a workaround for users in Russia) — ~20–30 min',
+    'plan.3': '💳 Stage 3. Pay for the subscription — ~10 min',
+    'plan.4': '⚙️ Stage 4. Install Claude Code and set it to maximum — ~15 min',
+    'plan.5': '🎤 Stage 5. Boosters: voice input + screenshots — ~10 min',
+    'plan.6': '🤖 Stage 6. Let the agent set up your environment — ~10–20 min',
+    'callout.tools': 'VS Code and Claude Code are two different programs that work together. We use Claude Code inside VS Code.',
+
+    // Этап 1
+    's1.title': '🖥 Stage 1. Install VS Code',
+    's1.p1': 'VS Code is a code editor, your main window for the whole workshop. It is free.',
+    's1.li1': 'Go to <a href="https://code.visualstudio.com" target="_blank" rel="noopener">code.visualstudio.com</a>',
+    's1.li2': 'Click <b>Download</b> — it will download the version for your system (Mac or Windows)',
+    's1.li3': 'Install it like any normal program: double-click → “Next” → “Finish”',
+    's1.li4': 'Open it. You should see an editor window with a dark background',
+    's1.p2': 'That is it, VS Code is ready. Let’s move on.',
+
+    // Этап 2
+    's2.title': '🔐 Stage 2. Sign up for Claude',
+    's2.p1': 'Claude is the “brain” that will write code for you. First we create an account, then (in the next stage) we pay for the subscription. If you are <b>not</b> in Russia and do not have a Russian SIM card — just go to <a href="https://claude.ai" target="_blank" rel="noopener">claude.ai</a>, sign up with Google and go straight to Stage 3.',
+    's2.p2': 'Your Google account should also use a Gmail address. If you do not have one — create it.',
+    's2.warn': '⚠️ What <b>not</b> to give Claude: passport data, bank passwords, clients’ personal data. Claude reads your files — if passports are there, they will be exposed to Anthropic. For ideas, code and business plans it is safe.',
+
+    // Этап 3
+    's3.title': '💳 Stage 3. Pay for the subscription',
+    's3.p1': 'Without a paid subscription you will hit the limits in 10 minutes. Paying is a must.',
+    's3.sub1': 'Step 1. Choose a plan',
+    's3.li1': '<b>Max x5 — $100 / month (~7,500 ₽).</b> Normal work. Enough for one active project.',
+    's3.callout': '🎯 <b>Recommendation:</b> at least <b>Max x5</b> for $100/month. On Pro you will make a couple of requests and then sit at the limit for half a day.',
+    's3.sub2': 'Step 2. Payment',
+    's3.p2': '<b>If your card is not Russian — pay directly:</b>',
+    's3.li2': 'Go to <a href="https://claude.ai/upgrade" target="_blank" rel="noopener">claude.ai/upgrade</a>',
+    's3.li3': 'Choose a plan',
+    's3.li4': 'Pay',
+
+    // Этап 4
+    's4.title': '⚙️ Stage 4. Install Claude Code and set it to maximum',
+    's4.p1': 'Now we connect Claude right inside VS Code, so the agent can write code and run commands in your editor.',
+    's4.sub1': 'Step 1. Install Node.js',
+    's4.p2': 'Node.js is needed so Claude can install the other programs (pnpm, Git and so on).',
+    's4.li1': 'Go to <a href="https://nodejs.org/" target="_blank" rel="noopener">nodejs.org</a>',
+    's4.li2': 'Download the <b>LTS</b> version (the green button)',
+    's4.li3': 'Install it by clicking <b>“Next”</b> everywhere',
+    's4.sub2': 'Step 2. Install the Claude Code extension',
+    's4.li4': 'In VS Code, find the <b>Extensions</b> icon in the left sidebar (four squares) or press Cmd / Ctrl + Shift + X',
+    's4.li5': 'Type <b>claude</b> in the search box',
+    's4.li6': 'Choose the <b>official extension by Anthropic</b> (with the verified check mark, millions of installs)',
+    's4.li7': 'Click <b>Install</b>',
+    's4.li8': 'After installing, the Claude icon appears in the sidebar — click it',
+    's4.li9': 'VS Code will open a browser — log in to your Claude account',
+    's4.li10': 'Go back to VS Code — now you have a Claude Code chat in the sidebar',
+    's4.p3': '<b>If the Extensions way did not work</b> — there is a backup way through the terminal. Open it in VS Code (<b>View → Terminal</b> in the top menu) and paste this command:',
+    's4.sub3': 'Step 3. Set Claude to maximum',
+    's4.warn': '🚨 <b>This is the most important step.</b> Without it Claude works at half power — a bit dumb and without enough context.',
+    's4.p4': 'Click the <b>gear</b> (⚙️) in the Claude Code panel → set <b>all 5 options</b>:',
+    's4.li11': '<b>Permission Mode — Bypass Permissions.</b> The agent does not ask before every command.',
+    's4.li12': '<b>Default Mode — Bypass Permissions.</b> Every new chat opens in this mode.',
+    's4.li13': '<b>Effort — Max.</b> It thinks deeper and does better work.',
+    's4.li14': '<b>Thinking — On.</b> It turns on “thinking out loud” before the answer.',
+    's4.li15': '<b>Model — Claude Opus 4.7.</b> The smartest model, 1 million tokens of context.',
+    's4.sub4': 'If the menu has no Opus 4.7 or Bypass Permissions',
+    's4.p5': 'Then you have an old version of the extension. Fix:',
+    's4.li16': 'Extensions → Claude → right click → <b>Reload</b> (or <b>Update</b>)',
+    's4.li17': '<b>Close VS Code completely</b> (Cmd / Ctrl + Q — do not just minimize)',
+    's4.li18': 'Open it again',
+    's4.li19': 'The options will appear',
+
+    // Этап 5
+    's5.title': '🎤 Stage 5. Boosters: voice input + screenshots',
+    's5.p1': 'These two tools make you 3–5 times faster. Without them the workshop becomes painful.',
+    's5.sub1': 'Step 1. Voice input',
+    's5.p2': 'Speaking is 3 times faster than typing. Claude’s built-in dictation works badly with Russian — so we install a separate tool.',
+    's5.p3': '<b>Mac — pick either of the two:</b>',
+    's5.p4': '<b>Windows:</b>',
+    's5.p5': '<b>What to do after installing:</b>',
+    's5.li1': 'Download and install it from the website',
+    's5.li2': 'Give the program access to the microphone (it asks on the first launch)',
+    's5.li3': 'Set a hotkey: hold it → speak → release → the text goes into the active field',
+    's5.li4': '<b>Check:</b> open Claude Code, press the hotkey, say “hello everyone, this is a test” — the text should appear in the input field',
+    's5.p6': '<b>If you are not ready to pay yet — free built-in options:</b>',
+    's5.li5': 'Mac: <b>System Settings → Keyboard → Dictation → On</b>',
+    's5.li6': 'Windows: press <b>Win + H</b> in any window',
+    's5.p7': 'The quality is clearly worse, but it works.',
+    's5.sub2': 'Step 2. Screenshots to the clipboard',
+    's5.p8': 'To show Claude an error, a design or an interface, you need a screenshot that goes <b>straight to the clipboard</b> (not saved to the desktop). Then Cmd / Ctrl + V into the chat.',
+    's5.p9': '<b>Mac.</b> The hotkey <b>Cmd + Shift + Ctrl + 4</b> takes a screenshot of the selected area straight to the clipboard. If it is not handy — reassign it:',
+    's5.li7': '<b>System Settings → Keyboard → Keyboard Shortcuts → Screenshots</b>',
+    's5.li8': 'Find the line <b>Copy picture of selected area to the clipboard</b>',
+    's5.li9': 'Click the current combination and press your own (for example, Cmd + Shift + 4)',
+    's5.p10': '<b>Windows.</b> <b>Win + Shift + S</b> opens the Snipping Tool. Select an area → it is in the clipboard.',
+    's5.p11': '<b>Check:</b>',
+    's5.li10': 'Take a screenshot of any area of the screen with the hotkey',
+    's5.li11': 'Open Claude Code',
+    's5.li12': 'Press Cmd / Ctrl + V in the input field',
+    's5.li13': 'The screenshot should appear in the chat',
+    's5.p12': 'If it appears — everything works. If not — check again that you use the “to clipboard” key, not the “to desktop” one.',
+
+    // Этап 6
+    's6.title': '🤖 Stage 6. Let the agent set up your environment',
+    's6.p1': 'The coolest stage — from here Claude does everything for you. Your only job is to confirm the commands.',
+    's6.sub1': 'Step 1. Copy the prompt and paste it into Claude',
+    's6.p2': 'Copy the prompt below with one button, paste it into the Claude Code chat, press Enter.',
+    's6.promptLabel': 'Prompt for the agent',
+    's6.copy': 'Copy',
+    's6.prompt': 'I am a complete beginner in programming, this is my first time. I am taking a workshop. My task today is to get my computer ready for building websites with Next.js.\n\nPlease do the following for me:\n\n1. Check which operating system I have (Mac or Windows).\n2. Check what is already installed: Node.js, pnpm, Git. Show the versions of what you find.\n3. Install what is missing:\n   - pnpm (with npm install -g pnpm)\n   - Git (if it is not there)\n4. After installing, check again: node -v, pnpm -v, git --version.\n5. Tell me and help me install the VS Code extensions for Next.js development: ESLint, Prettier, Tailwind CSS IntelliSense, Prisma.\n\nImportant rules:\n- Before every command, explain in simple words what you are going to do and why.\n- Wait for my permission before running each command.\n- If something goes wrong — explain the error in plain language and suggest a solution.\n- At the end say: “The environment is ready, we can start the workshop.”',
+    's6.p3': '<b>What this prompt will do:</b>',
+    's6.li1': '<b>Detect your system</b> — Mac or Windows, and pick the right commands',
+    's6.li2': '<b>Check what is already installed</b> — so it does not install things twice',
+    's6.li3': '<b>Install pnpm</b> — a library manager that downloads the parts of projects',
+    's6.li4': '<b>Install Git</b> — a code-sharing system, needed from Day 3',
+    's6.li5': '<b>Suggest VS Code extensions</b> — error highlighting, auto-formatting, hints',
+    's6.callout': 'That is it — your computer and Claude are ready for the workshop. If you do not set it up — no worries, you will see at the master class how much time and money this saves.',
+
+    // Итог
+    'sum.h3': '✅ Day 1 summary',
+    'sum.p1': 'You have done everything from the stages:',
+    'sum.li1': 'Stage 1. VS Code installed',
+    'sum.li2': 'Stage 2. Claude account created',
+    'sum.li3': 'Stage 3. Subscription paid',
+    'sum.li4': 'Stage 4. Claude Code installed and set up',
+    'sum.li5': 'Stage 5. Voice input and screenshots set up',
+    'sum.li6': 'Stage 6. The agent set up the environment',
+    'sum.p2': 'If everything is ready — click the “Done” button.',
+    'sum.doneBtn': 'Day 1 done',
+
+    // Этапы — общее
+    'etap.expand': 'expand',
+    'etap.done': 'Done',
+
+    // Футер
+    'foot.contact': 'Contact',
+    'foot.social': 'Social',
+    'foot.license': 'License'
+  };
+
+  // Динамические подписи кнопок — зависят от языка
+  var T = {
+    ru: {
+      watched: 'Посмотрено ✓',
+      copied: 'Скопировано ✓',
+      copy: 'Копировать',
+      etapDoneStatus: '✓ Выполнено',
+      doneBtn: 'Выполнено ✓',
+      noVideo: 'Видео ещё не загружено на YouTube — добавьте ID ролика в data-yt'
+    },
+    en: {
+      watched: 'Watched ✓',
+      copied: 'Copied ✓',
+      copy: 'Copy',
+      etapDoneStatus: '✓ Done',
+      doneBtn: 'Done ✓',
+      noVideo: 'The video is not on YouTube yet — add the video ID to data-yt'
+    }
+  };
+
+  // Текущий язык: ?lang=en → en, иначе ru (по умолчанию)
+  var LANG = (new URLSearchParams(location.search).get('lang') === 'en') ? 'en' : 'ru';
+
+  function applyLang(lang) {
+    if (lang === 'en') {
+      document.documentElement.lang = 'en';
+      document.title = I18N['_title'];
+      document.querySelectorAll('[data-i18n]').forEach(function (el) {
+        var k = el.getAttribute('data-i18n');
+        if (I18N[k] !== undefined) el.innerHTML = I18N[k];
+      });
+    }
+  }
+  applyLang(LANG);
+
+  // Видео-постер → YouTube-плеер (грузим iframe только по клику)
+  function cpPlay() {
+    var wrap = document.getElementById('cp-video');
+    var id = (wrap.getAttribute('data-yt') || '').trim();
+    if (!id) {
+      var sub = wrap.querySelector('.cp-video-sub');
+      if (sub) sub.textContent = T[LANG].noVideo;
+      return;
+    }
+    wrap.innerHTML = '<iframe src="https://www.youtube.com/embed/' + id +
+      '?autoplay=1&rel=0" allow="autoplay; fullscreen; picture-in-picture" ' +
+      'allowfullscreen title="Day 1 Live"></iframe>';
+  }
+
+  // Кнопка «Посмотрено» под видео → отмечает «Эфир Дня 1» пройденным
+  function cpWatched() {
+    var btn = document.getElementById('cp-watched-btn');
+    btn.classList.add('is-done');
+    btn.textContent = T[LANG].watched;
+    btn.disabled = true;
+    var ef = document.querySelector('.cp-lesson-active');
+    if (ef) {
+      ef.classList.remove('cp-lesson-active');
+      ef.classList.add('cp-lesson-done');
+      var m = ef.querySelector('.cp-lesson-mark');
+      if (m) m.textContent = '✓';
+    }
+  }
+
+  // Копирование промпта
+  function cpCopy(btn) {
+    navigator.clipboard.writeText(document.getElementById('cp-prompt-env').innerText);
+    btn.querySelector('span').textContent = T[LANG].copied;
+  }
+
+  // Прогресс курса. Курс = CP_DAYS дней, каждый день = равная доля.
+  // Этапы заполняют долю текущего дня; нижняя кнопка «Готов день» = день закрыт целиком.
+  var CP_DAY = 1, CP_DAYS = 3;
+  function cpRecalcProgress() {
+    var etaps = document.querySelectorAll('.cp-etap');
+    var done = document.querySelectorAll('.cp-etap.is-done').length;
+    var finalBtn = document.getElementById('cp-done-btn');
+    var finalDone = finalBtn && finalBtn.classList.contains('is-done');
+    var frac = finalDone ? 1 : (etaps.length ? done / etaps.length : 0);
+    var per = 100 / CP_DAYS;
+    var pct = Math.round((CP_DAY - 1) * per + frac * per);
+    var pctEl = document.querySelector('.cp-progress-pct');
+    var fillEl = document.querySelector('.cp-progress-fill');
+    if (pctEl) pctEl.textContent = pct + '%';
+    if (fillEl) fillEl.style.width = pct + '%';
+  }
+
+  // Кнопка «Готово» внутри этапа → отмечает этап, зелёная галочка справа, цвет, прогресс
+  function cpEtapDone(btn) {
+    var d = btn.closest('.cp-etap');
+    if (!d) return;
+    d.classList.add('is-done');
+    btn.textContent = T[LANG].doneBtn;
+    btn.disabled = true;
+    var st = d.querySelector('.cp-etap-status');
+    if (st) st.textContent = T[LANG].etapDoneStatus;
+    d.open = false;
+    cpRecalcProgress();
+  }
+
+  // Чек-поинт «Готов день» → «Выполнено» + прогресс курса до 100%
+  function cpDone() {
+    var btn = document.getElementById('cp-done-btn');
+    btn.classList.add('is-done');
+    btn.textContent = T[LANG].doneBtn;
+    btn.disabled = true;
+    cpRecalcProgress();
+  }
+</script>
+{% endraw %}{% endblock %}
