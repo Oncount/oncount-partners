@@ -1637,6 +1637,21 @@ company → products → audience → goals → economics → marketing → asse
     if (st) st.textContent = T[LANG].etapDoneStatus;
     d.open = false;
     cpRecalcProgress();
+    // После «Готово» сворачиваем этап и ведём дальше: следующий этап раскрываем
+    // и проматываем к нему. Без этого схлопывание контента «выбрасывало» страницу
+    // вверх, к началу инструкции дня. Если этапов больше нет — к чек-поинту «Готов день».
+    var all = Array.prototype.slice.call(document.querySelectorAll('.cp-etap'));
+    var i = all.indexOf(d);
+    var target;
+    if (i >= 0 && i + 1 < all.length) {
+      target = all[i + 1];
+      target.open = true;
+    } else {
+      target = document.querySelector('.cp-done-bar');
+    }
+    if (target && target.scrollIntoView) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 </script>
 {% endraw %}{% endblock %}
