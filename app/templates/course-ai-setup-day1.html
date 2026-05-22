@@ -543,7 +543,7 @@
           <!-- ===== ВИДЕО ЭФИРА (YouTube, скрытое) ===== -->
           <!-- После загрузки записи на YouTube впишите ID ролика в data-yt ниже
                (часть ссылки после "v=" или после "youtu.be/"). Постер сам сменится на плеер. -->
-          <div class="cp-video" id="cp-video" data-yt="j8GdF1IlK_4">
+          <div class="cp-video" id="cp-video" data-yt="j8GdF1IlK_4" data-yt-en="lJkWAu3HK04">
             <div class="cp-video-poster" onclick="cpPlay()">
               <span class="cp-video-tag" data-i18n="video.tag">Запись эфира · YouTube</span>
               <div class="cp-video-play">▶</div>
@@ -1061,7 +1061,9 @@
   // Видео-постер → YouTube-плеер (грузим iframe только по клику)
   function cpPlay() {
     var wrap = document.getElementById('cp-video');
-    var id = (wrap.getAttribute('data-yt') || '').trim();
+    // При английском языке берём английский ролик (data-yt-en), иначе — основной (data-yt).
+    var enId = (wrap.getAttribute('data-yt-en') || '').trim();
+    var id = ((LANG === 'en' && enId) ? enId : (wrap.getAttribute('data-yt') || '')).trim();
     if (!id) {
       var sub = wrap.querySelector('.cp-video-sub');
       if (sub) sub.textContent = T[LANG].noVideo;
