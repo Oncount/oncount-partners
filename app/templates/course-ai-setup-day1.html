@@ -1085,6 +1085,19 @@
       var m = ef.querySelector('.cp-lesson-mark');
       if (m) m.textContent = '✓';
     }
+    cpUpdateDayCount();
+  }
+
+  // Счётчик «N/M» в шапке текущего дня = сколько уроков дня отмечено пройденными.
+  // Текущий день определяем по пункту инструкции (#cp-nav-guide) — он всегда в нём.
+  function cpUpdateDayCount() {
+    var nav = document.getElementById('cp-nav-guide');
+    var day = nav && nav.closest('.cp-day');
+    if (!day) return;
+    var total = day.querySelectorAll('.cp-lesson-link').length;
+    var done = day.querySelectorAll('.cp-lesson-link.cp-lesson-done').length;
+    var cnt = day.querySelector('.cp-day-count');
+    if (cnt) cnt.textContent = done + '/' + total;
   }
 
   // Копирование промпта
@@ -1151,6 +1164,7 @@
       var m = nav.querySelector('.cp-lesson-mark');
       if (m) m.textContent = '✓';
     }
+    cpUpdateDayCount();
     cpRecalcProgress();
   }
 </script>
