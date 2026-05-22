@@ -15,7 +15,18 @@ import sys
 import urllib.request
 import urllib.error
 
-TOKEN = os.environ.get("RAILWAY_TOKEN") or "9c696ce7-9e4b-44a7-a4b0-9d551fb6ba77"
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Токен НЕ хардкодим (раньше лежал прямо здесь — попал в git-историю, скомпрометирован).
+# Берётся только из окружения / .env. Значение — из Railway → Account → Tokens.
+TOKEN = os.environ.get("RAILWAY_TOKEN")
+if not TOKEN:
+    raise SystemExit(
+        "RAILWAY_TOKEN не задан. Добавь строку RAILWAY_TOKEN=<токен> в .env "
+        "(значение — Railway → Account → Tokens). В код токен не вписывать."
+    )
 ENDPOINT = "https://backboard.railway.com/graphql/v2"
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
 
