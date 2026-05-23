@@ -13,7 +13,8 @@ TEXTS: dict[str, dict[str, str]] = {
             "Привет, {first_name}! 👋\n\n"
             "Я — бот ONCOUNT: лицензированной бухгалтерии полного цикла в ОАЭ.\n\n"
             "С чего хочешь начать?\n\n"
-            "📅 <b>Мастер-класс «AI 2-й мозг»</b> — 21 мая, 18:00 (Дубай). Бесплатно.\n"
+            "🎓 <b>Практикум «Настройка AI-сотрудников»</b> — за ~2 часа настроишь "
+            "2 AI-сотрудников, которые делают сайты и презентации. Бесплатно.\n"
             "🤝 <b>Партнёрская программа</b> — приводи клиентов, получай комиссию.\n\n"
             "Выбери внизу 👇"
         ),
@@ -21,23 +22,32 @@ TEXTS: dict[str, dict[str, str]] = {
             "Hi, {first_name}! 👋\n\n"
             "I'm the ONCOUNT bot — a licensed full-cycle accounting firm in the UAE.\n\n"
             "Where would you like to start?\n\n"
-            "📅 <b>«AI Second Brain» masterclass</b> — May 21, 6:00 PM (Dubai). Free.\n"
+            "🎓 <b>«Setting up AI employees» practicum</b> — in ~2 hours set up "
+            "2 AI employees that build websites and presentations. Free.\n"
             "🤝 <b>Partner program</b> — refer clients, earn commission.\n\n"
             "Pick an option below 👇"
         ),
     },
-    "WELCOME_REGISTERED_FOR_EVENT": {
+    "PRACTICUM_INTRO": {
         "ru": (
-            "Привет, {first_name}! 👋\n\n"
-            "Ты уже зарегистрирован/-а на мастер-класс <b>«AI 2-й мозг»</b> 21 мая в 18:00 (Дубай).\n\n"
-            "🎥 Zoom: https://us06web.zoom.us/j/81890945980\n\n"
-            "Хочешь параллельно стать партнёром ONCOUNT? Жми кнопку ниже."
+            "🎓 <b>Практикум «Настройка AI-сотрудников»</b>\n\n"
+            "За ~2 часа в 3 шага настроишь 2 AI-сотрудников, которые сами делают "
+            "сайты и презентации для твоего бизнеса.\n\n"
+            "Что внутри:\n"
+            "• Пошаговые уроки: День 1 — настройка, День 2 — практика\n"
+            "• Готовые промпты и тайм-коды\n"
+            "• Всё в твоём личном кабинете, проходи в своём темпе\n\n"
+            "Жми кнопку — вход в кабинет откроется сразу на практикуме:"
         ),
         "en": (
-            "Hi, {first_name}! 👋\n\n"
-            "You're already registered for the <b>«AI Second Brain»</b> masterclass on May 21 at 6:00 PM (Dubai).\n\n"
-            "🎥 Zoom: https://us06web.zoom.us/j/81890945980\n\n"
-            "Want to become an ONCOUNT partner too? Tap the button below."
+            "🎓 <b>«Setting up AI employees» practicum</b>\n\n"
+            "In ~2 hours and 3 steps you'll set up 2 AI employees that build "
+            "websites and presentations for your business.\n\n"
+            "What's inside:\n"
+            "• Step-by-step lessons: Day 1 — setup, Day 2 — practice\n"
+            "• Ready-made prompts and timecodes\n"
+            "• Everything in your cabinet, go at your own pace\n\n"
+            "Tap the button — your cabinet opens straight on the practicum:"
         ),
     },
     "WELCOME_PARTNER": {
@@ -48,96 +58,6 @@ TEXTS: dict[str, dict[str, str]] = {
         "en": (
             "Welcome back, {first_name}! 🤝\n\n"
             "What would you like to do?"
-        ),
-    },
-    "EVENT_REGISTERED": {
-        "ru": (
-            "Готово, {first_name}! 🎉\n\n"
-            "Ты зарегистрирован/-а на бесплатный AI-мастер-класс <b>«AI 2-й мозг»</b> от ONCOUNT.\n\n"
-            "📅 <b>21 мая 2026, четверг, 18:00 (Дубай / GST)</b>\n"
-            "🎥 Онлайн в Zoom — ссылку пришлю в день мероприятия.\n\n"
-            "---\n\n"
-            "<b>Подготовка к мастер-классу — 6 этапов. Делай по порядку:</b>\n\n"
-            "🖥 Этап 1. Устанавливаем VS Code — ~5 мин\n"
-            "🔐 Этап 2. Регистрируемся в Claude — ~20–30 мин\n"
-            "💳 Этап 3. Оплачиваем подписку — ~10 мин\n"
-            "⚙️ Этап 4. Ставим Claude Code и настраиваем — ~15 мин\n"
-            "🎤 Этап 5. Голосовой ввод + скриншоты — ~10 мин\n"
-            "🤖 Этап 6. Запускаем агента — ~10–20 мин\n\n"
-            "📄 <a href=\"https://docs.google.com/document/d/18rpKrqfDK1dIBIz5Psf7W8aRF3aW2_vuW2KBG3FsTcs/edit?usp=sharing\">Пошаговая инструкция</a>\n\n"
-            "Если не настроишь, не страшно, сделаешь позже."
-        ),
-        "en": (
-            "Done, {first_name}! 🎉\n\n"
-            "You're registered for the free AI masterclass <b>«AI Second Brain»</b> by ONCOUNT.\n\n"
-            "📅 <b>Thursday, May 21, 2026, 6:00 PM (Dubai / GST)</b>\n"
-            "🎥 Online via Zoom — I'll send the link on the event day.\n\n"
-            "---\n\n"
-            "<b>Getting ready — 6 steps. Do them in order:</b>\n\n"
-            "🖥 Step 1. Install VS Code — ~5 min\n"
-            "🔐 Step 2. Sign up for Claude — ~20–30 min\n"
-            "💳 Step 3. Pay for the subscription — ~10 min\n"
-            "⚙️ Step 4. Install and set up Claude Code — ~15 min\n"
-            "🎤 Step 5. Voice input + screenshots — ~10 min\n"
-            "🤖 Step 6. Launch your agent — ~10–20 min\n\n"
-            "📄 <a href=\"https://docs.google.com/document/d/18rpKrqfDK1dIBIz5Psf7W8aRF3aW2_vuW2KBG3FsTcs/edit?usp=sharing\">Step-by-step guide</a>\n\n"
-            "If you don't finish the setup, no worries — you can do it later."
-        ),
-    },
-    "EVENT_REMINDER_24H": {
-        "ru": (
-            "Напоминаю: <b>завтра, 21 мая, в 18:00</b> (Дубай) — мастер-класс «AI 2-й мозг».\n\n"
-            "✅ Проверь по чек-листу, что всё установлено.\n"
-            "✅ Подготовь блокнот и наушники.\n"
-            "✅ Заложи 3 часа — будет много практики.\n\n"
-            "До завтра!"
-        ),
-        "en": (
-            "Reminder: <b>tomorrow, May 21, at 6:00 PM</b> (Dubai) — the «AI Second Brain» masterclass.\n\n"
-            "✅ Use the checklist to confirm everything is installed.\n"
-            "✅ Get a notebook and headphones ready.\n"
-            "✅ Set aside 3 hours — lots of hands-on practice.\n\n"
-            "See you tomorrow!"
-        ),
-    },
-    "EVENT_REMINDER_ZOOM": {
-        "ru": (
-            "Сегодня в <b>18:00</b> (Дубай) встречаемся на мастер-классе — "
-            "<b>AI-автоматизация в B2B-бизнесе</b>.\n\n"
-            "Что будем делать:\n"
-            "1️⃣ Настроим Claude, который будет помнить всё о твоём бизнесе и "
-            "предлагать лучшие решения на основе анализа конкурентов.\n"
-            "2️⃣ Настроим 5 AI-сотрудников — для аналитики, маркетинговых текстов, "
-            "лидогенерации, подготовки презентаций и напоминаний клиентам — и "
-            "подключим их через API к соцсетям и CRM.\n"
-            "3️⃣ Нетворкинг с участниками комьюнити B2B-эдвайзеров в Дубае.\n\n"
-            "<a href=\"https://nikolhillton.github.io/ai_masterclass/\">Подробнее</a>\n\n"
-            "🎥 <b>Ссылка на Zoom:</b> https://us06web.zoom.us/j/81890945980\n\n"
-            "Сохрани, чтобы не искать. До вечера!"
-        ),
-        "en": (
-            "Today at <b>6:00 PM</b> (Dubai) we meet at the masterclass — "
-            "<b>AI automation for B2B business</b>.\n\n"
-            "What we'll do:\n"
-            "1️⃣ Set up Claude to remember everything about your business and "
-            "suggest the best moves based on competitor analysis.\n"
-            "2️⃣ Set up 5 AI employees — for analytics, marketing copy, "
-            "lead generation, presentations, and client reminders — and "
-            "connect them via API to social media and CRM.\n"
-            "3️⃣ Networking with the B2B advisor community in Dubai.\n\n"
-            "<a href=\"https://nikolhillton.github.io/ai_masterclass/\">Learn more</a>\n\n"
-            "🎥 <b>Zoom link:</b> https://us06web.zoom.us/j/81890945980\n\n"
-            "Save it so you don't have to search. See you tonight!"
-        ),
-    },
-    "EVENT_REMINDER_1H": {
-        "ru": (
-            "Через час начинаем — <b>заходи</b> 🚀\n\n"
-            "🎥 https://us06web.zoom.us/j/81890945980"
-        ),
-        "en": (
-            "We start in one hour — <b>join in</b> 🚀\n\n"
-            "🎥 https://us06web.zoom.us/j/81890945980"
         ),
     },
     "PARTNER_ONBOARDING_INTRO": {
@@ -319,14 +239,6 @@ TEXTS: dict[str, dict[str, str]] = {
     "LANG_PICK": {
         "ru": "Выберите язык / Choose your language 👇",
         "en": "Выберите язык / Choose your language 👇",
-    },
-    "EVENT_TOAST_ALREADY": {
-        "ru": "Уже было записано",
-        "en": "Already registered",
-    },
-    "EVENT_TOAST_DONE": {
-        "ru": "Зарегистрирован/-а!",
-        "en": "Registered!",
     },
 }
 

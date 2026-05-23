@@ -1,9 +1,8 @@
 """Telegram-бот ONCOUNT Partners + Community.
 
 Один токен @community_oncount_bot обслуживает:
-1. Регистрацию на мастер-класс «AI 2-й мозг» 21.05.2026.
-2. 3 cron-напоминания зарегистрированным.
-3. Партнёрскую программу (онбординг, реф-ссылки, передача клиента, статистика, продукты, FAQ).
+1. Практикум «Настройка AI-сотрудников» (готовый курс в личном кабинете).
+2. Партнёрскую программу (онбординг, реф-ссылки, передача клиента, статистика, продукты, FAQ).
 """
 from __future__ import annotations
 
@@ -25,21 +24,20 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     Message,
 )
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.db import SessionLocal, engine
 from app.messages_text import t
-from app.models import Base, EventRegistration, FaqItem, Lead, LoginSession, Partner, ProductBlock
+from app.models import Base, FaqItem, Lead, LoginSession, Partner, ProductBlock
 from app.refgen import generate_ref_slug
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s — %(message)s")
 log = logging.getLogger("bot")
 
-EVENT_SLUG = "ai-2brain-2026-05-21"
-TZ = "Asia/Dubai"
+# Slug курса-практикума в кабинете (см. seed.py / main.py LESSON_TEMPLATES).
+PRACTICUM_SLUG = "ai-employees-setup"
+PRACTICUM_PATH = f"/courses/{PRACTICUM_SLUG}"
 
 bot = Bot(token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher(storage=MemoryStorage())
@@ -48,13 +46,20 @@ dp = Dispatcher(storage=MemoryStorage())
 # ─────────────── helpers ────────────────────────────────────────────────────
 
 
-def issue_login_url(session: Session, telegram_id: int) -> str:
-    """Create LoginSession pre-bound to telegram_id; return one-click URL to /auth/bot-callback."""
+def issue_login_url(session: Session, telegram_id: int, next_path: str | None = None) -> str:
+    """Create LoginSession pre-bound to telegram_id; return one-click URL to /auth/bot-callback.
+
+    next_path (если задан) прокидывается в колбэк как ?next= — после входа кабинет
+    откроется сразу на этой внутренней странице (валидируется на стороне сервера)."""
     import secrets as _secrets
+    from urllib.parse import quote
     state = _secrets.token_urlsafe(24)
     session.add(LoginSession(state=state, telegram_id=telegram_id))
     session.commit()
-    return f"{settings.WEBAPP_URL}/auth/bot-callback?state={state}"
+    url = f"{settings.WEBAPP_URL}/auth/bot-callback?state={state}"
+    if next_path:
+        url += f"&next={quote(next_path, safe='/')}"
+    return url
 
 
 def get_or_create_partner(session: Session, msg: Message) -> Partner:
@@ -87,13 +92,13 @@ SUPPORTED_LANGS = ("ru", "en")
 
 # Подписи кнопок: BTN[key][lang]. Доступ — через b(key, lang) с ru-fallback.
 BTN: dict[str, dict[str, str]] = {
-    "event_register": {
-        "ru": "📅 Регистрация на мастер-класс 21.05",
-        "en": "📅 Register for the masterclass May 21",
+    "course_practicum": {
+        "ru": "🎓 Практикум: настроить AI-сотрудника",
+        "en": "🎓 Practicum: set up an AI employee",
     },
-    "event_show": {
-        "ru": "✅ Ты на мастер-классе 21.05",
-        "en": "✅ You're registered for May 21",
+    "open_practicum": {
+        "ru": "🎓 Открыть практикум",
+        "en": "🎓 Open the practicum",
     },
     "partner_intro": {
         "ru": "🤝 Партнёрская программа",
@@ -102,10 +107,6 @@ BTN: dict[str, dict[str, str]] = {
     "partner_intro_oncount": {
         "ru": "🤝 Партнёрство с ONCOUNT",
         "en": "🤝 Partner with ONCOUNT",
-    },
-    "partner_become": {
-        "ru": "🤝 Стать партнёром ONCOUNT",
-        "en": "🤝 Become an ONCOUNT partner",
     },
     "transfer": {
         "ru": "💰 Передать клиента",
@@ -172,37 +173,20 @@ def lang_picker_kb() -> InlineKeyboardMarkup:
 
 def main_menu_new(lang: str = DEFAULT_LANG) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=b("event_register", lang), callback_data="event:register")],
+        [InlineKeyboardButton(text=b("course_practicum", lang), callback_data="course:practicum")],
         [InlineKeyboardButton(text=b("partner_intro", lang), callback_data="partner:intro")],
         [InlineKeyboardButton(text=b("lang_change", lang), callback_data="lang:pick")],
     ])
 
 
-def menu_partner(lang: str = DEFAULT_LANG, registered_for_event: bool = False) -> InlineKeyboardMarkup:
+def menu_partner(lang: str = DEFAULT_LANG) -> InlineKeyboardMarkup:
     """Меню партнёра. Остальные функции — через команды и через ЛК."""
-    kb = []
-    if registered_for_event:
-        kb.append([InlineKeyboardButton(text=b("event_show", lang), callback_data="event:show")])
-    else:
-        kb.append([InlineKeyboardButton(text=b("event_register", lang), callback_data="event:register")])
-    kb.extend([
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=b("course_practicum", lang), callback_data="course:practicum")],
         [InlineKeyboardButton(text=b("partner_intro_oncount", lang), callback_data="partner:intro")],
         [InlineKeyboardButton(text=b("transfer", lang), callback_data="partner:transfer")],
         [InlineKeyboardButton(text=b("open_lk", lang), callback_data="partner:open-lk")],
         [InlineKeyboardButton(text=b("lang_change", lang), callback_data="lang:pick")],
-    ])
-    return InlineKeyboardMarkup(inline_keyboard=kb)
-
-
-def _is_registered_for_event(session, telegram_id: int) -> bool:
-    return session.query(EventRegistration).filter_by(
-        telegram_id=telegram_id, event_slug=EVENT_SLUG
-    ).first() is not None
-
-
-def menu_event_registered(lang: str = DEFAULT_LANG) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=b("partner_become", lang), callback_data="partner:intro")],
     ])
 
 
@@ -230,33 +214,6 @@ async def cmd_start_with_payload(msg: Message, command: CommandObject) -> None:
             await msg.answer(
                 t("PARTNER_ONBOARDING_INTRO", lang) + t("ONBOARDING_PARTNER_OK", lang),
                 reply_markup=kb,
-            )
-            return
-
-        if payload == "lending":
-            # пришёл с лендинга мастер-класса — мгновенная регистрация на ивент
-            existing = (
-                session.query(EventRegistration)
-                .filter_by(telegram_id=msg.from_user.id, event_slug=EVENT_SLUG)
-                .first()
-            )
-            if existing is None:
-                session.add(EventRegistration(
-                    telegram_id=msg.from_user.id,
-                    event_slug=EVENT_SLUG,
-                    first_name=msg.from_user.first_name,
-                    username=msg.from_user.username,
-                    meta={
-                        "source": "lending",
-                        "reminder_24h_sent": False,
-                        "zoom_link_sent": False,
-                        "start_1h_sent": False,
-                    },
-                ))
-                session.commit()
-            await msg.answer(
-                t("EVENT_REGISTERED", lang, first_name=msg.from_user.first_name or ""),
-                reply_markup=menu_event_registered(lang),
             )
             return
 
@@ -309,23 +266,15 @@ async def cmd_start(msg: Message) -> None:
 
 
 async def _send_welcome(msg: Message, partner_telegram_id: int, first_name: str) -> None:
-    """Шлёт приветствие на языке партнёра, учитывая статус и регистрацию на ивент."""
+    """Шлёт приветствие на языке партнёра, учитывая статус."""
     with SessionLocal() as session:
         partner = session.query(Partner).filter_by(telegram_id=partner_telegram_id).first()
         lang = resolve_lang(partner)
-        registered = _is_registered_for_event(session, partner_telegram_id)
         # уже партнёр (active)?
         if partner and partner.status == "active":
             await msg.answer(
                 t("WELCOME_PARTNER", lang, first_name=first_name),
-                reply_markup=menu_partner(lang, registered_for_event=registered),
-            )
-            return
-        # зарегистрирован на мастер-класс, но ещё не партнёр?
-        if registered:
-            await msg.answer(
-                t("WELCOME_REGISTERED_FOR_EVENT", lang, first_name=first_name),
-                reply_markup=menu_event_registered(lang),
+                reply_markup=menu_partner(lang),
             )
             return
         # новый
@@ -362,41 +311,20 @@ async def cb_lang_set(call) -> None:
                         first_name=call.from_user.first_name or "")
 
 
-# ─────────────── event: registration ────────────────────────────────────────
+# ─────────────── course: практикум ──────────────────────────────────────────
 
 
-@dp.callback_query(F.data == "event:register")
-async def cb_event_register(call) -> None:
-    with SessionLocal() as session:
-        exists = (
-            session.query(EventRegistration)
-            .filter_by(telegram_id=call.from_user.id, event_slug=EVENT_SLUG)
-            .first()
-        )
-        was_already = exists is not None
-        if not exists:
-            session.add(EventRegistration(
-                telegram_id=call.from_user.id,
-                event_slug=EVENT_SLUG,
-                first_name=call.from_user.first_name,
-                username=call.from_user.username,
-                meta={"reminder_24h_sent": False, "zoom_link_sent": False, "start_1h_sent": False},
-            ))
-            session.commit()
-        lang = get_lang(session, call.from_user.id)
-    await call.message.answer(
-        t("EVENT_REGISTERED", lang, first_name=call.from_user.first_name or ""),
-    )
-    await call.answer(t("EVENT_TOAST_ALREADY", lang) if was_already else t("EVENT_TOAST_DONE", lang))
-
-
-@dp.callback_query(F.data == "event:show")
-async def cb_event_show(call) -> None:
+@dp.callback_query(F.data == "course:practicum")
+async def cb_course_practicum(call) -> None:
+    """Практикум «Настройка AI-сотрудников» лежит в кабинете за логином.
+    Выдаём одноразовую ссылку входа, ведущую сразу на курс."""
     with SessionLocal() as session:
         lang = get_lang(session, call.from_user.id)
-    await call.message.answer(
-        t("EVENT_REGISTERED", lang, first_name=call.from_user.first_name or ""),
-    )
+        login_url = issue_login_url(session, call.from_user.id, next_path=PRACTICUM_PATH)
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=b("open_practicum", lang), url=login_url)],
+    ])
+    await call.message.answer(t("PRACTICUM_INTRO", lang), reply_markup=kb)
     await call.answer()
 
 
@@ -636,63 +564,6 @@ async def transfer_task(msg: Message, state: FSMContext) -> None:
     await state.clear()
 
 
-# ─────────────── event reminders (APScheduler) ──────────────────────────────
-
-
-async def send_reminder(field: str, text_key: str) -> None:
-    """Шлёт текст `text_key` всем регистрациям мастер-класса, у которых meta[field]
-    != True. Язык — по выбору партнёра (partners.lang), ru-fallback."""
-    sent = 0
-    with SessionLocal() as session:
-        regs = (
-            session.query(EventRegistration)
-            .filter_by(event_slug=EVENT_SLUG)
-            .all()
-        )
-        for reg in regs:
-            meta = reg.meta or {}
-            if meta.get(field):
-                continue
-            lang = get_lang(session, reg.telegram_id)
-            try:
-                await bot.send_message(reg.telegram_id, t(text_key, lang))
-                meta[field] = True
-                reg.meta = meta
-                sent += 1
-            except (TelegramBadRequest, TelegramForbiddenError) as e:
-                log.warning("reminder send fail for %s: %s", reg.telegram_id, e)
-        session.commit()
-    log.info("Reminder %s — sent to %s recipients", field, sent)
-
-
-async def reminder_24h() -> None:
-    await send_reminder("reminder_24h_sent", "EVENT_REMINDER_24H")
-
-
-async def reminder_zoom() -> None:
-    await send_reminder("zoom_link_sent", "EVENT_REMINDER_ZOOM")
-
-
-async def reminder_1h() -> None:
-    await send_reminder("start_1h_sent", "EVENT_REMINDER_1H")
-
-
-def start_scheduler() -> AsyncIOScheduler:
-    scheduler = AsyncIOScheduler(timezone=TZ)
-    # 20.05.2026 18:00 GST → за сутки
-    scheduler.add_job(reminder_24h, CronTrigger(month=5, day=20, hour=18, minute=0, timezone=TZ),
-                      id="rem_24h", replace_existing=True)
-    # 21.05.2026 10:00 GST → утром с ссылкой
-    scheduler.add_job(reminder_zoom, CronTrigger(month=5, day=21, hour=10, minute=0, timezone=TZ),
-                      id="rem_zoom", replace_existing=True)
-    # 21.05.2026 17:00 GST → за час до старта
-    scheduler.add_job(reminder_1h, CronTrigger(month=5, day=21, hour=17, minute=0, timezone=TZ),
-                      id="rem_1h", replace_existing=True)
-    scheduler.start()
-    log.info("Scheduler started, jobs: %s", [j.id for j in scheduler.get_jobs()])
-    return scheduler
-
-
 # ─────────────── entry point ────────────────────────────────────────────────
 
 
@@ -724,14 +595,12 @@ PARTNER_COMMANDS_EN = [
 
 async def main() -> None:
     Base.metadata.create_all(engine)
-    scheduler = start_scheduler()
     await bot.set_my_commands(PARTNER_COMMANDS)  # дефолт (RU)
     await bot.set_my_commands(PARTNER_COMMANDS_EN, language_code="en")
     log.info("Bot polling start, bot=@%s, time=%s", settings.BOT_USERNAME, datetime.utcnow())
     try:
         await dp.start_polling(bot)
     finally:
-        scheduler.shutdown(wait=False)
         await bot.session.close()
 
 
