@@ -20,7 +20,10 @@ class Partner(Base):
     __tablename__ = "partners"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
+    # telegram_id больше не обязателен: партнёр может зарегистрироваться по email
+    # без Telegram (план 2026-05-23). Postgres unique-индекс допускает несколько
+    # NULL, поэтому уникальность для TG-партнёров сохраняется.
+    telegram_id: Mapped[int | None] = mapped_column(BigInteger, unique=True, index=True)
     username: Mapped[str | None] = mapped_column(String(64))
     first_name: Mapped[str | None] = mapped_column(String(128))
     last_name: Mapped[str | None] = mapped_column(String(128))
@@ -166,6 +169,22 @@ class LoginSession(Base):
 
     state: Mapped[str] = mapped_column(String(64), primary_key=True)
     telegram_id: Mapped[int | None] = mapped_column(BigInteger)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    consumed_at: Mapped[datetime | None] = mapped_column(DateTime)
+
+
+class EmailLoginToken(Base):
+    """Одноразовый токен для входа в ЛК по email (магическая ссылка, план 2026-05-23).
+
+    Партнёр запрашивает вход → сюда пишется криптослучайный token + email.
+    Письмо со ссылкой `…/auth/email/callback?token=…` уходит через Resend. Клик:
+    токен валиден (не использован, не истёк, TTL 15 мин) → выдаём JWT-cookie.
+    consumed_at делает токен одноразовым; старые невостребованные чистятся в startup.
+    """
+    __tablename__ = "email_login_tokens"
+
+    token: Mapped[str] = mapped_column(String(64), primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     consumed_at: Mapped[datetime | None] = mapped_column(DateTime)
 

@@ -23,6 +23,12 @@ class Settings:
         "DATABASE_URL",
         "postgresql+psycopg2://oncount:oncount@localhost:5432/oncount_partners",
     )
+    # Resend — транзакционные письма (магическая ссылка входа по email).
+    # Пустой RESEND_API_KEY → dev-режим: ссылка пишется в лог, письмо не уходит.
+    # EMAIL_FROM должен быть на верифицированном в Resend домене (nikole-ai.com),
+    # иначе Resend отклоняет отправку. Имя отправителя — ONCOUNT (бренд).
+    RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
+    EMAIL_FROM: str = os.getenv("EMAIL_FROM", "ONCOUNT <noreply@nikole-ai.com>")
     KOMMO_DOMAIN: str = os.getenv("KOMMO_DOMAIN", "")
     KOMMO_TOKEN: str = os.getenv("KOMMO_TOKEN", "")
     KOMMO_PIPELINE_ID: str = os.getenv("KOMMO_PIPELINE_ID", "")

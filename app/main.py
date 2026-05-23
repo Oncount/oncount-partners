@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import re
 import secrets
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -9,6 +10,7 @@ from fastapi import Depends, FastAPI, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.auth import (
@@ -17,10 +19,12 @@ from app.auth import (
     issue_jwt,
 )
 from app.config import settings
+from app.email import send_magic_link
 from app.db import SessionLocal, engine, get_session
 from app.models import (
     Base,
     Course,
+    EmailLoginToken,
     EventRegistration,
     FaqItem,
     Lead,
@@ -34,6 +38,10 @@ from app.refgen import generate_ref_slug
 from app.seed import seed_if_empty
 
 LOGIN_SESSION_TTL = timedelta(minutes=10)
+# Магическая ссылка входа по email (план 2026-05-23).
+EMAIL_TOKEN_TTL = timedelta(minutes=15)
+EMAIL_RATE_LIMIT = 3  # запросов на один email за окно EMAIL_TOKEN_TTL
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "app" / "templates"))
@@ -84,6 +92,22 @@ async def on_startup() -> None:
         for tbl, cols in en_cols.items():
             for col in cols:
                 conn.execute(text(f"ALTER TABLE {tbl} ADD COLUMN IF NOT EXISTS {col} TEXT"))
+        # Вход по email (план 2026-05-23). Идемпотентно:
+        # 1) telegram_id больше не обязателен — email-партнёр может быть без TG.
+        conn.execute(text("ALTER TABLE partners ALTER COLUMN telegram_id DROP NOT NULL"))
+        # 2) Уникальность email регистронезависимо, только для непустых значений
+        #    (частичный индекс). create_all не создаёт частичных/выражательных индексов.
+        #    ПРЕД-УСЛОВИЕ: на проде не должно быть дублей lower(email) — иначе упадёт;
+        #    проверять перед первым деплоем (см. план, Фаза 1, пред-шаг).
+        conn.execute(text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS uq_partners_email_lower "
+            "ON partners (lower(email)) WHERE email IS NOT NULL"
+        ))
+        # 3) Гигиена: чистим протухшие невостребованные email-токены (старше суток).
+        conn.execute(text(
+            "DELETE FROM email_login_tokens "
+            "WHERE consumed_at IS NULL AND created_at < now() - interval '1 day'"
+        ))
     with SessionLocal() as session:
         seed_if_empty(session)
 
@@ -213,6 +237,111 @@ def auth_bot_callback(state: str, session: Session = Depends(get_session)):
     return response
 
 
+def _fresh_login_state(session: Session) -> str:
+    """Свежий state для Telegram-кнопки на странице входа (как в login_page)."""
+    state = secrets.token_urlsafe(24)
+    session.add(LoginSession(state=state))
+    session.commit()
+    return state
+
+
+@app.post("/auth/email/request", response_class=HTMLResponse)
+def auth_email_request(
+    request: Request,
+    email: str = Form(...),
+    session: Session = Depends(get_session),
+) -> HTMLResponse:
+    """Шаг 1 магической ссылки: принять email, отправить письмо со ссылкой входа.
+
+    Анти-энумерация: ответ всегда одинаковый — «проверьте почту» — есть такой
+    адрес или нет. Rate-limit: не больше EMAIL_RATE_LIMIT запросов на email за TTL.
+    """
+    email_norm = (email or "").strip().lower()
+    lang = _lang(request)
+
+    if EMAIL_RE.match(email_norm):
+        window_start = datetime.utcnow() - EMAIL_TOKEN_TTL
+        recent = (
+            session.query(EmailLoginToken)
+            .filter(
+                EmailLoginToken.email == email_norm,
+                EmailLoginToken.created_at >= window_start,
+            )
+            .count()
+        )
+        if recent < EMAIL_RATE_LIMIT:
+            token = secrets.token_urlsafe(32)
+            session.add(EmailLoginToken(token=token, email=email_norm))
+            session.commit()
+            url = f"{settings.WEBAPP_URL}/auth/email/callback?token={token}"
+            send_magic_link(email_norm, url, lang)
+
+    return templates.TemplateResponse(
+        "login.html",
+        _ctx(request, None, state=_fresh_login_state(session), email_sent=True),
+    )
+
+
+@app.get("/auth/email/callback")
+def auth_email_callback(token: str, session: Session = Depends(get_session)):
+    """Шаг 2: клик по магической ссылке → выдаём JWT-cookie и заводим ЛК."""
+    from sqlalchemy import func
+
+    rec = session.get(EmailLoginToken, token)
+    if rec is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Login link not found")
+    if rec.consumed_at is not None:
+        raise HTTPException(status.HTTP_410_GONE, "Login link already used")
+    if datetime.utcnow() - rec.created_at > EMAIL_TOKEN_TTL:
+        raise HTTPException(status.HTTP_410_GONE, "Login link expired, request a new one")
+
+    rec.consumed_at = datetime.utcnow()
+    session.commit()
+
+    partner = (
+        session.query(Partner)
+        .filter(func.lower(Partner.email) == rec.email)
+        .first()
+    )
+    if not partner:
+        # Новый партнёр без Telegram: заводим по email. first_name = локальная
+        # часть адреса, чтобы плашка пользователя в шапке не была пустой.
+        partner = Partner(
+            email=rec.email,
+            first_name=rec.email.split("@")[0],
+            ref_slug=generate_ref_slug(),
+            status="pending",
+        )
+        session.add(partner)
+        try:
+            session.commit()
+            session.refresh(partner)
+        except IntegrityError:
+            # Гонка: партнёр с этим email появился между запросом и вставкой.
+            session.rollback()
+            partner = (
+                session.query(Partner)
+                .filter(func.lower(Partner.email) == rec.email)
+                .first()
+            )
+            if partner is None:
+                raise
+
+    partner.last_login_at = datetime.utcnow()
+    session.commit()
+
+    response = RedirectResponse("/dashboard", status_code=302)
+    response.set_cookie(
+        COOKIE_NAME,
+        issue_jwt(partner.id),
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=settings.JWT_TTL_DAYS * 86400,
+    )
+    return response
+
+
 @app.get("/logout")
 def logout() -> RedirectResponse:
     response = RedirectResponse("/login", status_code=302)
@@ -288,7 +417,22 @@ def onboarding_submit(
     partner.phone = phone
     partner.email = email
     partner.onboarded_at = datetime.utcnow()
-    session.commit()
+    try:
+        session.commit()
+    except IntegrityError:
+        # Уникальный индекс по lower(email) (вход по email, план 2026-05-23):
+        # этот адрес уже привязан к другому партнёру.
+        session.rollback()
+        msg = (
+            "This email is already linked to another account."
+            if en else
+            "Этот email уже привязан к другому аккаунту."
+        )
+        return templates.TemplateResponse(
+            "onboarding.html",
+            _ctx(request, partner, segments=SEGMENTS, message=msg),
+            status_code=409,
+        )
     return RedirectResponse("/dashboard", status_code=302)
 
 

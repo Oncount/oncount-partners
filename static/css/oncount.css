@@ -255,6 +255,28 @@ table.list td {
 .login-logo { max-width: 200px; margin: 0 auto 16px; display: block; }
 .login-hint { color: var(--sage); font-size: 14px; margin-top: 24px; }
 
+/* Вход по email (магическая ссылка) */
+.login-divider {
+  display: flex; align-items: center; gap: 12px;
+  color: var(--sage); font-size: 13px; text-transform: uppercase;
+  letter-spacing: .08em; margin: 28px 0 20px;
+}
+.login-divider::before, .login-divider::after {
+  content: ""; flex: 1; height: 1px; background: var(--border);
+}
+.login-email-form { display: flex; flex-direction: column; gap: 12px; }
+.login-email-input {
+  width: 100%; padding: 13px 14px; font-size: 15px;
+  border: 1px solid var(--border); border-radius: 8px;
+  color: var(--charcoal); box-sizing: border-box;
+}
+.login-email-input:focus { outline: none; border-color: var(--deep-green); }
+.login-sent {
+  background: #eef6f2; color: var(--deep-green);
+  border-radius: 8px; padding: 12px 14px; font-size: 14px;
+  margin-bottom: 18px; line-height: 1.45;
+}
+
 /* FAQ accordion */
 details.faq-item {
   background: white;
