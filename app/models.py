@@ -29,6 +29,10 @@ class Partner(Base):
     phone: Mapped[str | None] = mapped_column(String(32))
     segment: Mapped[str | None] = mapped_column(String(32))
     ref_slug: Mapped[str] = mapped_column(String(16), unique=True, index=True)
+    # Язык интерфейса бота: "ru"/"en". None → не выбран явно, бот берёт по
+    # language_code Telegram (см. resolve_lang в bot.py). Кнопка-переключатель
+    # проставляет сюда явный выбор.
+    lang: Mapped[str | None] = mapped_column(String(2))
     tier: Mapped[str] = mapped_column(String(16), default="bronze")
     status: Mapped[str] = mapped_column(String(16), default="pending", index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

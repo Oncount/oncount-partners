@@ -31,19 +31,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.db import SessionLocal, engine
-from app.messages_text import (
-    EVENT_REGISTERED,
-    EVENT_REMINDER_1H,
-    EVENT_REMINDER_24H,
-    EVENT_REMINDER_ZOOM,
-    PARTNER_LINKS,
-    PARTNER_ONBOARDING_INTRO,
-    TRANSFER_DONE,
-    TRANSFER_INTRO,
-    WELCOME_NEW,
-    WELCOME_PARTNER,
-    WELCOME_REGISTERED_FOR_EVENT,
-)
+from app.messages_text import t
 from app.models import Base, EventRegistration, FaqItem, Lead, LoginSession, Partner, ProductBlock
 from app.refgen import generate_ref_slug
 
@@ -87,24 +75,121 @@ def get_or_create_partner(session: Session, msg: Message) -> Partner:
     return partner
 
 
-def main_menu_new() -> InlineKeyboardMarkup:
+# ─────────────── i18n: язык + подписи кнопок ────────────────────────────────
+#
+# Язык бота определяется ТОЛЬКО явным выбором (partner.lang). При первом входе
+# показываем экран выбора (lang_picker_kb); пока выбор не сделан, partner.lang =
+# None. resolve_lang даёт безопасный fallback "ru" для мест, где язык всё равно
+# нужен (deep-link сразу с действием, рассылки).
+
+DEFAULT_LANG = "ru"
+SUPPORTED_LANGS = ("ru", "en")
+
+# Подписи кнопок: BTN[key][lang]. Доступ — через b(key, lang) с ru-fallback.
+BTN: dict[str, dict[str, str]] = {
+    "event_register": {
+        "ru": "📅 Регистрация на мастер-класс 21.05",
+        "en": "📅 Register for the masterclass May 21",
+    },
+    "event_show": {
+        "ru": "✅ Ты на мастер-классе 21.05",
+        "en": "✅ You're registered for May 21",
+    },
+    "partner_intro": {
+        "ru": "🤝 Партнёрская программа",
+        "en": "🤝 Partner program",
+    },
+    "partner_intro_oncount": {
+        "ru": "🤝 Партнёрство с ONCOUNT",
+        "en": "🤝 Partner with ONCOUNT",
+    },
+    "partner_become": {
+        "ru": "🤝 Стать партнёром ONCOUNT",
+        "en": "🤝 Become an ONCOUNT partner",
+    },
+    "transfer": {
+        "ru": "💰 Передать клиента",
+        "en": "💰 Refer a client",
+    },
+    "open_lk": {
+        "ru": "🌐 Открыть кабинет",
+        "en": "🌐 Open cabinet",
+    },
+    "open_my_cabinet": {
+        "ru": "🌐 Открыть мой кабинет",
+        "en": "🌐 Open my cabinet",
+    },
+    "login_cabinet": {
+        "ru": "🌐 Войти в личный кабинет",
+        "en": "🌐 Log in to my cabinet",
+    },
+    "enter_cabinet": {
+        "ru": "🌐 Войти в кабинет",
+        "en": "🌐 Enter cabinet",
+    },
+    "lang_change": {
+        "ru": "🌐 Сменить язык / Language",
+        "en": "🌐 Change language / Язык",
+    },
+}
+
+
+def b(key: str, lang: str = DEFAULT_LANG) -> str:
+    """Подпись кнопки по ключу и языку, ru-fallback."""
+    variants = BTN.get(key, {})
+    return variants.get(lang) or variants.get(DEFAULT_LANG, key)
+
+
+def resolve_lang(partner: Partner | None) -> str:
+    """Язык партнёра с безопасным fallback. None/неизвестный → ru."""
+    lang = getattr(partner, "lang", None)
+    return lang if lang in SUPPORTED_LANGS else DEFAULT_LANG
+
+
+def get_lang(session: Session, telegram_id: int) -> str:
+    """Язык партнёра по telegram_id (ru-fallback)."""
+    partner = session.query(Partner).filter_by(telegram_id=telegram_id).first()
+    return resolve_lang(partner)
+
+
+def _loc(obj, attr: str, lang: str) -> str:
+    """Локализованное поле контента из БД: при lang=='en' берёт `{attr}_en`,
+    если оно непустое; иначе откатывается на русское поле `{attr}`."""
+    if lang == "en":
+        en = getattr(obj, f"{attr}_en", None)
+        if en:
+            return en
+    return getattr(obj, attr) or ""
+
+
+def lang_picker_kb() -> InlineKeyboardMarkup:
+    """Экран первого выбора языка (и смены языка из меню)."""
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="📅 Регистрация на мастер-класс 21.05", callback_data="event:register")],
-        [InlineKeyboardButton(text="🤝 Партнёрская программа", callback_data="partner:intro")],
+        [InlineKeyboardButton(text="🇷🇺 Русский", callback_data="lang:set:ru")],
+        [InlineKeyboardButton(text="🇬🇧 English", callback_data="lang:set:en")],
     ])
 
 
-def menu_partner(registered_for_event: bool = False) -> InlineKeyboardMarkup:
+def main_menu_new(lang: str = DEFAULT_LANG) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=b("event_register", lang), callback_data="event:register")],
+        [InlineKeyboardButton(text=b("partner_intro", lang), callback_data="partner:intro")],
+        [InlineKeyboardButton(text=b("lang_change", lang), callback_data="lang:pick")],
+    ])
+
+
+def menu_partner(lang: str = DEFAULT_LANG, registered_for_event: bool = False) -> InlineKeyboardMarkup:
     """Меню партнёра. Остальные функции — через команды и через ЛК."""
     kb = []
     if registered_for_event:
-        kb.append([InlineKeyboardButton(text="✅ Ты на мастер-классе 21.05", callback_data="event:show")])
+        kb.append([InlineKeyboardButton(text=b("event_show", lang), callback_data="event:show")])
     else:
-        kb.append([InlineKeyboardButton(text="📅 Регистрация на мастер-класс 21.05", callback_data="event:register")])
+        kb.append([InlineKeyboardButton(text=b("event_register", lang), callback_data="event:register")])
     kb.extend([
-        [InlineKeyboardButton(text="🤝 Партнёрство с ONCOUNT", callback_data="partner:intro")],
-        [InlineKeyboardButton(text="💰 Передать клиента", callback_data="partner:transfer")],
-        [InlineKeyboardButton(text="🌐 Открыть кабинет", callback_data="partner:open-lk")],
+        [InlineKeyboardButton(text=b("partner_intro_oncount", lang), callback_data="partner:intro")],
+        [InlineKeyboardButton(text=b("transfer", lang), callback_data="partner:transfer")],
+        [InlineKeyboardButton(text=b("open_lk", lang), callback_data="partner:open-lk")],
+        [InlineKeyboardButton(text=b("lang_change", lang), callback_data="lang:pick")],
     ])
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
@@ -115,9 +200,9 @@ def _is_registered_for_event(session, telegram_id: int) -> bool:
     ).first() is not None
 
 
-def menu_event_registered() -> InlineKeyboardMarkup:
+def menu_event_registered(lang: str = DEFAULT_LANG) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🤝 Стать партнёром ONCOUNT", callback_data="partner:intro")],
+        [InlineKeyboardButton(text=b("partner_become", lang), callback_data="partner:intro")],
     ])
 
 
@@ -130,6 +215,9 @@ async def cmd_start_with_payload(msg: Message, command: CommandObject) -> None:
     payload = (command.args or "").strip()
     with SessionLocal() as session:
         partner = get_or_create_partner(session, msg)
+        # deep-link сразу делает действие → язык не спрашиваем, берём явный выбор
+        # (если уже был) или ru-fallback; сменить можно кнопкой в меню.
+        lang = resolve_lang(partner)
 
         if payload == "partner":
             # прямая регистрационная ссылка — сразу активируем и даём вход в ЛК
@@ -137,10 +225,10 @@ async def cmd_start_with_payload(msg: Message, command: CommandObject) -> None:
             session.commit()
             login_url = issue_login_url(session, msg.from_user.id)
             kb = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="🌐 Открыть мой кабинет", url=login_url)],
+                [InlineKeyboardButton(text=b("open_my_cabinet", lang), url=login_url)],
             ])
             await msg.answer(
-                PARTNER_ONBOARDING_INTRO + "\n\n✅ Ты — партнёр ONCOUNT. Жми кнопку для входа в кабинет.",
+                t("PARTNER_ONBOARDING_INTRO", lang) + t("ONBOARDING_PARTNER_OK", lang),
                 reply_markup=kb,
             )
             return
@@ -167,8 +255,8 @@ async def cmd_start_with_payload(msg: Message, command: CommandObject) -> None:
                 ))
                 session.commit()
             await msg.answer(
-                EVENT_REGISTERED.format(first_name=msg.from_user.first_name or ""),
-                reply_markup=menu_event_registered(),
+                t("EVENT_REGISTERED", lang, first_name=msg.from_user.first_name or ""),
+                reply_markup=menu_event_registered(lang),
             )
             return
 
@@ -180,18 +268,12 @@ async def cmd_start_with_payload(msg: Message, command: CommandObject) -> None:
                 session.commit()
                 url = f"{settings.WEBAPP_URL}/auth/bot-callback?state={state}"
                 kb = InlineKeyboardMarkup(inline_keyboard=[
-                    [InlineKeyboardButton(text="🌐 Войти в личный кабинет", url=url)],
+                    [InlineKeyboardButton(text=b("login_cabinet", lang), url=url)],
                 ])
-                await msg.answer(
-                    "Готово! Жми кнопку — откроется кабинет партнёра в браузере.",
-                    reply_markup=kb,
-                )
+                await msg.answer(t("LOGIN_READY", lang), reply_markup=kb)
                 return
             else:
-                await msg.answer(
-                    "Ссылка для входа истекла или уже использована.\n"
-                    "Открой /login на сайте ещё раз."
-                )
+                await msg.answer(t("LOGIN_EXPIRED", lang))
                 return
 
         if payload.startswith("ref_"):
@@ -217,26 +299,67 @@ async def cmd_start_with_payload(msg: Message, command: CommandObject) -> None:
 async def cmd_start(msg: Message) -> None:
     with SessionLocal() as session:
         partner = get_or_create_partner(session, msg)
-        registered = _is_registered_for_event(session, msg.from_user.id)
+        # первый вход (язык ещё не выбран) → показываем экран выбора и выходим;
+        # приветствие покажет cb_lang_set после выбора.
+        if partner.lang not in SUPPORTED_LANGS:
+            await msg.answer(t("LANG_PICK"), reply_markup=lang_picker_kb())
+            return
+    await _send_welcome(msg, partner_telegram_id=msg.from_user.id,
+                        first_name=msg.from_user.first_name or "")
+
+
+async def _send_welcome(msg: Message, partner_telegram_id: int, first_name: str) -> None:
+    """Шлёт приветствие на языке партнёра, учитывая статус и регистрацию на ивент."""
+    with SessionLocal() as session:
+        partner = session.query(Partner).filter_by(telegram_id=partner_telegram_id).first()
+        lang = resolve_lang(partner)
+        registered = _is_registered_for_event(session, partner_telegram_id)
         # уже партнёр (active)?
-        if partner.status == "active":
+        if partner and partner.status == "active":
             await msg.answer(
-                WELCOME_PARTNER.format(first_name=msg.from_user.first_name or ""),
-                reply_markup=menu_partner(registered_for_event=registered),
+                t("WELCOME_PARTNER", lang, first_name=first_name),
+                reply_markup=menu_partner(lang, registered_for_event=registered),
             )
             return
         # зарегистрирован на мастер-класс, но ещё не партнёр?
         if registered:
             await msg.answer(
-                WELCOME_REGISTERED_FOR_EVENT.format(first_name=msg.from_user.first_name or ""),
-                reply_markup=menu_event_registered(),
+                t("WELCOME_REGISTERED_FOR_EVENT", lang, first_name=first_name),
+                reply_markup=menu_event_registered(lang),
             )
             return
         # новый
         await msg.answer(
-            WELCOME_NEW.format(first_name=msg.from_user.first_name or ""),
-            reply_markup=main_menu_new(),
+            t("WELCOME_NEW", lang, first_name=first_name),
+            reply_markup=main_menu_new(lang),
         )
+
+
+# ─────────────── язык: выбор и смена ─────────────────────────────────────────
+
+
+@dp.callback_query(F.data == "lang:pick")
+async def cb_lang_pick(call) -> None:
+    """Кнопка «Сменить язык» из меню — снова показывает экран выбора."""
+    await call.message.answer(t("LANG_PICK"), reply_markup=lang_picker_kb())
+    await call.answer()
+
+
+@dp.callback_query(F.data.startswith("lang:set:"))
+async def cb_lang_set(call) -> None:
+    lang = call.data.rsplit(":", 1)[-1]
+    if lang not in SUPPORTED_LANGS:
+        lang = DEFAULT_LANG
+    with SessionLocal() as session:
+        partner = session.query(Partner).filter_by(telegram_id=call.from_user.id).first()
+        if partner is None:
+            partner = get_or_create_partner(session, call)
+        partner.lang = lang
+        session.commit()
+    await call.answer(t("LANG_SWITCHED", lang))
+    # сразу показываем приветствие/меню на выбранном языке
+    await _send_welcome(call.message, partner_telegram_id=call.from_user.id,
+                        first_name=call.from_user.first_name or "")
 
 
 # ─────────────── event: registration ────────────────────────────────────────
@@ -260,16 +383,19 @@ async def cb_event_register(call) -> None:
                 meta={"reminder_24h_sent": False, "zoom_link_sent": False, "start_1h_sent": False},
             ))
             session.commit()
+        lang = get_lang(session, call.from_user.id)
     await call.message.answer(
-        EVENT_REGISTERED.format(first_name=call.from_user.first_name or ""),
+        t("EVENT_REGISTERED", lang, first_name=call.from_user.first_name or ""),
     )
-    await call.answer("Уже было записано" if was_already else "Зарегистрирован/-а!")
+    await call.answer(t("EVENT_TOAST_ALREADY", lang) if was_already else t("EVENT_TOAST_DONE", lang))
 
 
 @dp.callback_query(F.data == "event:show")
 async def cb_event_show(call) -> None:
+    with SessionLocal() as session:
+        lang = get_lang(session, call.from_user.id)
     await call.message.answer(
-        EVENT_REGISTERED.format(first_name=call.from_user.first_name or ""),
+        t("EVENT_REGISTERED", lang, first_name=call.from_user.first_name or ""),
     )
     await call.answer()
 
@@ -284,38 +410,43 @@ async def cb_partner_intro(call) -> None:
         if partner and partner.status != "active":
             partner.status = "active"
             session.commit()
+        lang = resolve_lang(partner)
         login_url = issue_login_url(session, call.from_user.id)
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🌐 Открыть мой кабинет", url=login_url)],
+        [InlineKeyboardButton(text=b("open_my_cabinet", lang), url=login_url)],
     ])
-    await call.message.answer(PARTNER_ONBOARDING_INTRO, reply_markup=kb)
+    await call.message.answer(t("PARTNER_ONBOARDING_INTRO", lang), reply_markup=kb)
     await call.answer()
 
 
 @dp.message(Command("lk"))
 async def cmd_open_lk(msg: Message) -> None:
     with SessionLocal() as session:
+        lang = get_lang(session, msg.from_user.id)
         login_url = issue_login_url(session, msg.from_user.id)
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🌐 Войти в кабинет", url=login_url)],
+        [InlineKeyboardButton(text=b("enter_cabinet", lang), url=login_url)],
     ])
-    await msg.answer("Жми кнопку — откроется твой кабинет:", reply_markup=kb)
+    await msg.answer(t("OPEN_CABINET_PROMPT", lang), reply_markup=kb)
 
 
 @dp.callback_query(F.data == "partner:open-lk")
 async def cb_partner_open_lk(call) -> None:
     with SessionLocal() as session:
+        lang = get_lang(session, call.from_user.id)
         login_url = issue_login_url(session, call.from_user.id)
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🌐 Войти в кабинет", url=login_url)],
+        [InlineKeyboardButton(text=b("enter_cabinet", lang), url=login_url)],
     ])
-    await call.message.answer("Жми кнопку — откроется твой кабинет:", reply_markup=kb)
+    await call.message.answer(t("OPEN_CABINET_PROMPT", lang), reply_markup=kb)
     await call.answer()
 
 
 @dp.message(Command("menu"))
 async def cmd_menu(msg: Message) -> None:
-    await msg.answer("Меню партнёра:", reply_markup=menu_partner())
+    with SessionLocal() as session:
+        lang = get_lang(session, msg.from_user.id)
+    await msg.answer(t("MENU_PARTNER_TITLE", lang), reply_markup=menu_partner(lang))
 
 
 @dp.message(Command("links"))
@@ -328,8 +459,9 @@ async def cmd_links(event) -> None:
         if not partner:
             partner = get_or_create_partner(session, event)
         ref = partner.ref_slug
+        lang = resolve_lang(partner)
     base = settings.WEBAPP_URL.rstrip("/")
-    await msg.answer(PARTNER_LINKS.format(
+    await msg.answer(t("PARTNER_LINKS", lang,
         ref_slug=ref,
         link_consult_tg=f"{base}/ct/{ref}",
         link_consult_wa=f"{base}/cw/{ref}",
@@ -350,21 +482,18 @@ async def cmd_stats(event) -> None:
     with SessionLocal() as session:
         partner = session.query(Partner).filter_by(telegram_id=user_id).first()
         if not partner:
-            await msg.answer("Сначала /start.")
+            await msg.answer(t("NEED_START"))
             return
+        lang = resolve_lang(partner)
         leads_q = session.query(Lead).filter_by(partner_id=partner.id)
         total = leads_q.count()
         won = leads_q.filter(Lead.status == "won").count()
         in_progress = leads_q.filter(Lead.status.in_(["new", "in_progress"])).count()
     conversion = round(won / total * 100, 1) if total else 0
-    await msg.answer(
-        f"📊 <b>Твоя статистика:</b>\n\n"
-        f"• Передано клиентов: <b>{total}</b>\n"
-        f"• Успешных: <b>{won}</b>\n"
-        f"• В работе: <b>{in_progress}</b>\n"
-        f"• Конверсия: <b>{conversion}%</b>\n\n"
-        f"Полный дашборд: {settings.WEBAPP_URL}/dashboard"
-    )
+    await msg.answer(t("STATS_BODY", lang,
+        total=total, won=won, in_progress=in_progress, conversion=conversion,
+        dashboard_url=f"{settings.WEBAPP_URL}/dashboard",
+    ))
     if not isinstance(event, Message):
         await event.answer()
 
@@ -374,16 +503,20 @@ async def cmd_stats(event) -> None:
 async def cmd_products(event) -> None:
     msg = event if isinstance(event, Message) else event.message
     with SessionLocal() as session:
+        lang = get_lang(session, event.from_user.id)
         items = (
             session.query(ProductBlock)
             .filter_by(is_active=True)
             .order_by(ProductBlock.order_index)
             .all()
         )
-    text = "📦 <b>Тарифы и сервисы ONCOUNT</b>\n\n"
-    for item in items:
-        text += f"<b>{item.title}</b> — {item.price_aed or ''}\n{item.summary_md}\n\n"
-    text += f"Подробности — в ЛК: {settings.WEBAPP_URL}/products"
+        text = t("PRODUCTS_HEADER", lang)
+        for item in items:
+            title = _loc(item, "title", lang)
+            price = _loc(item, "price_aed", lang)
+            summary = _loc(item, "summary_md", lang)
+            text += f"<b>{title}</b> — {price}\n{summary}\n\n"
+    text += t("PRODUCTS_FOOTER", lang, products_url=f"{settings.WEBAPP_URL}/products")
     await msg.answer(text)
     if not isinstance(event, Message):
         await event.answer()
@@ -394,6 +527,7 @@ async def cmd_products(event) -> None:
 async def cmd_faq(event) -> None:
     msg = event if isinstance(event, Message) else event.message
     with SessionLocal() as session:
+        lang = get_lang(session, event.from_user.id)
         items = (
             session.query(FaqItem)
             .filter_by(is_active=True)
@@ -401,14 +535,15 @@ async def cmd_faq(event) -> None:
             .limit(10)
             .all()
         )
-    text = "❓ <b>Частые вопросы</b>\n\n"
-    last_cat = None
-    for item in items:
-        if item.category != last_cat:
-            text += f"\n<b><i>{item.category}</i></b>\n"
-            last_cat = item.category
-        text += f"\n<b>Q:</b> {item.question}\n<b>A:</b> {item.answer_md}\n"
-    text += f"\nПолный FAQ: {settings.WEBAPP_URL}/faq"
+        text = t("FAQ_HEADER", lang)
+        last_cat = None
+        for item in items:
+            cat = _loc(item, "category", lang)
+            if cat != last_cat:
+                text += f"\n<b><i>{cat}</i></b>\n"
+                last_cat = cat
+            text += f"\n<b>Q:</b> {_loc(item, 'question', lang)}\n<b>A:</b> {_loc(item, 'answer_md', lang)}\n"
+    text += t("FAQ_FOOTER", lang, faq_url=f"{settings.WEBAPP_URL}/faq")
     await msg.answer(text)
     if not isinstance(event, Message):
         await event.answer()
@@ -418,10 +553,9 @@ async def cmd_faq(event) -> None:
 @dp.callback_query(F.data == "partner:messages")
 async def cmd_messages(event) -> None:
     msg = event if isinstance(event, Message) else event.message
-    await msg.answer(
-        "📨 <b>Тексты рассылок</b> — 5 готовых шаблонов под разные сегменты.\n\n"
-        f"Полный список с кнопкой «Скопировать» — в ЛК:\n{settings.WEBAPP_URL}/messages"
-    )
+    with SessionLocal() as session:
+        lang = get_lang(session, event.from_user.id)
+    await msg.answer(t("MESSAGES_BODY", lang, messages_url=f"{settings.WEBAPP_URL}/messages"))
     if not isinstance(event, Message):
         await event.answer()
 
@@ -439,34 +573,43 @@ class TransferStates(StatesGroup):
 @dp.callback_query(F.data == "partner:transfer")
 async def cmd_transfer(event, state: FSMContext) -> None:
     msg = event if isinstance(event, Message) else event.message
+    with SessionLocal() as session:
+        lang = get_lang(session, event.from_user.id)
+    # язык фиксируем на старте FSM, чтобы все шаги были на одном языке
+    await state.update_data(lang=lang)
     await state.set_state(TransferStates.name)
-    await msg.answer(TRANSFER_INTRO)
+    await msg.answer(t("TRANSFER_INTRO", lang))
     if not isinstance(event, Message):
         await event.answer()
 
 
 @dp.message(TransferStates.name)
 async def transfer_name(msg: Message, state: FSMContext) -> None:
+    data = await state.get_data()
+    lang = data.get("lang", DEFAULT_LANG)
     await state.update_data(client_name=msg.text.strip())
     await state.set_state(TransferStates.phone)
-    await msg.answer("Телефон, Telegram или WhatsApp клиента:")
+    await msg.answer(t("TRANSFER_ASK_PHONE", lang))
 
 
 @dp.message(TransferStates.phone)
 async def transfer_phone(msg: Message, state: FSMContext) -> None:
+    data = await state.get_data()
+    lang = data.get("lang", DEFAULT_LANG)
     phone = msg.text.strip()
     await state.update_data(client_phone=None if phone == "-" else phone)
     await state.set_state(TransferStates.task)
-    await msg.answer("Опиши задачу клиента в одном сообщении:")
+    await msg.answer(t("TRANSFER_ASK_TASK", lang))
 
 
 @dp.message(TransferStates.task)
 async def transfer_task(msg: Message, state: FSMContext) -> None:
     data = await state.get_data()
+    lang = data.get("lang", DEFAULT_LANG)
     with SessionLocal() as session:
         partner = session.query(Partner).filter_by(telegram_id=msg.from_user.id).first()
         if not partner:
-            await msg.answer("Сначала /start.")
+            await msg.answer(t("NEED_START", lang))
             await state.clear()
             return
         lead = Lead(
@@ -478,7 +621,7 @@ async def transfer_task(msg: Message, state: FSMContext) -> None:
         )
         session.add(lead)
         session.commit()
-    await msg.answer(TRANSFER_DONE.format(name=data["client_name"]), reply_markup=menu_partner())
+    await msg.answer(t("TRANSFER_DONE", lang, name=data["client_name"]), reply_markup=menu_partner(lang))
     # уведомить админа
     try:
         await bot.send_message(
@@ -496,8 +639,9 @@ async def transfer_task(msg: Message, state: FSMContext) -> None:
 # ─────────────── event reminders (APScheduler) ──────────────────────────────
 
 
-async def send_reminder(field: str, text: str) -> None:
-    """Шлёт `text` всем регистрациям мастер-класса, у которых meta[field] != True."""
+async def send_reminder(field: str, text_key: str) -> None:
+    """Шлёт текст `text_key` всем регистрациям мастер-класса, у которых meta[field]
+    != True. Язык — по выбору партнёра (partners.lang), ru-fallback."""
     sent = 0
     with SessionLocal() as session:
         regs = (
@@ -509,8 +653,9 @@ async def send_reminder(field: str, text: str) -> None:
             meta = reg.meta or {}
             if meta.get(field):
                 continue
+            lang = get_lang(session, reg.telegram_id)
             try:
-                await bot.send_message(reg.telegram_id, text)
+                await bot.send_message(reg.telegram_id, t(text_key, lang))
                 meta[field] = True
                 reg.meta = meta
                 sent += 1
@@ -521,15 +666,15 @@ async def send_reminder(field: str, text: str) -> None:
 
 
 async def reminder_24h() -> None:
-    await send_reminder("reminder_24h_sent", EVENT_REMINDER_24H)
+    await send_reminder("reminder_24h_sent", "EVENT_REMINDER_24H")
 
 
 async def reminder_zoom() -> None:
-    await send_reminder("zoom_link_sent", EVENT_REMINDER_ZOOM)
+    await send_reminder("zoom_link_sent", "EVENT_REMINDER_ZOOM")
 
 
 async def reminder_1h() -> None:
-    await send_reminder("start_1h_sent", EVENT_REMINDER_1H)
+    await send_reminder("start_1h_sent", "EVENT_REMINDER_1H")
 
 
 def start_scheduler() -> AsyncIOScheduler:
@@ -551,6 +696,9 @@ def start_scheduler() -> AsyncIOScheduler:
 # ─────────────── entry point ────────────────────────────────────────────────
 
 
+# Описания команд в меню Telegram. Telegram сам выбирает набор по языку
+# приложения пользователя: EN-набор привязан через language_code="en",
+# RU — дефолтный (для всех остальных).
 PARTNER_COMMANDS = [
     BotCommand(command="menu", description="🏠 Главное меню"),
     BotCommand(command="links", description="🔗 Мои реф-ссылки"),
@@ -562,11 +710,23 @@ PARTNER_COMMANDS = [
     BotCommand(command="lk", description="🌐 Открыть кабинет в браузере"),
 ]
 
+PARTNER_COMMANDS_EN = [
+    BotCommand(command="menu", description="🏠 Main menu"),
+    BotCommand(command="links", description="🔗 My referral links"),
+    BotCommand(command="stats", description="📊 My stats"),
+    BotCommand(command="transfer", description="💰 Refer a client"),
+    BotCommand(command="products", description="📦 Plans and services"),
+    BotCommand(command="messages", description="📨 Outreach copy"),
+    BotCommand(command="faq", description="❓ FAQ"),
+    BotCommand(command="lk", description="🌐 Open cabinet in browser"),
+]
+
 
 async def main() -> None:
     Base.metadata.create_all(engine)
     scheduler = start_scheduler()
-    await bot.set_my_commands(PARTNER_COMMANDS)
+    await bot.set_my_commands(PARTNER_COMMANDS)  # дефолт (RU)
+    await bot.set_my_commands(PARTNER_COMMANDS_EN, language_code="en")
     log.info("Bot polling start, bot=@%s, time=%s", settings.BOT_USERNAME, datetime.utcnow())
     try:
         await dp.start_polling(bot)

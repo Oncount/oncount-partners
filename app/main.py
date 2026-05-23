@@ -72,6 +72,8 @@ async def on_startup() -> None:
             "checklist_dismissed_at",
         ):
             conn.execute(text(f"ALTER TABLE partners ADD COLUMN IF NOT EXISTS {col} TIMESTAMP"))
+        # Язык интерфейса бота (план 2026-05-23). Идемпотентно.
+        conn.execute(text("ALTER TABLE partners ADD COLUMN IF NOT EXISTS lang VARCHAR(2)"))
         # EN-колонки контент-таблиц (план 2026-05-22). create_all не делает ALTER,
         # а таблицы уже существуют в проде — добавляем идемпотентно.
         en_cols = {
