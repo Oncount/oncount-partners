@@ -129,8 +129,8 @@ BTN: dict[str, dict[str, str]] = {
         "en": "🌐 Enter cabinet",
     },
     "lang_change": {
-        "ru": "🌐 Сменить язык / Language",
-        "en": "🌐 Change language / Язык",
+        "ru": "🔠 En/Ru",
+        "en": "🔠 En/Ru",
     },
 }
 
@@ -139,6 +139,25 @@ def b(key: str, lang: str = DEFAULT_LANG) -> str:
     """Подпись кнопки по ключу и языку, ru-fallback."""
     variants = BTN.get(key, {})
     return variants.get(lang) or variants.get(DEFAULT_LANG, key)
+
+
+# Telegram центрирует текст inline-кнопок — отдельной «выровнять влево» опции в API
+# нет. Добиваем короткие подписи NBSP (U+00A0, не схлопывается и не обрезается)
+# справа до длины самой длинной кнопки: при центрировании одинаковых по длине строк
+# их текст начинается на одном уровне у левого края. Шрифт пропорциональный, поэтому
+# выравнивание аккуратное, но не пиксель-в-пиксель.
+def _left_align(labels: list[str]) -> list[str]:
+    width = max(len(s) for s in labels)
+    return [s + " " * (width - len(s)) for s in labels]  # NBSP-добивка справа
+
+
+def _menu(rows: list[tuple[str, str]]) -> InlineKeyboardMarkup:
+    """rows = [(подпись, callback_data), ...] → клавиатура с выровненными влево подписями."""
+    labels = _left_align([text for text, _ in rows])
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=label, callback_data=cb)]
+        for label, (_, cb) in zip(labels, rows)
+    ])
 
 
 def resolve_lang(partner: Partner | None) -> str:
@@ -172,21 +191,21 @@ def lang_picker_kb() -> InlineKeyboardMarkup:
 
 
 def main_menu_new(lang: str = DEFAULT_LANG) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=b("course_practicum", lang), callback_data="course:practicum")],
-        [InlineKeyboardButton(text=b("partner_intro", lang), callback_data="partner:intro")],
-        [InlineKeyboardButton(text=b("lang_change", lang), callback_data="lang:pick")],
+    return _menu([
+        (b("course_practicum", lang), "course:practicum"),
+        (b("partner_intro", lang), "partner:intro"),
+        (b("lang_change", lang), "lang:pick"),
     ])
 
 
 def menu_partner(lang: str = DEFAULT_LANG) -> InlineKeyboardMarkup:
     """Меню партнёра. Остальные функции — через команды и через ЛК."""
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=b("course_practicum", lang), callback_data="course:practicum")],
-        [InlineKeyboardButton(text=b("partner_intro_oncount", lang), callback_data="partner:intro")],
-        [InlineKeyboardButton(text=b("transfer", lang), callback_data="partner:transfer")],
-        [InlineKeyboardButton(text=b("open_lk", lang), callback_data="partner:open-lk")],
-        [InlineKeyboardButton(text=b("lang_change", lang), callback_data="lang:pick")],
+    return _menu([
+        (b("course_practicum", lang), "course:practicum"),
+        (b("partner_intro_oncount", lang), "partner:intro"),
+        (b("transfer", lang), "partner:transfer"),
+        (b("open_lk", lang), "partner:open-lk"),
+        (b("lang_change", lang), "lang:pick"),
     ])
 
 
