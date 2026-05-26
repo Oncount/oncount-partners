@@ -144,30 +144,9 @@ async def on_startup() -> None:
 def healthz() -> dict:
     return {"ok": True, "ts": datetime.utcnow().isoformat()}
 
-
-@app.get("/admin/seed-agents")
-def admin_seed_agents(key: str, dry: bool = False) -> dict:
-    """Разовый запуск пред-создания Partner-агентов (Фаза 0.7) + фоновый синк лидов.
-    Защита: key == JWT_SECRET. Удалить после использования."""
-    if key != settings.JWT_SECRET:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "forbidden")
-    from app.kommo_sync import seed_partners_from_enums, sync_agent_leads
-    seeded = seed_partners_from_enums(dry=dry)
-    if not dry:
-        import threading
-        threading.Thread(target=sync_agent_leads, daemon=True).start()
-    return {"seeded": seeded, "sync_triggered": not dry}
-
-
-@app.get("/admin/agent-stats")
-def admin_agent_stats(key: str, session: Session = Depends(get_session)) -> dict:
-    """Проверка: сколько Partner-агентов и лидов разложено. key == JWT_SECRET."""
-    if key != settings.JWT_SECRET:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "forbidden")
-    from sqlalchemy import func
-    agents = session.query(func.count(Partner.id)).filter(Partner.kommo_agent_enum_id.isnot(None)).scalar()
-    leads = session.query(func.count(Lead.id)).filter(Lead.kommo_lead_id.isnot(None)).scalar()
-    return {"agent_partners": agents, "synced_leads": leads}
+# Разовые admin-эндпоинты seed/stats (Фаза 0.7) удалены после использования
+# (security-review 2026-05-26: ключ=JWT_SECRET в query — риск утечки). seed/синк
+# теперь только через CLI scripts/seed_agent_partners.py + APScheduler-синк.
 
 
 @app.get("/debug/event-stats")
