@@ -8,6 +8,12 @@
     <span class="balance-item-label">{{ 'Earned:' if lang == 'en' else 'Заработано:' }}</span>
     <span class="balance-item-value">{{ '%.0f'|format(kpi.earned_aed) }} AED</span>
   </div>
+  {% if kpi.expected_usd_high %}
+  <div class="balance-item">
+    <span class="balance-item-label">{{ 'Expected commission:' if lang == 'en' else 'Ожидаемая комиссия:' }}</span>
+    <span class="balance-item-value">${{ '{:,}'.format(kpi.expected_usd_low) }} – ${{ '{:,}'.format(kpi.expected_usd_high) }}</span>
+  </div>
+  {% endif %}
   <div class="balance-item">
     <span class="balance-item-label">{{ 'Your ref code:' if lang == 'en' else 'Ваш реф-код:' }}</span>
     <span class="balance-item-value">{{ partner.ref_slug }}</span>

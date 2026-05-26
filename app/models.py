@@ -38,6 +38,11 @@ class Partner(Base):
     lang: Mapped[str | None] = mapped_column(String(2))
     tier: Mapped[str] = mapped_column(String(16), default="bronze")
     status: Mapped[str] = mapped_column(String(16), default="pending", index=True)
+    # Связь с агентом в Kommo: enum_id значения поля «ID AGENT» (#961886) воронки 1.1.
+    # Один Partner ↔ один Kommo-агент. По нему отчёт/дайджест тянут лиды агента.
+    # kommo_agent_name — кэш отображаемого имени (латиница), для писем/дайджеста.
+    kommo_agent_enum_id: Mapped[int | None] = mapped_column(BigInteger, index=True)
+    kommo_agent_name: Mapped[str | None] = mapped_column(String(128))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime)
     onboarded_at: Mapped[datetime | None] = mapped_column(DateTime)
@@ -171,6 +176,10 @@ class LoginSession(Base):
     telegram_id: Mapped[int | None] = mapped_column(BigInteger)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     consumed_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Если вход начат по персональной инвайт-ссылке /invite/<slug> (Фаза 0.7),
+    # сюда кладётся ref_slug пред-созданного Partner-агента — чтобы привязать
+    # telegram_id к НЕМУ, а не плодить дубль.
+    ref_slug: Mapped[str | None] = mapped_column(String(16))
 
 
 class EmailLoginToken(Base):
@@ -187,6 +196,8 @@ class EmailLoginToken(Base):
     email: Mapped[str] = mapped_column(String(255), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     consumed_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # ref_slug пред-созданного Partner-агента, если вход начат по инвайт-ссылке (Фаза 0.7).
+    ref_slug: Mapped[str | None] = mapped_column(String(16))
 
 
 class EventRegistration(Base):

@@ -82,6 +82,12 @@ async def on_startup() -> None:
             conn.execute(text(f"ALTER TABLE partners ADD COLUMN IF NOT EXISTS {col} TIMESTAMP"))
         # Язык интерфейса бота (план 2026-05-23). Идемпотентно.
         conn.execute(text("ALTER TABLE partners ADD COLUMN IF NOT EXISTS lang VARCHAR(2)"))
+        # Фаза 0.7 (план 2026-05-26): связь Partner ↔ Kommo-агент + ref_slug инвайта.
+        conn.execute(text("ALTER TABLE partners ADD COLUMN IF NOT EXISTS kommo_agent_enum_id BIGINT"))
+        conn.execute(text("ALTER TABLE partners ADD COLUMN IF NOT EXISTS kommo_agent_name VARCHAR(128)"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_partners_kommo_agent_enum_id ON partners (kommo_agent_enum_id)"))
+        conn.execute(text("ALTER TABLE login_sessions ADD COLUMN IF NOT EXISTS ref_slug VARCHAR(16)"))
+        conn.execute(text("ALTER TABLE email_login_tokens ADD COLUMN IF NOT EXISTS ref_slug VARCHAR(16)"))
         # EN-колонки контент-таблиц (план 2026-05-22). create_all не делает ALTER,
         # а таблицы уже существуют в проде — добавляем идемпотентно.
         en_cols = {
@@ -119,6 +125,19 @@ async def on_startup() -> None:
         asyncio.create_task(bot_main())
     else:
         log.info("BOT_TOKEN empty -> bot polling skipped, web only")
+
+    # Периодический синк лидов агентов из Kommo в локальный Lead (кабинет читает его).
+    # Фаза 1/кабинет (план 2026-05-26). Запускается в отдельном потоке APScheduler.
+    if settings.KOMMO_TOKEN:
+        from datetime import datetime as _dt
+        from apscheduler.schedulers.background import BackgroundScheduler
+        from app.kommo_sync import sync_agent_leads
+        sched = BackgroundScheduler(timezone="UTC")
+        sched.add_job(sync_agent_leads, "interval", minutes=60, id="kommo_sync",
+                      next_run_time=_dt.utcnow(), max_instances=1, coalesce=True)
+        sched.start()
+        app.state.scheduler = sched
+        log.info("kommo_sync scheduler started (hourly)")
 
 
 @app.get("/healthz")
@@ -181,20 +200,41 @@ def join_partner_program() -> RedirectResponse:
     )
 
 
+INVITE_COOKIE = "invite_ref"
+
+
+@app.get("/invite/{slug}")
+def invite_link(slug: str, session: Session = Depends(get_session)) -> RedirectResponse:
+    """Персональная инвайт-ссылка агента (Фаза 0.7). Кладёт ref_slug в cookie и ведёт
+    на /login. На входе (TG/email) этот ref привяжет telegram_id/email к пред-созданному
+    Partner-агенту — чтобы не плодить дубли. Неизвестный slug просто ведёт на /login."""
+    resp = RedirectResponse("/login", status_code=302)
+    exists = session.query(Partner).filter_by(ref_slug=slug).first() is not None
+    if exists:
+        resp.set_cookie(INVITE_COOKIE, slug, httponly=True, secure=True,
+                        samesite="lax", max_age=3600)
+    return resp
+
+
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
     partner = current_partner(request, session)
     if partner:
         return RedirectResponse("/dashboard", status_code=302)
     state = secrets.token_urlsafe(24)
-    session.add(LoginSession(state=state))
+    ref = request.cookies.get(INVITE_COOKIE)
+    session.add(LoginSession(state=state, ref_slug=ref))
     session.commit()
     return templates.TemplateResponse("login.html", _ctx(request, None, state=state))
 
 
 @app.get("/auth/bot-callback")
-def auth_bot_callback(state: str, session: Session = Depends(get_session)):
-    """Завершение deep-link авторизации. Бот уже записал telegram_id для state."""
+def auth_bot_callback(state: str, next: str | None = None, session: Session = Depends(get_session)):
+    """Завершение deep-link авторизации. Бот уже записал telegram_id для state.
+
+    next — необязательная внутренняя страница, на которую кабинет откроется сразу
+    после входа (например, курс-практикум). Разрешаем только локальные пути под
+    /courses/, чтобы исключить open-redirect."""
     rec = session.get(LoginSession, state)
     if rec is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Login session not found")
@@ -209,7 +249,22 @@ def auth_bot_callback(state: str, session: Session = Depends(get_session)):
     rec.consumed_at = datetime.utcnow()
     session.commit()
 
-    partner = session.query(Partner).filter_by(telegram_id=telegram_id).first()
+    partner = None
+    # Фаза 0.7: вход по инвайт-ссылке → привязать telegram_id к пред-созданному
+    # Partner-агенту (с дедупом), а не плодить новый.
+    if rec.ref_slug:
+        invited = session.query(Partner).filter_by(ref_slug=rec.ref_slug).first()
+        if invited:
+            stray = session.query(Partner).filter_by(telegram_id=telegram_id).first()
+            if stray and stray.id != invited.id:
+                stray.telegram_id = None  # освободить уникальный telegram_id
+                stray.status = "merged"
+                session.flush()
+            invited.telegram_id = telegram_id
+            partner = invited
+
+    if partner is None:
+        partner = session.query(Partner).filter_by(telegram_id=telegram_id).first()
     if not partner:
         # бот к этому моменту уже создал партнёра в БД, но на всякий случай
         partner = Partner(
@@ -225,7 +280,8 @@ def auth_bot_callback(state: str, session: Session = Depends(get_session)):
     session.commit()
 
     token = issue_jwt(partner.id)
-    response = RedirectResponse("/dashboard", status_code=302)
+    dest = next if (next and next.startswith("/courses/")) else "/dashboard"
+    response = RedirectResponse(dest, status_code=302)
     response.set_cookie(
         COOKIE_NAME,
         token,
@@ -271,7 +327,10 @@ def auth_email_request(
         )
         if recent < EMAIL_RATE_LIMIT:
             token = secrets.token_urlsafe(32)
-            session.add(EmailLoginToken(token=token, email=email_norm))
+            session.add(EmailLoginToken(
+                token=token, email=email_norm,
+                ref_slug=request.cookies.get(INVITE_COOKIE),
+            ))
             session.commit()
             url = f"{settings.WEBAPP_URL}/auth/email/callback?token={token}"
             send_magic_link(email_norm, url, lang)
@@ -298,11 +357,29 @@ def auth_email_callback(token: str, session: Session = Depends(get_session)):
     rec.consumed_at = datetime.utcnow()
     session.commit()
 
-    partner = (
-        session.query(Partner)
-        .filter(func.lower(Partner.email) == rec.email)
-        .first()
-    )
+    partner = None
+    # Фаза 0.7: вход по инвайт-ссылке → привязать email к пред-созданному Partner-агенту.
+    if rec.ref_slug:
+        invited = session.query(Partner).filter_by(ref_slug=rec.ref_slug).first()
+        if invited:
+            stray = (
+                session.query(Partner)
+                .filter(func.lower(Partner.email) == rec.email)
+                .first()
+            )
+            if stray and stray.id != invited.id:
+                stray.email = None
+                stray.status = "merged"
+                session.flush()
+            invited.email = rec.email
+            partner = invited
+
+    if partner is None:
+        partner = (
+            session.query(Partner)
+            .filter(func.lower(Partner.email) == rec.email)
+            .first()
+        )
     if not partner:
         # Новый партнёр без Telegram: заводим по email. first_name = локальная
         # часть адреса, чтобы плашка пользователя в шапке не была пустой.
@@ -500,6 +577,9 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
                 "rejected": rejected,
                 "in_progress": in_progress,
                 "earned_aed": float(total_aed),
+                # Ожидаемая комиссия: $300 (мин) … $1000 (средн) с каждого лида.
+                "expected_usd_low": leads_count * 300,
+                "expected_usd_high": leads_count * 1000,
             },
             checklist_steps=checklist_steps,
             show_checklist=show_checklist,
