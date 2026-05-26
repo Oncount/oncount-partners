@@ -17,12 +17,47 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.db import SessionLocal
 from app.models import Lead, Partner
+from app.refgen import generate_ref_slug
 
 log = logging.getLogger("oncount.kommo_sync")
 
 BASE = "https://primeadvice.kommo.com/api/v4"
+AGENT_FIELD = 961886       # поле «ID AGENT»
 PIPELINE_AGENT = 11126307  # воронка 1.1 «Line agent lid»
 WON, LOST = 142, 143
+
+
+def seed_partners_from_enums(dry: bool = False) -> dict:
+    """Фаза 0.7: создать Partner на каждого агента из enum-справочника «ID AGENT».
+    Идемпотентно (upsert по kommo_agent_enum_id), быстро (без скана лидов).
+    У каждого ref_slug для персональной инвайт-ссылки."""
+    token = settings.KOMMO_TOKEN
+    if not token:
+        return {"error": "KOMMO_TOKEN пуст"}
+    with httpx.Client(timeout=30, headers={"Authorization": f"Bearer {token}"}) as c:
+        enums = (c.get(f"{BASE}/leads/custom_fields/{AGENT_FIELD}").json().get("enums") or [])
+    session = SessionLocal()
+    created = updated = 0
+    try:
+        for e in enums:
+            eid, name = e["id"], e["value"]
+            p = session.query(Partner).filter_by(kommo_agent_enum_id=eid).first()
+            if p:
+                if p.kommo_agent_name != name and not dry:
+                    p.kommo_agent_name = name
+                    updated += 1
+                continue
+            created += 1
+            if not dry:
+                session.add(Partner(
+                    kommo_agent_enum_id=eid, kommo_agent_name=name,
+                    ref_slug=generate_ref_slug(), status="invited",
+                ))
+        if not dry:
+            session.commit()
+    finally:
+        session.close()
+    return {"agents_in_field": len(enums), "created": created, "updated": updated, "dry": dry}
 
 
 def _status(status_id: int) -> str:
