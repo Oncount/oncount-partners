@@ -29,6 +29,13 @@ class Settings:
     # иначе Resend отклоняет отправку. Имя отправителя — ONCOUNT (бренд).
     RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
     EMAIL_FROM: str = os.getenv("EMAIL_FROM", "ONCOUNT <noreply@nikole-ai.com>")
+    # Wazzup24 — доставка кода входа в WhatsApp (план 2026-05-27, вход по номеру).
+    # Пустой ключ/канал → dev-режим: код в сеть не уходит (см. app/wazzup.py).
+    # WAZZUP_TEST_ONLY_NUMBER — предохранитель теста: если задан, код шлётся ТОЛЬКО
+    # на этот номер. Слать с НЕ основного номера (не жечь основной 84).
+    WAZZUP_API_KEY: str = os.getenv("WAZZUP_API_KEY", "")
+    WAZZUP_CHANNEL_ID: str = os.getenv("WAZZUP_CHANNEL_ID", "")
+    WAZZUP_TEST_ONLY_NUMBER: str = os.getenv("WAZZUP_TEST_ONLY_NUMBER", "")
     KOMMO_DOMAIN: str = os.getenv("KOMMO_DOMAIN", "")
     KOMMO_TOKEN: str = os.getenv("KOMMO_TOKEN", "")
     KOMMO_PIPELINE_ID: str = os.getenv("KOMMO_PIPELINE_ID", "")

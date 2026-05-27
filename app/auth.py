@@ -19,7 +19,7 @@ from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.models import Partner
+from app.models import Partner, PartnerIdentity
 
 COOKIE_NAME = "oncount_session"
 
@@ -47,6 +47,71 @@ def verify_telegram_auth(payload: dict) -> bool:
     if time.time() - auth_date > 86400:
         return False
     return True
+
+
+def normalize_phone(raw: str) -> str:
+    """Приводит телефон к каноничному виду для матчинга — только цифры, без `+`,
+    пробелов, скобок и дефисов.
+
+    Телефоны агентов в базе хранятся digits-only с кодом страны
+    (`971505306356`), встречаются и российские. Сравнение идёт по цифрам, поэтому
+    `+971 50 530 63 56`, `971505306356` и `00971505306356` сводятся к одному.
+    Ведущие нули международного префикса (`00`) срезаются. Возвращает "" для мусора.
+    """
+    digits = "".join(ch for ch in (raw or "") if ch.isdigit())
+    if digits.startswith("00"):
+        digits = digits[2:]
+    return digits
+
+
+def phone_match_candidates(norm: str) -> list[str]:
+    """Варианты хранения номера в Partner.phone для устойчивого матчинга.
+
+    Partner.phone не нормализуется на лету в SQL, поэтому подбираем кандидатов:
+    сами цифры и тот же номер с ведущим `+` (на случай, если где-то сохранён в
+    E.164 с плюсом)."""
+    if not norm:
+        return []
+    return [norm, f"+{norm}"]
+
+
+def normalize_tg_username(raw: str) -> str:
+    """tg_username для матчинга: lower, без ведущего `@` и пробелов."""
+    return (raw or "").strip().lstrip("@").lower()
+
+
+def find_partner_by_phone(session: Session, norm: str) -> Optional[Partner]:
+    """Кабинет по нормализованному номеру (план 2026-05-27, Вариант А).
+
+    Сначала ищем в `PartnerIdentity` (kind='phone', один кабинет → много номеров) —
+    основной путь. Fallback на `Partner.phone` (основной номер/совместимость), оба
+    формата хранения. Возвращает None для неизвестного номера — кабинет НЕ создаём."""
+    if not norm:
+        return None
+    link = (
+        session.query(PartnerIdentity)
+        .filter(PartnerIdentity.kind == "phone", PartnerIdentity.value == norm)
+        .first()
+    )
+    if link is not None:
+        return session.get(Partner, link.partner_id)
+    return (
+        session.query(Partner)
+        .filter(Partner.phone.in_(phone_match_candidates(norm)))
+        .first()
+    )
+
+
+def hash_login_code(code: str) -> str:
+    """hmac-sha256(code) с JWT_SECRET в роли перца. В базе лежит только хэш —
+    утечка таблицы не отдаёт коды напрямую (а TTL+лимит попыток режут перебор)."""
+    return hmac.new(
+        settings.JWT_SECRET.encode(), code.encode(), hashlib.sha256
+    ).hexdigest()
+
+
+def verify_login_code(code: str, code_hash: str) -> bool:
+    return hmac.compare_digest(hash_login_code(code), code_hash)
 
 
 def issue_jwt(partner_id: int) -> str:

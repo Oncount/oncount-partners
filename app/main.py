@@ -16,10 +16,15 @@ from sqlalchemy.orm import Session
 from app.auth import (
     COOKIE_NAME,
     current_partner,
+    find_partner_by_phone,
+    hash_login_code,
     issue_jwt,
+    normalize_phone,
+    verify_login_code,
 )
 from app.config import settings
 from app.email import send_magic_link
+from app.wazzup import send_wa_code
 from app.db import SessionLocal, engine, get_session
 from app.models import (
     Base,
@@ -31,6 +36,7 @@ from app.models import (
     LoginSession,
     MessageTemplate,
     Partner,
+    PhoneLoginToken,
     ProductBlock,
     Referral,
 )
@@ -42,6 +48,11 @@ LOGIN_SESSION_TTL = timedelta(minutes=10)
 EMAIL_TOKEN_TTL = timedelta(minutes=15)
 EMAIL_RATE_LIMIT = 3  # запросов на один email за окно EMAIL_TOKEN_TTL
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+# Вход по номеру телефона — код в WhatsApp (план 2026-05-27).
+PHONE_CODE_TTL = timedelta(minutes=10)
+PHONE_CODE_MAX_ATTEMPTS = 5  # неверных вводов кода до блокировки токена
+PHONE_RATE_LIMIT = 3         # запросов кода на один номер за окно PHONE_CODE_TTL
+PHONE_MIN_DIGITS = 9         # короче — заведомо мусор, код не шлём
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "app" / "templates"))
@@ -142,6 +153,14 @@ async def on_startup() -> None:
         conn.execute(text(
             "DELETE FROM email_login_tokens "
             "WHERE consumed_at IS NULL AND created_at < now() - interval '1 day'"
+        ))
+        # Вход по номеру телефона (план 2026-05-27). Таблицу создаёт create_all;
+        # здесь только гигиена — чистим протухшие коды (старше суток), чтобы не
+        # копить хэши и телефоны. Идемпотентно: нет таблицы на самом первом запуске
+        # быть не может (create_all уже отработал выше).
+        conn.execute(text(
+            "DELETE FROM phone_login_tokens "
+            "WHERE created_at < now() - interval '1 day'"
         ))
     with SessionLocal() as session:
         seed_if_empty(session)
@@ -450,6 +469,131 @@ def auth_email_callback(token: str, session: Session = Depends(get_session)):
                 raise
 
     partner.last_login_at = datetime.utcnow()
+    session.commit()
+
+    response = RedirectResponse("/dashboard", status_code=302)
+    response.set_cookie(
+        COOKIE_NAME,
+        issue_jwt(partner.id),
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=settings.JWT_TTL_DAYS * 86400,
+    )
+    return response
+
+
+@app.post("/auth/phone/request", response_class=HTMLResponse)
+def auth_phone_request(
+    request: Request,
+    phone: str = Form(...),
+    session: Session = Depends(get_session),
+) -> HTMLResponse:
+    """Шаг 1 входа по номеру: принять телефон → отправить 6-значный код в WhatsApp.
+
+    Главный способ входа (телефон — сквозной идентификатор агента, план 2026-05-27).
+    Анти-энумерация: ответ всегда одинаковый (показываем шаг ввода кода), есть
+    такой агент в базе или нет. Код шлём ТОЛЬКО известному агенту (Partner.phone).
+    Rate-limit: не больше PHONE_RATE_LIMIT кодов на номер за TTL.
+    """
+    norm = normalize_phone(phone)
+    lang = _lang(request)
+
+    if len(norm) >= PHONE_MIN_DIGITS:
+        window_start = datetime.utcnow() - PHONE_CODE_TTL
+        recent = (
+            session.query(PhoneLoginToken)
+            .filter(
+                PhoneLoginToken.phone == norm,
+                PhoneLoginToken.created_at >= window_start,
+            )
+            .count()
+        )
+        if recent < PHONE_RATE_LIMIT:
+            # Пускаем только известных агентов: номер должен быть привязан к кабинету
+            # (PartnerIdentity kind='phone' или Partner.phone). Неизвестный → код не шлём.
+            partner = find_partner_by_phone(session, norm)
+            if partner is not None:
+                code = f"{secrets.randbelow(900_000) + 100_000}"  # 6 цифр, 100000–999999
+                session.add(PhoneLoginToken(phone=norm, code_hash=hash_login_code(code)))
+                session.commit()
+                send_wa_code(norm, code, lang)
+
+    return templates.TemplateResponse(
+        "login.html",
+        _ctx(request, None, state=_fresh_login_state(session),
+             code_sent=True, code_phone=norm),
+    )
+
+
+@app.post("/auth/phone/verify", response_class=HTMLResponse)
+def auth_phone_verify(
+    request: Request,
+    phone: str = Form(...),
+    code: str = Form(...),
+    session: Session = Depends(get_session),
+):
+    """Шаг 2 входа по номеру: проверить код → выдать JWT-cookie → кабинет агента.
+
+    Брутфорс закрыт TTL (10 мин) + лимитом попыток (≤5) + rate-limit запросов кода
+    + per-IP middleware. Все провалы (нет кода / просрочен / неверный / попытки
+    кончились) дают ОДИН и тот же нейтральный ответ — иначе по тексту ошибки можно
+    было бы отличить «номер в базе» от «номера нет» (анти-энумерация)."""
+    norm = normalize_phone(phone)
+    code = (code or "").strip()
+
+    def reject() -> HTMLResponse:
+        return templates.TemplateResponse(
+            "login.html",
+            _ctx(request, None, state=_fresh_login_state(session),
+                 code_sent=True, code_phone=norm, code_error=True),
+        )
+
+    rec = (
+        session.query(PhoneLoginToken)
+        .filter(
+            PhoneLoginToken.phone == norm,
+            PhoneLoginToken.consumed_at.is_(None),
+        )
+        .order_by(PhoneLoginToken.created_at.desc())
+        .first()
+    )
+    if rec is None or datetime.utcnow() - rec.created_at > PHONE_CODE_TTL:
+        return reject()
+    if rec.attempts >= PHONE_CODE_MAX_ATTEMPTS:
+        return reject()
+
+    rec.attempts += 1
+    session.commit()
+    if not verify_login_code(code, rec.code_hash):
+        return reject()
+
+    rec.consumed_at = datetime.utcnow()
+    session.commit()
+
+    partner = find_partner_by_phone(session, norm)
+    if partner is None:
+        # Код выдаётся только известному агенту; partner=None здесь означает, что
+        # агента/привязку удалили между request и verify — трактуем как просроченный.
+        return reject()
+
+    # Объединение каналов: телефон-Partner каноничен. Если у того же Kommo-агента
+    # есть «осиротевшие» Partner из других каналов (бот/почта) — помечаем merged,
+    # чтобы дедуп/дайджест считали их вытесненными (по аналогии с ref-привязкой).
+    if partner.kommo_agent_enum_id is not None:
+        strays = (
+            session.query(Partner)
+            .filter(
+                Partner.kommo_agent_enum_id == partner.kommo_agent_enum_id,
+                Partner.id != partner.id,
+            )
+            .all()
+        )
+        for stray in strays:
+            stray.status = "merged"
+
+    partner.last_login_at = datetime.utcnow()
+    partner.status = "active"
     session.commit()
 
     response = RedirectResponse("/dashboard", status_code=302)

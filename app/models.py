@@ -200,6 +200,59 @@ class EmailLoginToken(Base):
     ref_slug: Mapped[str | None] = mapped_column(String(16))
 
 
+class PartnerIdentity(Base):
+    """Идентификатор агента для входа (план 2026-05-27, Вариант А).
+
+    Один кабинет (Partner) ↔ много идентификаторов разного типа:
+    - `kind="phone"`     — номер (digits-only, как normalize_phone) для входа по WhatsApp-коду;
+    - `kind="tg_username"` — username Telegram (lower, без `@`) — доверенные ники канала.
+
+    Нужно, потому что у агента бывает несколько номеров, а у канала-корзины
+    (`4dev`, `Ilya+Andrey`…) — массив номеров и ников команды. Матч на входе идёт
+    по этой таблице (value → partner_id), `Partner.phone` остаётся как основной/совместимость.
+
+    value уникален В РАМКАХ kind (один номер/ник не ведёт в два кабинета).
+    Заполняется из `dumps/agent_phone_map.json` (phone) + ручных от Николь
+    (`agent_phone_manual.json`: phones[]/tg_usernames[]) — Фаза 1б, на Railway.
+    """
+    __tablename__ = "partner_identities"
+    __table_args__ = (UniqueConstraint("kind", "value", name="uq_identity_kind_value"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    partner_id: Mapped[int] = mapped_column(ForeignKey("partners.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(16), index=True)
+    value: Mapped[str] = mapped_column(String(128), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    partner: Mapped["Partner"] = relationship()
+
+
+class PhoneLoginToken(Base):
+    """Одноразовый код для входа в ЛК по номеру телефона (план 2026-05-27).
+
+    Телефон — сквозной идентификатор агента (WhatsApp = телефон, карточка
+    воронки 6 = телефон), поэтому вход по номеру одновременно аутентифицирует и
+    объединяет каналы. Партнёр вводит номер → сюда пишется hmac-хэш 6-значного
+    кода + нормализованный (digits-only) телефон. Код уходит в WhatsApp через
+    Wazzup. На вводе кода: не истёк (TTL 10 мин), не использован, ≤5 попыток →
+    выдаём JWT-cookie.
+
+    Безопасность (опасная тройка — персональные данные): хранится ТОЛЬКО хэш кода
+    (hmac-sha256 с JWT_SECRET-перцем), сам код и телефон НЕ логируются. attempts
+    режет брутфорс, consumed_at делает код одноразовым, протухшие чистятся в
+    startup. phone здесь — не PK: на номер может быть несколько запросов, verify
+    берёт последний невостребованный.
+    """
+    __tablename__ = "phone_login_tokens"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    phone: Mapped[str] = mapped_column(String(32), index=True)
+    code_hash: Mapped[str] = mapped_column(String(64))
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    consumed_at: Mapped[datetime | None] = mapped_column(DateTime)
+
+
 class EventRegistration(Base):
     """Регистрации на мастер-классы и события — наследник telegram-bot-2brain."""
     __tablename__ = "event_registrations"

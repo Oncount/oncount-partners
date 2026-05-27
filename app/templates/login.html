@@ -6,26 +6,67 @@
   <div class="login-card">
     <img class="login-logo" src="/static/img/logo.png" alt="ONCOUNT">
     <h1>{{ 'Partner dashboard' if lang == 'en' else 'Кабинет партнёра' }}</h1>
-    <p>{{ 'Sign in with Telegram — no passwords, no sign-ups.' if lang == 'en' else 'Войди через Telegram — без паролей и регистраций.' }}</p>
 
-    <p style="margin: 28px 0 16px;">
-      <a class="btn btn-primary" style="padding: 14px 28px; font-size: 16px;"
+    {% if code_sent %}
+    {# Шаг 2: ввод кода из WhatsApp #}
+    <p>{{ 'Enter the code we sent to your WhatsApp.' if lang == 'en' else 'Введите код, который пришёл в WhatsApp.' }}</p>
+
+    {% if code_error %}
+    <p class="login-sent" style="color:#b00020;">
+      {{ 'Wrong or expired code. Request a new one below.'
+         if lang == 'en' else
+         'Код неверный или устарел. Запросите новый ниже.' }}
+    </p>
+    {% endif %}
+
+    <form method="post" action="/auth/phone/verify" class="login-email-form">
+      <input type="hidden" name="phone" value="{{ code_phone or '' }}">
+      <input type="text" name="code" required inputmode="numeric" pattern="[0-9]*"
+             autocomplete="one-time-code" maxlength="6"
+             placeholder="{{ '6-digit code' if lang == 'en' else 'Код из 6 цифр' }}"
+             class="login-email-input">
+      <button type="submit" class="btn btn-primary" style="width:100%;padding:13px;">
+        {{ 'Sign in' if lang == 'en' else 'Войти' }}
+      </button>
+    </form>
+
+    <form method="post" action="/auth/phone/request" class="login-email-form" style="margin-top:12px;">
+      <input type="hidden" name="phone" value="{{ code_phone or '' }}">
+      <button type="submit" class="btn" style="width:100%;padding:11px;background:transparent;">
+        {{ 'Send a new code' if lang == 'en' else 'Отправить код заново' }}
+      </button>
+    </form>
+
+    {% else %}
+    {# Шаг 1: ввод номера телефона — главный способ входа #}
+    <p>{{ 'Sign in with your phone number — we’ll send a code to your WhatsApp.'
+          if lang == 'en' else
+          'Войдите по номеру телефона — пришлём код в WhatsApp.' }}</p>
+
+    <form method="post" action="/auth/phone/request" class="login-email-form">
+      <input type="tel" name="phone" required autocomplete="tel"
+             placeholder="+971 50 123 4567"
+             class="login-email-input">
+      <button type="submit" class="btn btn-primary" style="width:100%;padding:13px;">
+        📱 {{ 'Get a code in WhatsApp' if lang == 'en' else 'Получить код в WhatsApp' }}
+      </button>
+    </form>
+    <p class="login-hint">
+      {{ 'Use the number registered with ONCOUNT. No password needed.'
+         if lang == 'en' else
+         'Укажите номер, который привязан к ONCOUNT. Пароль не нужен.' }}
+    </p>
+    {% endif %}
+
+    {# Вторичные способы входа: Telegram-бот и email #}
+    <div class="login-divider">{{ 'or' if lang == 'en' else 'или' }}</div>
+
+    <p style="margin: 8px 0 16px;">
+      <a class="btn" style="padding: 12px 24px; font-size: 15px;"
          href="https://t.me/{{ bot_username }}?start=login_{{ state }}">
         💬 {{ 'Sign in via the Telegram bot' if lang == 'en' else 'Войти через Telegram-бота' }}
       </a>
     </p>
-
-    <p class="login-hint">
-      {% if lang == 'en' %}
-      After you click, the <b>@{{ bot_username }}</b> bot opens. A “Log in to dashboard”
-      button will appear there — tap it and you'll come back here already signed in.
-      {% else %}
-      После нажатия откроется бот <b>@{{ bot_username }}</b>. В нём появится кнопка
-      «Войти в кабинет» — нажми её, и ты вернёшься сюда уже авторизованным.
-      {% endif %}
-    </p>
-
-    <div class="login-divider">{{ 'or' if lang == 'en' else 'или' }}</div>
 
     {% if email_sent %}
     <p class="login-sent">
@@ -37,17 +78,12 @@
 
     <form method="post" action="/auth/email/request" class="login-email-form">
       <input type="email" name="email" required autocomplete="email"
-             placeholder="{{ 'you@email.com' if lang == 'en' else 'you@email.com' }}"
+             placeholder="you@email.com"
              class="login-email-input">
-      <button type="submit" class="btn btn-primary" style="width:100%;padding:13px;">
+      <button type="submit" class="btn" style="width:100%;padding:12px;">
         ✉️ {{ 'Sign in by email' if lang == 'en' else 'Войти по email' }}
       </button>
     </form>
-    <p class="login-hint">
-      {{ 'We’ll email you a one-time sign-in link — no password needed.'
-         if lang == 'en' else
-         'Пришлём одноразовую ссылку для входа на почту — пароль не нужен.' }}
-    </p>
   </div>
 </div>
 {% endblock %}
