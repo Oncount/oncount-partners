@@ -215,6 +215,10 @@ table.list td {
 .status-in_progress { background: rgba(236, 100, 66, 0.15); color: var(--orange); }
 .status-won { background: rgba(16, 70, 62, 0.12); color: var(--deep-green); }
 .status-lost { background: rgba(34, 34, 34, 0.08); color: var(--charcoal); }
+/* Статус вознаграждения по won-лиду (Фаза B): нейтральный → ожидание → успех. */
+.payout-in_calc { background: rgba(84, 124, 118, 0.14); color: var(--sage); }
+.payout-to_pay { background: rgba(236, 100, 66, 0.15); color: var(--orange); }
+.payout-paid { background: rgba(16, 70, 62, 0.12); color: var(--deep-green); }
 
 /* Forms */
 .form label { display: block; font-size: 13px; color: var(--sage); margin-bottom: 6px; font-weight: 600; }
@@ -368,6 +372,14 @@ details.faq-item[open] summary { margin-bottom: 12px; }
 .msg-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
 .msg-card .seg { font-size: 11px; text-transform: uppercase; color: var(--orange); letter-spacing: 0.08em; font-weight: 600; }
 .msg-card .body { background: var(--cream); padding: 14px; border-radius: 8px; margin: 10px 0; font-size: 14px; white-space: pre-wrap; }
+
+/* Партнёрский кит (/kits): вкладки по типу партнёра + плашка черновика */
+.kit-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.kit-tab { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1px solid var(--border); border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--sage); text-decoration: none; background: white; }
+.kit-tab:hover { border-color: var(--sage); }
+.kit-tab.active { background: var(--deep-green); color: var(--cream); border-color: var(--deep-green); }
+.kit-draft { display: inline-block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; color: var(--orange); background: rgba(236, 100, 66, 0.12); border-radius: 6px; padding: 3px 8px; margin-left: 8px; }
+.msg-card.is-draft { border-style: dashed; border-color: var(--orange); opacity: 0.92; }
 
 /* Courses */
 .course-banner { background: var(--deep-green); color: var(--cream); border-radius: 12px; padding: 22px 24px; margin-bottom: 20px; line-height: 1.5; display: flex; align-items: center; gap: 18px; }

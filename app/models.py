@@ -81,6 +81,13 @@ class Lead(Base):
     kommo_lead_id: Mapped[int | None] = mapped_column(BigInteger)
     status: Mapped[str] = mapped_column(String(32), default="new", index=True)
     amount_aed: Mapped[float | None] = mapped_column(Numeric(12, 2))
+    # Статус партнёрского вознаграждения по ВЫИГРАННОМУ лиду (Фаза B, план
+    # 2026-05-27): in_calc / to_pay / paid. Менеджер ставит вручную
+    # (scripts/set_payout_state.py). NULL у won-лида = «в расчёте» — дефолт
+    # выводим на слое отображения (payout_label в main.py), в данные не пишем,
+    # поэтому колонка nullable без DB-default. Таблицу Payout НЕ заводим
+    # (решение Николь). kommo_sync это поле не трогает — ручная отметка живёт.
+    payout_state: Mapped[str | None] = mapped_column(String(16))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
@@ -101,6 +108,13 @@ class MessageTemplate(Base):
     segment_en: Mapped[str | None] = mapped_column(String(64))
     title_en: Mapped[str | None] = mapped_column(String(255))
     body_md_en: Mapped[str | None] = mapped_column(Text)
+    # Тип ПАРТНЁРА, под который собран ассет (Фаза C, план 2026-05-27): ключ из
+    # PARTNER_TYPES в main.py (employee/solo/events/agency/media/consultant/insider).
+    # NULL → шаблон не привязан к типу (генерик-крючки /messages — старое поведение,
+    # они НЕ показываются в /kits). Это ДРУГАЯ ось, чем segment (= тип ассета:
+    # «Интро WhatsApp» / «Lead-магнит» / «Disclosure»…). EN-зеркало не нужно:
+    # partner_type — внутренний ключ, ярлык берётся из PARTNER_TYPES (ru/en).
+    partner_type: Mapped[str | None] = mapped_column(String(32), index=True)
 
 
 class ProductBlock(Base):

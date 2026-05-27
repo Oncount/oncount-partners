@@ -46,6 +46,7 @@
     <div class="sidebar-section">{{ 'Knowledge base' if lang == 'en' else 'База знаний' }}</div>
     <a class="menu-item {% if '/courses' in request.url.path %}active{% endif %}" href="/courses">🎓 {{ 'Courses' if lang == 'en' else 'Курсы' }}</a>
     <a class="menu-item {% if request.url.path == '/messages' %}active{% endif %}" href="/messages">📨 {{ 'Message templates' if lang == 'en' else 'Тексты рассылок' }}</a>
+    <a class="menu-item {% if request.url.path == '/kits' %}active{% endif %}" href="/kits">🧰 {{ 'Partner kit' if lang == 'en' else 'Партнёрский кит' }}</a>
     <a class="menu-item {% if '/products' in request.url.path %}active{% endif %}" href="/products">📦 {{ 'Plans and services' if lang == 'en' else 'Тарифы и сервисы' }}</a>
     <a class="menu-item {% if '/faq' in request.url.path %}active{% endif %}" href="/faq">❓ FAQ</a>
 

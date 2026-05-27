@@ -72,6 +72,31 @@
 </div>
 {% endif %}
 
+{% if kpi.successful %}
+<div class="card">
+  <h3 style="margin: 0 0 4px;">{{ 'Your partner reward' if lang == 'en' else 'Ваше партнёрское вознаграждение' }}</h3>
+  <p style="color: var(--sage); font-size: 13px; margin: 0 0 16px;">
+    {% if lang == 'en' %}For clients who came on board through you — see each one under <a href="/leads">all requests</a>.{% else %}За клиентов, пришедших с нами через вас — детали по каждому в <a href="/leads">всех заявках</a>.{% endif %}
+  </p>
+  {# В расчёте = выигранные минус уже к выплате/выплаченные (дефолт как в payout_label). #}
+  {% set in_calc = kpi.successful - kpi.payout_to_pay - kpi.payout_paid %}
+  <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+    <div style="flex: 1; min-width: 140px;">
+      <span class="status-pill payout-in_calc">🧾 {{ 'Being calculated' if lang == 'en' else 'В расчёте' }}</span>
+      <div style="font-size: 28px; font-weight: 700; color: var(--deep-green); margin-top: 8px;">{{ in_calc }}</div>
+    </div>
+    <div style="flex: 1; min-width: 140px;">
+      <span class="status-pill payout-to_pay">⏳ {{ 'To be paid' if lang == 'en' else 'К выплате' }}</span>
+      <div style="font-size: 28px; font-weight: 700; color: var(--deep-green); margin-top: 8px;">{{ kpi.payout_to_pay }}</div>
+    </div>
+    <div style="flex: 1; min-width: 140px;">
+      <span class="status-pill payout-paid">✅ {{ 'Paid' if lang == 'en' else 'Выплачено' }}</span>
+      <div style="font-size: 28px; font-weight: 700; color: var(--deep-green); margin-top: 8px;">{{ kpi.payout_paid }}</div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 {% if show_checklist %}
 <div class="card" id="checklist">
   <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">

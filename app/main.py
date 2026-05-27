@@ -80,8 +80,75 @@ def lead_stage(status: str, lang: str = "ru") -> dict[str, str]:
     return {"label": stage[lang], "icon": stage["icon"], "status": status}
 
 
+# Статус партнёрского вознаграждения по ВЫИГРАННОМУ лиду — единый источник
+# истины кабинета (Фаза B, план 2026-05-27). Деньги показываем ТОЛЬКО по won;
+# под-таблицу выплат НЕ заводим (решение Николь) — значение в Lead.payout_state,
+# менеджер ставит вручную (scripts/set_payout_state.py). hint — короткий смысл
+# статуса для партнёра (репутация = операционное доверие).
+PAYOUT_STATES: dict[str, dict[str, str]] = {
+    "in_calc": {"icon": "🧾", "ru": "В расчёте", "en": "Being calculated",
+                "hint_ru": "Считаем ваше вознаграждение по этому клиенту.",
+                "hint_en": "We’re calculating your reward for this client."},
+    "to_pay":  {"icon": "⏳", "ru": "К выплате", "en": "To be paid",
+                "hint_ru": "Вознаграждение подтверждено, готовим выплату.",
+                "hint_en": "Reward confirmed — payout is on the way."},
+    "paid":    {"icon": "✅", "ru": "Выплачено", "en": "Paid",
+                "hint_ru": "Вознаграждение по этому клиенту выплачено.",
+                "hint_en": "Your reward for this client has been paid."},
+}
+
+# Разрешённые значения payout_state — единый список для валидации (UI и CLI).
+PAYOUT_STATE_VALUES: tuple[str, ...] = tuple(PAYOUT_STATES.keys())
+
+
+def payout_label(lead: Lead, lang: str = "ru") -> dict[str, str] | None:
+    """Статус вознаграждения по лиду → {state, label, icon, hint} для шаблонов.
+    Деньги показываем ТОЛЬКО по выигранным (won) лидам — по остальным рано,
+    возвращаем None (шаблон не рисует ничего про деньги). У won без явного
+    payout_state дефолт «в расчёте» выводим здесь (в данные не пишем).
+    Неизвестное значение деградирует мягко: сырой текст без иконки/подсказки."""
+    if getattr(lead, "status", None) != "won":
+        return None
+    lang = lang if lang in ("ru", "en") else "ru"
+    state = lead.payout_state or "in_calc"
+    meta = PAYOUT_STATES.get(state)
+    if not meta:
+        return {"state": state, "label": state, "icon": "", "hint": ""}
+    return {"state": state, "label": meta[lang], "icon": meta["icon"], "hint": meta[f"hint_{lang}"]}
+
+
+# Типы партнёра для раздела «Материалы / Партнёрский кит» (Фаза C, план
+# 2026-05-27) — единый источник истины. Ключ = MessageTemplate.partner_type;
+# партнёр сам выбирает свой тип вкладками (решение Николь). Ярлыки ru/en, как
+# LEAD_STAGES. ВАЖНО (приватность): тип `insider` (скрытые рефереры, Imran)
+# подписан нейтрально «Конфиденциально / Confidential» — нигде не светим «банк/
+# инсайдер/комиссия» ([[feedback_brand_name_oncount]], перекличка с Фазой G).
+# Порядок ключей = порядок вкладок.
+PARTNER_TYPES: dict[str, dict[str, str]] = {
+    "employee":   {"icon": "💼", "ru": "В найме / сотрудник",      "en": "Employed professional"},
+    "solo":       {"icon": "🧑‍💻", "ru": "Соло-консультант",         "en": "Solo operator"},
+    "events":     {"icon": "🎤", "ru": "События и сообщества",      "en": "Events & community"},
+    "agency":     {"icon": "🏷️", "ru": "Агентство (white-label)",  "en": "Agency (white-label)"},
+    "media":      {"icon": "📣", "ru": "Медиа и блог",             "en": "Media & blog"},
+    "consultant": {"icon": "📊", "ru": "Консультант / фин-директор", "en": "Consultant / CFO"},
+    "insider":    {"icon": "🔒", "ru": "Конфиденциально",          "en": "Confidential"},
+}
+
+
+def partner_type_label(key: str, lang: str = "ru") -> dict[str, str]:
+    """Тип партнёра → {key, label, icon} для вкладок/заголовков /kits.
+    Неизвестный/пустой ключ деградирует мягко: сырое значение без иконки."""
+    lang = lang if lang in ("ru", "en") else "ru"
+    meta = PARTNER_TYPES.get(key or "")
+    if not meta:
+        return {"key": key or "", "label": key or "—", "icon": ""}
+    return {"key": key, "label": meta[lang], "icon": meta["icon"]}
+
+
 # Доступно во всех шаблонах кабинета (DRY): leads.html, dashboard.html.
 templates.env.globals["lead_stage"] = lead_stage
+templates.env.globals["payout_label"] = payout_label
+templates.env.globals["partner_type_label"] = partner_type_label
 
 app = FastAPI(title="ONCOUNT Partner Platform")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -188,6 +255,17 @@ async def on_startup() -> None:
             "DELETE FROM phone_login_tokens "
             "WHERE created_at < now() - interval '1 day'"
         ))
+        # Статус вознаграждения по выигранному лиду (Фаза B, план 2026-05-27).
+        # Аддитивно и идемпотентно: одна nullable-колонка, без DB-default —
+        # дефолт «в расчёте» выводит payout_label. Существующие строки/колонки
+        # не трогаются. create_all не делает ALTER, а leads уже есть в проде.
+        conn.execute(text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS payout_state VARCHAR(16)"))
+        # Тип партнёра у шаблона-материала (Фаза C, план 2026-05-27). Аддитивно и
+        # идемпотентно: одна nullable-колонка + индекс. NULL = генерик /messages
+        # (старые строки не трогаются). create_all не делает ALTER, а
+        # message_templates уже есть в проде.
+        conn.execute(text("ALTER TABLE message_templates ADD COLUMN IF NOT EXISTS partner_type VARCHAR(32)"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_message_templates_partner_type ON message_templates (partner_type)"))
     with SessionLocal() as session:
         seed_if_empty(session)
 
@@ -753,7 +831,12 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
     rejected = leads_q.filter(Lead.status == "lost").count()
     conversion = round(successful / leads_count * 100, 1) if leads_count else 0.0
 
-    total_aed = sum((l.amount_aed or 0) for l in leads_q.filter(Lead.status == "won").all())
+    won_rows = leads_q.filter(Lead.status == "won").all()
+    total_aed = sum((l.amount_aed or 0) for l in won_rows)
+    # Сводка по вознаграждению (Фаза B): из тех же won-лидов, без доп. запроса.
+    # Дефолт «в расчёте» = won без явного payout_state — как в payout_label.
+    payout_to_pay = sum(1 for l in won_rows if l.payout_state == "to_pay")
+    payout_paid = sum(1 for l in won_rows if l.payout_state == "paid")
 
     checklist_steps = [
         {
@@ -792,6 +875,9 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
                 "rejected": rejected,
                 "in_progress": in_progress,
                 "earned_aed": float(total_aed),
+                # Сводка вознаграждения (Фаза B): к выплате / выплачено.
+                "payout_to_pay": payout_to_pay,
+                "payout_paid": payout_paid,
                 # Ожидаемая комиссия: $300 (мин) … $1000 (средн) с каждого лида.
                 "expected_usd_low": leads_count * 300,
                 "expected_usd_high": leads_count * 1000,
@@ -982,13 +1068,59 @@ def messages(request: Request, session: Session = Depends(get_session)) -> HTMLR
     partner = current_partner(request, session)
     if not partner:
         return RedirectResponse("/login", status_code=302)
+    # Только генерик-крючки (partner_type IS NULL). Материалы с типом партнёра
+    # живут в /kits — иначе черновики-киты протекли бы сюда с кнопкой «Скопировать».
     items = (
         session.query(MessageTemplate)
-        .filter_by(is_active=True)
+        .filter(MessageTemplate.is_active.is_(True))
+        .filter(MessageTemplate.partner_type.is_(None))
         .order_by(MessageTemplate.order_index)
         .all()
     )
     return templates.TemplateResponse("messages.html", _ctx(request, partner, items=items))
+
+
+@app.get("/kits", response_class=HTMLResponse)
+def kits(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
+    """Раздел «Материалы / Партнёрский кит» (Фаза C, план 2026-05-27).
+
+    Готовые ассеты, сегментированные по ТИПУ ПАРТНЁРА (PARTNER_TYPES). Партнёр сам
+    выбирает свой тип вкладкой (?type=), видит карточки этого типа с кнопкой
+    «Скопировать». Материалы = MessageTemplate с непустым partner_type (генерик
+    /messages с partner_type IS NULL сюда не попадают — другая ось).
+    """
+    partner = current_partner(request, session)
+    if not partner:
+        return RedirectResponse("/login", status_code=302)
+    lang = _lang(request)
+    items = (
+        session.query(MessageTemplate)
+        .filter(MessageTemplate.is_active.is_(True))
+        .filter(MessageTemplate.partner_type.isnot(None))
+        # id — стабильный тай-брейк: при равных order_index в одном типе порядок
+        # карточек иначе не определён (Николь добавит несколько ассетов на тип).
+        .order_by(MessageTemplate.partner_type, MessageTemplate.order_index, MessageTemplate.id)
+        .all()
+    )
+    # Группируем по типу партнёра, сохраняя порядок PARTNER_TYPES (для вкладок).
+    grouped: dict[str, list] = {}
+    for it in items:
+        grouped.setdefault(it.partner_type, []).append(it)
+    # Вкладки = только типы, у которых есть материалы, в порядке PARTNER_TYPES.
+    type_keys = [k for k in PARTNER_TYPES if k in grouped]
+    # Выбранный тип: ?type= из числа доступных, иначе первый доступный (если есть).
+    requested = request.query_params.get("type")
+    selected = requested if requested in type_keys else (type_keys[0] if type_keys else None)
+    return templates.TemplateResponse(
+        "kits.html",
+        _ctx(
+            request,
+            partner,
+            type_keys=type_keys,
+            selected=selected,
+            items=grouped.get(selected, []),
+        ),
+    )
 
 
 @app.get("/faq", response_class=HTMLResponse)

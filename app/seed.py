@@ -357,6 +357,153 @@ TEMPLATES = [
 ]
 
 
+# Партнёрский кит (/kits, Фаза C, план 2026-05-27). Материалы сегментированы по
+# ТИПУ ПАРТНЁРА (partner_type, ключи PARTNER_TYPES в main.py). segment = тип
+# ассета (чип над карточкой), это ДРУГАЯ ось, чем partner_type.
+#
+# ⚠️ ВНИМАНИЕ: это КАРКАС — ЧЕРНОВИКИ-ЗАГЛУШКИ, НЕ живые тексты для клиента.
+# slug заканчивается на `-draft` → шаблон рисует плашку «черновик · не утверждён»
+# и НЕ даёт копировать. body_md здесь — пометка «что тут будет», а не сообщение,
+# которое можно отправить наружу. Финальные тексты пишет/одобряет Николь
+# (опасная тройка: текст уходит клиенту наружу). После утверждения: заменить
+# body_md/body_md_en на согласованный текст и убрать суффикс `-draft` в slug.
+_DRAFT_RU = "⚠️ Черновик на утверждении Николь. "
+_DRAFT_EN = "⚠️ Draft pending Nikole's approval. "
+KITS = [
+    {
+        "slug": "kit-employee-wa-intro-draft",
+        "partner_type": "employee",
+        "segment": "Интро WhatsApp",
+        "segment_en": "WhatsApp intro",
+        "title": "Интро клиенту в WhatsApp",
+        "title_en": "WhatsApp intro to a client",
+        "body_md": _DRAFT_RU + (
+            "Здесь будет готовое интро-сообщение в WhatsApp от лица партнёра в "
+            "найме — солидный профессиональный тон, представление ONCOUNT как "
+            "личной рекомендации, без «купонного» оттенка."
+        ),
+        "body_md_en": _DRAFT_EN + (
+            "A ready WhatsApp intro for an employed partner will go here — a "
+            "solid professional tone, ONCOUNT presented as a personal "
+            "recommendation, no «coupon» feel."
+        ),
+        "order_index": 1,
+    },
+    {
+        "slug": "kit-solo-intro-draft",
+        "partner_type": "solo",
+        "segment": "Интро / письмо",
+        "segment_en": "Intro / email",
+        "title": "Интро клиенту (WhatsApp или письмо)",
+        "title_en": "Client intro (WhatsApp or email)",
+        "body_md": _DRAFT_RU + (
+            "Здесь будет интро для соло-консультанта — факты без хайпа, чистый "
+            "хэндофф «передал и забыл», понятно, что дальше делает ONCOUNT."
+        ),
+        "body_md_en": _DRAFT_EN + (
+            "An intro for a solo operator will go here — facts without hype, a "
+            "clean «hand off and forget» handover, clear next steps by ONCOUNT."
+        ),
+        "order_index": 1,
+    },
+    {
+        "slug": "kit-events-lead-magnet-draft",
+        "partner_type": "events",
+        "segment": "Lead-магнит (RU)",
+        "segment_en": "Lead magnet (RU)",
+        "title": "Lead-магнит для аудитории события",
+        "title_en": "Lead magnet for an event audience",
+        "body_md": _DRAFT_RU + (
+            "Здесь будет готовый RU-ассет под событие (текст-врезка + ссылка на "
+            "материал/лендинг) — премиум-подача «доступ и авторитет», оффер "
+            "зафиксирован на момент создания."
+        ),
+        "body_md_en": _DRAFT_EN + (
+            "A ready RU asset for an event will go here (intro blurb + link to "
+            "the material/landing) — a premium «access and authority» framing, "
+            "offer fixed at creation time."
+        ),
+        "order_index": 1,
+    },
+    {
+        "slug": "kit-agency-white-label-draft",
+        "partner_type": "agency",
+        "segment": "White-label материал",
+        "segment_en": "White-label asset",
+        "title": "White-label материал для команды агентства",
+        "title_en": "White-label asset for the agency team",
+        "body_md": _DRAFT_RU + (
+            "Здесь будет white-label материал для команды агентства — бэк-офис "
+            "ONCOUNT не «светится» перед клиентом агентства; для внутреннего "
+            "использования продавцами."
+        ),
+        "body_md_en": _DRAFT_EN + (
+            "A white-label asset for the agency team will go here — the ONCOUNT "
+            "back office stays invisible to the agency's client; for internal "
+            "use by the sales team."
+        ),
+        "order_index": 1,
+    },
+    {
+        "slug": "kit-media-disclosure-draft",
+        "partner_type": "media",
+        "segment": "Disclosure-шаблон",
+        "segment_en": "Disclosure template",
+        "title": "Шаблон раскрытия + образовательный брифинг",
+        "title_en": "Disclosure template + educational briefing",
+        "body_md": _DRAFT_RU + (
+            "Здесь будет шаблон раскрытия для медиа/блога + сырой "
+            "образовательный брифинг (регуляторный апдейт / реальный кейс), а не "
+            "рекламная брошюра — чтобы аудитория видела рекомендацию, не рекламу."
+        ),
+        "body_md_en": _DRAFT_EN + (
+            "A disclosure template for media/blog + a raw educational briefing "
+            "(regulatory update / real case) will go here, not an ad — so the "
+            "audience sees a recommendation, not advertising."
+        ),
+        "order_index": 1,
+    },
+    {
+        "slug": "kit-consultant-pre-referral-draft",
+        "partner_type": "consultant",
+        "segment": "Pre-referral: ожидания",
+        "segment_en": "Pre-referral: expectations",
+        "title": "Документ ожиданий + интро",
+        "title_en": "Expectations doc + intro",
+        "body_md": _DRAFT_RU + (
+            "Здесь будет pre-referral документ ожиданий (что реально требует "
+            "комплаенс ОАЭ и в каком темпе) + интро с сигналом комплаенс/тех-"
+            "экспертизы — чтобы у клиента не было «Дубай — это просто»."
+        ),
+        "body_md_en": _DRAFT_EN + (
+            "A pre-referral expectations document (what UAE compliance really "
+            "requires and at what pace) + an intro signalling compliance/tech "
+            "expertise will go here — so the client avoids «Dubai is easy»."
+        ),
+        "order_index": 1,
+    },
+    {
+        "slug": "kit-insider-intro-script-draft",
+        "partner_type": "insider",
+        "segment": "Скрипт интро",
+        "segment_en": "Intro script",
+        "title": "Дискретный скрипт интро",
+        "title_en": "Discreet intro script",
+        "body_md": _DRAFT_RU + (
+            "Здесь будет дискретный скрипт интро (приватный тон): что говорю "
+            "клиенту и чего НЕ говорю никогда. Формулировки без компрометирующих "
+            "слов — финальная вычитка под «увидит ли это работодатель» в Фазе G."
+        ),
+        "body_md_en": _DRAFT_EN + (
+            "A discreet intro script (private tone) will go here: what to say "
+            "to the client and what never to say. Wording without compromising "
+            "terms — final pass under «would an employer see this» in Phase G."
+        ),
+        "order_index": 1,
+    },
+]
+
+
 FAQ = [
     {
         "category": "Передача клиента",
@@ -469,7 +616,9 @@ def seed_if_empty(session: Session) -> None:
     session.query(ProductBlock).delete()
     session.add_all([ProductBlock(**p) for p in PRODUCTS])
     session.query(MessageTemplate).delete()
-    session.add_all([MessageTemplate(**t) for t in TEMPLATES])
+    # TEMPLATES — генерик-крючки /messages (partner_type=NULL); KITS — материалы
+    # /kits по типу партнёра (Фаза C, пока ЧЕРНОВИКИ-заглушки, см. KITS выше).
+    session.add_all([MessageTemplate(**t) for t in TEMPLATES + KITS])
     session.query(FaqItem).delete()
     session.add_all([FaqItem(**f) for f in FAQ])
     # Course — тоже force-reseed: прогресс хранится отдельно (course_progress) по slug,
