@@ -50,6 +50,35 @@ app = FastAPI(title="ONCOUNT Partner Platform")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
 
+_RL_HITS: dict[str, "deque"] = {}
+_RL_PATHS = ("/auth/", "/login", "/invite/")
+_RL_MAX = 30          # запросов с одного IP
+_RL_WINDOW = 60       # за столько секунд
+
+
+@app.middleware("http")
+async def rate_limit(request: Request, call_next):
+    """Простой per-IP rate-limit на чувствительные роуты (вход/инвайт) — против
+    брутфорса токенов/ключей и енумерации (security-review 2026-05-26). In-memory,
+    sliding window; за прокси Railway берём первый IP из X-Forwarded-For."""
+    path = request.url.path
+    if any(path.startswith(p) for p in _RL_PATHS):
+        from collections import deque
+        import time as _t
+        xff = request.headers.get("x-forwarded-for")
+        ip = (xff.split(",")[0].strip() if xff else
+              (request.client.host if request.client else "?"))
+        now = _t.time()
+        dq = _RL_HITS.setdefault(ip, deque())
+        while dq and now - dq[0] > _RL_WINDOW:
+            dq.popleft()
+        if len(dq) >= _RL_MAX:
+            from starlette.responses import PlainTextResponse
+            return PlainTextResponse("Too many requests", status_code=429)
+        dq.append(now)
+    return await call_next(request)
+
+
 @app.middleware("http")
 async def persist_lang_cookie(request: Request, call_next):
     """Делает выбор языка «липким»: ?lang=en|ru → кука lang на год. Без этого язык
@@ -255,16 +284,19 @@ def auth_bot_callback(state: str, next: str | None = None, session: Session = De
 
     partner = None
     # Фаза 0.7: вход по инвайт-ссылке → привязать telegram_id к пред-созданному
-    # Partner-агенту (с дедупом), а не плодить новый.
+    # Partner-агенту. Привязываем ТОЛЬКО не активированного агента (status="invited")
+    # и ТОЛЬКО если канал свободен — иначе чужой по той же ссылке перехватил бы
+    # кабинет агента (security-review 2026-05-26, одноразовость инвайта).
     if rec.ref_slug:
         invited = session.query(Partner).filter_by(ref_slug=rec.ref_slug).first()
-        if invited:
+        if invited and invited.status == "invited" and invited.telegram_id is None:
             stray = session.query(Partner).filter_by(telegram_id=telegram_id).first()
             if stray and stray.id != invited.id:
                 stray.telegram_id = None  # освободить уникальный telegram_id
                 stray.status = "merged"
                 session.flush()
             invited.telegram_id = telegram_id
+            invited.status = "active"  # инвайт «погашен»: повторная привязка невозможна
             partner = invited
 
     if partner is None:
@@ -362,10 +394,12 @@ def auth_email_callback(token: str, session: Session = Depends(get_session)):
     session.commit()
 
     partner = None
-    # Фаза 0.7: вход по инвайт-ссылке → привязать email к пред-созданному Partner-агенту.
+    # Фаза 0.7: вход по инвайт-ссылке → привязать email к Partner-агенту. Только
+    # не активированного (status="invited") и со свободным email — защита от
+    # перехвата кабинета по чужой ссылке (security-review 2026-05-26).
     if rec.ref_slug:
         invited = session.query(Partner).filter_by(ref_slug=rec.ref_slug).first()
-        if invited:
+        if invited and invited.status == "invited" and invited.email is None:
             stray = (
                 session.query(Partner)
                 .filter(func.lower(Partner.email) == rec.email)
@@ -376,6 +410,7 @@ def auth_email_callback(token: str, session: Session = Depends(get_session)):
                 stray.status = "merged"
                 session.flush()
             invited.email = rec.email
+            invited.status = "active"  # инвайт «погашен»
             partner = invited
 
     if partner is None:

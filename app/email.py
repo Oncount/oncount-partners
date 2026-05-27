@@ -59,7 +59,9 @@ def send_magic_link(to: str, url: str, lang: str = "ru") -> bool:
     lang = "en" if lang == "en" else "ru"
 
     if not settings.RESEND_API_KEY:
-        log.warning("RESEND_API_KEY пуст → dev-режим. Magic link для %s: %s", to, url)
+        # Ссылку входа НЕ логируем (security 2026-05-26): в логах она = готовый
+        # доступ в чужой ЛК. Для локальной отладки временно раскомментируй url.
+        log.warning("RESEND_API_KEY пуст → письмо не отправлено (dev), ссылка не логируется")
         return True
 
     try:
