@@ -38,10 +38,10 @@
     <a class="menu-item {% if request.url.path == '/leads' %}active{% endif %}" href="/leads">📋 {{ 'All requests' if lang == 'en' else 'Все заявки' }}</a>
 
     <div class="sidebar-section">{{ 'Create a request' if lang == 'en' else 'Создать заявку' }}</div>
-    <a class="menu-item {% if request.url.path == '/transfer' %}active{% endif %}" href="/transfer">➡️ {{ 'Refer a client' if lang == 'en' else 'Передать клиента' }}</a>
+    <a class="menu-item {% if request.url.path == '/transfer' %}active{% endif %}" href="/transfer">➡️ {{ 'Introduce a client' if lang == 'en' else 'Передать клиента' }}</a>
 
     <div class="sidebar-section">{{ 'Tools' if lang == 'en' else 'Инструменты' }}</div>
-    <a class="menu-item {% if request.url.path == '/links' %}active{% endif %}" href="/links">🔗 {{ 'Referral links' if lang == 'en' else 'Реферальные ссылки' }}</a>
+    <a class="menu-item {% if request.url.path == '/links' %}active{% endif %}" href="/links">🔗 {{ 'Partner links' if lang == 'en' else 'Партнёрские ссылки' }}</a>
 
     <div class="sidebar-section">{{ 'Knowledge base' if lang == 'en' else 'База знаний' }}</div>
     <a class="menu-item {% if '/courses' in request.url.path %}active{% endif %}" href="/courses">🎓 {{ 'Courses' if lang == 'en' else 'Курсы' }}</a>

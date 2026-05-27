@@ -15,7 +15,7 @@ PRICE_EN = "https://drive.google.com/file/d/1fs1vJi5X6AgARmv7B0NOtaYE5Y69wqOs/vi
 def _meta(commission: str, price: str) -> str:
     """Две строки под названием карточки: Комиссия + Цена."""
     return (
-        f"<div class=\"meta-row\"><span class=\"meta-label\">Комиссия:</span> "
+        f"<div class=\"meta-row\"><span class=\"meta-label\">Вознаграждение:</span> "
         f"<strong>{commission}</strong></div>"
         f"<div class=\"meta-row\"><span class=\"meta-label\">Цена:</span> "
         f"<strong>{price}</strong></div>"
@@ -25,7 +25,7 @@ def _meta(commission: str, price: str) -> str:
 def _meta_en(commission: str, price: str) -> str:
     """EN-вариант блока «Комиссия + Цена»."""
     return (
-        f"<div class=\"meta-row\"><span class=\"meta-label\">Commission:</span> "
+        f"<div class=\"meta-row\"><span class=\"meta-label\">Reward:</span> "
         f"<strong>{commission}</strong></div>"
         f"<div class=\"meta-row\"><span class=\"meta-label\">Price:</span> "
         f"<strong>{price}</strong></div>"
@@ -360,18 +360,18 @@ TEMPLATES = [
 FAQ = [
     {
         "category": "Передача клиента",
-        "category_en": "Referring a client",
+        "category_en": "Introducing a client",
         "question": "Что происходит после того, как я передал клиента?",
-        "question_en": "What happens after I refer a client?",
+        "question_en": "What happens after I introduce a client?",
         "answer_md": (
             "1. Карточка создаётся в нашей CRM Kommo с твоим именем как партнёра.\n"
             "2. Менеджер связывается с клиентом в рабочее время в течение часа.\n"
-            "3. Вы получаете отчёт о всех клиентах и комиссию до 10-го числа каждого месяца."
+            "3. Вы получаете отчёт о всех клиентах и партнёрское вознаграждение до 10-го числа каждого месяца."
         ),
         "answer_md_en": (
             "1. A card is created in our Kommo CRM with your name as the partner.\n"
             "2. A manager contacts the client during business hours within an hour.\n"
-            "3. You get a report on all clients and your commission by the 10th of each month."
+            "3. You get a report on all clients and your partner reward by the 10th of each month."
         ),
         "order_index": 1,
     },
@@ -379,32 +379,32 @@ FAQ = [
         "category": "Выплаты",
         "category_en": "Payouts",
         "question": "Сколько и когда я получу за приведённого клиента?",
-        "question_en": "How much and when do I get for a referred client?",
+        "question_en": "How much and when do I get for a client you've introduced?",
         "answer_md": (
-            "Размер комиссии зависит от тарифа клиента — обычно от $300 до $1 000. "
-            "Комиссия всегда включена в тарифы ONCOUNT. "
+            "Размер партнёрского вознаграждения зависит от тарифа клиента — обычно от $300 до $1 000. "
+            "Партнёрское вознаграждение всегда включено в тарифы ONCOUNT. "
             "Выплаты и отчёты отправляем раз в месяц по итогам месяца, "
             "до 10-го числа каждого месяца, на удобные реквизиты."
         ),
         "answer_md_en": (
-            "The commission depends on the client's plan — usually from $300 to $1,000. "
-            "The commission is always included in ONCOUNT's pricing. "
+            "The partner reward depends on the client's plan — usually from $300 to $1,000. "
+            "The partner reward is always included in ONCOUNT's pricing. "
             "We send payouts and reports once a month, by the 10th of each month, "
             "to your preferred payment details."
         ),
         "order_index": 2,
     },
     {
-        "category": "Реф-ссылки",
-        "category_en": "Referral links",
-        "question": "Где взять реферальную ссылку?",
-        "question_en": "Where do I get my referral link?",
+        "category": "Партнёрские ссылки",
+        "category_en": "Partner links",
+        "question": "Где взять партнёрскую ссылку?",
+        "question_en": "Where do I get my partner link?",
         "answer_md": (
-            "Раздел «Мои ссылки» в личном кабинете — там твоя личная ссылка "
+            "Раздел «Партнёрские ссылки» в личном кабинете — там твоя личная ссылка "
             "на Telegram и WhatsApp ONCOUNT и кнопка «Скопировать»."
         ),
         "answer_md_en": (
-            "The “Referral links” section in your dashboard — there you'll find "
+            "The “Partner links” section in your dashboard — there you'll find "
             "your personal link to ONCOUNT's Telegram and WhatsApp and a “Copy” button."
         ),
         "order_index": 3,
@@ -449,10 +449,10 @@ COURSES = [
     {
         "slug": "partner-course",
         "title": "Курс партнёра ONCOUNT",
-        "subtitle": "5 шагов к первым $2 500 комиссии",
+        "subtitle": "5 шагов к первым $2 500 вознаграждения",
         "outcome": None,
         "title_en": "ONCOUNT Partner Course",
-        "subtitle_en": "5 steps to your first $2,500 commission",
+        "subtitle_en": "5 steps to your first $2,500 reward",
         "outcome_en": None,
         "done_label_en": "Program materials",
         "total_steps": 5,

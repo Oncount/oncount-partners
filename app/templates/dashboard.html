@@ -10,16 +10,16 @@
   </div>
   {% if kpi.expected_usd_high %}
   <div class="balance-item">
-    <span class="balance-item-label">{{ 'Expected commission:' if lang == 'en' else 'Ожидаемая комиссия:' }}</span>
+    <span class="balance-item-label">{{ 'Expected reward:' if lang == 'en' else 'Ожидаемое вознаграждение:' }}</span>
     <span class="balance-item-value">${{ '{:,}'.format(kpi.expected_usd_low) }} – ${{ '{:,}'.format(kpi.expected_usd_high) }}</span>
   </div>
   {% endif %}
   <div class="balance-item">
-    <span class="balance-item-label">{{ 'Your ref code:' if lang == 'en' else 'Ваш реф-код:' }}</span>
+    <span class="balance-item-label">{{ 'Your partner code:' if lang == 'en' else 'Ваш код партнёра:' }}</span>
     <span class="balance-item-value">{{ partner.ref_slug }}</span>
   </div>
   <div style="margin-left: auto;">
-    <a class="btn btn-primary" href="/transfer">+ {{ 'Refer a client' if lang == 'en' else 'Передать клиента' }}</a>
+    <a class="btn btn-primary" href="/transfer">+ {{ 'Introduce a client' if lang == 'en' else 'Передать клиента' }}</a>
   </div>
 </div>
 
@@ -46,10 +46,36 @@
   </div>
 </div>
 
+{% if kpi.leads %}
+<div class="card">
+  <h3 style="margin: 0 0 4px;">{{ 'Where your clients are' if lang == 'en' else 'Где сейчас ваши клиенты' }}</h3>
+  <p style="color: var(--sage); font-size: 13px; margin: 0 0 16px;">
+    {% if lang == 'en' %}Status updates show up here — open <a href="/leads">all requests</a> to see each client's stage.{% else %}Обновления статуса видны здесь — откройте <a href="/leads">все заявки</a>, чтобы увидеть стадию по каждому клиенту.{% endif %}
+  </p>
+  <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+    {% set in_progress_stage = lead_stage('in_progress', lang) %}
+    {% set won_stage = lead_stage('won', lang) %}
+    {% set lost_stage = lead_stage('lost', lang) %}
+    <div style="flex: 1; min-width: 140px;">
+      <span class="status-pill status-in_progress">{{ in_progress_stage.icon }} {{ in_progress_stage.label }}</span>
+      <div style="font-size: 28px; font-weight: 700; color: var(--deep-green); margin-top: 8px;">{{ kpi.in_progress }}</div>
+    </div>
+    <div style="flex: 1; min-width: 140px;">
+      <span class="status-pill status-won">{{ won_stage.icon }} {{ won_stage.label }}</span>
+      <div style="font-size: 28px; font-weight: 700; color: var(--deep-green); margin-top: 8px;">{{ kpi.successful }}</div>
+    </div>
+    <div style="flex: 1; min-width: 140px;">
+      <span class="status-pill status-lost">{{ lost_stage.icon }} {{ lost_stage.label }}</span>
+      <div style="font-size: 28px; font-weight: 700; color: var(--charcoal); margin-top: 8px;">{{ kpi.rejected }}</div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 {% if show_checklist %}
 <div class="card" id="checklist">
   <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
-    <h3 style="margin: 0;">🚀 {{ 'Take these 3 steps to earn your first commission' if lang == 'en' else 'Сделай эти 3 шага, чтобы заработать первую комиссию' }}</h3>
+    <h3 style="margin: 0;">🚀 {{ 'Take these 3 steps to earn your first reward' if lang == 'en' else 'Сделай эти 3 шага, чтобы получить первое вознаграждение' }}</h3>
     <form method="POST" action="/checklist/dismiss" style="margin: 0;">
       <button type="submit" class="btn btn-ghost" style="padding: 4px 12px; font-size: 12px;" title="{{ 'Hide checklist' if lang == 'en' else 'Скрыть чек-лист' }}">✕</button>
     </form>
@@ -72,16 +98,16 @@
 <div class="card">
   {% if lang == 'en' %}
   <h3>What to do next</h3>
-  <p>1. Open <a href="/links">“Referral links”</a> — copy your personal link.</p>
+  <p>1. Open <a href="/links">“Partner links”</a> — copy your personal link.</p>
   <p>2. Grab a ready-made <a href="/messages">message template</a> matching your client's need.</p>
-  <p>3. Send the text and your link to the client, or refer them via the <a href="/transfer">“Refer a client”</a> section in your dashboard or straight from the Telegram bot.</p>
-  <p>4. Every month, get a report with statuses (went quiet, preparing a quote, thinking it over) or a commission payout to your details.</p>
+  <p>3. Send the text and your link to the client, or introduce them via the <a href="/transfer">“Introduce a client”</a> section in your dashboard or straight from the Telegram bot.</p>
+  <p>4. Open your dashboard anytime — you'll see each client's stage and your partner reward for clients who paid.</p>
   {% else %}
   <h3>Что делать дальше</h3>
-  <p>1. Открой <a href="/links">«Реферальные ссылки»</a> — скопируй личную ссылку.</p>
+  <p>1. Открой <a href="/links">«Партнёрские ссылки»</a> — скопируй личную ссылку.</p>
   <p>2. Возьми готовый <a href="/messages">текст рассылки</a> под запрос твоего клиента.</p>
   <p>3. Отправь текст и свою ссылку клиенту или передавай через раздел <a href="/transfer">«Передать клиента»</a> в личном кабинете или прямо из Telegram-бота.</p>
-  <p>4. Получай каждый месяц отчёт со статусами (пропал, делаем КП, думает) или перевод комиссий по реквизитам.</p>
+  <p>4. Заходи в кабинет — по каждому клиенту видна стадия и партнёрское вознаграждение за оплативших клиентов.</p>
   {% endif %}
 </div>
 {% endif %}

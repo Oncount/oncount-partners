@@ -15,7 +15,7 @@ TEXTS: dict[str, dict[str, str]] = {
             "С чего хочешь начать?\n\n"
             "🎓 <b>Практикум «Настройка AI-сотрудников»</b> — за ~2 часа настроишь "
             "2 AI-сотрудников, которые делают сайты и презентации. Бесплатно.\n"
-            "🤝 <b>Партнёрская программа</b> — приводи клиентов, получай комиссию.\n\n"
+            "🤝 <b>Партнёрская программа</b> — приводи клиентов, получай вознаграждение.\n\n"
             "Выбери внизу 👇"
         ),
         "en": (
@@ -24,7 +24,7 @@ TEXTS: dict[str, dict[str, str]] = {
             "Where would you like to start?\n\n"
             "🎓 <b>«Setting up AI employees» practicum</b> — in ~2 hours set up "
             "2 AI employees that build websites and presentations. Free.\n"
-            "🤝 <b>Partner program</b> — refer clients, earn commission.\n\n"
+            "🤝 <b>Partner program</b> — introduce clients, earn rewards.\n\n"
             "Pick an option below 👇"
         ),
     },
@@ -67,13 +67,13 @@ TEXTS: dict[str, dict[str, str]] = {
             "<b>от $2 000 – 25 000 каждый месяц</b>\n\n"
             "<b>Почему это выгодно:</b>\n"
             "• 🛡 <b>Надёжный партнёр.</b> Лицензия ОАЭ, страхование 1 000 000 AED, бухгалтеры с опытом 8+ лет.\n"
-            "• 💰 <b>Щедрая комиссия — и вовремя.</b>\n"
+            "• 💰 <b>Щедрое вознаграждение — и вовремя.</b>\n"
             "   ▸ <b>100%</b> от первого месяца бухгалтерского обслуживания клиента;\n"
             "   ▸ <b>30%</b> от разовых услуг (аудит, налоговые отчёты, открытие компании, визы) — обычно $500–1 000 с клиента;\n"
-            "   ▸ <b>10%</b> от агентских вознаграждений партнёров, которых ты привёл;\n"
+            "   ▸ <b>10%</b> от вознаграждений партнёров, которых ты привёл;\n"
             "   ▸ <b>White Label — 30% ежемесячно</b> с каждой оплаты при 10+ клиентах.\n"
-            "• 🔗 <b>Готовые инструменты.</b> Реф-ссылки и тексты под 5 сегментов клиентов.\n"
-            "• 📊 <b>Прозрачный дашборд:</b> каждый клиент, статус, комиссия — в одном кабинете.\n"
+            "• 🔗 <b>Готовые инструменты.</b> Партнёрские ссылки и тексты под 5 сегментов клиентов.\n"
+            "• 📊 <b>Прозрачный дашборд:</b> каждый клиент, статус, вознаграждение — в одном кабинете.\n"
             "• ⚡ <b>1 клик — передал клиента.</b> Менеджер свяжется в течение часа.\n\n"
             "Открой свой кабинет — там уже ждут твои ссылки, тексты и статистика:"
         ),
@@ -83,20 +83,20 @@ TEXTS: dict[str, dict[str, str]] = {
             "<b>$2,000–25,000 every month</b>\n\n"
             "<b>Why it pays off:</b>\n"
             "• 🛡 <b>A reliable partner.</b> UAE license, 1,000,000 AED insurance, accountants with 8+ years of experience.\n"
-            "• 💰 <b>Generous commission — paid on time.</b>\n"
+            "• 💰 <b>Generous reward — paid on time.</b>\n"
             "   ▸ <b>100%</b> of the client's first month of accounting service;\n"
             "   ▸ <b>30%</b> of one-off services (audit, tax reports, company setup, visas) — usually $500–1,000 per client;\n"
-            "   ▸ <b>10%</b> of the agent rewards of partners you bring in;\n"
+            "   ▸ <b>10%</b> of the rewards earned by partners you bring in;\n"
             "   ▸ <b>White Label — 30% monthly</b> on every payment once you have 10+ clients.\n"
-            "• 🔗 <b>Ready-made tools.</b> Referral links and copy for 5 client segments.\n"
-            "• 📊 <b>Transparent dashboard:</b> every client, status, and commission in one place.\n"
-            "• ⚡ <b>1 click to refer a client.</b> A manager reaches out within the hour.\n\n"
+            "• 🔗 <b>Ready-made tools.</b> Partner links and copy for 5 client segments.\n"
+            "• 📊 <b>Transparent dashboard:</b> every client, status, and reward in one place.\n"
+            "• ⚡ <b>1 click to introduce a client.</b> A manager reaches out within the hour.\n\n"
             "Open your cabinet — your links, copy, and stats are already waiting:"
         ),
     },
     "PARTNER_LINKS": {
         "ru": (
-            "🔗 <b>Твои реферальные ссылки</b>\n"
+            "🔗 <b>Твои партнёрские ссылки</b>\n"
             "Код партнёра: <code>{ref_slug}</code>\n\n"
             "💼 <b>Бесплатная консультация с бухгалтером</b>\n"
             "Telegram: <code>{link_consult_tg}</code>\n"
@@ -105,12 +105,12 @@ TEXTS: dict[str, dict[str, str]] = {
             "Telegram: <code>{link_mclass_tg}</code>\n"
             "WhatsApp: <code>{link_mclass_wa}</code>\n\n"
             "🤝 <b>Партнёрская ссылка в бот ONCOUNT Community</b>\n"
-            "10% от агентских вознаграждений приглашённых партнёров.\n"
+            "10% от вознаграждений приглашённых партнёров.\n"
             "<code>{link_partner_bot}</code>\n\n"
             "Открыть со всеми кнопками «Скопировать» и QR-кодами: {webapp_url}/links"
         ),
         "en": (
-            "🔗 <b>Your referral links</b>\n"
+            "🔗 <b>Your partner links</b>\n"
             "Partner code: <code>{ref_slug}</code>\n\n"
             "💼 <b>Free consultation with an accountant</b>\n"
             "Telegram: <code>{link_consult_tg}</code>\n"
@@ -118,8 +118,8 @@ TEXTS: dict[str, dict[str, str]] = {
             "🎓 <b>Masterclass with an accountant</b>\n"
             "Telegram: <code>{link_mclass_tg}</code>\n"
             "WhatsApp: <code>{link_mclass_wa}</code>\n\n"
-            "🤝 <b>Referral link to the ONCOUNT Community bot</b>\n"
-            "10% of the agent rewards of partners you invite.\n"
+            "🤝 <b>Partner link to the ONCOUNT Community bot</b>\n"
+            "10% of the rewards earned by partners you invite.\n"
             "<code>{link_partner_bot}</code>\n\n"
             "Open it with all the «Copy» buttons and QR codes: {webapp_url}/links"
         ),
@@ -130,7 +130,7 @@ TEXTS: dict[str, dict[str, str]] = {
             "Введи имя клиента:"
         ),
         "en": (
-            "💰 <b>Refer a client</b>\n\n"
+            "💰 <b>Introduce a client</b>\n\n"
             "Enter the client's name:"
         ),
     },
@@ -146,13 +146,13 @@ TEXTS: dict[str, dict[str, str]] = {
         "ru": (
             "✅ Клиент <b>{name}</b> передан в работу.\n\n"
             "Спасибо за доверие. Менеджер ONCOUNT свяжется с ним в рабочее время "
-            "в течение часа и проведёт полную консультацию. Статус сделки и комиссия — "
+            "в течение часа и проведёт полную консультацию. Статус сделки и вознаграждение — "
             "в твоём личном кабинете."
         ),
         "en": (
             "✅ Client <b>{name}</b> has been handed over.\n\n"
             "Thanks for your trust. An ONCOUNT manager will reach out during working hours "
-            "within the hour and give a full consultation. The deal status and your commission "
+            "within the hour and give a full consultation. The deal status and your partner reward "
             "are in your personal cabinet."
         ),
     },

@@ -110,7 +110,7 @@ BTN: dict[str, dict[str, str]] = {
     },
     "transfer": {
         "ru": "💰 Передать клиента",
-        "en": "💰 Refer a client",
+        "en": "💰 Introduce a client",
     },
     "open_lk": {
         "ru": "🌐 Открыть кабинет",
@@ -591,7 +591,7 @@ async def transfer_task(msg: Message, state: FSMContext) -> None:
 # RU — дефолтный (для всех остальных).
 PARTNER_COMMANDS = [
     BotCommand(command="menu", description="🏠 Главное меню"),
-    BotCommand(command="links", description="🔗 Мои реф-ссылки"),
+    BotCommand(command="links", description="🔗 Мои партнёрские ссылки"),
     BotCommand(command="stats", description="📊 Моя статистика"),
     BotCommand(command="transfer", description="💰 Передать клиента"),
     BotCommand(command="products", description="📦 Тарифы и сервисы"),
@@ -602,9 +602,9 @@ PARTNER_COMMANDS = [
 
 PARTNER_COMMANDS_EN = [
     BotCommand(command="menu", description="🏠 Main menu"),
-    BotCommand(command="links", description="🔗 My referral links"),
+    BotCommand(command="links", description="🔗 My partner links"),
     BotCommand(command="stats", description="📊 My stats"),
-    BotCommand(command="transfer", description="💰 Refer a client"),
+    BotCommand(command="transfer", description="💰 Introduce a client"),
     BotCommand(command="products", description="📦 Plans and services"),
     BotCommand(command="messages", description="📨 Outreach copy"),
     BotCommand(command="faq", description="❓ FAQ"),

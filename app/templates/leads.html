@@ -5,7 +5,7 @@
 {% block content %}
 {% if not rows %}
   <div class="card">
-    <p>{% if lang == 'en' %}Nothing here yet. <a href="/transfer">Refer your first client</a> and they'll show up in this table.{% else %}Пока пусто. <a href="/transfer">Передай первого клиента</a>, и он появится в этой таблице.{% endif %}</p>
+    <p>{% if lang == 'en' %}Nothing here yet. <a href="/transfer">Introduce your first client</a> and they'll show up in this table.{% else %}Пока пусто. <a href="/transfer">Передай первого клиента</a>, и он появится в этой таблице.{% endif %}</p>
   </div>
 {% else %}
 <table class="list">
@@ -25,7 +25,13 @@
       <td data-label="{{ 'Contact' if lang == 'en' else 'Контакт' }}">{{ row.client_phone or row.client_telegram or '—' }}</td>
       <td data-label="{{ 'Company' if lang == 'en' else 'Компания' }}">{{ row.company_name or '—' }}</td>
       <td data-label="{{ 'Created' if lang == 'en' else 'Создано' }}">{{ row.created_at.strftime('%d.%m.%Y') }}</td>
-      <td data-label="{{ 'Status' if lang == 'en' else 'Статус' }}"><span class="status-pill status-{{ row.status }}">{{ row.status }}</span></td>
+      <td data-label="{{ 'Status' if lang == 'en' else 'Статус' }}">
+        {% set stage = lead_stage(row.status, lang) %}
+        <span class="status-pill status-{{ row.status }}">{{ stage.icon }} {{ stage.label }}</span>
+        {% if row.updated_at %}
+        <div style="font-size: 12px; color: var(--sage); margin-top: 4px;">{{ ('upd. ' if lang == 'en' else 'обн. ') }}{{ row.updated_at.strftime('%d.%m.%Y') }}</div>
+        {% endif %}
+      </td>
     </tr>
     {% endfor %}
   </tbody>
