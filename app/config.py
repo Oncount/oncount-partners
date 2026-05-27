@@ -32,6 +32,10 @@ class Settings:
     KOMMO_DOMAIN: str = os.getenv("KOMMO_DOMAIN", "")
     KOMMO_TOKEN: str = os.getenv("KOMMO_TOKEN", "")
     KOMMO_PIPELINE_ID: str = os.getenv("KOMMO_PIPELINE_ID", "")
+    # Предохранитель Telegram-дайджеста (Фаза 4). По умолчанию OFF: планировщик 5/20
+    # работает в dry (превью в лог), реально НЕ шлёт. Включить только осознанно:
+    # DIGEST_ENABLED=1 в Railway, когда агенты уже в боте и формат подтверждён.
+    DIGEST_ENABLED: bool = os.getenv("DIGEST_ENABLED", "") in ("1", "true", "True")
     ADMIN_TG_ID: int = int(os.getenv("ADMIN_TG_ID", "6634813047"))
     CONTACT_TG_USERNAME: str = os.getenv("CONTACT_TG_USERNAME", "nikol_hillton")
     CONTACT_WA_NUMBER: str = os.getenv("CONTACT_WA_NUMBER", "971589217784")

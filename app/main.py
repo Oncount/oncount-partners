@@ -164,9 +164,15 @@ async def on_startup() -> None:
         sched = BackgroundScheduler(timezone="UTC")
         sched.add_job(sync_agent_leads, "interval", minutes=60, id="kommo_sync",
                       next_run_time=_dt.utcnow(), max_instances=1, coalesce=True)
+        # Дайджест партнёрам 5 и 20 числа, 05:00 UTC = 09:00 по Дубаю (Фаза 4).
+        # Реально шлёт только при DIGEST_ENABLED, иначе dry (превью в лог).
+        from app.digest import scheduled_digest
+        sched.add_job(scheduled_digest, "cron", day="5,20", hour=5, minute=0,
+                      id="partner_digest", max_instances=1, coalesce=True)
         sched.start()
         app.state.scheduler = sched
-        log.info("kommo_sync scheduler started (hourly)")
+        log.info("scheduler started: kommo_sync hourly + digest 5/20 (enabled=%s)",
+                 settings.DIGEST_ENABLED)
 
 
 @app.get("/healthz")
