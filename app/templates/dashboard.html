@@ -97,6 +97,35 @@
 </div>
 {% endif %}
 
+{% set mgr = partner_manager(lang) %}
+<div class="card manager-card">
+  <img class="manager-photo" src="{{ mgr.photo }}" alt="{{ mgr.name }}" width="72" height="72">
+  <div class="manager-body">
+    <div class="manager-role">{{ mgr.role }}</div>
+    <div class="manager-name">
+      {{ mgr.name }}
+      {% if mgr.name_pending %}<span class="manager-pending">{{ 'name pending Nicole’s approval' if lang == 'en' else 'имя на утверждении Николь' }}</span>{% endif %}
+    </div>
+    <p class="manager-sla">⏱ {{ mgr.sla }}</p>
+    <div class="manager-contacts">
+      {% for link in mgr.links %}
+      <a class="btn btn-primary manager-contact" href="{{ link.href }}" target="_blank" rel="noopener">
+        {% if link.channel == 'whatsapp' %}{{ 'Message on WhatsApp' if lang == 'en' else 'Написать в WhatsApp' }}
+        {% elif link.channel == 'telegram' %}{{ 'Message on Telegram' if lang == 'en' else 'Написать в Telegram' }}
+        {% else %}{{ 'Email the manager' if lang == 'en' else 'Написать на email' }}{% endif %}{% if link.display %} · {{ link.display }}{% endif %}
+      </a>
+      {% endfor %}
+      {% for ch in mgr.pending_channels %}
+      <span class="manager-pending manager-pending-contact">
+        {% if ch == 'whatsapp' %}{{ 'WhatsApp number pending Nicole’s approval' if lang == 'en' else 'номер WhatsApp на утверждении Николь' }}
+        {% elif ch == 'telegram' %}{{ 'Telegram pending Nicole’s approval' if lang == 'en' else 'Telegram на утверждении Николь' }}
+        {% else %}{{ 'email pending Nicole’s approval' if lang == 'en' else 'email на утверждении Николь' }}{% endif %}
+      </span>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
 {% if show_checklist %}
 <div class="card" id="checklist">
   <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">

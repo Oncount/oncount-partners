@@ -145,10 +145,81 @@ def partner_type_label(key: str, lang: str = "ru") -> dict[str, str]:
     return {"key": key, "label": meta[lang], "icon": meta["icon"]}
 
 
+# Партнёрский менеджер — ОДИН общий на всех партнёров (решение Николь 2026-05-28,
+# Фаза E). Единый источник истины кабинета: имя/контакт/SLA в одном месте, БЕЗ
+# поля в Partner и БЕЗ миграции. ВАЖНО (ПД, «опасная тройка»): имя и контакт —
+# РЕАЛЬНЫЕ данные, их НЕ выдумываем. До подтверждения Николь стоят помеченные
+# плейсхолдеры (name_confirmed / contact_confirmed = False) — UI тогда НЕ выдаёт
+# их за живой контакт и не строит кликабельную ссылку. Фото — реальное из
+# team-2026-05 (static/img/manager.jpg). SLA-формулировка совпадает с уже
+# обещанной в transfer.html / seed.py / messages_text.py («в рабочее время в
+# течение часа») — не противоречит существующей копии кабинета.
+PARTNER_MANAGER: dict = {
+    "photo": "/static/img/manager.jpg",  # реальное фото Николь (team-2026-05)
+    # Подтверждено Николь 2026-05-28: менеджер партнёров = Николь Хилтон.
+    "name_confirmed": True,
+    "name": {"ru": "Николь Хилтон", "en": "Nicole Hilton"},
+    "role": {"ru": "Ваш партнёрский менеджер", "en": "Your partner manager"},
+    # Контакты менеджера. channel ∈ {"whatsapp","telegram","email"};
+    # value — цифры номера / username / email. confirmed=True → строим
+    # кликабельную ссылку; False → UI помечает «на утверждении Николь» и НЕ
+    # выдаёт выдуманные ПД за живой контакт. ВАЖНО (ПД): value НЕ выдумываем.
+    "contacts": [
+        # Номер WhatsApp подтверждён Николь 2026-05-28 (оканчивается на 14).
+        {"channel": "whatsapp", "value": "971528553814", "confirmed": True},
+        # Telegram-username из конфига проекта (CONTACT_TG_USERNAME), подтверждён Николь.
+        {"channel": "telegram", "value": "nikol_hillton", "confirmed": True},
+    ],
+    # SLA — согласовано с уже обещанным в кабинете (transfer/seed/bot): час в
+    # рабочее время. Подтверждено Николь 2026-05-28.
+    "sla": {
+        "ru": "Отвечаем по вашему клиенту в течение часа в рабочее время.",
+        "en": "We reply about your client within an hour during business hours.",
+    },
+}
+
+
+def partner_manager(lang: str = "ru") -> dict:
+    """Данные партнёрского менеджера для шаблонов (единый источник, Фаза E).
+    Возвращает локализованные строки, список готовых кликабельных контактов
+    (links — только confirmed) и список каналов на утверждении (pending_channels),
+    чтобы UI пометил их «на утверждении Николь» и не выдавал выдуманные ПД за
+    живой контакт. Мягко деградирует на неизвестный канал (пропускаем)."""
+    lang = lang if lang in ("ru", "en") else "ru"
+    m = PARTNER_MANAGER
+    links: list[dict] = []
+    pending_channels: list[str] = []
+    for c in m["contacts"]:
+        ch = c.get("channel")
+        if c.get("confirmed") and c.get("value"):
+            v = str(c["value"]).strip()
+            if ch == "whatsapp":
+                digits = v.lstrip("+")
+                links.append({"channel": ch, "href": f"https://wa.me/{digits}", "display": f"+{digits}"})
+            elif ch == "telegram":
+                uname = v.lstrip("@")
+                links.append({"channel": ch, "href": f"https://t.me/{uname}", "display": f"@{uname}"})
+            elif ch == "email":
+                links.append({"channel": ch, "href": f"mailto:{v}", "display": v})
+            # неизвестный канал — пропускаем (мягкая деградация)
+        elif ch in ("whatsapp", "telegram", "email"):
+            pending_channels.append(ch)
+    return {
+        "photo": m["photo"],
+        "name": m["name"][lang],
+        "name_pending": not m["name_confirmed"],
+        "role": m["role"][lang],
+        "sla": m["sla"][lang],
+        "links": links,
+        "pending_channels": pending_channels,
+    }
+
+
 # Доступно во всех шаблонах кабинета (DRY): leads.html, dashboard.html.
 templates.env.globals["lead_stage"] = lead_stage
 templates.env.globals["payout_label"] = payout_label
 templates.env.globals["partner_type_label"] = partner_type_label
+templates.env.globals["partner_manager"] = partner_manager
 
 app = FastAPI(title="ONCOUNT Partner Platform")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
