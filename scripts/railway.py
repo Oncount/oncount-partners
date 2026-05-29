@@ -165,9 +165,12 @@ def cmd_vars(extra_vars: dict | None = None):
         return
     sid = bot_service["id"]
 
+    jwt_secret = os.environ.get("JWT_SECRET")
+    if not jwt_secret:
+        raise SystemExit("JWT_SECRET не задан в .env — секрет не хардкодим в коде.")
     base = {
         "BOT_USERNAME": "community_oncount_bot",
-        "JWT_SECRET": "oncount-partners-prod-jwt-key-2026-must-be-rotated-later",
+        "JWT_SECRET": jwt_secret,
         "ADMIN_TG_ID": "6634813047",
         "DATABASE_URL": "${{postgres.DATABASE_URL}}",
         "WEBAPP_URL": "https://oncount-partners.up.railway.app",
