@@ -1,6 +1,13 @@
 .env
 .env.local
 .venv/
+
+# Секреты / бизнес-данные — НИКОГДА в git
+credentials.md
+.business/
+*.key
+*.pem
+
 __pycache__/
 *.pyc
 *.pyo
