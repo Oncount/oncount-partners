@@ -257,7 +257,25 @@ table.list td {
   text-align: center;
 }
 .login-logo { max-width: 200px; margin: 0 auto 16px; display: block; }
-.login-hint { color: var(--sage); font-size: 14px; margin-top: 24px; }
+.login-wordmark {
+  font-family: 'Outfit', 'Raleway', sans-serif;
+  font-weight: 800; font-size: 46px; line-height: 1;
+  letter-spacing: -0.03em; color: var(--deep-green);
+  margin: 0 0 20px;
+}
+.login-wordmark .on, .login-wordmark .dot { color: #EC6442; }
+.login-lead { color: var(--sage); font-size: 15px; margin: 0 0 22px; }
+.login-hint { color: var(--sage); font-size: 13px; margin-top: 18px; }
+.login-textlink {
+  background: none; border: 0; cursor: pointer; padding: 6px;
+  color: var(--sage); font-family: inherit; font-size: 14px; text-decoration: underline;
+}
+.login-textlink:hover { color: var(--deep-green); }
+.login-tg {
+  display: inline-block; margin-top: 26px;
+  color: var(--sage); font-size: 14px; text-decoration: underline;
+}
+.login-tg:hover { color: var(--deep-green); }
 
 /* Вход по email (магическая ссылка) */
 .login-divider {
@@ -719,6 +737,7 @@ details.faq-item[open] summary { margin-bottom: 12px; }
   .login-card { padding: 28px 22px; border-radius: 14px; }
   .login-card h1 { font-size: 22px; }
   .login-logo { max-width: 160px; }
+  .login-wordmark { font-size: 38px; }
 }
 
 @media (max-width: 900px) {
