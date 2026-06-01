@@ -80,3 +80,50 @@ def send_wa_code(phone: str, code: str, lang: str = "ru") -> bool:
     except httpx.HTTPError as exc:
         log.error("Wazzup недоступен для %s: %s", _mask(norm), exc)
         return False
+
+
+def send_wa_text(phone: str, text: str) -> bool:
+    """Отправить ПРОИЗВОЛЬНЫЙ текст в WhatsApp (Фаза K: digest / win-пуш).
+
+    Тот же транспорт и те же предохранители, что и у send_wa_code, но текст
+    приходит готовым извне (банк формулировок в app/notifications.py). Возвращает
+    True при успешной отправке, False при сетевой/HTTP-ошибке.
+
+    ВАЖНО: эта функция выполняет реальный сетевой вызов ВСЕГДА, когда задан
+    ключ/канал и номер прошёл test-guard. Главный предохранитель Фазы K
+    (NOTIFICATIONS_LIVE) живёт ВЫШЕ — в send_notification: при live=false сюда
+    вообще не заходим. Здесь — только WA-специфичные гарды (dev + test-only)."""
+    norm = normalize_phone(phone)
+    if not norm:
+        log.warning("WAZZUP send_wa_text: пустой/мусорный номер — пропуск")
+        return False
+
+    if not settings.WAZZUP_API_KEY or not settings.WAZZUP_CHANNEL_ID:
+        log.warning("WAZZUP не настроен → текст не отправлен (dev), %s", _mask(norm))
+        return False
+
+    # Предохранитель теста: пока канал не подтверждён живьём, шлём только на свой номер.
+    test_only = normalize_phone(settings.WAZZUP_TEST_ONLY_NUMBER)
+    if test_only and norm != test_only:
+        log.info("WAZZUP test-guard: пропуск %s (разрешён только тестовый номер)", _mask(norm))
+        return False
+
+    try:
+        resp = httpx.post(
+            WAZZUP_ENDPOINT,
+            headers={"Authorization": f"Bearer {settings.WAZZUP_API_KEY}"},
+            json={
+                "channelId": settings.WAZZUP_CHANNEL_ID,
+                "chatType": "whatsapp",
+                "chatId": norm,
+                "text": text,
+            },
+            timeout=10.0,
+        )
+        if resp.status_code >= 400:
+            log.error("Wazzup вернул %s для %s: %s", resp.status_code, _mask(norm), resp.text[:300])
+            return False
+        return True
+    except httpx.HTTPError as exc:
+        log.error("Wazzup недоступен для %s: %s", _mask(norm), exc)
+        return False

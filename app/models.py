@@ -102,6 +102,18 @@ class Lead(Base):
     # поэтому колонка nullable без DB-default. Таблицу Payout НЕ заводим
     # (решение Николь). kommo_sync это поле не трогает — ручная отметка живёт.
     payout_state: Mapped[str | None] = mapped_column(String(16))
+    # Якорь выплаты (Фаза K, план 2026-05-27): момент ПЕРВОГО перехода лида в
+    # `won`, ставится один раз в kommo_sync и больше не двигается. Из него
+    # payout_due_date() считает «10-е число следующего месяца». НЕ используем
+    # updated_at — он шевелится при любом синке ([[project_lead_updated_at_tech_debt]]),
+    # а дата выплаты должна быть стабильной. nullable: старые/не-won лиды — без него.
+    won_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Идемпотентность win-пуша (Фаза K): отметка, что событие «клиент оплатил»
+    # уже ОБРАБОТАНО (пуш отправлен / dry-run / бэкфилл). NULL → ещё не обработан.
+    # Ставится один раз; повторный переход в won второго пуша не плодит. Важно:
+    # в dry-режиме тоже штампуется (событие «прожито»), чтобы при go-live не
+    # ушла лавина пушей по старым оплатам ([[feedback_no_agent_outreach_yet]]).
+    won_notified_at: Mapped[datetime | None] = mapped_column(DateTime)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
@@ -279,6 +291,40 @@ class PhoneLoginToken(Base):
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     consumed_at: Mapped[datetime | None] = mapped_column(DateTime)
+
+
+class NotificationAttempt(Base):
+    """Журнал попыток уведомить партнёра (Фаза K, план 2026-05-27).
+
+    Append-only аудит КАЖДОГО триггера (digest / win-пуш) — даже когда наружу
+    ничего не ушло. Нужен для трёх вещей:
+    - доказать, что при NOTIFICATIONS_LIVE=false реальных отправок 0 (все строки
+      status='dry_run');
+    - идемпотентность: один digest в день на партнёра (партнёр+kind+дата);
+    - уникальность текста: выбор шапки/концовки сверяется с прошлой записью.
+
+    Безопасность («опасная тройка»): `recipient` хранится МАСКИРОВАННЫМ (код страны
+    + 2 последние цифры для WA, либо tg:<id> — это наш внутренний chat_id, не ПД
+    клиента). `body` — полный текст сообщения ПАРТНЁРУ (агрегаты в digest, имя
+    собственного клиента партнёра в win — не чужие ПД). В общий лог пишем только
+    partner_id/kind/status/тип-ошибки, не телефон и не текст.
+    """
+    __tablename__ = "notification_attempts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    partner_id: Mapped[int] = mapped_column(ForeignKey("partners.id"), index=True)
+    # 'digest' | 'win'
+    kind: Mapped[str] = mapped_column(String(16), index=True)
+    # 'tg' | 'wa' | 'none'
+    channel: Mapped[str] = mapped_column(String(8))
+    recipient: Mapped[str | None] = mapped_column(String(64))  # маскированный
+    body: Mapped[str] = mapped_column(Text)
+    # 'dry_run' | 'sent' | 'failed' | 'no_channel' | 'rate_limited'
+    status: Mapped[str] = mapped_column(String(16), index=True)
+    error_short: Mapped[str | None] = mapped_column(String(64))
+    # Привязка к конкретному лиду для win-пуша (для digest — NULL).
+    lead_id: Mapped[int | None] = mapped_column(ForeignKey("leads.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
 
 class EventRegistration(Base):

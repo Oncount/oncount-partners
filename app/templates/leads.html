@@ -38,6 +38,9 @@
           <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--sage); margin-bottom: 4px;">{{ 'Reward' if lang == 'en' else 'Вознаграждение' }}</div>
           <span class="status-pill payout-{{ payout.state }}">{{ payout.icon }} {{ payout.label }}</span>
           {% if payout.hint %}<div style="font-size: 12px; color: var(--sage); margin-top: 4px;">{{ payout.hint }}</div>{% endif %}
+          {# Дата выплаты (Фаза K): 10-е число месяца, следующего за оплатой. Якорь — won_at; для won без won_at деградирует в «после оплаты». #}
+          {% set due = payout_due_date(row, lang) %}
+          {% if due %}<div style="font-size: 12px; color: var(--sage); margin-top: 4px;">📅 {{ due.label }}</div>{% endif %}
           {# amount_aed — сумма СДЕЛКИ клиента (основа расчёта), не сумма выплаты партнёру: модели комиссий нет, % разный. Подписываем явно, чтобы не переобещать. #}
           {% if row.amount_aed %}<div style="font-size: 12px; color: var(--sage); margin-top: 4px;">{{ 'Client deal:' if lang == 'en' else 'Сумма сделки клиента:' }} <span style="font-weight: 600; color: var(--deep-green);">{{ '%.0f'|format(row.amount_aed) }} AED</span></div>{% endif %}
         </div>

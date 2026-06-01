@@ -370,6 +370,9 @@ templates.env.globals["lead_stage"] = lead_stage
 templates.env.globals["payout_label"] = payout_label
 templates.env.globals["partner_type_label"] = partner_type_label
 templates.env.globals["partner_manager"] = partner_manager
+# Дата выплаты по won-лиду (Фаза K) — единый источник для leads.html.
+from app.notifications import payout_due_date as _payout_due_date  # noqa: E402
+templates.env.globals["payout_due_date"] = _payout_due_date
 
 app = FastAPI(title="ONCOUNT Partner Platform")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -485,6 +488,12 @@ async def on_startup() -> None:
         # план 2026-05-27): защищает репутацию партнёра. Аддитивно, идемпотентно,
         # nullable: старые лиды и лиды из kommo_sync/бота — без этого поля.
         conn.execute(text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS do_not_offer TEXT"))
+        # Якорь выплаты + идемпотентность win-пуша (Фаза K, план 2026-05-27).
+        # Аддитивно и идемпотентно: две nullable-колонки без DB-default. won_at —
+        # стабильный момент перехода в won (дата выплаты), won_notified_at — что
+        # пуш уже обработан. create_all не делает ALTER, а leads уже есть в проде.
+        conn.execute(text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS won_at TIMESTAMP"))
+        conn.execute(text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS won_notified_at TIMESTAMP"))
         # Тип партнёра у шаблона-материала (Фаза C, план 2026-05-27). Аддитивно и
         # идемпотентно: одна nullable-колонка + индекс. NULL = генерик /messages
         # (старые строки не трогаются). create_all не делает ALTER, а
@@ -520,15 +529,22 @@ async def on_startup() -> None:
         sched = BackgroundScheduler(timezone="UTC")
         sched.add_job(sync_agent_leads, "interval", minutes=60, id="kommo_sync",
                       next_run_time=_dt.utcnow(), max_instances=1, coalesce=True)
-        # Дайджест партнёрам 5 и 20 числа, 05:00 UTC = 09:00 по Дубаю (Фаза 4).
-        # Реально шлёт только при DIGEST_ENABLED, иначе dry (превью в лог).
-        from app.digest import scheduled_digest
-        sched.add_job(scheduled_digest, "cron", day="5,20", hour=5, minute=0,
-                      id="partner_digest", max_instances=1, coalesce=True)
+        # Старый месячный digest (Фаза 4, 5/20) погашен Фазой K: единый канал
+        # уведомлений наружу — недельный digest_job ниже, под предохранителем
+        # NOTIFICATIONS_LIVE. Модуль app/digest.py не удалён (build_digest как
+        # библиотека), но в планировщик больше не регистрируется — чтобы нельзя
+        # было случайно запустить две рассылки двумя разными флагами.
+        # Еженедельный digest партнёру (Фаза K): ежедневно 12:00 UTC = 16:00
+        # Asia/Dubai; внутри сам отбирает партнёров «чей сегодня день» (id % 7) и
+        # молчит, если за неделю изменений нет. Реально шлёт только при
+        # NOTIFICATIONS_LIVE, иначе dry (запись в notification_attempts).
+        from app.notifications import digest_job
+        sched.add_job(digest_job, "cron", hour=12, minute=0,
+                      id="weekly_digest", max_instances=1, coalesce=True)
         sched.start()
         app.state.scheduler = sched
-        log.info("scheduler started: kommo_sync hourly + digest 5/20 (enabled=%s)",
-                 settings.DIGEST_ENABLED)
+        log.info("scheduler started: kommo_sync hourly + weekly_digest 16:00 Dubai (notifications_live=%s)",
+                 settings.NOTIFICATIONS_LIVE)
 
 
 @app.get("/healthz")

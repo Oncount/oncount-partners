@@ -110,6 +110,10 @@
       <div style="font-size: 28px; font-weight: 700; color: var(--deep-green); margin-top: 8px;">{{ kpi.payout_paid }}</div>
     </div>
   </div>
+  {# Правило выплат (Фаза K, решение Николь): прозрачное ожидание без конкретной суммы. #}
+  <p style="color: var(--sage); font-size: 13px; margin: 16px 0 0; padding-top: 12px; border-top: 1px dashed var(--border);">
+    {% if lang == 'en' %}💳 Your partner reward is paid by the 10th of the month following the client's payment.{% else %}💳 Партнёрское вознаграждение выплачивается до 10-го числа месяца, следующего за оплатой клиентом.{% endif %}
+  </p>
 </div>
 {% endif %}
 

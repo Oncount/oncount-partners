@@ -10,6 +10,7 @@ kommo_lead_id. Запускается планировщиком (см. main.on_
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 
 import httpx
 from sqlalchemy.orm import Session
@@ -93,6 +94,10 @@ def sync_agent_leads() -> dict:
 
     session: Session = SessionLocal()
     created = updated = 0
+    # kommo_lead_id лидов, ТОЛЬКО ЧТО перешедших в won на существующей строке —
+    # их извещаем после commit (Фаза K). Лиды, созданные сразу как won (бэкфилл
+    # истории), сюда НЕ попадают: им ставим won_notified_at без отправки.
+    newly_won: list[int] = []
     try:
         # карта enum_id агента -> partner_id
         by_enum = {
@@ -127,18 +132,32 @@ def sync_agent_leads() -> dict:
                     st = _status(l.get("status_id"))
                     amount = l.get("price") or None
                     if row:
+                        old_status = row.status
                         row.status = st
                         row.partner_id = pid
                         if amount is not None:
                             row.amount_aed = amount
+                        # Переход в won (Фаза K): фиксируем якорь выплаты один раз
+                        # и помечаем лид на извещение партнёра (после commit).
+                        if st == "won" and old_status != "won":
+                            if row.won_at is None:
+                                row.won_at = datetime.utcnow()
+                            if row.won_notified_at is None:
+                                newly_won.append(kommo_id)
                         updated += 1
                     else:
+                        # Лид впервые виден синком. Если он уже won — это история
+                        # (бэкфилл): ставим якорь, но помечаем извещённым БЕЗ
+                        # отправки, чтобы при go-live не ушла лавина старых пушей.
+                        now = datetime.utcnow()
                         session.add(Lead(
                             partner_id=pid,
                             kommo_lead_id=kommo_id,
                             client_name=_client_name(l),
                             status=st,
                             amount_aed=amount,
+                            won_at=now if st == "won" else None,
+                            won_notified_at=now if st == "won" else None,
                         ))
                         created += 1
                 if len(leads) < 250:
@@ -147,7 +166,22 @@ def sync_agent_leads() -> dict:
                 if page > 80:
                     break
         session.commit()
-        log.info("kommo_sync: создано %s, обновлено %s", created, updated)
-        return {"created": created, "updated": updated}
+        # Извещаем партнёров о только что выигранных лидах (Фаза K). Делаем ПОСЛЕ
+        # commit статусов: уведомление — отдельная забота, его сбой не должен
+        # откатывать синк. notify_lead_won идемпотентен (won_notified_at) и сам
+        # уважает предохранитель NOTIFICATIONS_LIVE (в dry наружу 0 пакетов).
+        notified = 0
+        if newly_won:
+            from app.notifications import notify_lead_won
+            for kid in newly_won:
+                lead = session.query(Lead).filter_by(kommo_lead_id=kid).first()
+                if lead is not None:
+                    try:
+                        notify_lead_won(lead, session)
+                        notified += 1
+                    except Exception as exc:  # одно уведомление не валит весь синк
+                        log.error("win-notify fail lead kommo=%s: %s", kid, type(exc).__name__)
+        log.info("kommo_sync: создано %s, обновлено %s, win-пушей %s", created, updated, notified)
+        return {"created": created, "updated": updated, "won_notified": notified}
     finally:
         session.close()

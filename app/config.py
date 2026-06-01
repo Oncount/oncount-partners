@@ -43,6 +43,13 @@ class Settings:
     # работает в dry (превью в лог), реально НЕ шлёт. Включить только осознанно:
     # DIGEST_ENABLED=1 в Railway, когда агенты уже в боте и формат подтверждён.
     DIGEST_ENABLED: bool = os.getenv("DIGEST_ENABLED", "") in ("1", "true", "True")
+    # ГЛАВНЫЙ ПРЕДОХРАНИТЕЛЬ уведомлений партнёрам (Фаза K, план 2026-05-27).
+    # default FALSE: пока агентов не пригласили в кабинет ([[feedback_no_agent_outreach_yet]]),
+    # НИЧЕГО наружу не уходит — каждый триггер логируется в notification_attempts
+    # со status='dry_run', в сеть 0 пакетов. Включать ТОЛЬКО осознанно в Railway
+    # env (NOTIFICATIONS_LIVE=true) по команде Николь, НЕ дефолтом в коде.
+    # Доп. слой для WhatsApp — WAZZUP_TEST_ONLY_NUMBER (шлёт только на тестовый).
+    NOTIFICATIONS_LIVE: bool = os.getenv("NOTIFICATIONS_LIVE", "") in ("1", "true", "True")
     ADMIN_TG_ID: int = int(os.getenv("ADMIN_TG_ID", "6634813047"))
     CONTACT_TG_USERNAME: str = os.getenv("CONTACT_TG_USERNAME", "nikol_hillton")
     CONTACT_WA_NUMBER: str = os.getenv("CONTACT_WA_NUMBER", "971589217784")
