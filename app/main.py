@@ -467,21 +467,24 @@ def login_page(request: Request, session: Session = Depends(get_session)) -> HTM
 
 
 @app.get("/auth/bot-callback")
-def auth_bot_callback(state: str, next: str | None = None, session: Session = Depends(get_session)):
+def auth_bot_callback(request: Request, state: str, next: str | None = None, session: Session = Depends(get_session)):
     """Завершение deep-link авторизации. Бот уже записал telegram_id для state.
 
     next — необязательная внутренняя страница, на которую кабинет откроется сразу
     после входа (например, курс-практикум). Разрешаем только локальные пути под
     /courses/, чтобы исключить open-redirect."""
     rec = session.get(LoginSession, state)
-    if rec is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Login session not found")
-    if rec.consumed_at is not None:
-        raise HTTPException(status.HTTP_410_GONE, "Login session already used")
+    expired = rec is not None and datetime.utcnow() - rec.created_at > LOGIN_SESSION_TTL
+    # Ссылка одноразовая. Повторный тап по той же кнопке (частый кейс в Telegram
+    # Web App — кнопка остаётся в чате) не должен пугать сырым JSON «already used»:
+    # если в этой сессии уже есть кука — просто открываем кабинет; иначе показываем
+    # аккуратную страницу со свежей рабочей кнопкой входа.
+    if rec is None or rec.consumed_at is not None or expired:
+        if current_partner(request, session):
+            return RedirectResponse("/dashboard", status_code=302)
+        return _relogin_notice(request, session)
     if rec.telegram_id is None:
         raise HTTPException(status.HTTP_425_TOO_EARLY, "Click the button inside the bot first")
-    if datetime.utcnow() - rec.created_at > LOGIN_SESSION_TTL:
-        raise HTTPException(status.HTTP_410_GONE, "Login session expired, /login again")
 
     telegram_id = rec.telegram_id
     rec.consumed_at = datetime.utcnow()
@@ -540,6 +543,16 @@ def _fresh_login_state(session: Session) -> str:
     session.add(LoginSession(state=state))
     session.commit()
     return state
+
+
+def _relogin_notice(request: Request, session: Session) -> HTMLResponse:
+    """Дружелюбная заглушка вместо сырого JSON, когда одноразовая ссылка входа
+    уже использована/протухла, а активной сессии нет. Сразу даёт свежий deep-link
+    в бота — один тап возвращает партнёра в кабинет."""
+    state = _fresh_login_state(session)
+    return templates.TemplateResponse(
+        "relogin.html", _ctx(request, None, state=state)
+    )
 
 
 @app.post("/auth/email/request", response_class=HTMLResponse)

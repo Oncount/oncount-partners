@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Open cabinet' if lang == 'en' else 'Кабинет партнёра' }} — ONCOUNT Partners{% endblock %}
+
+{% block anonymous %}
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-wordmark"><span class="on">on</span>count<span class="dot">.</span></div>
+    <h1>{{ 'Partner dashboard' if lang == 'en' else 'Кабинет партнёра' }}</h1>
+
+    <p class="login-lead">
+      {{ 'This sign-in link has already been used — it works only once. Open your cabinet again with the button below.'
+         if lang == 'en' else
+         'Эта ссылка для входа уже использована — она одноразовая. Откройте кабинет заново кнопкой ниже.' }}
+    </p>
+
+    <a class="btn btn-primary" style="display:block;width:100%;padding:14px;box-sizing:border-box;"
+       href="https://t.me/{{ bot_username }}?start=login_{{ state }}">
+      {{ 'Open my cabinet' if lang == 'en' else 'Войти в кабинет' }}
+    </a>
+
+    <a class="login-tg" href="/login">{{ 'Sign in another way' if lang == 'en' else 'Войти другим способом' }}</a>
+  </div>
+</div>
+{% endblock %}
