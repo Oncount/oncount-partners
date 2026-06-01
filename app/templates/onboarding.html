@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="card">
-  <p style="font-size: 16px;">{% if lang == 'en' %}Hi, {{ partner.first_name or 'partner' }}! It takes 30 seconds to set up your dashboard — tell us a bit about yourself:{% else %}Привет, {{ partner.first_name or 'партнёр' }}! Нужно 30 секунд, чтобы настроить твой кабинет — расскажи кратко о себе:{% endif %}</p>
+  <p style="font-size: 16px;">{% if lang == 'en' %}Hi, {{ partner.first_name or 'partner' }}! It takes 30 seconds to set up your dashboard — tell us a bit about yourself:{% else %}Привет, {{ partner.first_name or 'партнёр' }}! Нужно 30 секунд, чтобы настроить ваш кабинет — расскажите кратко о себе:{% endif %}</p>
 </div>
 
 {% if message %}
@@ -15,9 +15,9 @@
 
 <div class="card">
   <form class="form" method="POST" action="/onboarding">
-    <label>{{ 'What do you mainly do?' if lang == 'en' else 'Кто ты по основной деятельности?' }} *</label>
+    <label>{{ 'What do you mainly do?' if lang == 'en' else 'Кто вы по основной деятельности?' }} *</label>
     <select name="segment" required>
-      <option value="">{{ '— choose —' if lang == 'en' else '— выбери —' }}</option>
+      <option value="">{{ '— choose —' if lang == 'en' else '— выберите —' }}</option>
       {% for slug, label_ru, label_en in segments %}
         <option value="{{ slug }}">{{ label_en if lang == 'en' else label_ru }}</option>
       {% endfor %}
