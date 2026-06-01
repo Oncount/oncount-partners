@@ -153,7 +153,7 @@ TEXTS: dict[str, dict[str, str]] = {
         ),
     },
     "ONBOARDING_PARTNER_OK": {
-        "ru": "\n\n✅ Ты — партнёр ONCOUNT. Жми кнопку для входа в кабинет.",
+        "ru": "\n\n✅ Вы — партнёр ONCOUNT. Жмите на кнопку для входа в кабинет.",
         "en": "\n\n✅ You're an ONCOUNT partner. Tap the button to enter your cabinet.",
     },
     "LOGIN_READY": {
