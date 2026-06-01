@@ -70,10 +70,11 @@ TEXTS: dict[str, dict[str, str]] = {
             "в течение часа и проведёт бесплатную консультацию. Вы видите статусы и отчёты, "
             "а довольный клиент благодарит именно вас.\n\n"
             "<b>Выплаты до 10 числа, чётко и вовремя:</b>\n"
-            "   ▸ <b>100%</b> от первого месяца обслуживания клиента;\n"
-            "   ▸ <b>30%</b> от разовых услуг (компания, визы, аудит, отчёты) — обычно $500–1 000;\n"
-            "   ▸ от <b>10 клиентов/мес</b> — индивидуальные тарифы.\n\n"
-            "Загляните в кабинет. Тексты, посты, чек-листы и сайты с UTM-метками уже ждут вас."
+            "   ▸ <b>100%</b> от первого месяца бухгалтерского обслуживания;\n"
+            "   ▸ <b>30%</b> от разовых услуг (банки, аудит, отчёты) — обычно $500–1 000;\n"
+            "   ▸ от <b>10 клиентов/мес</b> — индивидуальные тарифы.\n"
+            "В среднем — <b>$2 000–25 000</b> в месяц.\n\n"
+            "Тексты, посты, чек-листы и сайты с UTM-метками уже ждут вас."
         ),
         "en": (
             "🤝 <b>ONCOUNT Partner Program</b>\n\n"
@@ -84,10 +85,11 @@ TEXTS: dict[str, dict[str, str]] = {
             "during working hours and gives a free consultation. You see statuses and reports, "
             "and the happy client thanks you.\n\n"
             "<b>Payouts by the 10th, clear and on time:</b>\n"
-            "   ▸ <b>100%</b> of the client's first month of service;\n"
-            "   ▸ <b>30%</b> of one-off services (company, visas, audit, reports) — usually $500–1,000;\n"
-            "   ▸ from <b>10 clients/mo</b> — individual rates.\n\n"
-            "Take a look inside your cabinet. Copy, posts, checklists, and landing pages with UTM tags are already waiting for you."
+            "   ▸ <b>100%</b> of the client's first month of accounting service;\n"
+            "   ▸ <b>30%</b> of one-off services (banking, audit, reports) — usually $500–1,000;\n"
+            "   ▸ from <b>10 clients/mo</b> — individual rates.\n"
+            "On average — <b>$2,000–25,000</b> a month.\n\n"
+            "Copy, posts, checklists, and landing pages with UTM tags are already waiting for you."
         ),
     },
     "PARTNER_LINKS": {
@@ -153,8 +155,8 @@ TEXTS: dict[str, dict[str, str]] = {
         ),
     },
     "ONBOARDING_PARTNER_OK": {
-        "ru": "\n\n✅ Вы — партнёр ONCOUNT. Жмите на кнопку для входа в кабинет.",
-        "en": "\n\n✅ You're an ONCOUNT partner. Tap the button to enter your cabinet.",
+        "ru": "\n\n✅ Жмите на кнопку для входа в кабинет.",
+        "en": "\n\n✅ Tap the button to enter your cabinet.",
     },
     "LOGIN_READY": {
         "ru": "Готово! Жмите на кнопку — откроется кабинет партнёра в браузере.",
