@@ -23,7 +23,6 @@ from aiogram.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     Message,
-    WebAppInfo,
 )
 from sqlalchemy.orm import Session
 
@@ -64,10 +63,16 @@ def issue_login_url(session: Session, telegram_id: int, next_path: str | None = 
 
 
 def cabinet_kb(label: str, url: str) -> InlineKeyboardMarkup:
-    """Кнопка входа в ЛК как Telegram Web App — кабинет открывается прямо внутри
-    Telegram, без системного окна «Open Link» с длинным URL. Только приватные чаты."""
+    """Кнопка входа в ЛК — обычная url-кнопка (кабинет открывается во внешнем
+    браузере, где JWT-кука сохраняется надёжно).
+
+    Пробовали web_app=WebAppInfo(...) чтобы убрать системное окно «Open Link»,
+    но в Telegram Mini App вход не доходил до /dashboard (кука/домен в webview) —
+    логин ломался. Откат на url= (2026-06-01). Окно «Open Link» Telegram задаёт
+    сам; убрать его без поломки входа можно только через регистрацию домена
+    Mini App в BotFather — отдельной задачей, с проверкой."""
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=label, web_app=WebAppInfo(url=url))],
+        [InlineKeyboardButton(text=label, url=url)],
     ])
 
 
