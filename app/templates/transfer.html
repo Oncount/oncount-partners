@@ -19,16 +19,18 @@
         <input type="text" name="company_name">
       </div>
       <div>
-        <label>{{ 'Phone / WhatsApp' if lang == 'en' else 'Телефон / WhatsApp' }}</label>
-        <input type="text" name="client_phone" placeholder="+971...">
+        <label>{{ 'Phone / WhatsApp' if lang == 'en' else 'Телефон / WhatsApp' }} *</label>
+        <input type="text" name="client_phone" required placeholder="+971...">
       </div>
       <div>
         <label>{{ "Client's Telegram" if lang == 'en' else 'Telegram клиента' }}</label>
         <input type="text" name="client_telegram" placeholder="@username">
       </div>
     </div>
-    <label>{{ "Client's request" if lang == 'en' else 'Задача клиента' }}</label>
-    <textarea name="task_description" rows="4" placeholder="{% if lang == 'en' %}Accounting services, VAT registration, corporate tax filing, etc., company and bank account setup{% else %}Бухгалтерское обслуживание, VAT registration, сдача корпоративного отчёта, и т. д., регистрация компании и банковского счёта{% endif %}"></textarea>
+    <label>{{ "Which service is the client interested in" if lang == 'en' else 'На какую услугу' }} *</label>
+    <textarea name="task_description" rows="3" required placeholder="{% if lang == 'en' %}Accounting services, VAT registration, corporate tax filing, etc., company and bank account setup{% else %}Бухгалтерское обслуживание, VAT registration, сдача корпоративного отчёта, и т. д., регистрация компании и банковского счёта{% endif %}"></textarea>
+    <label>{{ "What NOT to offer this client" if lang == 'en' else 'Что НЕ предлагать клиенту' }} *</label>
+    <textarea name="do_not_offer" rows="3" required placeholder="{% if lang == 'en' %}Examples: already has an accountant, only needs one specific service, sensitive to upselling, limited budget, etc.{% else %}Примеры: уже есть бухгалтер — не предлагать смену; нужна только одна услуга — не допродавать; ограниченный бюджет; и т. д.{% endif %}"></textarea>
     <button type="submit" class="btn btn-primary">{{ 'Introduce a client' if lang == 'en' else 'Передать клиента' }}</button>
   </form>
 </div>
@@ -37,14 +39,14 @@
   {% if lang == 'en' %}
   <h3>What happens next</h3>
   <ol>
-    <li>A card is created in our CRM with your name as the partner.</li>
+    <li>Your manager at ONCOUNT receives the request immediately and opens a card in our CRM with your name as the partner.</li>
     <li>An ONCOUNT manager contacts your client during business hours within an hour, runs a full consultation, collects payment and makes sure the work is fully done and your client is happy.</li>
     <li>You receive your partner reward for clients who paid and a full report on all leads you've introduced by the 10th of each month.</li>
   </ol>
   {% else %}
   <h3>Что произойдёт после</h3>
   <ol>
-    <li>Карточка создастся в нашей CRM с вашим именем как партнёра.</li>
+    <li>Ваш менеджер ONCOUNT сразу получает заявку и заводит карточку клиента в нашей CRM с вашим именем как партнёра.</li>
     <li>Менеджер ONCOUNT свяжется с вашим клиентом в рабочее время в течение часа, проведёт полную консультацию, получит оплату и проконтролирует, что работа полностью выполнена и ваш клиент доволен.</li>
     <li>Вы получите партнёрское вознаграждение за оплативших клиентов и полный отчёт о всех переданных лидах до 10-го числа каждого месяца.</li>
   </ol>

@@ -78,6 +78,11 @@ class Lead(Base):
     client_email: Mapped[str | None] = mapped_column(String(255))
     company_name: Mapped[str | None] = mapped_column(String(255))
     task_description: Mapped[str | None] = mapped_column(Text)
+    # «Что НЕ предлагать клиенту» — обязательное поле в /transfer (Фаза F, план
+    # 2026-05-27): партнёр пишет ограничения/табу, чтобы менеджер не повредил
+    # его репутации лишним предложением. nullable=True, потому что лиды из
+    # kommo_sync и легаси-ТГ-бота этого поля не заполняют.
+    do_not_offer: Mapped[str | None] = mapped_column(Text)
     kommo_lead_id: Mapped[int | None] = mapped_column(BigInteger)
     status: Mapped[str] = mapped_column(String(32), default="new", index=True)
     amount_aed: Mapped[float | None] = mapped_column(Numeric(12, 2))

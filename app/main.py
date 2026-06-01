@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from urllib.parse import quote
 
+import httpx
 from fastapi import Depends, FastAPI, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -331,6 +332,10 @@ async def on_startup() -> None:
         # дефолт «в расчёте» выводит payout_label. Существующие строки/колонки
         # не трогаются. create_all не делает ALTER, а leads уже есть в проде.
         conn.execute(text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS payout_state VARCHAR(16)"))
+        # «Что НЕ предлагать клиенту» — обязательное поле формы /transfer (Фаза F,
+        # план 2026-05-27): защищает репутацию партнёра. Аддитивно, идемпотентно,
+        # nullable: старые лиды и лиды из kommo_sync/бота — без этого поля.
+        conn.execute(text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS do_not_offer TEXT"))
         # Тип партнёра у шаблона-материала (Фаза C, план 2026-05-27). Аддитивно и
         # идемпотентно: одна nullable-колонка + индекс. NULL = генерик /messages
         # (старые строки не трогаются). create_all не делает ALTER, а
@@ -1083,32 +1088,76 @@ def transfer_get(request: Request, session: Session = Depends(get_session)) -> H
 def transfer_post(
     request: Request,
     client_name: str = Form(...),
-    client_phone: str = Form(""),
+    client_phone: str = Form(...),
+    task_description: str = Form(...),
+    do_not_offer: str = Form(...),
     client_telegram: str = Form(""),
     company_name: str = Form(""),
-    task_description: str = Form(""),
     session: Session = Depends(get_session),
 ) -> HTMLResponse:
     partner = current_partner(request, session)
     if not partner:
         return RedirectResponse("/login", status_code=302)
 
+    client_name_v = client_name.strip()
+    client_phone_v = client_phone.strip()
+    task_v = task_description.strip()
+    do_not_offer_v = do_not_offer.strip()
+    client_telegram_v = client_telegram.strip()
+    company_name_v = company_name.strip()
+
     lead = Lead(
         partner_id=partner.id,
-        client_name=client_name.strip(),
-        client_phone=client_phone.strip() or None,
-        client_telegram=client_telegram.strip() or None,
-        company_name=company_name.strip() or None,
-        task_description=task_description.strip() or None,
+        client_name=client_name_v,
+        client_phone=client_phone_v,
+        client_telegram=client_telegram_v or None,
+        company_name=company_name_v or None,
+        task_description=task_v,
+        do_not_offer=do_not_offer_v,
         status="new",
     )
     session.add(lead)
     session.commit()
 
+    # Уведомление в Telegram Николь (ADMIN_TG_ID). Менеджер заносит в Kommo
+    # вручную (решение 2026-06-01). Лид уже в БД — если TG упал, ничего не
+    # теряем: партнёр видит /leads, менеджер получит на следующей попытке.
+    # ПД клиента летят во внутренний канал (свой бот → личка владельца), как
+    # уже делает app/bot.py для ТГ-флоу.
+    if settings.BOT_TOKEN and settings.ADMIN_TG_ID:
+        partner_label = (
+            (partner.first_name or "").strip()
+            or (partner.kommo_agent_name or "").strip()
+            or (partner.phone or "").strip()
+            or (partner.email or "").strip()
+            or f"#{partner.id}"
+        )
+        lines = [
+            "🆕 Новый клиент от партнёра",
+            f"Партнёр: {partner_label}",
+            f"Телефон: {client_phone_v}",
+            f"Имя клиента: {client_name_v}",
+            f"Услуга: {task_v}",
+            f"Что НЕ предлагать: {do_not_offer_v}",
+        ]
+        if client_telegram_v:
+            lines.append(f"Telegram: {client_telegram_v}")
+        if company_name_v:
+            lines.append(f"Компания: {company_name_v}")
+        try:
+            httpx.post(
+                f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendMessage",
+                json={"chat_id": settings.ADMIN_TG_ID, "text": "\n".join(lines)},
+                timeout=10,
+            )
+        except Exception as e:
+            # НЕ логируем ПД клиента — только тип ошибки.
+            log.warning("/transfer telegram notify failed: %s", type(e).__name__)
+
     msg = (
-        "Client referred. A manager will be in touch within 24 hours."
+        "Client referred. A manager will be in touch within an hour during business hours (9:00–18:00 Dubai time)."
         if _lang(request) == "en"
-        else "Клиент передан. Менеджер свяжется в течение 24 часов."
+        else "Клиент передан. Менеджер свяжется в течение часа в рабочее время с 9-18.00 дубай."
     )
     return templates.TemplateResponse(
         "transfer.html",
