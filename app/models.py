@@ -49,6 +49,15 @@ class Partner(Base):
     links_viewed_at: Mapped[datetime | None] = mapped_column(DateTime)
     products_viewed_at: Mapped[datetime | None] = mapped_column(DateTime)
     checklist_dismissed_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Анкета партнёра (Фаза L, план 2026-05-27): профиль для подбора
+    # СТРАТЕГИЧЕСКОГО партнёрства (это анкета самого партнёра, НЕ онбординг
+    # клиента). Ответы — только варианты из белого списка (JSON-словарь);
+    # survey_completed_at IS NOT NULL → анкета пройдена (баннер скрыт).
+    # ⚠️ ПД («опасная тройка»): реквизиты выплат (номера карт/кошельков/IBAN)
+    # сюда НЕ пишем — только ТИП канала. Точные реквизиты менеджер собирает
+    # в личной переписке, вне БД.
+    onboarding_answers: Mapped[dict | None] = mapped_column(JSON)
+    survey_completed_at: Mapped[datetime | None] = mapped_column(DateTime)
 
     referrals: Mapped[list["Referral"]] = relationship(back_populates="partner")
     leads: Mapped[list["Lead"]] = relationship(back_populates="partner")

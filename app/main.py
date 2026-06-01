@@ -146,6 +146,155 @@ def partner_type_label(key: str, lang: str = "ru") -> dict[str, str]:
     return {"key": key, "label": meta[lang], "icon": meta["icon"]}
 
 
+# ─── Анкета партнёра (Фаза L, план 2026-05-27) ──────────────────────────────
+# ⚠️ ТЕКСТЫ ВОПРОСОВ/ВАРИАНТОВ — ЧЕРНОВИК на утверждении Николь (НЕ выдаём за
+# финальные, урок Фаз E/F). Правятся ЗДЕСЬ без миграции — ответы лежат в JSON
+# по ключу варианта, а не по тексту. Снять флаг SURVEY_DRAFT после утверждения.
+#
+# Структура решена Николь 2026-06-01:
+#   • список «сфера» — из плана Фазы L (НЕ переиспользуем SEGMENTS/PARTNER_TYPES);
+#   • «опыт» — по рынку ОАЭ; «поток B2B» — да/нет + диапазон; «соцсети» —
+#     каналы (мультивыбор) + ориентир аудитории;
+#   • «выплаты» — ТОЛЬКО ТИП канала (белый список). Номера карт/кошельков/IBAN
+#     в БД НЕ пишем — критерий безопасности (ПД, «опасная тройка»).
+SURVEY_DRAFT = True  # тексты не утверждены Николь → форма помечает «черновик»
+
+# Каждый вариант: (value, ru, en). value — стабильный ключ в JSON-ответах.
+SURVEY_OPTIONS: dict[str, list[tuple[str, str, str]]] = {
+    "sphere": [
+        ("consulting",        "Консалтинг",                   "Consulting"),
+        ("bank_accounts",     "Открытие банковских счетов",   "Bank account opening"),
+        ("real_estate",       "Недвижимость",                 "Real estate"),
+        ("company_formation", "Регистрация компаний",         "Company formation"),
+        ("golden_visa",       "Golden Visa / визы",           "Golden Visa / visas"),
+        ("finance_insurance", "Финансы и страхование",        "Finance & insurance"),
+        ("marketing_pr",      "Маркетинг и PR",               "Marketing & PR"),
+        ("events",            "События и сообщества",         "Events & community"),
+        ("media_influencer",  "Медиа / инфлюенсер",           "Media / influencer"),
+        ("other",             "Другое",                       "Other"),
+    ],
+    "uae_experience": [
+        ("lt1",    "До 1 года",  "Under 1 year"),
+        ("1-3",    "1–3 года",   "1–3 years"),
+        ("3-5",    "3–5 лет",    "3–5 years"),
+        ("5-10",   "5–10 лет",   "5–10 years"),
+        ("10plus", "10+ лет",    "10+ years"),
+    ],
+    "b2b_flow": [
+        ("steady",     "Да, постоянно",      "Yes, steady"),
+        ("occasional", "Время от времени",   "From time to time"),
+        ("none",       "Пока нет",           "Not yet"),
+    ],
+    "b2b_volume": [
+        ("1-5",    "1–5 в месяц",    "1–5 a month"),
+        ("5-20",   "5–20 в месяц",   "5–20 a month"),
+        ("20-50",  "20–50 в месяц",  "20–50 a month"),
+        ("50plus", "50+ в месяц",    "50+ a month"),
+    ],
+    "base_size": [
+        ("lt50",     "До 50",     "Under 50"),
+        ("50-200",   "50–200",    "50–200"),
+        ("200-1000", "200–1000",  "200–1000"),
+        ("1000plus", "1000+",     "1000+"),
+    ],
+    "social_channels": [
+        ("instagram", "Instagram",       "Instagram"),
+        ("telegram",  "Telegram",        "Telegram"),
+        ("linkedin",  "LinkedIn",        "LinkedIn"),
+        ("youtube",   "YouTube",         "YouTube"),
+        ("tiktok",    "TikTok",          "TikTok"),
+        ("facebook",  "Facebook",        "Facebook"),
+        ("none",      "Нет соцсетей",    "No social channels"),
+        ("other",     "Другое",          "Other"),
+    ],
+    "social_audience": [
+        ("lt1k",    "До 1 000",   "Under 1k"),
+        ("1-10k",   "1–10 тыс.",  "1–10k"),
+        ("10-50k",  "10–50 тыс.", "10–50k"),
+        ("50kplus", "50 тыс.+",   "50k+"),
+    ],
+    "payout_method": [
+        ("card",   "Банковская карта",       "Bank card"),
+        ("bank",   "Банковский счёт (IBAN)", "Bank account (IBAN)"),
+        ("crypto", "Криптовалюта (USDT)",    "Crypto (USDT)"),
+        ("other",  "Другое",                 "Other"),
+    ],
+}
+
+# Заголовок вопроса (ru, en). Порядок отображения и для менеджер-сводки —
+# SURVEY_FIELD_ORDER ниже.
+SURVEY_LABELS: dict[str, tuple[str, str]] = {
+    "sphere":          ("В какой сфере вы работаете?",
+                        "What's your field?"),
+    "uae_experience":  ("Сколько вы работаете с бизнесом в ОАЭ?",
+                        "How long have you worked with UAE business?"),
+    "b2b_flow":        ("Есть ли у вас поток клиентов-предпринимателей?",
+                        "Do you have a flow of business clients?"),
+    "b2b_volume":      ("Сколько примерно клиентов в месяц?",
+                        "Roughly how many clients a month?"),
+    "base_size":       ("Насколько большая у вас база контактов?",
+                        "How large is your contact base?"),
+    "social_channels": ("Где вы могли бы рекомендовать ONCOUNT?",
+                        "Where could you recommend ONCOUNT?"),
+    "social_audience": ("Ориентир по размеру аудитории",
+                        "Approximate audience size"),
+    "payout_method":   ("Как удобнее получать партнёрское вознаграждение?",
+                        "How would you prefer to receive partner rewards?"),
+}
+
+# Порядок вопросов в форме и в сводке для менеджера.
+SURVEY_FIELD_ORDER = [
+    "sphere", "uae_experience", "b2b_flow", "b2b_volume",
+    "base_size", "social_channels", "social_audience", "payout_method",
+]
+# Поля, обязательные на сервере (остальные — условные/опциональные).
+SURVEY_REQUIRED = {"sphere", "uae_experience", "b2b_flow", "base_size", "payout_method"}
+# Свободный текст к варианту «other» — длину режем, ПД не предполагается.
+SURVEY_OTHER_MAXLEN = 120
+
+
+def _survey_values(field: str) -> set[str]:
+    """Белый список value по полю анкеты."""
+    return {o[0] for o in SURVEY_OPTIONS.get(field, [])}
+
+
+def partner_onboarding(partner: Partner, lang: str = "ru") -> dict:
+    """Единый источник по анкете партнёра (Фаза L): статус + человекочитаемые
+    ответы. Используется баннером (`completed`), GET-формой (`answers` для
+    предзаполнения) и админ-просмотром менеджера (`summary`).
+    Мягко деградирует: пустые/неизвестные значения не валят рендер."""
+    lang = lang if lang in ("ru", "en") else "ru"
+    li = 2 if lang == "en" else 1  # индекс ru/en в кортеже варианта
+    answers: dict = partner.onboarding_answers or {}
+    completed = partner.survey_completed_at is not None
+
+    def label(field: str, val: str) -> str:
+        for o in SURVEY_OPTIONS.get(field, []):
+            if o[0] == val:
+                return o[li]
+        return val  # текст «other» или неизвестный ключ — как есть
+
+    summary: list[dict] = []
+    for field in SURVEY_FIELD_ORDER:
+        raw = answers.get(field)
+        if not raw:
+            continue
+        if isinstance(raw, list):
+            value_label = ", ".join(label(field, v) for v in raw)
+        else:
+            value_label = label(field, raw)
+        # «other»-текст хранится отдельным ключом <field>_other.
+        extra = answers.get(f"{field}_other")
+        if extra:
+            value_label = f"{value_label}: {extra}"
+        summary.append({
+            "field": field,
+            "question": SURVEY_LABELS.get(field, ("", ""))[0 if lang == "ru" else 1],
+            "value": value_label,
+        })
+    return {"completed": completed, "answers": answers, "summary": summary}
+
+
 # Партнёрский менеджер — ОДИН общий на всех партнёров (решение Николь 2026-05-28,
 # Фаза E). Единый источник истины кабинета: имя/контакт/SLA в одном месте, БЕЗ
 # поля в Partner и БЕЗ миграции. ВАЖНО (ПД, «опасная тройка»): имя и контакт —
@@ -342,6 +491,14 @@ async def on_startup() -> None:
         # message_templates уже есть в проде.
         conn.execute(text("ALTER TABLE message_templates ADD COLUMN IF NOT EXISTS partner_type VARCHAR(32)"))
         conn.execute(text("CREATE INDEX IF NOT EXISTS ix_message_templates_partner_type ON message_templates (partner_type)"))
+        # Анкета партнёра (Фаза L, план 2026-05-27). Аддитивно и идемпотентно:
+        # две nullable-колонки, без DB-default. onboarding_answers (JSON) — ответы
+        # белого списка; survey_completed_at — отметка прохождения (NULL = не
+        # пройдена → баннер показан). Существующие партнёры остаются без значений.
+        # Тип JSON совпадает с моделью (как Referral.visitor_meta) — нет
+        # расхождения dev/prod. ПД: номера карт/кошельков в JSON НЕ пишем.
+        conn.execute(text("ALTER TABLE partners ADD COLUMN IF NOT EXISTS onboarding_answers JSON"))
+        conn.execute(text("ALTER TABLE partners ADD COLUMN IF NOT EXISTS survey_completed_at TIMESTAMP"))
     with SessionLocal() as session:
         seed_if_empty(session)
 
@@ -892,7 +1049,145 @@ def onboarding_submit(
             _ctx(request, partner, segments=SEGMENTS, message=msg),
             status_code=409,
         )
+    # После базового онбординга — сразу на анкету партнёра (Фаза L),
+    # если она ещё не пройдена. Анкета мягкая: партнёр может «Пропустить».
+    if partner.survey_completed_at is None:
+        return RedirectResponse("/onboarding-survey", status_code=302)
     return RedirectResponse("/dashboard", status_code=302)
+
+
+# ─── Анкета партнёра (Фаза L) ───────────────────────────────────────────────
+# МЯГКАЯ форма: НЕ блокирует кабинет. Отдельный маршрут /onboarding-survey
+# (НЕ трогаем блокирующий /onboarding, который собирает базовый контакт).
+SURVEY_SNOOZE_COOKIE = "survey_snooze"  # «Позже»: прячет баннер на время
+
+
+@app.get("/onboarding-survey", response_class=HTMLResponse)
+def onboarding_survey_page(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
+    partner = current_partner(request, session)
+    if not partner:
+        return RedirectResponse("/login", status_code=302)
+    info = partner_onboarding(partner, _lang(request))
+    return templates.TemplateResponse(
+        "onboarding_survey.html",
+        _ctx(
+            request, partner,
+            options=SURVEY_OPTIONS,
+            labels=SURVEY_LABELS,
+            answers=info["answers"],   # предзаполнение при повторном входе
+            completed=info["completed"],
+            survey_draft=SURVEY_DRAFT,
+            message=None,
+        ),
+    )
+
+
+@app.post("/onboarding-survey", response_class=HTMLResponse)
+def onboarding_survey_submit(
+    request: Request,
+    sphere: str = Form(""),
+    sphere_other: str = Form(""),
+    uae_experience: str = Form(""),
+    b2b_flow: str = Form(""),
+    b2b_volume: str = Form(""),
+    base_size: str = Form(""),
+    social_channels: list[str] = Form(default=[]),
+    social_audience: str = Form(""),
+    payout_method: str = Form(""),
+    payout_other: str = Form(""),
+    session: Session = Depends(get_session),
+) -> HTMLResponse:
+    partner = current_partner(request, session)
+    if not partner:
+        return RedirectResponse("/login", status_code=302)
+    en = _lang(request) == "en"
+
+    def clean_other(v: str) -> str:
+        return (v or "").strip()[:SURVEY_OTHER_MAXLEN]
+
+    def safe_payout_other(v: str) -> str:
+        # Предохранитель ПД (фин-данные): «другое» — это НАЗВАНИЕ способа
+        # (PayPal/Wise/…), не реквизиты. Если партнёр вопреки подсказке вписал
+        # длинную цепочку цифр (карта/IBAN/счёт ≥8 цифр) — текст НЕ сохраняем,
+        # реквизиты в БД не попадают. Сам ключ payout_method='other' остаётся.
+        t = clean_other(v)
+        return "" if re.search(r"\d{8,}", t.replace(" ", "")) else t
+
+    # Сборка ответов СТРОГО по белым спискам (всё вне списка отбрасывается).
+    answers: dict = {}
+    single = {
+        "sphere": sphere, "uae_experience": uae_experience, "b2b_flow": b2b_flow,
+        "base_size": base_size, "social_audience": social_audience,
+        "payout_method": payout_method,
+    }
+    for field, val in single.items():
+        val = (val or "").strip()
+        if val and val in _survey_values(field):
+            answers[field] = val
+    # b2b_volume — только если поток есть (не "none").
+    bv = (b2b_volume or "").strip()
+    if answers.get("b2b_flow") in ("steady", "occasional") and bv in _survey_values("b2b_volume"):
+        answers["b2b_volume"] = bv
+    # Соцсети — мультивыбор; фильтруем по белому списку, режем дубли, порядок храним.
+    allowed_ch = _survey_values("social_channels")
+    chans = [c.strip() for c in social_channels if c and c.strip() in allowed_ch]
+    seen: set[str] = set()
+    chans = [c for c in chans if not (c in seen or seen.add(c))]
+    # «Нет соцсетей» несовместимо с реальными каналами: если выбрано и то и то,
+    # реальные каналы важнее — убираем "none" (иначе менеджер видит противоречие).
+    if "none" in chans and len(chans) > 1:
+        chans = [c for c in chans if c != "none"]
+    if chans:
+        answers["social_channels"] = chans
+    # Свободный текст «other» — только если выбран соответствующий вариант.
+    if answers.get("sphere") == "other":
+        txt = clean_other(sphere_other)
+        if txt:
+            answers["sphere_other"] = txt
+    if answers.get("payout_method") == "other":
+        txt = safe_payout_other(payout_other)
+        if txt:
+            answers["payout_other"] = txt
+
+    # Серверная валидация обязательных вопросов.
+    missing = [f for f in SURVEY_REQUIRED if f not in answers]
+    if missing:
+        msg = ("Please answer the required questions (marked *)."
+               if en else "Пожалуйста, ответьте на обязательные вопросы (со звёздочкой *).")
+        return templates.TemplateResponse(
+            "onboarding_survey.html",
+            _ctx(
+                request, partner,
+                options=SURVEY_OPTIONS, labels=SURVEY_LABELS,
+                answers=answers,  # сохраняем введённое для повторного показа
+                completed=partner.survey_completed_at is not None,
+                survey_draft=SURVEY_DRAFT, message=msg,
+            ),
+            status_code=400,
+        )
+
+    partner.onboarding_answers = answers
+    partner.survey_completed_at = datetime.utcnow()
+    session.commit()
+    # После заполнения снуз больше не нужен — баннер и так скрыт по completed.
+    resp = RedirectResponse("/dashboard", status_code=302)
+    resp.delete_cookie(SURVEY_SNOOZE_COOKIE)
+    return resp
+
+
+@app.post("/onboarding-survey/later")
+def onboarding_survey_later(request: Request, session: Session = Depends(get_session)):
+    """«Позже»: мягко прячет баннер-приглашение на неделю (cookie, БЕЗ записи в
+    БД и без блокировки кабинета). Анкета остаётся доступной из шапки/ссылки."""
+    partner = current_partner(request, session)
+    if not partner:
+        return RedirectResponse("/login", status_code=302)
+    resp = RedirectResponse("/dashboard", status_code=302)
+    resp.set_cookie(
+        SURVEY_SNOOZE_COOKIE, "1",
+        max_age=7 * 24 * 3600, httponly=True, secure=True, samesite="lax",
+    )
+    return resp
 
 
 @app.post("/checklist/dismiss")
@@ -951,6 +1246,12 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
         partner.checklist_dismissed_at is None
         and not all(s["done"] for s in checklist_steps)
     )
+    # Баннер-приглашение пройти анкету (Фаза L). Мягкий: виден, пока анкета не
+    # пройдена И партнёр не нажал «Позже» (cookie-снуз). Не блокирует кабинет.
+    show_survey_banner = (
+        partner.survey_completed_at is None
+        and request.cookies.get(SURVEY_SNOOZE_COOKIE) != "1"
+    )
 
     return templates.TemplateResponse(
         "dashboard.html",
@@ -973,6 +1274,7 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
             },
             checklist_steps=checklist_steps,
             show_checklist=show_checklist,
+            show_survey_banner=show_survey_banner,
         ),
     )
 

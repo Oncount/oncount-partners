@@ -3,6 +3,22 @@
 {% block heading %}{{ 'Dashboard' if lang == 'en' else 'Дашборд' }}{% endblock %}
 
 {% block content %}
+{% if show_survey_banner %}
+<div class="card survey-banner">
+  <div class="survey-banner-body">
+    <h3 style="margin: 0 0 4px;">🤝 {{ 'Tell us about yourself' if lang == 'en' else 'Расскажите о себе' }}</h3>
+    <p style="margin: 0; color: var(--sage); font-size: 14px;">
+      {% if lang == 'en' %}A short survey (about a minute) — we'll suggest the partnership format that fits you best.{% else %}Короткая анкета (около минуты) — подберём формат партнёрства, который подойдёт именно вам.{% endif %}
+    </p>
+  </div>
+  <div class="survey-banner-actions">
+    <a class="btn btn-primary" href="/onboarding-survey">{{ 'Fill in' if lang == 'en' else 'Пройти' }}</a>
+    <form method="POST" action="/onboarding-survey/later" style="margin: 0;">
+      <button type="submit" class="btn btn-ghost">{{ 'Later' if lang == 'en' else 'Позже' }}</button>
+    </form>
+  </div>
+</div>
+{% endif %}
 <div class="balance">
   <div class="balance-item">
     <span class="balance-item-label">{{ 'Earned:' if lang == 'en' else 'Заработано:' }}</span>

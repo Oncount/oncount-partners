@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}{{ 'About you' if lang == 'en' else 'О себе' }} — ONCOUNT Partners{% endblock %}
+{% block heading %}{{ 'Tell us about yourself' if lang == 'en' else 'Расскажите о себе' }}{% endblock %}
+
+{% block content %}
+{# Индексы: метка вопроса (ru,en) → 0/1; вариант (value,ru,en) → ru=1/en=2. #}
+{% set qi = 1 if lang == 'en' else 0 %}
+{% set oi = 2 if lang == 'en' else 1 %}
+
+<div class="card">
+  <p style="font-size: 16px; margin: 0;">
+    {% if lang == 'en' %}A few quick questions — they help us suggest the partnership format that fits you best. You can skip and finish later; the survey doesn't block your dashboard.{% else %}Несколько коротких вопросов — они помогают подобрать формат партнёрства под вас. Можно пропустить и вернуться позже: анкета не блокирует кабинет.{% endif %}
+  </p>
+  {% if completed %}
+  <p style="font-size: 14px; color: var(--sage); margin: 8px 0 0;">
+    {% if lang == 'en' %}✅ You've already filled this in — feel free to update your answers below.{% else %}✅ Вы уже заполнили анкету — можно обновить ответы ниже.{% endif %}
+  </p>
+  {% endif %}
+</div>
+
+{% if survey_draft %}
+<div class="alert" style="background: rgba(236, 100, 66, 0.10); color: var(--orange); border: 1px solid var(--orange);">
+  {% if lang == 'en' %}⚠️ Draft wording — pending Nicole's approval.{% else %}⚠️ Черновик формулировок — на утверждении Николь.{% endif %}
+</div>
+{% endif %}
+
+{% if message %}
+<div class="alert" style="background: rgba(236, 100, 66, 0.12); color: var(--orange); border: 1px solid var(--orange);">
+  {{ message }}
+</div>
+{% endif %}
+
+<div class="card">
+  <form class="form" method="POST" action="/onboarding-survey">
+
+    {# 1. Сфера — select (10 вариантов) + текст «другое» #}
+    <div class="survey-q">
+      <label class="survey-label">{{ labels['sphere'][qi] }} *</label>
+      <select name="sphere" required>
+        <option value="">{{ '— choose —' if lang == 'en' else '— выберите —' }}</option>
+        {% for opt in options['sphere'] %}
+          <option value="{{ opt[0] }}" {% if answers.get('sphere') == opt[0] %}selected{% endif %}>{{ opt[oi] }}</option>
+        {% endfor %}
+      </select>
+      <input type="text" name="sphere_other" maxlength="120"
+             value="{{ answers.get('sphere_other', '') }}"
+             placeholder="{{ 'If “Other” — please specify' if lang == 'en' else 'Если «Другое» — уточните' }}">
+    </div>
+
+    {# 2. Опыт работы с ОАЭ — radio #}
+    <div class="survey-q">
+      <label class="survey-label">{{ labels['uae_experience'][qi] }} *</label>
+      <div class="survey-opts">
+        {% for opt in options['uae_experience'] %}
+        <label class="survey-opt">
+          <input type="radio" name="uae_experience" value="{{ opt[0] }}" {% if answers.get('uae_experience') == opt[0] %}checked{% endif %}>
+          <span>{{ opt[oi] }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# 3. Поток B2B — radio (+ диапазон, если поток есть) #}
+    <div class="survey-q">
+      <label class="survey-label">{{ labels['b2b_flow'][qi] }} *</label>
+      <div class="survey-opts">
+        {% for opt in options['b2b_flow'] %}
+        <label class="survey-opt">
+          <input type="radio" name="b2b_flow" value="{{ opt[0] }}" {% if answers.get('b2b_flow') == opt[0] %}checked{% endif %}>
+          <span>{{ opt[oi] }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="survey-q">
+      <label class="survey-label">{{ labels['b2b_volume'][qi] }}</label>
+      <div class="survey-opts">
+        {% for opt in options['b2b_volume'] %}
+        <label class="survey-opt">
+          <input type="radio" name="b2b_volume" value="{{ opt[0] }}" {% if answers.get('b2b_volume') == opt[0] %}checked{% endif %}>
+          <span>{{ opt[oi] }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# 4. Размер базы — radio #}
+    <div class="survey-q">
+      <label class="survey-label">{{ labels['base_size'][qi] }} *</label>
+      <div class="survey-opts">
+        {% for opt in options['base_size'] %}
+        <label class="survey-opt">
+          <input type="radio" name="base_size" value="{{ opt[0] }}" {% if answers.get('base_size') == opt[0] %}checked{% endif %}>
+          <span>{{ opt[oi] }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# 5. Соцсети — checkbox (мультивыбор) + ориентир аудитории #}
+    <div class="survey-q">
+      <label class="survey-label">{{ labels['social_channels'][qi] }}</label>
+      <div class="survey-opts">
+        {% for opt in options['social_channels'] %}
+        <label class="survey-opt">
+          <input type="checkbox" name="social_channels" value="{{ opt[0] }}" {% if opt[0] in answers.get('social_channels', []) %}checked{% endif %}>
+          <span>{{ opt[oi] }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="survey-q">
+      <label class="survey-label">{{ labels['social_audience'][qi] }}</label>
+      <div class="survey-opts">
+        {% for opt in options['social_audience'] %}
+        <label class="survey-opt">
+          <input type="radio" name="social_audience" value="{{ opt[0] }}" {% if answers.get('social_audience') == opt[0] %}checked{% endif %}>
+          <span>{{ opt[oi] }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# 6. Способ выплаты — ТОЛЬКО тип канала (реквизиты НЕ собираем) #}
+    <div class="survey-q">
+      <label class="survey-label">{{ labels['payout_method'][qi] }} *</label>
+      <div class="survey-opts">
+        {% for opt in options['payout_method'] %}
+        <label class="survey-opt">
+          <input type="radio" name="payout_method" value="{{ opt[0] }}" {% if answers.get('payout_method') == opt[0] %}checked{% endif %}>
+          <span>{{ opt[oi] }}</span>
+        </label>
+        {% endfor %}
+      </div>
+      <input type="text" name="payout_other" maxlength="120"
+             value="{{ answers.get('payout_other', '') }}"
+             placeholder="{{ 'If “Other” — please specify' if lang == 'en' else 'Если «Другое» — уточните' }}">
+      <p style="color: var(--sage); font-size: 13px; margin: 4px 0 0;">
+        {% if lang == 'en' %}🔒 Don't enter card or wallet details here — the manager will request them privately.{% else %}🔒 Не вводите здесь номер карты или кошелька — менеджер уточнит реквизиты в личной переписке.{% endif %}
+      </p>
+    </div>
+
+    <div style="display: flex; gap: 12px; align-items: center; margin-top: 8px;">
+      <button type="submit" class="btn btn-primary">{{ 'Save' if lang == 'en' else 'Сохранить' }}</button>
+      <a class="btn btn-ghost" href="/dashboard">{{ 'Skip for now' if lang == 'en' else 'Пропустить' }}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

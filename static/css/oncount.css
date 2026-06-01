@@ -237,6 +237,23 @@ table.list td {
 .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; }
 .alert-success { background: rgba(16, 70, 62, 0.08); color: var(--deep-green); border: 1px solid rgba(16, 70, 62, 0.2); }
 
+/* Анкета партнёра (Фаза L) */
+.survey-banner { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; border-left: 4px solid var(--orange); }
+.survey-banner-body { flex: 1; min-width: 220px; }
+.survey-banner-actions { display: flex; align-items: center; gap: 12px; }
+.survey-q { margin-bottom: 22px; }
+.survey-q .survey-label { display: block; font-weight: 600; color: var(--charcoal); margin-bottom: 10px; font-size: 14px; }
+.survey-opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.survey-opt {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 14px; border: 1px solid var(--border); border-radius: 999px;
+  background: var(--cream); cursor: pointer; font-size: 14px; color: var(--charcoal);
+  margin-bottom: 0;
+}
+.survey-opt:hover { border-color: var(--orange); }
+/* Радио/чекбоксы внутри .form не должны растягиваться на всю ширину. */
+.survey-opt input[type="radio"], .survey-opt input[type="checkbox"] { width: auto; margin: 0; }
+
 /* Login */
 .login-page {
   display: flex;
