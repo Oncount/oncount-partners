@@ -23,6 +23,7 @@ from aiogram.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     Message,
+    WebAppInfo,
 )
 from sqlalchemy.orm import Session
 
@@ -60,6 +61,14 @@ def issue_login_url(session: Session, telegram_id: int, next_path: str | None = 
     if next_path:
         url += f"&next={quote(next_path, safe='/')}"
     return url
+
+
+def cabinet_kb(label: str, url: str) -> InlineKeyboardMarkup:
+    """Кнопка входа в ЛК как Telegram Web App — кабинет открывается прямо внутри
+    Telegram, без системного окна «Open Link» с длинным URL. Только приватные чаты."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=label, web_app=WebAppInfo(url=url))],
+    ])
 
 
 def get_or_create_partner(session: Session, msg: Message) -> Partner:
@@ -227,9 +236,7 @@ async def cmd_start_with_payload(msg: Message, command: CommandObject) -> None:
             partner.status = "active"
             session.commit()
             login_url = issue_login_url(session, msg.from_user.id)
-            kb = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text=b("open_my_cabinet", lang), url=login_url)],
-            ])
+            kb = cabinet_kb(b("open_my_cabinet", lang), login_url)
             await msg.answer(
                 t("PARTNER_ONBOARDING_INTRO", lang) + t("ONBOARDING_PARTNER_OK", lang),
                 reply_markup=kb,
@@ -243,9 +250,7 @@ async def cmd_start_with_payload(msg: Message, command: CommandObject) -> None:
                 login_session.telegram_id = msg.from_user.id
                 session.commit()
                 url = f"{settings.WEBAPP_URL}/auth/bot-callback?state={state}"
-                kb = InlineKeyboardMarkup(inline_keyboard=[
-                    [InlineKeyboardButton(text=b("login_cabinet", lang), url=url)],
-                ])
+                kb = cabinet_kb(b("login_cabinet", lang), url)
                 await msg.answer(t("LOGIN_READY", lang), reply_markup=kb)
                 return
             else:
@@ -340,9 +345,7 @@ async def cb_course_practicum(call) -> None:
     with SessionLocal() as session:
         lang = get_lang(session, call.from_user.id)
         login_url = issue_login_url(session, call.from_user.id, next_path=PRACTICUM_PATH)
-    kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=b("open_practicum", lang), url=login_url)],
-    ])
+    kb = cabinet_kb(b("open_practicum", lang), login_url)
     await call.message.answer(t("PRACTICUM_INTRO", lang), reply_markup=kb)
     await call.answer()
 
@@ -359,9 +362,7 @@ async def cb_partner_intro(call) -> None:
             session.commit()
         lang = resolve_lang(partner)
         login_url = issue_login_url(session, call.from_user.id)
-    kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=b("open_my_cabinet", lang), url=login_url)],
-    ])
+    kb = cabinet_kb(b("open_my_cabinet", lang), login_url)
     await call.message.answer(t("PARTNER_ONBOARDING_INTRO", lang), reply_markup=kb)
     await call.answer()
 
@@ -371,9 +372,7 @@ async def cmd_open_lk(msg: Message) -> None:
     with SessionLocal() as session:
         lang = get_lang(session, msg.from_user.id)
         login_url = issue_login_url(session, msg.from_user.id)
-    kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=b("enter_cabinet", lang), url=login_url)],
-    ])
+    kb = cabinet_kb(b("enter_cabinet", lang), login_url)
     await msg.answer(t("OPEN_CABINET_PROMPT", lang), reply_markup=kb)
 
 
@@ -382,9 +381,7 @@ async def cb_partner_open_lk(call) -> None:
     with SessionLocal() as session:
         lang = get_lang(session, call.from_user.id)
         login_url = issue_login_url(session, call.from_user.id)
-    kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=b("enter_cabinet", lang), url=login_url)],
-    ])
+    kb = cabinet_kb(b("enter_cabinet", lang), login_url)
     await call.message.answer(t("OPEN_CABINET_PROMPT", lang), reply_markup=kb)
     await call.answer()
 

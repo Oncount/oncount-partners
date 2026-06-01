@@ -159,8 +159,8 @@ TEXTS: dict[str, dict[str, str]] = {
         "en": "\n\n✅ Tap the button to enter your cabinet.",
     },
     "LOGIN_READY": {
-        "ru": "Готово! Жмите на кнопку — откроется кабинет партнёра в браузере.",
-        "en": "Done! Tap the button — your partner cabinet will open in the browser.",
+        "ru": "Готово! Жмите на кнопку — откроется кабинет партнёра.",
+        "en": "Done! Tap the button — your partner cabinet will open.",
     },
     "LOGIN_EXPIRED": {
         "ru": (
