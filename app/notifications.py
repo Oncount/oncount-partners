@@ -10,12 +10,13 @@
 Что делает модуль:
 - send_notification() — единый гард-канал наружу (TG-first → WhatsApp fallback),
   пишет попытку в БД при любом исходе, в общий лог — только partner_id/kind/status.
-- digest_job() — раз в неделю в 16:00 Asia/Dubai в назначенный партнёру день
-  (partner_id % 7). Если за 7 дней ничего не изменилось — МОЛЧИМ (не шлём пустое).
+- digest_job() — ежедневный джоб 16:00 Asia/Dubai. Адаптивная частота: прислал
+  заявку за неделю → недельные итоги в его день (partner_id % 7); не прислал →
+  месячный нудж «ждём заявки». Гард _engaged() сохраняется.
 - notify_lead_won() — точечный пуш на переходе лида в `won` (идемпотентно).
 - payout_due_date() — дата выплаты: 10-е число месяца, следующего за `won_at`.
 
-ТЕКСТЫ — ЧЕРНОВИК (NOTIFICATIONS_DRAFT=True), на утверждении Николь (урок Фаз C/L).
+ТЕКСТЫ — УТВЕРЖДЕНЫ Николь 2026-06-02 (Фаза 4 go-live), single fixed без ротации.
 """
 from __future__ import annotations
 
@@ -32,9 +33,10 @@ from app.wazzup import send_wa_text
 
 log = logging.getLogger("oncount.notifications")
 
-# Тексты ниже НЕ утверждены Николь — это рыба. show_notifications.py печатает
-# плашку, win/digest помечаются в логе. Снять после утверждения текстов.
-NOTIFICATIONS_DRAFT = True
+# Тексты утверждены Николь 2026-06-02 (Фаза 4 go-live). Единые фиксированные
+# формулировки без ротации: разворачивать в неутверждённые варианты и метить их
+# «финальными» — повтор ошибки Фаз E/F. Анти-бан держится на TG-first + редкости.
+NOTIFICATIONS_DRAFT = False
 
 # Дубай не переходит на летнее время → фиксированный сдвиг от UTC. Так обходимся
 # без zoneinfo (надёжнее на Windows/Railway, нет зависимости от tz-базы).
@@ -44,86 +46,53 @@ DUBAI_OFFSET = timedelta(hours=4)
 # ([[project_wa_broadcast_limit]] — держать ≤40/день/номер). dry-run не считается.
 WA_DAILY_LIMIT = 40
 
-# ─── Банк формулировок (ЧЕРНОВИК) ───────────────────────────────────────────
-# Уникальность (анти-бан): шапка/концовка ротируются по числу прошлых сообщений
-# партнёру → два подряд сообщения не совпадают. Плейсхолдеры: {name}, {client}.
+# ─── Тексты уведомлений (УТВЕРЖДЕНЫ Николь 2026-06-02, single fixed) ─────────
+# Без ротации: одно фиксированное сообщение каждого типа. Плейсхолдеры win:
+# {name}, {client}, {phone_part}, {payout_line}; digest: {name} + счётчики.
 
-GREETINGS_DIGEST = {
-    "ru": [
-        "{name}, добрый день! Коротко — что нового по вашим клиентам в ONCOUNT за неделю.",
-        "Здравствуйте, {name}. Еженедельная сводка по вашим рекомендациям в ONCOUNT.",
-        "{name}, на связи ONCOUNT. Как продвигаются клиенты, которых вы привели.",
-        "Добрый день, {name}! Обновления по вашим клиентам за прошедшую неделю.",
-        "{name}, ваша недельная сводка ONCOUNT готова — главное ниже.",
-        "Приветствуем, {name}! Что изменилось у ваших клиентов за 7 дней.",
-    ],
-    "en": [
-        "{name}, hello! A quick weekly update on your clients at ONCOUNT.",
-        "Hi {name}. Your weekly summary on the clients you introduced to ONCOUNT.",
-        "{name}, it's ONCOUNT. Here's how your introduced clients are progressing.",
-        "Good day, {name}! Updates on your clients over the past week.",
-        "{name}, your weekly ONCOUNT summary is ready — highlights below.",
-        "Hello {name}! What changed for your clients in the last 7 days.",
-    ],
+# WIN-пуш: клиент оплатил. Телефон клиента показываем (правка Николь 2026-06-02 —
+# осознанное ПД-решение: партнёр сам привёл клиента, номер у него и так есть).
+# Выплата — после онбординга клиента и получения от него документов.
+WIN_TEXT = {
+    "ru": ("{name}, отличная новость! Ваш клиент {client}{phone_part} оплатил "
+           "и теперь с ONCOUNT.\n\n"
+           "{payout_line}\n\n"
+           "Полная история по клиенту — в вашем кабинете ONCOUNT."),
+    "en": ("{name}, great news! Your client {client}{phone_part} has paid "
+           "and is now with ONCOUNT.\n\n"
+           "{payout_line}\n\n"
+           "The full client history is in your ONCOUNT dashboard."),
+}
+WIN_PAYOUT_WITH_DATE = {
+    "ru": ("Ожидаемая дата выплаты вам — {date}, после того как клиент пройдёт "
+           "онбординг. Сейчас ждём от него документы."),
+    "en": ("Your expected payout date — {date}, once the client completes "
+           "onboarding. We're currently waiting for their documents."),
+}
+WIN_PAYOUT_NO_DATE = {
+    "ru": ("Выплата вам — после того как клиент пройдёт онбординг. Сейчас ждём "
+           "от него документы."),
+    "en": ("Your payout — once the client completes onboarding. We're currently "
+           "waiting for their documents."),
 }
 
-CLOSINGS_DIGEST = {
-    "ru": [
-        "Полная картина по каждому клиенту — в вашем кабинете ONCOUNT.",
-        "Детали по каждому клиенту всегда в кабинете. Спасибо, что рекомендуете ONCOUNT.",
-        "Загляните в кабинет — там статус по каждому вашему клиенту.",
-        "Появится клиент, которому нужна бухгалтерия в ОАЭ, — вы знаете, куда передать.",
-        "Спасибо за доверие. Вопросы — ваш партнёрский менеджер на связи.",
-        "Материалы для новых рекомендаций — в кабинете ONCOUNT.",
-    ],
-    "en": [
-        "The full picture for every client is in your ONCOUNT dashboard.",
-        "Details on each client are always in your dashboard. Thank you for recommending ONCOUNT.",
-        "Drop by your dashboard — it shows the status of each of your clients.",
-        "If a client needs accounting in the UAE, you know where to introduce them.",
-        "Thank you for your trust. Questions? Your partner manager is one tap away.",
-        "Materials for new recommendations are waiting in your ONCOUNT dashboard.",
-    ],
+# DIGEST: недельная/месячная сводка. Тело — только агрегаты по всем заявкам
+# партнёра (без имён клиентов — ПД). Один и тот же текст для недели и месяца.
+DIGEST_HEAD = {
+    "ru": "{name}, добрый день!\nКоротко, что нового по вашим клиентам за неделю:",
+    "en": "{name}, good afternoon!\nA quick update on your clients this week:",
 }
-
-GREETINGS_WIN = {
-    "ru": [
-        "{name}, отличная новость! Ваш клиент {client} теперь с ONCOUNT.",
-        "{name}, поздравляем — {client} оплатил и работает с ONCOUNT.",
-        "Хорошие новости, {name}! {client}, которого вы привели, оформил сотрудничество.",
-        "{name}, ваш клиент {client} с нами. Спасибо за рекомендацию!",
-        "{name}, {client} оплатил — рекомендация сработала. Спасибо!",
-    ],
-    "en": [
-        "{name}, great news! Your client {client} is now with ONCOUNT.",
-        "{name}, congratulations — {client} has signed up with ONCOUNT.",
-        "Good news, {name}! {client}, whom you introduced, has come on board.",
-        "{name}, your client {client} is with us. Thank you for the recommendation!",
-        "{name}, {client} signed up — your recommendation worked. Thank you!",
-    ],
+DIGEST_BODY = {
+    "ru": "{in_progress} - в работе\n{won} - оплатил\n{lost} - отказ\n{total} - всего",
+    "en": "{in_progress} - in progress\n{won} - paid\n{lost} - declined\n{total} - total",
 }
-
-CLOSINGS_WIN = {
-    "ru": [
-        "Статус выплаты виден в вашем кабинете ONCOUNT.",
-        "Детали — в кабинете. Будем рады новым вашим клиентам.",
-        "Спасибо, что доверяете ONCOUNT своих клиентов.",
-        "Ваш партнёрский менеджер на связи, если будут вопросы.",
-        "Полная история по клиенту — в кабинете ONCOUNT.",
-    ],
-    "en": [
-        "The payout status is visible in your ONCOUNT dashboard.",
-        "Details are in your dashboard. We'd be glad to welcome more of your clients.",
-        "Thank you for trusting ONCOUNT with your clients.",
-        "Your partner manager is here if any questions come up.",
-        "The full client history is in your ONCOUNT dashboard.",
-    ],
-}
-
-# Видимое правило выплат (решение Николь #4) — без конкретной суммы (решение #6).
-PAYOUT_RULE = {
-    "ru": "Партнёрское вознаграждение выплачивается до 10-го числа месяца, следующего за оплатой клиентом.",
-    "en": "Your partner reward is paid by the 10th of the month following the client's payment.",
+DIGEST_CLOSE = {
+    "ru": ("Ждём от вас новые заявки.\n"
+           "Полная картина по каждому клиенту и тексты для рассылок — "
+           "в вашем партнёрском кабинете ONCOUNT."),
+    "en": ("We're waiting for your new referrals.\n"
+           "The full picture for every client and ready-to-send texts — "
+           "in your ONCOUNT partner dashboard."),
 }
 
 
@@ -158,78 +127,63 @@ def payout_due_date(lead: Lead, lang: str = "ru") -> dict | None:
     return {"date": ds, "label": label}
 
 
-# ─── Выбор варианта (уникальность) ───────────────────────────────────────────
-def _prior_count(session: Session, partner_id: int, kind: str) -> int:
-    return (session.query(NotificationAttempt)
-            .filter(NotificationAttempt.partner_id == partner_id,
-                    NotificationAttempt.kind == kind)
-            .count())
+# ─── Адаптивная частота digest ───────────────────────────────────────────────
+DIGEST_WEEKLY_WINDOW = timedelta(days=7)   # прислал заявку за неделю → недельные итоги
+DIGEST_MONTHLY_GAP = timedelta(days=28)    # иначе — не чаще раза в ~месяц
 
 
-def _pick(bank: dict[str, list[str]], lang: str, n: int) -> str:
-    """Детерминированная ротация по счётчику n: соседние сообщения различаются
-    (n и n+1 дают разные индексы при len>=2). Без random — тестируемо."""
-    variants = bank.get(lang) or bank["ru"]
-    return variants[n % len(variants)]
+def _sent_lead_this_week(session: Session, partner_id: int, now: datetime) -> bool:
+    """Прислал ли партнёр хоть одну заявку за последнюю неделю (Lead.created_at).
+    Да → шлём недельные итоги; нет → партнёр в месячном режиме (нудж «ждём заявки»)."""
+    window = now - DIGEST_WEEKLY_WINDOW
+    return (session.query(Lead)
+            .filter(Lead.partner_id == partner_id, Lead.created_at >= window)
+            .first()) is not None
+
+
+def _last_digest_at(session: Session, partner_id: int) -> datetime | None:
+    rec = (session.query(NotificationAttempt)
+           .filter(NotificationAttempt.partner_id == partner_id,
+                   NotificationAttempt.kind == "digest")
+           .order_by(NotificationAttempt.created_at.desc())
+           .first())
+    return rec.created_at if rec else None
 
 
 # ─── Сборка текстов ──────────────────────────────────────────────────────────
 def build_win_text(partner: Partner, lead: Lead, session: Session) -> str:
+    """Пуш на оплату клиента. Телефон клиента — в тексте (правка Николь 2026-06-02).
+    Выплата — после онбординга клиента и получения документов (см. WIN_PAYOUT_*)."""
     lang = _plang(partner)
-    n = _prior_count(session, partner.id, "win")
     name = partner.first_name or partner.kommo_agent_name or ("партнёр" if lang == "ru" else "partner")
     client = (lead.client_name or "").strip() or ("ваш клиент" if lang == "ru" else "your client")
-    greet = _pick(GREETINGS_WIN, lang, n).format(name=name, client=client)
-    close = _pick(CLOSINGS_WIN, lang, n).format(name=name, client=client)
+    phone = (lead.client_phone or "").strip()
+    phone_part = f" ({phone})" if phone else ""
     due = payout_due_date(lead, lang)
-    body_mid: list[str] = []
-    if due and due["date"]:
-        body_mid.append(f"Ожидаемая дата выплаты — {due['date']}."
-                        if lang == "ru" else f"Expected payout date — {due['date']}.")
-    # Правило выплат — всегда (без конкретной суммы, решение Николь #6).
-    body_mid.append(PAYOUT_RULE[lang])
-    return "\n\n".join([greet, *body_mid, close])
-
-
-def build_digest_text(partner: Partner, session: Session, now: datetime) -> str | None:
-    """Сводка по лидам партнёра. None → за 7 дней ничего не изменилось (МОЛЧИМ).
-
-    «Изменение» = новый лид (created_at) ИЛИ выигранный (won_at) за окно 7 дней
-    (решение Николь: digest-детект по 1 полю won_at + created_at). Тело — только
-    АГРЕГАТЫ, без имён клиентов (ПД: имя чужого клиента в сводку НЕ кладём)."""
-    lang = _plang(partner)
-    window = now - timedelta(days=7)
-    rows = session.query(Lead).filter_by(partner_id=partner.id).all()
-    if not rows:
-        return None
-    new_week = sum(1 for l in rows if l.created_at and l.created_at >= window)
-    won_week = sum(1 for l in rows if l.won_at and l.won_at >= window)
-    if new_week == 0 and won_week == 0:
-        return None  # тишина — нет хороших новостей за неделю
-
-    in_progress = sum(1 for l in rows if l.status in ("new", "in_progress"))
-    won_total = sum(1 for l in rows if l.status == "won")
-
-    n = _prior_count(session, partner.id, "digest")
-    name = partner.first_name or partner.kommo_agent_name or ("партнёр" if lang == "ru" else "partner")
-    greet = _pick(GREETINGS_DIGEST, lang, n).format(name=name)
-    close = _pick(CLOSINGS_DIGEST, lang, n).format(name=name)
-
-    if lang == "en":
-        body = [
-            f"In progress with the accountant: {in_progress}.",
-            f"Already with us (paid): {won_total}.",
-            f"New introductions this week: {new_week}.",
-        ]
+    if due and due.get("date"):
+        payout_line = WIN_PAYOUT_WITH_DATE[lang].format(date=due["date"])
     else:
-        body = [
-            f"В работе у бухгалтера: {in_progress}.",
-            f"Уже с нами (оплатили): {won_total}.",
-            f"Новые заявки за неделю: {new_week}.",
-        ]
-    if won_total:
-        body.append(PAYOUT_RULE[lang])
-    return "\n\n".join([greet, "\n".join(body), close])
+        payout_line = WIN_PAYOUT_NO_DATE[lang]
+    return WIN_TEXT[lang].format(
+        name=name, client=client, phone_part=phone_part, payout_line=payout_line
+    )
+
+
+def build_digest_text(partner: Partner, session: Session, now: datetime) -> str:
+    """Сводка по заявкам партнёра. Тело — только АГРЕГАТЫ по ВСЕМ его заявкам
+    (без имён клиентов — ПД): в работе / оплатил / отказ / всего. Текст один и тот
+    же для недельной (активный) и месячной (реактивация) рассылки — частоту решает
+    run_weekly_digest, не этот сборщик."""
+    lang = _plang(partner)
+    rows = session.query(Lead).filter_by(partner_id=partner.id).all()
+    in_progress = sum(1 for l in rows if l.status in ("new", "in_progress"))
+    won = sum(1 for l in rows if l.status == "won")
+    lost = sum(1 for l in rows if l.status == "lost")
+    total = len(rows)
+    name = partner.first_name or partner.kommo_agent_name or ("партнёр" if lang == "ru" else "partner")
+    head = DIGEST_HEAD[lang].format(name=name)
+    body = DIGEST_BODY[lang].format(in_progress=in_progress, won=won, lost=lost, total=total)
+    return f"{head}\n{body}\n\n{DIGEST_CLOSE[lang]}"
 
 
 # ─── Канал-роутинг (TG-first) ────────────────────────────────────────────────
@@ -372,7 +326,9 @@ def _digest_already_today(session: Session, partner_id: int, now: datetime) -> b
 def run_weekly_digest(session: Session, now: datetime | None = None) -> dict:
     """Тело джоба (вынесено для тестируемости). Бежит ежедневно в 16:00 Дубай;
     отбирает партнёров, у кого СЕГОДНЯ их день (partner_id % 7 == weekday Дубай).
-    Молчит, если за неделю изменений нет. Идемпотентно: ≤1 digest/день/партнёр."""
+    Адаптивная частота (решение Николь 2026-06-02): прислал заявку за неделю →
+    недельные итоги в его слот; не прислал → месячный нудж (если с прошлого digest
+    прошло ≥28 дней). Идемпотентно: ≤1 digest/день."""
     now = now or datetime.utcnow()
     dubai_weekday = (now + DUBAI_OFFSET).weekday()  # Пн=0 … Вс=6
     # Только партнёры-агенты, КОТОРЫЕ УЖЕ ЗАХОДИЛИ В КАБИНЕТ (last_login_at):
@@ -382,20 +338,22 @@ def run_weekly_digest(session: Session, now: datetime | None = None) -> dict:
               .filter(Partner.kommo_agent_enum_id.isnot(None),
                       Partner.last_login_at.isnot(None))
               .all())
-    sent = silent = skipped_today = 0
+    sent = monthly_skip = skipped_today = 0
     for p in agents:
         if p.id % 7 != dubai_weekday:
             continue
         if _digest_already_today(session, p.id, now):
             skipped_today += 1
             continue
-        text = build_digest_text(p, session, now)
-        if text is None:
-            silent += 1
-            continue
-        send_notification(p, text, "digest", session, now=now)
+        # Не присылал заявок на этой неделе — месячный режим (нудж не чаще ~раза в месяц).
+        if not _sent_lead_this_week(session, p.id, now):
+            last = _last_digest_at(session, p.id)
+            if last is not None and (now - last) < DIGEST_MONTHLY_GAP:
+                monthly_skip += 1
+                continue
+        send_notification(p, build_digest_text(p, session, now), "digest", session, now=now)
         sent += 1
-    res = {"weekday": dubai_weekday, "sent": sent, "silent": silent,
+    res = {"weekday": dubai_weekday, "sent": sent, "monthly_skip": monthly_skip,
            "skipped_today": skipped_today, "live": settings.NOTIFICATIONS_LIVE}
     log.info("weekly_digest: %s", res)
     return res

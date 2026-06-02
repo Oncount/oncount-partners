@@ -70,9 +70,11 @@ class Settings:
     CONTACT_WA_NUMBER: str = os.getenv("CONTACT_WA_NUMBER", "971589217784")
     # Баннер набора на Mastermind в разделе «Курсы». Меняется по месяцам — из конфига,
     # не хардкодом в шаблоне (правило репо №1). Пустой MASTERMIND_TITLE — баннер скрыт.
+    # Сейчас СКРЫТ (решение Николь 2026-06-02): набор закрыт. Чтобы вернуть — задать
+    # MASTERMIND_TITLE/_EN (env или дефолт) с новым текстом месяца.
     MASTERMIND_TITLE: str = os.getenv(
         "MASTERMIND_TITLE",
-        "Открыт набор на Mastermind — Июнь",
+        "",
     )
     # Программа: 5 AI-сотрудников, по пунктам через «;» (в баннере — через запятую).
     # Пункты 4–5 — заглушки до уточнения.
@@ -92,7 +94,7 @@ class Settings:
     # Без них EN-витрина показывала русский текст баннера.
     MASTERMIND_TITLE_EN: str = os.getenv(
         "MASTERMIND_TITLE_EN",
-        "Mastermind enrollment open — June",
+        "",
     )
     MASTERMIND_DETAILS_EN: str = os.getenv(
         "MASTERMIND_DETAILS_EN",

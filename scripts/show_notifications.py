@@ -28,24 +28,18 @@ from app.models import NotificationAttempt
 
 
 def print_bank() -> None:
-    flag = "ЧЕРНОВИК (не утверждён)" if N.NOTIFICATIONS_DRAFT else "утверждён"
-    print(f"\n=== БАНК ТЕКСТОВ УВЕДОМЛЕНИЙ — {flag} ===")
-    print(f"NOTIFICATIONS_DRAFT = {N.NOTIFICATIONS_DRAFT}")
-    blocks = [
-        ("DIGEST — шапки", N.GREETINGS_DIGEST),
-        ("DIGEST — концовки", N.CLOSINGS_DIGEST),
-        ("WIN — шапки", N.GREETINGS_WIN),
-        ("WIN — концовки", N.CLOSINGS_WIN),
-    ]
-    for title, bank in blocks:
-        print(f"\n— {title} —")
-        for lang in ("ru", "en"):
-            print(f"  [{lang}]")
-            for i, v in enumerate(bank[lang], 1):
-                print(f"    {i}. {v}")
-    print("\n— Правило выплат —")
+    flag = "ЧЕРНОВИК (не утверждён)" if N.NOTIFICATIONS_DRAFT else "УТВЕРЖДЁН"
+    print(f"\n=== ТЕКСТЫ УВЕДОМЛЕНИЙ — {flag} ===")
+    print(f"NOTIFICATIONS_DRAFT = {N.NOTIFICATIONS_DRAFT}  (single fixed, без ротации)")
     for lang in ("ru", "en"):
-        print(f"  [{lang}] {N.PAYOUT_RULE[lang]}")
+        win = N.WIN_TEXT[lang].format(
+            name="{имя}", client="{клиент}", phone_part=" ({телефон})",
+            payout_line=N.WIN_PAYOUT_WITH_DATE[lang].format(date="{дата}"))
+        head = N.DIGEST_HEAD[lang].format(name="{имя}")
+        body = N.DIGEST_BODY[lang].format(in_progress="N", won="N", lost="N", total="N")
+        digest = f"{head}\n{body}\n\n{N.DIGEST_CLOSE[lang]}"
+        print(f"\n— WIN-пуш [{lang}] —\n  " + win.replace("\n", "\n  "))
+        print(f"\n— DIGEST [{lang}] —\n  " + digest.replace("\n", "\n  "))
     print()
 
 
