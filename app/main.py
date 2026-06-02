@@ -150,33 +150,34 @@ def partner_type_label(key: str, lang: str = "ru") -> dict[str, str]:
 # ─── Способы привлечения — ось вкладок /tools (план 2026-06-02) ──────────────
 # Партнёр выбирает не «кто я» (тип), а «каким действием привожу» (способ).
 # Порядок METHODS = порядок вкладок. hint = строка-фильтр «для кого» в шапке
-# блока. directlinks — особый блок: рендерит карточки персональных ссылок
-# (не тексты из БД). EN-ярлыки тут же (ось внутренняя, как PARTNER_TYPES).
+# блока. Названия КОРОТКИЕ (решение Николь 2026-06-02) — чтобы 5 вкладок влезли
+# в одну строку. Вкладка `intro` объединяет личное интро + прямые персональные
+# ссылки: её панель рендерит И тексты-интро из БД (method='intro'), И карточки
+# ссылок (бывший directlinks). EN-ярлыки тут же (ось внутренняя, как PARTNER_TYPES).
 METHODS: dict[str, dict[str, str]] = {
-    "broadcast":   {"icon": "📨", "ru": "Рассылка по базе",     "en": "Broadcast to your base",
-                    "hint_ru": "У вас есть база контактов (WhatsApp / Telegram) — отправьте готовый текст со своей ссылкой.",
-                    "hint_en": "You have a contact base (WhatsApp / Telegram) — send a ready text with your link."},
-    "social":      {"icon": "📱", "ru": "Пост в соцсетях",      "en": "Social media post",
-                    "hint_ru": "У вас есть канал, блог или аккаунт — опубликуйте готовый пост со своей ссылкой.",
-                    "hint_en": "You have a channel, blog or account — publish a ready post with your link."},
-    "event":       {"icon": "🤝", "ru": "Совместное событие",   "en": "Joint event",
-                    "hint_ru": "Проводите совместное мероприятие — пригласите аудиторию на разбор с бухгалтером.",
-                    "hint_en": "Running a joint event — invite the audience to a session with an accountant."},
-    "leadmagnet":  {"icon": "📋", "ru": "Чек-лист в подарок",   "en": "Free checklist",
-                    "hint_ru": "Подарите чек-лист в обмен на интерес — мягкий повод привести клиента.",
-                    "hint_en": "Offer a checklist in exchange for interest — a soft way to bring a client."},
-    "intro":       {"icon": "💬", "ru": "Личное интро",         "en": "Personal intro",
-                    "hint_ru": "Тёплый клиент 1-на-1 — представьте нас в переписке готовым шаблоном.",
-                    "hint_en": "A warm 1-on-1 client — introduce us in chat with a ready template."},
-    "directlinks": {"icon": "🎓", "ru": "Прямые ссылки",        "en": "Direct links",
-                    "hint_ru": "Просто нужна персональная ссылка — скопируйте и отправьте куда угодно.",
-                    "hint_en": "You just need a personal link — copy it and send it anywhere."},
+    "broadcast":  {"icon": "📨", "ru": "Рассылка",  "en": "Broadcast",
+                   "hint_ru": "У вас есть база контактов (WhatsApp / Telegram) — отправьте готовый текст со своей ссылкой.",
+                   "hint_en": "You have a contact base (WhatsApp / Telegram) — send a ready text with your link."},
+    "social":     {"icon": "📱", "ru": "Пост",      "en": "Post",
+                   "hint_ru": "У вас есть канал, блог или аккаунт — опубликуйте готовый пост со своей ссылкой.",
+                   "hint_en": "You have a channel, blog or account — publish a ready post with your link."},
+    "event":      {"icon": "🤝", "ru": "События",   "en": "Events",
+                   "hint_ru": "Проводите совместное мероприятие — пригласите аудиторию на разбор с бухгалтером.",
+                   "hint_en": "Running a joint event — invite the audience to a session with an accountant."},
+    "leadmagnet": {"icon": "📋", "ru": "Чек-лист",  "en": "Checklist",
+                   "hint_ru": "Подарите чек-лист в обмен на интерес — мягкий повод привести клиента.",
+                   "hint_en": "Offer a checklist in exchange for interest — a soft way to bring a client."},
+    "intro":      {"icon": "💬", "ru": "Интро и ссылки", "en": "Intro & links",
+                   "hint_ru": "Тёплый клиент 1-на-1 — представьте нас готовым шаблоном; ниже — ваши прямые персональные ссылки.",
+                   "hint_en": "A warm 1-on-1 client — introduce us with a ready template; below are your direct personal links."},
 }
 METHODS_ORDER: list[str] = list(METHODS.keys())
 
-# Старые якоря /tools → новые способы (bot.py и закладки не ломаем).
+# Старые якоря /tools → новые способы (bot.py и закладки не ломаем). directlinks
+# больше нет отдельной вкладкой — ссылки переехали в `intro`, туда же #links.
 LEGACY_TOOL_ANCHORS: dict[str, str] = {
-    "links": "directlinks",
+    "links": "intro",
+    "directlinks": "intro",
     "messages": "broadcast",
     "kits": "intro",
 }
@@ -1520,7 +1521,7 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
             "label": "Скопируй свою партнёрскую ссылку",
             "label_en": "Copy your partner link",
             "done": partner.links_viewed_at is not None,
-            "href": "/tools#directlinks",
+            "href": "/tools#intro",
         },
         {
             "label": "Передай первого клиента",
@@ -1722,10 +1723,10 @@ def tools(request: Request, session: Session = Depends(get_session)) -> HTMLResp
 
 
 # Старые URL → объединённая страница (бот /links, /messages и закладки живут).
-# Якоря переехали на способы (план 2026-06-02): /links → directlinks.
+# Якоря переехали на способы (план 2026-06-02): ссылки теперь во вкладке intro.
 @app.get("/links")
 def links_redirect() -> RedirectResponse:
-    return RedirectResponse("/tools#directlinks", status_code=302)
+    return RedirectResponse("/tools#intro", status_code=302)
 
 
 @app.get("/transfer", response_class=HTMLResponse)
