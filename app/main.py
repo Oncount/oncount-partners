@@ -477,7 +477,8 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 
 
 _RL_HITS: dict[str, "deque"] = {}
-_RL_PATHS = ("/auth/", "/login", "/invite/", "/consultation/submit", "/mk/submit")
+_RL_PATHS = ("/auth/", "/login", "/invite/", "/consultation/submit", "/mk/submit",
+             "/guide/corp-tax/submit")
 _RL_MAX = 30          # запросов с одного IP
 _RL_WINDOW = 60       # за столько секунд
 
@@ -1111,11 +1112,51 @@ async def mk_submit(request: Request,
     )
 
 
+# ─── Лид-магнит «0% Corporate Tax»: квиз → PDF чек-листа ссылкой в WhatsApp ──────
+# (план 2026-06-02). Партнёрский канал: тизер + ссылка ?ref={код}. Те же 3 шага,
+# но после заявки клиенту уходит WhatsApp-сообщение со ссылкой на PDF.
+
+@app.get("/guide/corp-tax", response_class=HTMLResponse)
+def guide_corp_tax_page(request: Request) -> HTMLResponse:
+    from app import leadmagnet_config as lm
+    return templates.TemplateResponse("quiz.html", {
+        "request": request,
+        "page_title": "ONCOUNT — чек-лист 0% Corporate Tax",
+        "cover": lm.COVER,
+        "intro": lm.INTRO,
+        "questions": lm.QUESTIONS,
+        "final": lm.FINAL,
+        "thanks": lm.THANKS,
+        "socials": lm.SOCIALS,
+        "submit_url": "/guide/corp-tax/submit",
+    })
+
+
+@app.post("/guide/corp-tax/submit")
+async def guide_corp_tax_submit(request: Request,
+                                session: Session = Depends(get_session)) -> dict:
+    """Приём заявки лид-магнита → лид в воронку 1.1 + PDF-ссылка в WhatsApp.
+    Та же машинерия, что у /consultation и /mk, плюс доставка чек-листа ссылкой."""
+    from app import leadmagnet_config as lm
+    return await _handle_quiz_submit(
+        request, session,
+        valid_options=lm.VALID_OPTIONS,
+        question_titles=lm.QUESTION_TITLES,
+        event_slug=lm.EVENT_SLUG,
+        notify_header="📥 Новая заявка с лид-магнита «0% Corporate Tax»",
+        lead_prefix=lm.KOMMO_LEAD_PREFIX,
+        lead_tag=lm.KOMMO_LEAD_TAG,
+        note_intro=lm.KOMMO_NOTE_INTRO,
+        deliver_wa_text=lm.WA_TEXT.format(link=lm.GUIDE_PDF_URL),
+    )
+
+
 async def _handle_quiz_submit(
     request: Request, session: Session, *,
     valid_options: dict, question_titles: dict,
     event_slug: str | None, notify_header: str,
     lead_prefix: str, lead_tag: str, note_intro: str,
+    deliver_wa_text: str | None = None,
 ) -> dict:
     """Общее ядро приёма заявок квиз-лендингов (/consultation и /mk). Клиенту
     ВСЕГДА отвечаем ok (идемпотентно, без утечки внутренней логики). Порядок:
@@ -1190,6 +1231,17 @@ async def _handle_quiz_submit(
     sub.kommo_status = result["status"]
     sub.kommo_lead_id = result.get("kommo_lead_id")
     session.commit()
+
+    # Доставка чек-листа клиенту в WhatsApp (лид-магнит). Best-effort: лид уже
+    # создан, провал доставки не валит приём. Предохранители — внутри send_wa_text
+    # (dev / WAZZUP_TEST_ONLY_NUMBER): на тесте PDF уходит только на тестовый номер.
+    if deliver_wa_text:
+        try:
+            from app.wazzup import send_wa_text
+            ok = send_wa_text(phone_norm, deliver_wa_text)
+            log.info("leadmagnet PDF link → WA event=%s sent=%s", event_slug, ok)
+        except Exception as exc:  # сеть/конфиг — не валим приём заявки
+            log.warning("leadmagnet WA delivery error: %s", type(exc).__name__)
 
     # TG-пуш админу (Николь) — внутреннее уведомление в наш бот, не сторонний сервис.
     _notify_admin_new_quiz(sub, partner, answers,
