@@ -83,6 +83,15 @@
     .cover-team{margin:0 0 22px;display:flex;flex-direction:column;gap:3px}
     .cover-team p{margin:0;font-weight:700;font-size:16px;line-height:1.45;color:var(--ink)}
     .cover-bullets-title{font-weight:700;font-size:17px;margin:0 0 14px;color:var(--ink)}
+    .cover-main{display:flex;flex-direction:column}
+    /* Двухколоночная обложка (консультация): на мобиле фото ПОД кнопкой,
+       на десктопе (≥640px) текст слева, фото СПРАВА. /mk это не затрагивает. */
+    .cover-split .cover-img{margin:20px 0 0}
+    @media (min-width:640px){
+      .cover-split{flex-direction:row;align-items:flex-start;gap:28px}
+      .cover-split .cover-main{flex:1;min-width:0}
+      .cover-split .cover-img{width:40%;max-width:300px;margin:0;flex:0 0 auto;position:sticky;top:18px}
+    }
     /* Текстовый логотип ONCOUNT — всегда виден на светлом фоне (оранжевое on + тёмное count) */
     .logo-text{font-family:Outfit,sans-serif;font-weight:800;font-size:28px;
       letter-spacing:-0.02em;line-height:1;color:#15211e}
@@ -103,19 +112,22 @@
     <div class="brand"><img class="brand-logo" src="/static/img/logo-light.png" alt="ONCOUNT"></div>
 
     {% if cover %}
-    <section class="cover" id="cover">
-      {% if cover.image %}<img class="cover-img" src="{{ cover.image }}" alt="ONCOUNT — we count, you succeed">{% endif %}
-      {% if cover.badge %}<div class="cover-badge">{{ cover.badge }}</div>{% endif %}
-      <h1 class="cover-title">{{ cover.title }}</h1>
-      {% if cover.date %}<div class="cover-meta">🕕 {{ cover.date }} · 📍 {{ cover.place }}</div>{% endif %}
-      {% if cover.lead %}<p class="cover-lead">{{ cover.lead }}</p>{% endif %}
-      {% if cover.team %}<div class="cover-team">{% for t in cover.team %}<p>{{ t }}</p>{% endfor %}</div>{% endif %}
-      {% if cover.bullets_title %}<p class="cover-bullets-title">{{ cover.bullets_title }}</p>{% endif %}
-      {% if cover.bullets %}<ul class="cover-bullets">
-        {% for b in cover.bullets %}<li>{{ b }}</li>{% endfor %}
-      </ul>{% endif %}
-      <button type="button" class="btn btn-primary cover-cta" id="coverStart">{{ cover.cta }}</button>
-      {% if cover.note %}<p class="cover-note">{{ cover.note }}</p>{% endif %}
+    <section class="cover{% if cover.image_side == 'right' %} cover-split{% endif %}" id="cover">
+      {% if cover.image and cover.image_side != 'right' %}<img class="cover-img" src="{{ cover.image }}" alt="ONCOUNT — we count, you succeed">{% endif %}
+      <div class="cover-main">
+        {% if cover.badge %}<div class="cover-badge">{{ cover.badge }}</div>{% endif %}
+        <h1 class="cover-title">{{ cover.title }}</h1>
+        {% if cover.date %}<div class="cover-meta">🕕 {{ cover.date }} · 📍 {{ cover.place }}</div>{% endif %}
+        {% if cover.lead %}<p class="cover-lead">{{ cover.lead }}</p>{% endif %}
+        {% if cover.team %}<div class="cover-team">{% for t in cover.team %}<p>{{ t }}</p>{% endfor %}</div>{% endif %}
+        {% if cover.bullets_title %}<p class="cover-bullets-title">{{ cover.bullets_title }}</p>{% endif %}
+        {% if cover.bullets %}<ul class="cover-bullets">
+          {% for b in cover.bullets %}<li>{{ b }}</li>{% endfor %}
+        </ul>{% endif %}
+        <button type="button" class="btn btn-primary cover-cta" id="coverStart">{{ cover.cta }}</button>
+        {% if cover.note %}<p class="cover-note">{{ cover.note }}</p>{% endif %}
+      </div>
+      {% if cover.image and cover.image_side == 'right' %}<img class="cover-img" src="{{ cover.image }}" alt="ONCOUNT — консультация по налогам и бухгалтерии в ОАЭ">{% endif %}
     </section>
     {% endif %}
 
