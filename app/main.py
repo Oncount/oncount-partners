@@ -185,8 +185,9 @@ LEGACY_TOOL_ANCHORS: dict[str, str] = {
 # Сертифицированные бухгалтеры — блок доверия в кружочках (решение Николь
 # 2026-06-02): на квиз-лендинге /consultation и в кабинете у приглашения на
 # консультацию. Только визуал доверия (без клика). Майя — реальное имя/роль
-# (главбух), Омер — ведущий бухгалтер; имена Адам/Даниэль условные (по просьбе
-# Николь), языки — флагами. Фото в static/img/accountants/.
+# (главбух, фото 391), Омер — ведущий бухгалтер (фото 394, с волосами и очками);
+# Радж/Нихил — условные ИНДИЙСКИЕ имена (по просьбе Николь), языки — флагами.
+# Фото в static/img/accountants/.
 ACCOUNTANTS: list[dict] = [
     {"photo": "/static/img/accountants/maya.jpg", "name": "Майя Мандзюк",
      "name_en": "Maya Mandziuk", "role": "Главный бухгалтер",
@@ -194,11 +195,11 @@ ACCOUNTANTS: list[dict] = [
     {"photo": "/static/img/accountants/omer.jpg", "name": "Омер",
      "name_en": "Omer", "role": "Ведущий бухгалтер",
      "role_en": "Lead accountant", "flags": "🇬🇧 🇦🇪"},
-    {"photo": "/static/img/accountants/adam.jpg", "name": "Адам",
-     "name_en": "Adam", "role": "Бухгалтер", "role_en": "Accountant",
+    {"photo": "/static/img/accountants/raj.jpg", "name": "Радж",
+     "name_en": "Raj", "role": "Бухгалтер", "role_en": "Accountant",
      "flags": "🇬🇧"},
-    {"photo": "/static/img/accountants/daniel.jpg", "name": "Даниэль",
-     "name_en": "Daniel", "role": "Бухгалтер", "role_en": "Accountant",
+    {"photo": "/static/img/accountants/nikhil.jpg", "name": "Нихил",
+     "name_en": "Nikhil", "role": "Бухгалтер", "role_en": "Accountant",
      "flags": "🇬🇧"},
 ]
 
