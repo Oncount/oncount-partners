@@ -47,11 +47,12 @@ class Settings:
     # id воронки/этапа 1.1 — из конфига (правило репо №1), сверены ниже.
     # Поле «ID AGENT» = #961886 (см. Partner.kommo_agent_enum_id).
     QUIZ_KOMMO_LIVE: bool = os.getenv("QUIZ_KOMMO_LIVE", "") in ("1", "true", "True")
-    # Дефолты сверены kommo_quiz_discover 2026-06-02 (read-only Kommo): воронка
-    # «1.1 Line agent lid» pipeline_id=11126307, входящий этап «Incoming leads»
-    # status_id=85364779. Переопределяемо через env при необходимости.
+    # Дефолты сверены kommo_quiz_discover 2026-06-02. Воронка «1.1 Line agent lid»
+    # pipeline_id=11126307. ВАЖНО: «Incoming leads» (85364779) — это unsorted-этап,
+    # API его НЕ принимает (NotSupportedChoice). Берём первый РЕГУЛЯРНЫЙ этап
+    # «Первый ход» status_id=85364783 (проверено live-тестом 2026-06-02).
     QUIZ_KOMMO_PIPELINE_ID: str = os.getenv("QUIZ_KOMMO_PIPELINE_ID", "11126307")
-    QUIZ_KOMMO_STATUS_ID: str = os.getenv("QUIZ_KOMMO_STATUS_ID", "85364779")
+    QUIZ_KOMMO_STATUS_ID: str = os.getenv("QUIZ_KOMMO_STATUS_ID", "85364783")
     KOMMO_ID_AGENT_FIELD_ID: int = int(os.getenv("KOMMO_ID_AGENT_FIELD_ID", "961886"))
     # Предохранитель Telegram-дайджеста (Фаза 4). По умолчанию OFF: планировщик 5/20
     # работает в dry (превью в лог), реально НЕ шлёт. Включить только осознанно:

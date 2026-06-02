@@ -72,23 +72,25 @@ def _find_contact_by_phone(phone_norm: str, headers: dict) -> tuple[int | None, 
         log.warning("contact search failed: %s", type(exc).__name__)
         return None, []
 
+    def _match(d: str) -> bool:
+        # Точное совпадение: либо все цифры равны, либо совпадают последние 10
+        # (учёт разного префикса страны). НИКАКОГО «первого попавшегося» —
+        # fuzzy-поиск Kommo легко цепляет чужой контакт по подстроке.
+        if not d or not phone_norm:
+            return False
+        return d == phone_norm or (len(d) >= 10 and len(phone_norm) >= 10
+                                   and d[-10:] == phone_norm[-10:])
+
     chosen = None
     for c in contacts:
         for f in (c.get("custom_fields_values") or []):
-            if f.get("field_code") == "PHONE":
-                for v in (f.get("values") or []):
-                    d = _digits(v.get("value"))
-                    if d and phone_norm and d[-9:] == phone_norm[-9:]:
-                        chosen = c
-                        break
-            if chosen:
+            if f.get("field_code") == "PHONE" and any(
+                    _match(_digits(v.get("value"))) for v in (f.get("values") or [])):
+                chosen = c
                 break
         if chosen:
             break
-    # query был телефоном → если по полю не подтвердилось (поле скрыто), берём первого.
-    if chosen is None and contacts:
-        chosen = contacts[0]
-    if chosen is None:
+    if chosen is None:  # точного совпадения нет → не дедупим, создаём новую сделку
         return None, []
     tags = [{"name": t["name"]} for t in ((chosen.get("_embedded") or {}).get("tags") or [])
             if t.get("name")]
@@ -207,6 +209,17 @@ def create_consultation_lead(
     except Exception as exc:  # сеть/JSON — не валим приём заявки
         log.error("quiz lead create error: %s", type(exc).__name__)
         return {"status": "failed", "kommo_lead_id": None, "error": type(exc).__name__}
+
+    # /leads/complex кладёт лид в unsorted/главную воронку — принудительно
+    # переносим в 1.1 на регулярный этап (PATCH, проверено live-тестом 2026-06-02).
+    if lead_id:
+        try:
+            httpx.patch(f"{_base()}/leads/{lead_id}",
+                        json={"pipeline_id": int(settings.QUIZ_KOMMO_PIPELINE_ID),
+                              "status_id": int(settings.QUIZ_KOMMO_STATUS_ID)},
+                        headers=headers, timeout=_TIMEOUT)
+        except Exception as exc:
+            log.warning("quiz lead pipeline PATCH failed (lead=%s): %s", lead_id, type(exc).__name__)
 
     # Примечание с ответами/UTM — best-effort: лид уже создан, провал не критичен.
     if lead_id:
