@@ -24,12 +24,11 @@
     <span class="balance-item-label">{{ 'Earned:' if lang == 'en' else 'Заработано:' }}</span>
     <span class="balance-item-value">{{ '%.0f'|format(kpi.earned_aed) }} AED</span>
   </div>
-  {% if kpi.expected_usd_high %}
   <div class="balance-item">
     <span class="balance-item-label">{{ 'Expected reward:' if lang == 'en' else 'Ожидаемое вознаграждение:' }}</span>
-    <span class="balance-item-value">${{ '{:,}'.format(kpi.expected_usd_low) }} – ${{ '{:,}'.format(kpi.expected_usd_high) }}</span>
+    {# У новичка с 0 заявок показываем мотивирующий потенциал, а не «$0 – $0». #}
+    <span class="balance-item-value">{% if kpi.leads %}${{ '{:,}'.format(kpi.expected_usd_low) }} – ${{ '{:,}'.format(kpi.expected_usd_high) }}{% else %}{{ '$300–$1,000 per client' if lang == 'en' else '$300–$1 000 за каждого клиента' }}{% endif %}</span>
   </div>
-  {% endif %}
   <div class="balance-item" style="flex-direction: row; align-items: baseline; gap: 8px; flex-wrap: wrap;">
     <span class="balance-item-label">{{ 'Your partner code:' if lang == 'en' else 'Ваш код партнёра:' }}</span>
     <span class="balance-item-value">{{ partner.ref_slug }}</span>
@@ -45,44 +44,18 @@
     <div class="kpi-value">{{ kpi.leads }}</div>
   </div>
   <div class="kpi">
-    <div class="kpi-label">{{ 'Won' if lang == 'en' else 'Успешные' }}</div>
-    <div class="kpi-value">{{ kpi.successful }}</div>
+    <div class="kpi-label">{{ 'In progress' if lang == 'en' else 'В работе' }}</div>
+    <div class="kpi-value">{{ kpi.in_progress }}</div>
   </div>
   <div class="kpi">
     <div class="kpi-label">{{ 'Rejected' if lang == 'en' else 'Отказы' }}</div>
     <div class="kpi-value">{{ kpi.rejected }}</div>
   </div>
   <div class="kpi">
-    <div class="kpi-label">{{ 'In progress' if lang == 'en' else 'В работе' }}</div>
-    <div class="kpi-value">{{ kpi.in_progress }}</div>
+    <div class="kpi-label">{{ 'Won' if lang == 'en' else 'Успешные' }}</div>
+    <div class="kpi-value">{{ kpi.successful }}</div>
   </div>
 </div>
-
-{% if kpi.leads %}
-<div class="card">
-  <h3 style="margin: 0 0 4px;">{{ 'Where your clients are' if lang == 'en' else 'Где сейчас ваши клиенты' }}</h3>
-  <p style="color: var(--sage); font-size: 13px; margin: 0 0 16px;">
-    {% if lang == 'en' %}Status updates show up here — open <a href="/leads">all requests</a> to see each client's stage.{% else %}Обновления статуса видны здесь — откройте <a href="/leads">все заявки</a>, чтобы увидеть стадию по каждому клиенту.{% endif %}
-  </p>
-  <div style="display: flex; flex-wrap: wrap; gap: 12px;">
-    {% set in_progress_stage = lead_stage('in_progress', lang) %}
-    {% set won_stage = lead_stage('won', lang) %}
-    {% set lost_stage = lead_stage('lost', lang) %}
-    <div style="flex: 1; min-width: 140px;">
-      <span class="status-pill status-in_progress">{{ in_progress_stage.icon }} {{ in_progress_stage.label }}</span>
-      <div style="font-size: 28px; font-weight: 700; color: var(--deep-green); margin-top: 8px;">{{ kpi.in_progress }}</div>
-    </div>
-    <div style="flex: 1; min-width: 140px;">
-      <span class="status-pill status-won">{{ won_stage.icon }} {{ won_stage.label }}</span>
-      <div style="font-size: 28px; font-weight: 700; color: var(--deep-green); margin-top: 8px;">{{ kpi.successful }}</div>
-    </div>
-    <div style="flex: 1; min-width: 140px;">
-      <span class="status-pill status-lost">{{ lost_stage.icon }} {{ lost_stage.label }}</span>
-      <div style="font-size: 28px; font-weight: 700; color: var(--charcoal); margin-top: 8px;">{{ kpi.rejected }}</div>
-    </div>
-  </div>
-</div>
-{% endif %}
 
 {% if kpi.successful %}
 <div class="card">
@@ -142,7 +115,10 @@
   </div>
 </div>
 
-{% if show_checklist %}
+{# Постоянный пошаговый план «как зарабатывать с нами»: НЕ убираем после прохождения
+   всех шагов — гейтим прямо по partner (не по show_checklist), чтобы исчезал только
+   после ручного ✕. show_checklist из main.py намеренно не используем. #}
+{% if partner.checklist_dismissed_at is None %}
 <div class="card" id="checklist">
   <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
     <h3 style="margin: 0;">🚀 {{ 'Take these 3 steps to earn your first reward' if lang == 'en' else 'Сделай эти 3 шага, чтобы получить первое вознаграждение' }}</h3>
