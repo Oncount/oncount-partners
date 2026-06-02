@@ -800,6 +800,81 @@ def admin_partner_detail(pid: int, request: Request, session: Session = Depends(
     )
 
 
+@app.get("/admin/sources", response_class=HTMLResponse)
+def admin_sources(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
+    """Аналитика источников (Фаза 4): заявки по UTM / мероприятию / ссылке агента.
+    Считаем КОНВЕРСИИ (заявки квиза + регистрации), не сырые клики. Только админ."""
+    admin = require_admin(request, session)
+    from sqlalchemy import func
+
+    # 1) По UTM (source + campaign) — заявки квиза.
+    utm = [
+        {"src": r.src, "camp": r.camp, "n": r.n}
+        for r in session.query(
+            func.coalesce(QuizSubmission.utm_source, "—").label("src"),
+            func.coalesce(QuizSubmission.utm_campaign, "—").label("camp"),
+            func.count(QuizSubmission.id).label("n"),
+        )
+        .group_by(QuizSubmission.utm_source, QuizSubmission.utm_campaign)
+        .order_by(func.count(QuizSubmission.id).desc())
+        .all()
+    ]
+
+    # 2) По мероприятию: заявки квиза (NULL event_slug = консультация) + регистрации бота.
+    events_quiz = [
+        {"ev": r.ev, "n": r.n}
+        for r in session.query(
+            func.coalesce(QuizSubmission.event_slug, "consultation").label("ev"),
+            func.count(QuizSubmission.id).label("n"),
+        ).group_by(QuizSubmission.event_slug).order_by(func.count(QuizSubmission.id).desc()).all()
+    ]
+    events_reg = [
+        {"ev": r.ev, "n": r.n}
+        for r in session.query(
+            EventRegistration.event_slug.label("ev"),
+            func.count(EventRegistration.id).label("n"),
+        ).group_by(EventRegistration.event_slug).order_by(func.count(EventRegistration.id).desc()).all()
+    ]
+
+    # 3) По ссылке агента: заявки квиза с привязкой к партнёру + сколько лидов won.
+    quiz_by_p = dict(
+        session.query(QuizSubmission.partner_id, func.count(QuizSubmission.id))
+        .filter(QuizSubmission.partner_id.isnot(None))
+        .group_by(QuizSubmission.partner_id)
+        .all()
+    )
+    won_by_p = dict(
+        session.query(Lead.partner_id, func.count(Lead.id))
+        .filter(Lead.status == "won", Lead.partner_id.isnot(None))
+        .group_by(Lead.partner_id)
+        .all()
+    )
+    pids = list(quiz_by_p.keys())
+    pmap = (
+        {p.id: p for p in session.query(Partner).filter(Partner.id.in_(pids)).all()}
+        if pids else {}
+    )
+    links = []
+    for pid, n in quiz_by_p.items():
+        p = pmap.get(pid)
+        if p is None:
+            continue
+        links.append({
+            "id": pid,
+            "name": p.first_name or p.kommo_agent_name or f"#{pid}",
+            "ref_slug": p.ref_slug or "—",
+            "quiz": n,
+            "won": won_by_p.get(pid, 0),
+        })
+    links.sort(key=lambda x: (x["quiz"], x["won"]), reverse=True)
+
+    return templates.TemplateResponse(
+        "admin_sources.html",
+        _ctx(request, admin, utm=utm, events_quiz=events_quiz,
+             events_reg=events_reg, links=links),
+    )
+
+
 def _balance_kpi(session: Session, partner: Partner) -> dict:
     """Минимум данных для верхней «балансовой» полосы (шаблон _balance.html):
     заработано + ожидаемое вознаграждение по числу заявок + код партнёра.

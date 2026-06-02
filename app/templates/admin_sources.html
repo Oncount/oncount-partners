@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Источники — ONCOUNT{% endblock %}
+{% block heading %}Источники заявок{% endblock %}
+
+{% block content %}
+<p style="margin-top:0;">
+  <a href="/admin/partner-stats">← лидеры</a>
+  <span style="color:#aaa;">·</span>
+  <b>источники</b>
+</p>
+<p style="color:#888; margin:.2em 0 1em;">Считаются заявки/регистрации (конверсии), не сырые клики.</p>
+
+<div class="card" style="overflow-x:auto;">
+  <h3 style="margin-top:0;">По UTM (заявки квиза)</h3>
+  <table style="width:100%; border-collapse:collapse; font-size:14px;">
+    <thead><tr style="text-align:left; border-bottom:2px solid #e5e0d5;">
+      <th style="padding:6px;">utm_source</th><th>utm_campaign</th><th style="text-align:right;">Заявок</th>
+    </tr></thead>
+    <tbody>
+      {% for r in utm %}
+      <tr style="border-bottom:1px solid #eee;">
+        <td style="padding:6px;">{{ r.src }}</td><td>{{ r.camp }}</td>
+        <td style="text-align:right; font-weight:600;">{{ r.n }}</td>
+      </tr>
+      {% endfor %}
+      {% if not utm %}<tr><td colspan="3" style="padding:12px; color:#888;">Заявок пока нет.</td></tr>{% endif %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card" style="overflow-x:auto;">
+  <h3 style="margin-top:0;">По мероприятию (заявки квиза)</h3>
+  <table style="width:100%; border-collapse:collapse; font-size:14px;">
+    <thead><tr style="text-align:left; border-bottom:2px solid #e5e0d5;">
+      <th style="padding:6px;">Мероприятие</th><th style="text-align:right;">Заявок</th>
+    </tr></thead>
+    <tbody>
+      {% for r in events_quiz %}
+      <tr style="border-bottom:1px solid #eee;">
+        <td style="padding:6px;">{{ r.ev }}</td><td style="text-align:right; font-weight:600;">{{ r.n }}</td>
+      </tr>
+      {% endfor %}
+      {% if not events_quiz %}<tr><td colspan="2" style="padding:12px; color:#888;">Нет данных.</td></tr>{% endif %}
+    </tbody>
+  </table>
+  {% if events_reg %}
+  <h3 style="margin:18px 0 0;">Регистрации через бота</h3>
+  <table style="width:100%; border-collapse:collapse; font-size:14px;">
+    <thead><tr style="text-align:left; border-bottom:2px solid #e5e0d5;">
+      <th style="padding:6px;">Мероприятие</th><th style="text-align:right;">Регистраций</th>
+    </tr></thead>
+    <tbody>
+      {% for r in events_reg %}
+      <tr style="border-bottom:1px solid #eee;">
+        <td style="padding:6px;">{{ r.ev }}</td><td style="text-align:right; font-weight:600;">{{ r.n }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+
+<div class="card" style="overflow-x:auto;">
+  <h3 style="margin-top:0;">Заявки квиза по агенту</h3>
+  <p style="color:#888; margin:.2em 0 .8em; font-size:13px;">«Заявок» — заявки квиза с меткой агента. «Оплат» — всего оплаченных лидов у агента (не обязательно из этих заявок).</p>
+  <table style="width:100%; border-collapse:collapse; font-size:14px;">
+    <thead><tr style="text-align:left; border-bottom:2px solid #e5e0d5;">
+      <th style="padding:6px;">Агент</th><th>Код</th><th style="text-align:right;">Заявок (квиз)</th><th style="text-align:right;">Оплат (всего)</th>
+    </tr></thead>
+    <tbody>
+      {% for r in links %}
+      <tr style="border-bottom:1px solid #eee;">
+        <td style="padding:6px;"><a href="/admin/partner/{{ r.id }}"><b>{{ r.name }}</b></a></td>
+        <td style="color:#999;">{{ r.ref_slug }}</td>
+        <td style="text-align:right; font-weight:600;">{{ r.quiz }}</td>
+        <td style="text-align:right; color:#10463E;">{{ r.won }}</td>
+      </tr>
+      {% endfor %}
+      {% if not links %}<tr><td colspan="4" style="padding:12px; color:#888;">Заявок с привязкой к агенту пока нет.</td></tr>{% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
