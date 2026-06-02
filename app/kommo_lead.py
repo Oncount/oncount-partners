@@ -52,6 +52,71 @@ def _answers_note(answers: dict | None, utm: dict | None, ref_slug: str | None,
     return "\n".join(lines)
 
 
+def _digits(s) -> str:
+    return "".join(ch for ch in str(s or "") if ch.isdigit())
+
+
+def _find_contact_by_phone(phone_norm: str, headers: dict) -> tuple[int | None, list[dict]]:
+    """Ищет контакт в Kommo по телефону. → (contact_id, существующие_теги) или (None, []).
+
+    Поиск через ?query=<цифры телефона> (Kommo матчит по телефону). Подтверждаем
+    совпадение по последним 9 цифрам, чтобы не зацепить чужой контакт. Теги
+    существующего контакта возвращаем, чтобы при отметке ДОБАВИТЬ тег, а не стереть."""
+    try:
+        r = httpx.get(_base() + "/contacts", params={"query": phone_norm},
+                      headers=headers, timeout=_TIMEOUT)
+        if r.status_code != 200:
+            return None, []
+        contacts = (r.json().get("_embedded") or {}).get("contacts") or []
+    except Exception as exc:
+        log.warning("contact search failed: %s", type(exc).__name__)
+        return None, []
+
+    chosen = None
+    for c in contacts:
+        for f in (c.get("custom_fields_values") or []):
+            if f.get("field_code") == "PHONE":
+                for v in (f.get("values") or []):
+                    d = _digits(v.get("value"))
+                    if d and phone_norm and d[-9:] == phone_norm[-9:]:
+                        chosen = c
+                        break
+            if chosen:
+                break
+        if chosen:
+            break
+    # query был телефоном → если по полю не подтвердилось (поле скрыто), берём первого.
+    if chosen is None and contacts:
+        chosen = contacts[0]
+    if chosen is None:
+        return None, []
+    tags = [{"name": t["name"]} for t in ((chosen.get("_embedded") or {}).get("tags") or [])
+            if t.get("name")]
+    return chosen.get("id"), tags
+
+
+def _mark_existing_contact(contact_id: int, existing_tags: list[dict], headers: dict,
+                           *, note_text: str, tag: str) -> None:
+    """Отметить существующий контакт: примечание + тег (без сделки). Best-effort.
+
+    Тег ДОБАВЛЯЕМ к существующим (PATCH tags в Kommo заменяет список целиком —
+    иначе стёрли бы прежние теги контакта)."""
+    try:
+        httpx.post(f"{_base()}/contacts/{contact_id}/notes",
+                   json=[{"note_type": "common", "params": {"text": note_text}}],
+                   headers=headers, timeout=_TIMEOUT)
+    except Exception as exc:
+        log.warning("mark contact note failed (%s): %s", contact_id, type(exc).__name__)
+    names = {t["name"] for t in existing_tags}
+    if tag and tag not in names:
+        try:
+            httpx.patch(f"{_base()}/contacts/{contact_id}",
+                        json={"_embedded": {"tags": existing_tags + [{"name": tag}]}},
+                        headers=headers, timeout=_TIMEOUT)
+        except Exception as exc:
+            log.warning("mark contact tag failed (%s): %s", contact_id, type(exc).__name__)
+
+
 def create_consultation_lead(
     *,
     name: str | None,
@@ -65,10 +130,15 @@ def create_consultation_lead(
     note_intro: str = "Заявка с квиз-лендинга /consultation.",
     question_titles: dict[str, str] | None = None,
 ) -> dict:
-    """Создать лид в воронке 1.1. Возвращает {status, kommo_lead_id, error}.
+    """Создать лид в воронке 1.1 ИЛИ отметить существующий контакт.
 
-    status: 'dry' (гард off / нет конфига — в сеть не ходили), 'sent' (лид создан),
-    'failed' (API/сеть). Никогда не бросает — приём заявки не должен падать из-за CRM.
+    Возвращает {status, kommo_lead_id, error}:
+    - 'dry'    — гард off / нет конфига (в сеть не ходили);
+    - 'sent'   — создана новая сделка (kommo_lead_id = id сделки);
+    - 'exists' — телефон уже в Kommo: сделку НЕ создавали, отметили контакт
+                 примечанием + тегом (kommo_lead_id = id контакта);
+    - 'failed' — ошибка API/сети.
+    Никогда не бросает — приём заявки не должен падать из-за CRM.
 
     lead_prefix/lead_tag/note_intro/question_titles параметризуют лид под событие
     (по умолчанию — квиз /consultation; мастер-класс передаёт свои, план 2026-06-02).
@@ -83,7 +153,25 @@ def create_consultation_lead(
         log.warning("quiz lead: QUIZ_KOMMO_LIVE=true, но не задан token/pipeline/status — пропуск")
         return {"status": "dry", "kommo_lead_id": None, "error": "config_missing"}
 
+    headers = {"Authorization": f"Bearer {settings.KOMMO_TOKEN}"}
     display = (name or "").strip() or f"+{phone_norm}"
+    note_text = _answers_note(answers, utm, ref_slug, note_intro=note_intro,
+                              question_titles=question_titles)
+
+    # Дедуп по телефону: если контакт УЖЕ есть в Kommo — новую сделку НЕ создаём,
+    # а отмечаем существующий контакт (примечание + тег `lead_tag`), что прошла
+    # регистрация/заявка (для /mk тег = 'masterclass'). Дублей сделок нет, но
+    # факт регистрации виден в CRM.
+    contact_id, existing_tags = _find_contact_by_phone(phone_norm, headers)
+    if contact_id:
+        _mark_existing_contact(
+            contact_id, existing_tags, headers,
+            note_text=note_text + "\n\n(Контакт уже в CRM — новая сделка не создавалась.)",
+            tag=lead_tag,
+        )
+        log.info("quiz: контакт уже в Kommo (id=%s) — отметили, сделку не создавали", contact_id)
+        return {"status": "exists", "kommo_lead_id": contact_id, "error": None}
+
     lead: dict = {
         "name": display[:250],  # название сделки = имя клиента (источник — в теге + примечании)
         "pipeline_id": int(settings.QUIZ_KOMMO_PIPELINE_ID),
@@ -109,7 +197,6 @@ def create_consultation_lead(
     else:
         lead["_embedded"]["tags"].append({"name": "no-agent"})
 
-    headers = {"Authorization": f"Bearer {settings.KOMMO_TOKEN}"}
     try:
         r = httpx.post(_base() + "/leads/complex", json=[lead], headers=headers, timeout=_TIMEOUT)
         if r.status_code >= 300:
@@ -124,10 +211,7 @@ def create_consultation_lead(
     # Примечание с ответами/UTM — best-effort: лид уже создан, провал не критичен.
     if lead_id:
         try:
-            note = {"note_type": "common",
-                    "params": {"text": _answers_note(answers, utm, ref_slug,
-                                                     note_intro=note_intro,
-                                                     question_titles=question_titles)}}
+            note = {"note_type": "common", "params": {"text": note_text}}
             httpx.post(f"{_base()}/leads/{lead_id}/notes", json=[note],
                        headers=headers, timeout=_TIMEOUT)
         except Exception as exc:
