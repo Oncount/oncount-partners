@@ -202,7 +202,7 @@ ACCOUNTANTS: list[dict] = [
      "name_en": "Raj", "role": "Бухгалтер", "role_en": "Accountant",
      "langs": ["gb"], "exp": "3+ лет опыта", "exp_en": "3+ yrs"},
     {"photo": "/static/img/accountants/lesia.jpg", "name": "Леся",
-     "name_en": "Lesia", "role": "Бухгалтер", "role_en": "Accountant",
+     "name_en": "Lesia", "role": "Ведущий бухгалтер", "role_en": "Lead accountant",
      "langs": ["ru", "gb"], "exp": "8+ лет опыта", "exp_en": "8+ yrs"},
 ]
 

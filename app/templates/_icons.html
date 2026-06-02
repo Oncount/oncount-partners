@@ -23,3 +23,15 @@
 {% macro nav_courses() %}<svg class="menu-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3L1 8l11 5 9-4.09V15h2V8L12 3zM5 13.18V17c0 1.66 3.13 3 7 3s7-1.34 7-3v-3.82l-7 3.18-7-3.18z"/></svg>{% endmacro %}
 
 {% macro nav_logout() %}<svg class="menu-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5v-2H5V5h5V3z"/><path d="M16.5 7.5l-1.41 1.41L17.67 11.5H9v2h8.67l-2.58 2.59L16.5 17.5l5-5-5-5z"/></svg>{% endmacro %}
+
+{# ── Иконки вкладок /tools (способы привлечения), стиль бокового меню ── #}
+
+{% macro tab_intro() %}<svg class="tab-icon" width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 3h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H10l-5 4v-4H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm3 6.2a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6zm5 0a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6zm5 0a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6z"/></svg>{% endmacro %}
+
+{% macro tab_broadcast() %}<svg class="tab-icon" width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v.35l-10 6.25L2 6.35V6a1 1 0 0 1 1-1z"/><path d="M22 8.7V18a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V8.7l9.47 5.92a1 1 0 0 0 1.06 0L22 8.7z"/></svg>{% endmacro %}
+
+{% macro tab_post() %}<svg class="tab-icon" width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 9a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h1.2l1.4 4.9a1 1 0 0 0 .96.72H8a1 1 0 0 0 .96-1.28L7.8 15.4 19 20.2a1 1 0 0 0 1.4-.92V4.72A1 1 0 0 0 19 3.8L7.5 9H3z"/></svg>{% endmacro %}
+
+{% macro tab_checklist() %}<svg class="tab-icon" width="17" height="17" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" aria-hidden="true"><path d="M8 4V3a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1h2a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3zm2-1h4v2h-4V3zm-.3 13.9l5.2-5.2-1.4-1.4-3.8 3.8-1.5-1.5L6.8 13l2.9 2.9z"/></svg>{% endmacro %}
+
+{% macro tab_event() %}<svg class="tab-icon" width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="8.5" cy="8" r="3.2"/><path d="M8.5 12.5c-3.4 0-6 1.9-6 4.2V19h12v-2.3c0-2.3-2.6-4.2-6-4.2z"/><circle cx="17" cy="8.7" r="2.6"/><path d="M17 13c-.85 0-1.62.14-2.3.4 1.27.96 2.05 2.3 2.05 3.8V19H22v-1.9c0-2.2-2.2-4.1-5-4.1z"/></svg>{% endmacro %}
