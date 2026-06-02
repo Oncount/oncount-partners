@@ -958,6 +958,10 @@ def auth_phone_verify(
         for stray in strays:
             stray.status = "merged"
 
+    # Телефон больше не спрашиваем в онбординге: раз вошли по номеру — знаем его.
+    # Проставляем в Partner.phone, если пуст (запасной канал WhatsApp-уведомлений).
+    if not (partner.phone or "").strip():
+        partner.phone = norm
     partner.last_login_at = datetime.utcnow()
     partner.status = "active"
     session.commit()
@@ -983,13 +987,9 @@ def logout() -> RedirectResponse:
 
 # (slug, RU-подпись, EN-подпись) — шаблон онбординга выбирает подпись по lang.
 SEGMENTS = [
-    ("lawyer", "Юрист / юр. фирма", "Lawyer / law firm"),
-    ("freezone", "Free-zone agent", "Free-zone agent"),
-    ("banker", "Банкир / RM", "Banker / RM"),
-    ("coworking", "Коворкинг / бизнес-сервис", "Coworking / business services"),
-    ("accountant", "Бухгалтер-фрилансер", "Freelance accountant"),
-    ("entrepreneur", "Предприниматель", "Entrepreneur"),
-    ("other", "Другое", "Other"),
+    ("owner", "Владелец компании", "Company owner"),
+    ("freelancer", "Фрилансер", "Freelancer"),
+    ("employee", "Сотрудник компании", "Company employee"),
 ]
 
 
@@ -1010,7 +1010,6 @@ def onboarding_page(request: Request, session: Session = Depends(get_session)) -
 def onboarding_submit(
     request: Request,
     segment: str = Form(...),
-    phone: str = Form(...),
     email: str = Form(...),
     session: Session = Depends(get_session),
 ) -> HTMLResponse:
@@ -1019,19 +1018,11 @@ def onboarding_submit(
         return RedirectResponse("/login", status_code=302)
 
     segment = (segment or "").strip().lower()
-    phone = (phone or "").strip()
     email = (email or "").strip().lower()
     en = _lang(request) == "en"
 
     if segment not in {s[0] for s in SEGMENTS}:
         msg = "Choose a segment from the list." if en else "Выбери сегмент из списка."
-        return templates.TemplateResponse(
-            "onboarding.html",
-            _ctx(request, partner, segments=SEGMENTS, message=msg),
-            status_code=400,
-        )
-    if not phone or len(phone) < 5:
-        msg = "Enter your phone or WhatsApp." if en else "Укажи телефон или WhatsApp."
         return templates.TemplateResponse(
             "onboarding.html",
             _ctx(request, partner, segments=SEGMENTS, message=msg),
@@ -1045,8 +1036,9 @@ def onboarding_submit(
             status_code=400,
         )
 
+    # Телефон в форме больше не спрашиваем — он известен из входа по номеру
+    # (auth_phone_verify проставляет Partner.phone). Здесь только роль + email.
     partner.segment = segment
-    partner.phone = phone
     partner.email = email
     partner.onboarded_at = datetime.utcnow()
     try:

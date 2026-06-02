@@ -15,16 +15,13 @@
 
 <div class="card">
   <form class="form" method="POST" action="/onboarding">
-    <label>{{ 'What do you mainly do?' if lang == 'en' else 'Кто вы по основной деятельности?' }} *</label>
+    <label>{{ "What's your role?" if lang == 'en' else 'Кто вы?' }} *</label>
     <select name="segment" required>
       <option value="">{{ '— choose —' if lang == 'en' else '— выберите —' }}</option>
       {% for slug, label_ru, label_en in segments %}
         <option value="{{ slug }}">{{ label_en if lang == 'en' else label_ru }}</option>
       {% endfor %}
     </select>
-
-    <label>{{ 'Phone or WhatsApp' if lang == 'en' else 'Телефон или WhatsApp' }} *</label>
-    <input type="text" name="phone" required placeholder="+971 58 ...">
 
     <label>{{ 'Email for invoices and payouts' if lang == 'en' else 'Email для актов и выплат' }} *</label>
     <input type="email" name="email" required placeholder="you@example.com">
@@ -37,15 +34,13 @@
   {% if lang == 'en' %}
   <h3 style="margin-bottom: 8px;">Why we ask for this</h3>
   <ul style="margin: 0; padding-left: 18px; color: var(--charcoal);">
-    <li><b>Segment</b> — we send message templates tailored to your audience.</li>
-    <li><b>Phone / WhatsApp</b> — an ONCOUNT manager will reach you about new leads.</li>
+    <li><b>Role</b> — we send message templates tailored to your audience.</li>
     <li><b>Email</b> — that's where the service agreement, invoices and partner payout confirmations go.</li>
   </ul>
   {% else %}
   <h3 style="margin-bottom: 8px;">Зачем эти данные</h3>
   <ul style="margin: 0; padding-left: 18px; color: var(--charcoal);">
-    <li><b>Сегмент</b> — присылаем шаблоны рассылок именно под твою аудиторию.</li>
-    <li><b>Телефон / WhatsApp</b> — менеджер ONCOUNT свяжется с тобой по новым лидам.</li>
+    <li><b>Роль</b> — присылаем шаблоны рассылок именно под твою аудиторию.</li>
     <li><b>Email</b> — туда уйдут договор-оферта, акты и подтверждение партнёрских выплат.</li>
   </ul>
   {% endif %}
