@@ -9,3 +9,17 @@
 {% macro telegram() %}<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>{% endmacro %}
 
 {% macro whatsapp() %}<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.47 14.38c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.75-1.64-2.05-.17-.3-.02-.46.13-.6.13-.14.3-.35.44-.53.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51l-.57-.01c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.07 2.88 1.22 3.07.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.69.63.71.22 1.36.19 1.87.12.57-.09 1.77-.73 2.02-1.43.25-.7.25-1.29.17-1.42-.07-.12-.27-.2-.56-.34zM12.04 21.5h-.01a9.9 9.9 0 0 1-5.04-1.38l-.36-.22-3.75.98 1-3.65-.24-.38a9.86 9.86 0 0 1-1.51-5.26c0-5.45 4.44-9.88 9.9-9.88a9.82 9.82 0 0 1 9.88 9.89c0 5.45-4.44 9.88-9.9 9.88zM20.5 3.49A11.78 11.78 0 0 0 12.04 0C5.46 0 .11 5.34.1 11.9c0 2.1.55 4.14 1.6 5.95L0 24l6.3-1.65a11.9 11.9 0 0 0 5.73 1.46h.01c6.58 0 11.93-5.34 11.93-11.9a11.8 11.8 0 0 0-3.48-8.42z"/></svg>{% endmacro %}
+
+{# ── Иконки бокового меню (сплошные, наследуют цвет текста пункта через currentColor) ── #}
+
+{% macro nav_dashboard() %}<svg class="menu-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>{% endmacro %}
+
+{% macro nav_leads() %}<svg class="menu-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="6" r="1.7"/><circle cx="5" cy="12" r="1.7"/><circle cx="5" cy="18" r="1.7"/><rect x="9" y="4.8" width="12" height="2.4" rx="1.2"/><rect x="9" y="10.8" width="12" height="2.4" rx="1.2"/><rect x="9" y="16.8" width="12" height="2.4" rx="1.2"/></svg>{% endmacro %}
+
+{% macro nav_texts() %}<svg class="menu-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 2h7l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M13 2l5 5h-4a1 1 0 0 1-1-1V2z" opacity="0.45"/></svg>{% endmacro %}
+
+{% macro nav_products() %}<svg class="menu-icon" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" aria-hidden="true"><path d="M3 4.5A1.5 1.5 0 0 1 4.5 3h6.26a2 2 0 0 1 1.42.59l8.23 8.23a2 2 0 0 1 0 2.83l-5.97 5.97a2 2 0 0 1-2.83 0L3.6 12.18A2 2 0 0 1 3 10.76V4.5zM7.5 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/></svg>{% endmacro %}
+
+{% macro nav_courses() %}<svg class="menu-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3L1 8l11 5 9-4.09V15h2V8L12 3zM5 13.18V17c0 1.66 3.13 3 7 3s7-1.34 7-3v-3.82l-7 3.18-7-3.18z"/></svg>{% endmacro %}
+
+{% macro nav_logout() %}<svg class="menu-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5v-2H5V5h5V3z"/><path d="M16.5 7.5l-1.41 1.41L17.67 11.5H9v2h8.67l-2.58 2.59L16.5 17.5l5-5-5-5z"/></svg>{% endmacro %}

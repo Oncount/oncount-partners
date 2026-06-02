@@ -92,13 +92,19 @@ h3 { font-size: 18px; }
 }
 .sidebar-bottom a {
   flex: 1;
-  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   padding: 8px;
   border: 1px solid rgba(243, 249, 248, 0.15);
   border-radius: 8px;
   color: var(--cream);
   font-size: 13px;
 }
+/* Иконки бокового меню — размер и подсветка активного пункта. */
+.sidebar .menu-icon { width: 20px; height: 20px; flex-shrink: 0; }
+.sidebar a.menu-item.active .menu-icon { color: var(--orange); }
 
 /* Content */
 .content {
@@ -204,15 +210,16 @@ table.list td {
 }
 .status-pill {
   display: inline-block;
-  padding: 3px 10px;
+  padding: 5px 14px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 13px;
   text-transform: uppercase;
-  font-weight: 600;
-  letter-spacing: 0.05em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 .status-new { background: rgba(238, 145, 121, 0.18); color: #b04020; }
-.status-in_progress { background: rgba(236, 100, 66, 0.15); color: var(--orange); }
+/* «В работе» (in_progress) — жёлтый/янтарный. */
+.status-in_progress { background: rgba(245, 158, 11, 0.18); color: #b45309; }
 /* «Оплачено» (won) — ярко-зелёный, светится: главное радостное событие для партнёра. */
 .status-won {
   background: #16a34a;
@@ -226,14 +233,20 @@ table.list td {
 @media (prefers-reduced-motion: reduce) {
   .status-won { animation: none; box-shadow: 0 0 10px rgba(22, 163, 74, 0.6); }
 }
-/* «Отказ» (lost) — приглушённый серый. */
-.status-lost { background: rgba(34, 34, 34, 0.08); color: var(--sage); }
+/* «Отказ» (lost) — красный. */
+.status-lost { background: rgba(226, 59, 46, 0.12); color: #dc2626; }
 /* Сумма оплаты клиента рядом со статусом «Оплачено» — крупно и зелёным. */
 .lead-paid-amount {
   margin-top: 6px;
   font-size: 18px;
   font-weight: 700;
   color: #16a34a;
+}
+/* Контакт клиента под именем (телефон/телеграм) — серым, помельче. */
+.lead-contact {
+  margin-top: 3px;
+  font-size: 13px;
+  color: var(--sage);
 }
 /* Подпись под таблицей заявок. */
 .leads-footnote {

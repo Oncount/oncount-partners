@@ -34,17 +34,17 @@
       <img src="/static/img/logo.png" alt="ONCOUNT">
     </div>
 
-    <a class="menu-item {% if request.url.path == '/dashboard' %}active{% endif %}" href="/dashboard">🏠 {{ 'Dashboard' if lang == 'en' else 'Дашборд' }}</a>
-    <a class="menu-item {% if request.url.path == '/leads' %}active{% endif %}" href="/leads">📋 {{ 'All requests' if lang == 'en' else 'Все заявки' }}</a>
+    <a class="menu-item {% if request.url.path == '/dashboard' %}active{% endif %}" href="/dashboard">{{ icons.nav_dashboard() }}{{ 'Dashboard' if lang == 'en' else 'Дашборд' }}</a>
+    <a class="menu-item {% if request.url.path == '/leads' %}active{% endif %}" href="/leads">{{ icons.nav_leads() }}{{ 'All requests' if lang == 'en' else 'Все заявки' }}</a>
 
-    <a class="menu-item {% if request.url.path == '/tools' %}active{% endif %}" href="/tools">🔗 {{ 'Texts and links' if lang == 'en' else 'Тексты и ссылки' }}</a>
+    <a class="menu-item {% if request.url.path == '/tools' %}active{% endif %}" href="/tools">{{ icons.nav_texts() }}{{ 'Texts and links' if lang == 'en' else 'Тексты и ссылки' }}</a>
 
-    <a class="menu-item {% if '/products' in request.url.path %}active{% endif %}" href="/products">🏷️ {{ 'Plans' if lang == 'en' else 'Тарифы' }}</a>
-    <a class="menu-item {% if '/courses' in request.url.path %}active{% endif %}" href="/courses">🎓 {{ 'Courses' if lang == 'en' else 'Курсы' }}</a>
+    <a class="menu-item {% if '/products' in request.url.path %}active{% endif %}" href="/products">{{ icons.nav_products() }}{{ 'Plans' if lang == 'en' else 'Тарифы' }}</a>
+    <a class="menu-item {% if '/courses' in request.url.path %}active{% endif %}" href="/courses">{{ icons.nav_courses() }}{{ 'Courses' if lang == 'en' else 'Курсы' }}</a>
 
     <div class="spacer"></div>
     <div class="sidebar-bottom">
-      <a href="/logout">↩️ {{ 'Log out' if lang == 'en' else 'Выход' }}</a>
+      <a href="/logout">{{ icons.nav_logout() }}{{ 'Log out' if lang == 'en' else 'Выход' }}</a>
     </div>
   </aside>
 

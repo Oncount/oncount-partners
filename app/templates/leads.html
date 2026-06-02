@@ -13,7 +13,6 @@
   <thead>
     <tr>
       <th>{{ 'Client' if lang == 'en' else 'Клиент' }}</th>
-      <th>{{ 'Contact' if lang == 'en' else 'Контакт' }}</th>
       <th>{{ 'Created' if lang == 'en' else 'Создано' }}</th>
       <th>{{ 'Status' if lang == 'en' else 'Статус' }}</th>
     </tr>
@@ -21,8 +20,10 @@
   <tbody>
     {% for row in rows %}
     <tr>
-      <td data-label="{{ 'Client' if lang == 'en' else 'Клиент' }}"><strong>{{ row.client_name }}</strong></td>
-      <td data-label="{{ 'Contact' if lang == 'en' else 'Контакт' }}">{{ row.client_phone or row.client_telegram or '—' }}</td>
+      <td data-label="{{ 'Client' if lang == 'en' else 'Клиент' }}">
+        <strong>{{ row.client_name }}</strong>
+        <div class="lead-contact">{{ row.client_phone or row.client_telegram or '—' }}</div>
+      </td>
       <td data-label="{{ 'Created' if lang == 'en' else 'Создано' }}">{{ row.created_at.strftime('%d.%m.%Y') }}</td>
       <td data-label="{{ 'Status' if lang == 'en' else 'Статус' }}">
         {% set stage = lead_stage(row.status, lang) %}
