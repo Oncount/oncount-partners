@@ -1,0 +1,28 @@
+{# Блок доверия: сертифицированные бухгалтеры в кружочках (план 2026-06-02).
+   Переиспользуется на квиз-лендинге /consultation и в кабинете /tools.
+   Ожидает в контексте: accountants (список), acc_lang ('ru'|'en', по умолч. 'ru').
+   Самодостаточен по стилям (работает и на квизе, и в кабинете). #}
+{% set _l = acc_lang | default('ru') %}
+<div class="acc-trust">
+  <p class="acc-title">{{ 'Certified by IFTS and the FTA' if _l == 'en' else 'Сертифицированы ИФНС и ФТА' }}</p>
+  <div class="acc-row">
+    {% for a in accountants %}
+    <div class="acc-item">
+      <img class="acc-photo" src="{{ a.photo }}" alt="{{ a.name_en if _l == 'en' else a.name }}" loading="lazy">
+      <div class="acc-name">{{ a.name_en if _l == 'en' else a.name }}</div>
+      <div class="acc-role">{{ a.role_en if _l == 'en' else a.role }}</div>
+      <div class="acc-flags">{{ a.flags }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+<style>
+.acc-trust{margin:0 0 22px}
+.acc-title{font-weight:700;font-size:14px;color:#10463E;margin:0 0 14px;text-align:center;letter-spacing:.01em}
+.acc-row{display:flex;flex-wrap:wrap;gap:16px;justify-content:center}
+.acc-item{width:118px;text-align:center}
+.acc-photo{width:76px;height:76px;border-radius:50%;object-fit:cover;border:2px solid #e2e8e5;background:#0e0e10}
+.acc-name{font-weight:600;font-size:13px;margin-top:8px;color:#15211e}
+.acc-role{font-size:12px;color:#5d6b67;line-height:1.3;margin-top:1px}
+.acc-flags{font-size:15px;margin-top:3px;line-height:1}
+</style>

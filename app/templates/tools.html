@@ -33,6 +33,11 @@
     <p>{{ m.hint }}</p>
   </div>
 
+  {# Блок доверия: сертифицированные бухгалтеры — у приглашения на консультацию #}
+  {% if key == 'broadcast' and accountants %}
+  <div class="card">{% set acc_lang = lang %}{% include "_accountants.html" %}</div>
+  {% endif %}
+
   {# ─── Готовые тексты способа ──────────────────────────────────────────── #}
   {% set items = method_groups.get(key, []) %}
   {% if items %}

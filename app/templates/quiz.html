@@ -124,6 +124,7 @@
         {% if cover.bullets %}<ul class="cover-bullets">
           {% for b in cover.bullets %}<li>{{ b }}</li>{% endfor %}
         </ul>{% endif %}
+        {% if accountants %}{% set acc_lang = 'ru' %}{% include "_accountants.html" %}{% endif %}
         <button type="button" class="btn btn-primary cover-cta" id="coverStart">{{ cover.cta }}</button>
         {% if cover.note %}<p class="cover-note">{{ cover.note }}</p>{% endif %}
       </div>

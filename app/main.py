@@ -182,6 +182,26 @@ LEGACY_TOOL_ANCHORS: dict[str, str] = {
     "kits": "intro",
 }
 
+# Сертифицированные бухгалтеры — блок доверия в кружочках (решение Николь
+# 2026-06-02): на квиз-лендинге /consultation и в кабинете у приглашения на
+# консультацию. Только визуал доверия (без клика). Майя — реальное имя/роль
+# (главбух), Омер — ведущий бухгалтер; имена Адам/Даниэль условные (по просьбе
+# Николь), языки — флагами. Фото в static/img/accountants/.
+ACCOUNTANTS: list[dict] = [
+    {"photo": "/static/img/accountants/maya.jpg", "name": "Майя Мандзюк",
+     "name_en": "Maya Mandziuk", "role": "Главный бухгалтер",
+     "role_en": "Chief accountant", "flags": "🇷🇺 🇬🇧"},
+    {"photo": "/static/img/accountants/omer.jpg", "name": "Омер",
+     "name_en": "Omer", "role": "Ведущий бухгалтер",
+     "role_en": "Lead accountant", "flags": "🇬🇧 🇦🇪"},
+    {"photo": "/static/img/accountants/adam.jpg", "name": "Адам",
+     "name_en": "Adam", "role": "Бухгалтер", "role_en": "Accountant",
+     "flags": "🇬🇧"},
+    {"photo": "/static/img/accountants/daniel.jpg", "name": "Даниэль",
+     "name_en": "Daniel", "role": "Бухгалтер", "role_en": "Accountant",
+     "flags": "🇬🇧"},
+]
+
 
 def method_label(key: str, lang: str = "ru") -> dict[str, str]:
     """Способ → {key, label, icon, hint} для вкладок/шапки блока /tools.
@@ -921,6 +941,7 @@ def consultation_page(request: Request) -> HTMLResponse:
         "thanks": quiz_config.THANKS,
         "socials": quiz_config.SOCIALS,
         "submit_url": "/consultation/submit",
+        "accountants": ACCOUNTANTS,
     })
 
 
@@ -1925,6 +1946,7 @@ def tools(request: Request, session: Session = Depends(get_session)) -> HTMLResp
             method_groups=method_groups,
             links=links,
             manager_wa=manager_wa,
+            accountants=ACCOUNTANTS,
             kpi=_balance_kpi(session, partner),
         ),
     )
