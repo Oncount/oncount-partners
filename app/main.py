@@ -589,6 +589,15 @@ async def on_startup() -> None:
         # пуш уже обработан. create_all не делает ALTER, а leads уже есть в проде.
         conn.execute(text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS won_at TIMESTAMP"))
         conn.execute(text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS won_notified_at TIMESTAMP"))
+        # Модуль выплат (план 2026-06-02, замена Excel). Аддитивно и идемпотентно:
+        # nullable-колонки без DB-default (кроме payout_urgent). create_all не делает
+        # ALTER, а leads уже есть в проде. Заполняет менеджер на /admin/payouts.
+        conn.execute(text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS fee_aed NUMERIC(12,2)"))
+        conn.execute(text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS payout_urgent BOOLEAN DEFAULT FALSE"))
+        conn.execute(text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS agreement_url TEXT"))
+        conn.execute(text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS bank_details TEXT"))
+        conn.execute(text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS payout_receipt_url TEXT"))
+        conn.execute(text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS payout_paid_on VARCHAR(32)"))
         # Тип партнёра у шаблона-материала (Фаза C, план 2026-05-27). Аддитивно и
         # идемпотентно: одна nullable-колонка + индекс. NULL = генерик /messages
         # (старые строки не трогаются). create_all не делает ALTER, а
@@ -894,6 +903,106 @@ def admin_sources(request: Request, session: Session = Depends(get_session)) -> 
         _ctx(request, admin, utm=utm, events_quiz=events_quiz,
              events_reg=events_reg, links=links),
     )
+
+
+# ─── Модуль выплат (план 2026-06-02, замена Excel менеджера) ─────────────────
+# Менеджерский статус (4) → (агент-facing payout_state, payout_urgent). Агент в
+# кабинете видит только дружелюбные in_calc/to_pay/paid; «срочно»/«уточняется» —
+# внутренние для менеджера, агенту НЕ показываются.
+PAYOUT_MGR_OPTIONS = [
+    ("clarify", "Уточняется"),
+    ("to_pay", "Под выплату"),
+    ("urgent", "Срочно"),
+    ("paid", "Оплачено"),
+]
+_MGR_TO_STATE = {
+    "clarify": ("in_calc", False),
+    "to_pay": ("to_pay", False),
+    "urgent": ("to_pay", True),
+    "paid": ("paid", False),
+}
+
+
+def _payout_mgr_value(lead: Lead) -> str:
+    """Текущий менеджерский статус из (payout_state, payout_urgent)."""
+    if getattr(lead, "payout_urgent", False):
+        return "urgent"
+    return {"in_calc": "clarify", "to_pay": "to_pay", "paid": "paid"}.get(
+        lead.payout_state or "in_calc", "clarify"
+    )
+
+
+@app.get("/admin/payouts", response_class=HTMLResponse)
+def admin_payouts(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
+    """Учёт выплат агентам (замена Excel). Только админ. Список won-лидов: авто из
+    системы (клиент/Kommo/агент/сумма/дата) + ручные поля (комиссия, статус,
+    договор, реквизиты, чек, дата выплаты)."""
+    admin = require_admin(request, session)
+    leads = (
+        session.query(Lead)
+        .filter(Lead.status == "won")
+        .order_by(Lead.won_at.desc(), Lead.id.desc())
+        .all()
+    )
+    pids = {l.partner_id for l in leads if l.partner_id}
+    pmap = (
+        {p.id: p for p in session.query(Partner).filter(Partner.id.in_(pids)).all()}
+        if pids else {}
+    )
+    rows = [
+        {"lead": l,
+         "agent": (pmap[l.partner_id].first_name or pmap[l.partner_id].kommo_agent_name or "—")
+                  if l.partner_id in pmap else "—",
+         "mgr": _payout_mgr_value(l)}
+        for l in leads
+    ]
+    fee_total = sum(float(l.fee_aed) for l in leads if l.fee_aed is not None)
+    paid_total = sum(float(l.fee_aed) for l in leads
+                     if l.fee_aed is not None and l.payout_state == "paid")
+    return templates.TemplateResponse(
+        "admin_payouts.html",
+        _ctx(request, admin, rows=rows, kommo_url=KOMMO_LEAD_URL,
+             mgr_options=PAYOUT_MGR_OPTIONS, fee_total=fee_total, paid_total=paid_total),
+    )
+
+
+@app.post("/admin/payouts/{lead_id}")
+def admin_payout_save(
+    lead_id: int,
+    request: Request,
+    fee_aed: str = Form(""),
+    mgr_status: str = Form("clarify"),
+    agreement_url: str = Form(""),
+    bank_details: str = Form(""),
+    receipt_url: str = Form(""),
+    paid_on: str = Form(""),
+    session: Session = Depends(get_session),
+):
+    """Сохранить выплату по won-лиду. Только админ. Менеджерский статус → агент-
+    facing payout_state + флаг urgent. Реквизиты — финансовые ПД, в лог не пишем."""
+    require_admin(request, session)
+    lead = session.get(Lead, lead_id)
+    if lead is None or lead.status != "won":
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    # Пробел и запятая — разделители тысяч (формат файла: «1,460», «2 320»,
+    # «3,424.05»), точка — десятичная. Убираем тысячные, точку сохраняем.
+    fee = (fee_aed or "").strip().replace(" ", "").replace(",", "")
+    if fee:
+        try:
+            lead.fee_aed = float(fee)
+        except ValueError:
+            pass  # мусор в сумме игнорируем, остальное сохраняем
+    else:
+        lead.fee_aed = None
+    state, urgent = _MGR_TO_STATE.get((mgr_status or "").strip(), ("in_calc", False))
+    lead.payout_state = state
+    lead.payout_urgent = urgent
+    lead.agreement_url = (agreement_url or "").strip() or None
+    lead.bank_details = (bank_details or "").strip() or None
+    lead.payout_receipt_url = (receipt_url or "").strip() or None
+    lead.payout_paid_on = (paid_on or "").strip() or None
+    session.commit()
+    return RedirectResponse("/admin/payouts", status_code=303)
 
 
 def _balance_kpi(session: Session, partner: Partner) -> dict:

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Выплаты — ONCOUNT{% endblock %}
+{% block heading %}Выплаты агентам{% endblock %}
+
+{% block content %}
+<p style="margin-top:0;">
+  <a href="/admin/partner-stats">лидеры</a> <span style="color:#aaa;">·</span>
+  <a href="/admin/sources">источники</a> <span style="color:#aaa;">·</span>
+  <b>выплаты</b>
+</p>
+
+<div class="card">
+  <p style="margin:0; line-height:1.7;">
+    Оплаченных лидов: <b>{{ rows|length }}</b> ·
+    Комиссий всего: <b>{{ '%.0f'|format(fee_total) }} AED</b> ·
+    Выплачено: <b>{{ '%.0f'|format(paid_total) }} AED</b>
+  </p>
+  <p style="margin:.5em 0 0; color:#888; font-size:13px;">🔒 Реквизиты видны только вам (раздел закрыт под ваш Telegram).</p>
+</div>
+
+{% for r in rows %}
+{% set l = r.lead %}
+<div class="card">
+  <div style="display:flex; flex-wrap:wrap; gap:8px 18px; align-items:baseline; margin-bottom:10px;">
+    <b style="font-size:16px;">{{ l.client_name }}</b>
+    <span style="color:#666;">агент: {{ r.agent }}</span>
+    <span style="color:#666;">оплата клиента: {{ ('%.0f'|format(l.amount_aed)) ~ ' AED' if l.amount_aed else '—' }}</span>
+    <span style="color:#666;">won: {{ l.won_at.strftime('%d.%m.%y') if l.won_at else '—' }}</span>
+    {% if l.kommo_lead_id %}<a href="{{ kommo_url }}{{ l.kommo_lead_id }}" target="_blank" rel="noopener">Kommo ↗</a>{% endif %}
+  </div>
+  {% if l.task_description %}<p style="margin:.2em 0; color:#888;">Услуга: {{ l.task_description }}</p>{% endif %}
+
+  <form method="POST" action="/admin/payouts/{{ l.id }}" class="form" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; align-items:end;">
+    <label>Комиссия (Fee AED)
+      <input type="text" name="fee_aed" value="{{ l.fee_aed if l.fee_aed is not none else '' }}" placeholder="напр. 1450" inputmode="decimal">
+    </label>
+    <label>Статус
+      <select name="mgr_status">
+        {% for val, lbl in mgr_options %}
+        <option value="{{ val }}" {% if r.mgr == val %}selected{% endif %}>{{ lbl }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Дата выплаты
+      <input type="text" name="paid_on" value="{{ l.payout_paid_on or '' }}" placeholder="напр. September / 31 December">
+    </label>
+    <label>Ссылка на договор
+      <input type="url" name="agreement_url" value="{{ l.agreement_url or '' }}" placeholder="https://drive.google.com/...">
+    </label>
+    <label>Ссылка на чек
+      <input type="url" name="receipt_url" value="{{ l.payout_receipt_url or '' }}" placeholder="https://drive.google.com/...">
+    </label>
+    <label style="grid-column:1 / -1;">Реквизиты (из договора) 🔒
+      <textarea name="bank_details" rows="2" placeholder="IBAN / карта / крипто-кошелёк">{{ l.bank_details or '' }}</textarea>
+    </label>
+    <div style="grid-column:1 / -1;">
+      <button type="submit" class="btn btn-primary">Сохранить</button>
+      {% if l.agreement_url %}<a class="btn btn-ghost" href="{{ l.agreement_url }}" target="_blank" rel="noopener">Договор ↗</a>{% endif %}
+      {% if l.payout_receipt_url %}<a class="btn btn-ghost" href="{{ l.payout_receipt_url }}" target="_blank" rel="noopener">Чек ↗</a>{% endif %}
+    </div>
+  </form>
+</div>
+{% endfor %}
+
+{% if not rows %}
+<div class="card"><p style="margin:0; color:#888;">Оплаченных лидов пока нет.</p></div>
+{% endif %}
+{% endblock %}

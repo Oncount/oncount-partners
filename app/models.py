@@ -114,6 +114,19 @@ class Lead(Base):
     # в dry-режиме тоже штампуется (событие «прожито»), чтобы при go-live не
     # ушла лавина пушей по старым оплатам ([[feedback_no_agent_outreach_yet]]).
     won_notified_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # ─── Модуль выплат (план 2026-06-02, замена Excel менеджера). Заполняет
+    # менеджер на /admin/payouts. Под-таблицу НЕ заводим (решение Николь).
+    # fee_aed — комиссия агента; payout_urgent — «срочно» (агенту НЕ показываем,
+    # это менеджерский флаг поверх payout_state); agreement_url/receipt_url —
+    # ссылки Google Drive; bank_details — реквизиты (финансовые ПД, видны ТОЛЬКО
+    # админу на /admin/*); payout_paid_on — месяц/дата выплаты (свободный текст,
+    # как в файле менеджера: «September», «31 December»).
+    fee_aed: Mapped[float | None] = mapped_column(Numeric(12, 2))
+    payout_urgent: Mapped[bool] = mapped_column(Boolean, default=False)
+    agreement_url: Mapped[str | None] = mapped_column(Text)
+    bank_details: Mapped[str | None] = mapped_column(Text)
+    payout_receipt_url: Mapped[str | None] = mapped_column(Text)
+    payout_paid_on: Mapped[str | None] = mapped_column(String(32))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
