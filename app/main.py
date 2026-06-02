@@ -149,27 +149,27 @@ def partner_type_label(key: str, lang: str = "ru") -> dict[str, str]:
 
 # ─── Способы привлечения — ось вкладок /tools (план 2026-06-02) ──────────────
 # Партнёр выбирает не «кто я» (тип), а «каким действием привожу» (способ).
-# Порядок METHODS = порядок вкладок. hint = строка-фильтр «для кого» в шапке
-# блока. Названия КОРОТКИЕ (решение Николь 2026-06-02) — чтобы 5 вкладок влезли
-# в одну строку. Вкладка `intro` объединяет личное интро + прямые персональные
-# ссылки: её панель рендерит И тексты-интро из БД (method='intro'), И карточки
-# ссылок (бывший directlinks). EN-ярлыки тут же (ось внутренняя, как PARTNER_TYPES).
+# Порядок METHODS = порядок вкладок (Интро / Рассылка / Пост / Чек-лист /
+# События — решение Николь 2026-06-02). hint = строка-фильтр «для кого» в шапке
+# блока. Названия КОРОТКИЕ — чтобы 5 вкладок влезли в одну строку. Отдельного
+# блока «прямые ссылки» нет: персональная ссылка уже вшита в каждый текст через
+# {link}, дублировать список не нужно. EN-ярлыки тут же (ось внутренняя).
 METHODS: dict[str, dict[str, str]] = {
+    "intro":      {"icon": "💬", "ru": "Интро",     "en": "Intro",
+                   "hint_ru": "Тёплый клиент 1-на-1 — представьте нас в переписке готовым шаблоном со своей ссылкой.",
+                   "hint_en": "A warm 1-on-1 client — introduce us in chat with a ready template that has your link."},
     "broadcast":  {"icon": "📨", "ru": "Рассылка",  "en": "Broadcast",
                    "hint_ru": "У вас есть база контактов (WhatsApp / Telegram) — отправьте готовый текст со своей ссылкой.",
                    "hint_en": "You have a contact base (WhatsApp / Telegram) — send a ready text with your link."},
     "social":     {"icon": "📱", "ru": "Пост",      "en": "Post",
                    "hint_ru": "У вас есть канал, блог или аккаунт — опубликуйте готовый пост со своей ссылкой.",
                    "hint_en": "You have a channel, blog or account — publish a ready post with your link."},
-    "event":      {"icon": "🤝", "ru": "События",   "en": "Events",
-                   "hint_ru": "Проводите совместное мероприятие — пригласите аудиторию на разбор с бухгалтером.",
-                   "hint_en": "Running a joint event — invite the audience to a session with an accountant."},
     "leadmagnet": {"icon": "📋", "ru": "Чек-лист",  "en": "Checklist",
                    "hint_ru": "Подарите чек-лист в обмен на интерес — мягкий повод привести клиента.",
                    "hint_en": "Offer a checklist in exchange for interest — a soft way to bring a client."},
-    "intro":      {"icon": "💬", "ru": "Интро и ссылки", "en": "Intro & links",
-                   "hint_ru": "Тёплый клиент 1-на-1 — представьте нас готовым шаблоном; ниже — ваши прямые персональные ссылки.",
-                   "hint_en": "A warm 1-on-1 client — introduce us with a ready template; below are your direct personal links."},
+    "event":      {"icon": "🤝", "ru": "События",   "en": "Events",
+                   "hint_ru": "Проводите совместное мероприятие — пригласите аудиторию на разбор с бухгалтером.",
+                   "hint_en": "Running a joint event — invite the audience to a session with an accountant."},
 }
 METHODS_ORDER: list[str] = list(METHODS.keys())
 

@@ -6,12 +6,17 @@
 {% include "_balance.html" %}
 {# Переборка 2026-06-02: вкладки = СПОСОБЫ привлечения (METHODS), не «ссылки/  #}
 {# тексты/кит». В каждом тексте уже вшита персональная ссылка (плейсхолдер     #}
-{# {link} → links[item.link_key], подстановка фильтром replace). directlinks — #}
-{# особый блок: карточки персональных ссылок. Глубокий вход по #<способ>;      #}
-{# старые якоря #links/#messages/#kits мапятся в JS (LEGACY).                  #}
+{# {link} → links[item.link_key], подстановка фильтром replace) — отдельного   #}
+{# блока ссылок нет. Глубокий вход по #<способ>; старые якоря #links/#messages/ #}
+{# #kits мапятся в JS (LEGACY).                                                #}
 <div class="card">
-  <p>{% if lang == 'en' %}Pick how you bring clients — each tab has a ready text with your personal link already inside. Copy and send, nothing to write from scratch.{% else %}Выберите, каким способом приводите клиентов — в каждой вкладке готовый текст с вашей персональной ссылкой уже внутри. Скопируйте и отправьте, ничего не нужно сочинять с нуля.{% endif %}</p>
-  <p class="ref-hint">{{ 'Your partner code:' if lang == 'en' else 'Ваш код партнёра:' }} <code>{{ ref_slug }}</code></p>
+  {% if lang == 'en' %}
+  <p>5 ways to recommend a first-class service and earn a reward from grateful clients. Pick the one that suits you — each tab has a ready text with your personal link. Copy and send, nothing to write from scratch.</p>
+  <p>Your reward is already included in the price of all our services and is paid out by the 10th of each month. Just recommend us.</p>
+  {% else %}
+  <p>5 способов порекомендовать первоклассный сервис и получить вознаграждение от благодарных клиентов. Выберите удобный вам способ — в каждой вкладке готовый текст с вашей персональной ссылкой. Скопируйте и отправьте, сочинять ничего не нужно.</p>
+  <p>Ваше вознаграждение уже включено в стоимость всех наших услуг и выплачивается до 10 числа каждого месяца. Просто рекомендуйте нас.</p>
+  {% endif %}
 </div>
 
 <div class="tool-tabs">
@@ -58,84 +63,6 @@
     </div>
   {% endif %}
 
-  {# ─── Прямые персональные ссылки — внутри вкладки «Интро и ссылки» ──────── #}
-  {% if key == 'intro' %}
-    <div class="card">
-      <h3>📝 {{ 'Quiz: free consultation' if lang == 'en' else 'Квиз: бесплатная консультация' }}</h3>
-      <div class="ref-row">
-        <div class="ref-row-text">
-          <div class="ref-row-title">{{ 'Quiz link' if lang == 'en' else 'Ссылка на квиз' }}</div>
-          <a class="ref-row-url" href="{{ links.consult_quiz }}" target="_blank" rel="noopener">{{ links.consult_quiz }}</a>
-        </div>
-        <button class="icon-btn" title="{{ 'Copy' if lang == 'en' else 'Скопировать' }}" onclick="copyLink(this, '{{ links.consult_quiz }}')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        </button>
-      </div>
-      <div class="ref-row">
-        <div class="ref-row-text">
-          <div class="ref-row-title">Telegram</div>
-          <a class="ref-row-url" href="{{ links.consult_tg }}" target="_blank" rel="noopener">{{ links.consult_tg }}</a>
-        </div>
-        <button class="icon-btn" title="{{ 'Copy' if lang == 'en' else 'Скопировать' }}" onclick="copyLink(this, '{{ links.consult_tg }}')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        </button>
-      </div>
-      <div class="ref-row">
-        <div class="ref-row-text">
-          <div class="ref-row-title">WhatsApp</div>
-          <a class="ref-row-url" href="{{ links.consult_wa }}" target="_blank" rel="noopener">{{ links.consult_wa }}</a>
-        </div>
-        <button class="icon-btn" title="{{ 'Copy' if lang == 'en' else 'Скопировать' }}" onclick="copyLink(this, '{{ links.consult_wa }}')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        </button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>🎓 {{ 'Masterclass with an accountant' if lang == 'en' else 'Мастер-класс с бухгалтером' }}</h3>
-      <div class="ref-row">
-        <div class="ref-row-text">
-          <div class="ref-row-title">{{ 'Quiz link' if lang == 'en' else 'Ссылка на квиз' }}</div>
-          <a class="ref-row-url" href="{{ links.mk_quiz }}" target="_blank" rel="noopener">{{ links.mk_quiz }}</a>
-        </div>
-        <button class="icon-btn" title="{{ 'Copy' if lang == 'en' else 'Скопировать' }}" onclick="copyLink(this, '{{ links.mk_quiz }}')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        </button>
-      </div>
-      <div class="ref-row">
-        <div class="ref-row-text">
-          <div class="ref-row-title">Telegram</div>
-          <a class="ref-row-url" href="{{ links.mk_tg }}" target="_blank" rel="noopener">{{ links.mk_tg }}</a>
-        </div>
-        <button class="icon-btn" title="{{ 'Copy' if lang == 'en' else 'Скопировать' }}" onclick="copyLink(this, '{{ links.mk_tg }}')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        </button>
-      </div>
-      <div class="ref-row">
-        <div class="ref-row-text">
-          <div class="ref-row-title">WhatsApp</div>
-          <a class="ref-row-url" href="{{ links.mk_wa }}" target="_blank" rel="noopener">{{ links.mk_wa }}</a>
-        </div>
-        <button class="icon-btn" title="{{ 'Copy' if lang == 'en' else 'Скопировать' }}" onclick="copyLink(this, '{{ links.mk_wa }}')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        </button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>🤝 {{ 'Partner link to the ONCOUNT Community bot' if lang == 'en' else 'Партнёрская ссылка в бот ONCOUNT Community' }}</h3>
-      <p class="ref-hint">{% if lang == 'en' %}Invite new partners — earn <strong>10% of their partner rewards</strong>.{% else %}Приглашайте новых партнёров — получайте <strong>10% от их партнёрских вознаграждений</strong>.{% endif %}</p>
-      <div class="ref-row">
-        <div class="ref-row-text">
-          <div class="ref-row-title">{{ 'Community Telegram bot' if lang == 'en' else 'Telegram-бот сообщества' }}</div>
-          <a class="ref-row-url" href="{{ links.partner_bot }}" target="_blank" rel="noopener">{{ links.partner_bot }}</a>
-        </div>
-        <button class="icon-btn" title="{{ 'Copy' if lang == 'en' else 'Скопировать' }}" onclick="copyLink(this, '{{ links.partner_bot }}')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        </button>
-      </div>
-    </div>
-  {% endif %}
 </section>
 {% endfor %}
 
