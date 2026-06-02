@@ -15,7 +15,7 @@ EVENT_DATE_HUMAN = "11 июня, 18:00 (по Дубаю)"
 
 # Экран-обложка (шаг 0) — оффер мастер-класса (с Marquiz-референса).
 COVER = {
-    "image": "/static/img/mk-hero.png",  # баннер мастер-класса на первом экране
+    "image": "/static/img/mk-hero.jpg",  # баннер мастер-класса (сжат: 1000px, ~62КБ)
     "title": "Закрытая встреча с главным бухгалтером ONCOUNT",
     "date": EVENT_DATE_HUMAN,
     "place": "ZOOM",
