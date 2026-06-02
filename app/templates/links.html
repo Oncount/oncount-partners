@@ -9,6 +9,81 @@
 </div>
 
 <div class="card">
+  <h3>📝 {{ 'Quiz: free consultation (3 questions)' if lang == 'en' else 'Квиз: бесплатная консультация (3 вопроса)' }}</h3>
+  <p class="ref-hint">{% if lang == 'en' %}A short quiz attributed to you. Share the link or copy a ready text and send it to a friend — every request that comes through it is tied to you.{% else %}Короткий квиз, закреплённый за вами. Поделитесь ссылкой или скопируйте готовый текст и отправьте другу — каждая заявка по нему закрепляется за вами.{% endif %}</p>
+
+  <div class="ref-row">
+    <div class="ref-row-text">
+      <div class="ref-row-title">{{ 'Your quiz link' if lang == 'en' else 'Ваша ссылка на квиз' }}</div>
+      <a class="ref-row-url" href="{{ link_quiz }}" target="_blank" rel="noopener">{{ link_quiz }}</a>
+    </div>
+    <button class="icon-btn" title="{{ 'Copy' if lang == 'en' else 'Скопировать' }}" onclick="copyLink(this, '{{ link_quiz }}')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+    </button>
+  </div>
+
+  <p class="ref-hint" style="margin-top:16px">{{ '3 ready texts — pick one, copy and send:' if lang == 'en' else '3 готовых текста — выберите, скопируйте и отправьте:' }}</p>
+
+  {% if lang == 'en' %}
+  <div class="ref-row">
+    <div class="ref-row-text">
+      <div class="msg-text" id="qtext1">Hi! If you run a business in the UAE — or are just planning one — ONCOUNT offers a free situation review with an accountant: taxes, VAT, opening a company or a bank account. Answer 3 quick questions and they'll come to the call with concrete numbers:
+{{ link_quiz }}</div>
+    </div>
+    <button class="icon-btn" title="Copy" onclick="copyText(this, 'qtext1')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+    </button>
+  </div>
+  <div class="ref-row">
+    <div class="ref-row-text">
+      <div class="msg-text" id="qtext2">Accounting and taxes in the UAE can be a real headache. ONCOUNT (200+ clients in Dubai) gives a free consultation: how not to overpay on VAT and Corporate Tax and put your books in order. Fill a 3-question quiz — they'll tailor a solution for you:
+{{ link_quiz }}</div>
+    </div>
+    <button class="icon-btn" title="Copy" onclick="copyText(this, 'qtext2')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+    </button>
+  </div>
+  <div class="ref-row">
+    <div class="ref-row-text">
+      <div class="msg-text" id="qtext3">I recommend ONCOUNT — accountants for businesses in the UAE. Free consultation, 3 questions and a convenient call time:
+{{ link_quiz }}</div>
+    </div>
+    <button class="icon-btn" title="Copy" onclick="copyText(this, 'qtext3')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+    </button>
+  </div>
+  {% else %}
+  <div class="ref-row">
+    <div class="ref-row-text">
+      <div class="msg-text" id="qtext1">Привет! Если ведёшь бизнес в ОАЭ или только планируешь — у ONCOUNT можно бесплатно разобрать свою ситуацию с бухгалтером: налоги, VAT, открытие компании или счёта. Ответь на 3 коротких вопроса — и на созвон придут уже с конкретными цифрами:
+{{ link_quiz }}</div>
+    </div>
+    <button class="icon-btn" title="Скопировать" onclick="copyText(this, 'qtext1')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+    </button>
+  </div>
+  <div class="ref-row">
+    <div class="ref-row-text">
+      <div class="msg-text" id="qtext2">Знаю, что бухгалтерия и налоги в ОАЭ — головная боль. ONCOUNT (200+ клиентов в Дубае) даёт бесплатную консультацию: подскажут, как не переплатить по VAT и Corporate Tax и навести порядок в учёте. Заполни анкету из 3 вопросов — подберут решение под тебя:
+{{ link_quiz }}</div>
+    </div>
+    <button class="icon-btn" title="Скопировать" onclick="copyText(this, 'qtext2')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+    </button>
+  </div>
+  <div class="ref-row">
+    <div class="ref-row-text">
+      <div class="msg-text" id="qtext3">Рекомендую ONCOUNT — бухгалтеры для бизнеса в ОАЭ. Бесплатная консультация, 3 вопроса и удобное время созвона:
+{{ link_quiz }}</div>
+    </div>
+    <button class="icon-btn" title="Скопировать" onclick="copyText(this, 'qtext3')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+    </button>
+  </div>
+  {% endif %}
+</div>
+
+<div class="card">
   <h3>💼 {{ 'Free consultation with an accountant' if lang == 'en' else 'Бесплатная консультация с бухгалтером' }}</h3>
   <p class="ref-hint">{{ 'Copy the link and send it to your client.' if lang == 'en' else 'Скопируйте ссылку и отправьте клиенту.' }}</p>
 
@@ -73,13 +148,24 @@
   </div>
 </div>
 
+<style>
+.msg-text{white-space:pre-line;line-height:1.5;font-size:14px;color:var(--ink, #15211e)}
+</style>
 <script>
-function copyLink(btn, url) {
-  navigator.clipboard.writeText(url);
+function _flash(btn) {
   const orig = btn.innerHTML;
   btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
   btn.classList.add('copied');
   setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 1500);
+}
+function copyLink(btn, url) {
+  navigator.clipboard.writeText(url);
+  _flash(btn);
+}
+function copyText(btn, id) {
+  const el = document.getElementById(id);
+  if (el) navigator.clipboard.writeText(el.innerText);
+  _flash(btn);
 }
 </script>
 {% endblock %}
