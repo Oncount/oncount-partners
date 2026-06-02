@@ -378,7 +378,7 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 
 
 _RL_HITS: dict[str, "deque"] = {}
-_RL_PATHS = ("/auth/", "/login", "/invite/", "/consultation/submit")
+_RL_PATHS = ("/auth/", "/login", "/invite/", "/consultation/submit", "/mk/submit")
 _RL_MAX = 30          # запросов с одного IP
 _RL_WINDOW = 60       # за столько секунд
 
@@ -621,10 +621,12 @@ def consultation_page(request: Request) -> HTMLResponse:
     from app import quiz_config
     return templates.TemplateResponse("quiz.html", {
         "request": request,
+        "cover": quiz_config.COVER,
         "intro": quiz_config.INTRO,
         "questions": quiz_config.QUESTIONS,
         "final": quiz_config.FINAL,
         "thanks": quiz_config.THANKS,
+        "socials": quiz_config.SOCIALS,
         "submit_url": "/consultation/submit",
     })
 
