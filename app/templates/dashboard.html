@@ -115,17 +115,11 @@
   </div>
 </div>
 
-{# Постоянный пошаговый план «как зарабатывать с нами»: НЕ убираем после прохождения
-   всех шагов — гейтим прямо по partner (не по show_checklist), чтобы исчезал только
-   после ручного ✕. show_checklist из main.py намеренно не используем. #}
-{% if partner.checklist_dismissed_at is none %}
+{# Постоянный пошаговый план «как зарабатывать с нами»: висит ВСЕГДА, без скрытия и
+   без крестика — напоминает агенту, что и за чем делать. show_checklist /
+   checklist_dismissed_at намеренно не используем. #}
 <div class="card" id="checklist">
-  <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
-    <h3 style="margin: 0;">🚀 {{ 'Take these 3 steps to earn your first reward' if lang == 'en' else 'Сделай эти 3 шага, чтобы получить первое вознаграждение' }}</h3>
-    <form method="POST" action="/checklist/dismiss" style="margin: 0;">
-      <button type="submit" class="btn btn-ghost" style="padding: 4px 12px; font-size: 12px;" title="{{ 'Hide checklist' if lang == 'en' else 'Скрыть чек-лист' }}">✕</button>
-    </form>
-  </div>
+  <h3 style="margin: 0;">🚀 {{ 'Take these 3 steps to earn your first reward' if lang == 'en' else 'Сделай эти 3 шага, чтобы получить первое вознаграждение' }}</h3>
   <div style="margin-top: 16px;">
     {% for step in checklist_steps %}
     <a href="{{ step.href }}" style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border); color: var(--charcoal);">
@@ -138,6 +132,5 @@
     {% endfor %}
   </div>
 </div>
-{% endif %}
 
 {% endblock %}
