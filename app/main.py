@@ -147,6 +147,72 @@ def partner_type_label(key: str, lang: str = "ru") -> dict[str, str]:
     return {"key": key, "label": meta[lang], "icon": meta["icon"]}
 
 
+# ─── Способы привлечения — ось вкладок /tools (план 2026-06-02) ──────────────
+# Партнёр выбирает не «кто я» (тип), а «каким действием привожу» (способ).
+# Порядок METHODS = порядок вкладок. hint = строка-фильтр «для кого» в шапке
+# блока. directlinks — особый блок: рендерит карточки персональных ссылок
+# (не тексты из БД). EN-ярлыки тут же (ось внутренняя, как PARTNER_TYPES).
+METHODS: dict[str, dict[str, str]] = {
+    "broadcast":   {"icon": "📨", "ru": "Рассылка по базе",     "en": "Broadcast to your base",
+                    "hint_ru": "У вас есть база контактов (WhatsApp / Telegram) — отправьте готовый текст со своей ссылкой.",
+                    "hint_en": "You have a contact base (WhatsApp / Telegram) — send a ready text with your link."},
+    "social":      {"icon": "📱", "ru": "Пост в соцсетях",      "en": "Social media post",
+                    "hint_ru": "У вас есть канал, блог или аккаунт — опубликуйте готовый пост со своей ссылкой.",
+                    "hint_en": "You have a channel, blog or account — publish a ready post with your link."},
+    "event":       {"icon": "🤝", "ru": "Совместное событие",   "en": "Joint event",
+                    "hint_ru": "Проводите совместное мероприятие — пригласите аудиторию на разбор с бухгалтером.",
+                    "hint_en": "Running a joint event — invite the audience to a session with an accountant."},
+    "leadmagnet":  {"icon": "📋", "ru": "Чек-лист в подарок",   "en": "Free checklist",
+                    "hint_ru": "Подарите чек-лист в обмен на интерес — мягкий повод привести клиента.",
+                    "hint_en": "Offer a checklist in exchange for interest — a soft way to bring a client."},
+    "intro":       {"icon": "💬", "ru": "Личное интро",         "en": "Personal intro",
+                    "hint_ru": "Тёплый клиент 1-на-1 — представьте нас в переписке готовым шаблоном.",
+                    "hint_en": "A warm 1-on-1 client — introduce us in chat with a ready template."},
+    "directlinks": {"icon": "🎓", "ru": "Прямые ссылки",        "en": "Direct links",
+                    "hint_ru": "Просто нужна персональная ссылка — скопируйте и отправьте куда угодно.",
+                    "hint_en": "You just need a personal link — copy it and send it anywhere."},
+}
+METHODS_ORDER: list[str] = list(METHODS.keys())
+
+# Старые якоря /tools → новые способы (bot.py и закладки не ломаем).
+LEGACY_TOOL_ANCHORS: dict[str, str] = {
+    "links": "directlinks",
+    "messages": "broadcast",
+    "kits": "intro",
+}
+
+
+def method_label(key: str, lang: str = "ru") -> dict[str, str]:
+    """Способ → {key, label, icon, hint} для вкладок/шапки блока /tools.
+    Неизвестный/пустой ключ деградирует мягко: сырое значение без иконки."""
+    lang = lang if lang in ("ru", "en") else "ru"
+    meta = METHODS.get(key or "")
+    if not meta:
+        return {"key": key or "", "label": key or "—", "icon": "", "hint": ""}
+    return {
+        "key": key,
+        "label": meta[lang],
+        "icon": meta["icon"],
+        "hint": meta["hint_en" if lang == "en" else "hint_ru"],
+    }
+
+
+def _personal_links(ref: str, base: str) -> dict[str, str]:
+    """Все персональные ссылки партнёра по ключам link_key. Один источник истины
+    для вкладок /tools и для подстановки плейсхолдера {link} в тело текста.
+    Квизы /consultation и /mk — наш домен, ?ref= метит лида нативно; TG/WA —
+    редиректы /ct,/cw,/mt,/mw; partner_bot — приглашение нового партнёра."""
+    return {
+        "consult_quiz": f"{base}/consultation?ref={ref}",
+        "consult_tg":   f"{base}/ct/{ref}",
+        "consult_wa":   f"{base}/cw/{ref}",
+        "mk_quiz":      f"{base}/mk?ref={ref}",
+        "mk_tg":        f"{base}/mt/{ref}",
+        "mk_wa":        f"{base}/mw/{ref}",
+        "partner_bot":  f"{base}/p/{ref}",
+    }
+
+
 # ─── Анкета партнёра (Фаза L, план 2026-05-27) ──────────────────────────────
 # ⚠️ ТЕКСТЫ ВОПРОСОВ/ВАРИАНТОВ — ЧЕРНОВИК на утверждении Николь (НЕ выдаём за
 # финальные, урок Фаз E/F). Правятся ЗДЕСЬ без миграции — ответы лежат в JSON
@@ -368,6 +434,7 @@ def partner_manager(lang: str = "ru") -> dict:
 templates.env.globals["lead_stage"] = lead_stage
 templates.env.globals["payout_label"] = payout_label
 templates.env.globals["partner_type_label"] = partner_type_label
+templates.env.globals["method_label"] = method_label
 templates.env.globals["partner_manager"] = partner_manager
 # Дата выплаты по won-лиду (Фаза K) — единый источник для leads.html.
 from app.notifications import payout_due_date as _payout_due_date  # noqa: E402
@@ -503,6 +570,13 @@ async def on_startup() -> None:
         # message_templates уже есть в проде.
         conn.execute(text("ALTER TABLE message_templates ADD COLUMN IF NOT EXISTS partner_type VARCHAR(32)"))
         conn.execute(text("CREATE INDEX IF NOT EXISTS ix_message_templates_partner_type ON message_templates (partner_type)"))
+        # Способ привлечения + ключ персональной ссылки (план 2026-06-02
+        # «переборка /tools по способам»). Аддитивно и идемпотентно: две
+        # nullable-колонки + индекс по method. NULL = текст не в новых вкладках.
+        # create_all не делает ALTER, а message_templates уже есть в проде.
+        conn.execute(text("ALTER TABLE message_templates ADD COLUMN IF NOT EXISTS method VARCHAR(32)"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_message_templates_method ON message_templates (method)"))
+        conn.execute(text("ALTER TABLE message_templates ADD COLUMN IF NOT EXISTS link_key VARCHAR(16)"))
         # Анкета партнёра (Фаза L, план 2026-05-27). Аддитивно и идемпотентно:
         # две nullable-колонки, без DB-default. onboarding_answers (JSON) — ответы
         # белого списка; survey_completed_at — отметка прохождения (NULL = не
@@ -1446,7 +1520,7 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
             "label": "Скопируй свою партнёрскую ссылку",
             "label_en": "Copy your partner link",
             "done": partner.links_viewed_at is not None,
-            "href": "/tools#links",
+            "href": "/tools#directlinks",
         },
         {
             "label": "Передай первого клиента",
@@ -1600,12 +1674,13 @@ def short_partner_bot(slug: str) -> RedirectResponse:
 
 @app.get("/tools", response_class=HTMLResponse)
 def tools(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
-    """Раздел «Инструменты → Тексты и ссылки» — объединение трёх бывших страниц
-    в одну (решение Николь 2026-06-02): партнёрские ссылки (/links) + тексты
-    рассылок (/messages, partner_type IS NULL) + партнёрский кит (/kits,
-    partner_type IS NOT NULL). Вкладки переключаются на клиенте; глубокий вход
-    по #links / #messages / #kits (бот и дашборд ведут на якорь). Старые URL
-    /links, /messages, /kits — 302-редиректы сюда (deep-link бота не ломаем).
+    """Раздел «Инструменты → Тексты и ссылки» (переборка 2026-06-02): вкладки =
+    СПОСОБЫ привлечения (METHODS), а не «ссылки/тексты/кит». Каждый блок
+    самодостаточен: фильтр «для кого» + персональная ссылка + готовые тексты со
+    вшитой (плейсхолдер {link}) персональной ссылкой. Ось partner_type как
+    группировка убрана. directlinks — особый блок: карточки персональных ссылок.
+    Глубокий вход по #broadcast/#social/#event/#leadmagnet/#intro/#directlinks;
+    старые якоря #links/#messages/#kits мапятся на клиенте (LEGACY_TOOL_ANCHORS).
     """
     partner = current_partner(request, session)
     if not partner:
@@ -1617,28 +1692,20 @@ def tools(request: Request, session: Session = Depends(get_session)) -> HTMLResp
 
     ref = partner.ref_slug
     base = str(request.base_url).rstrip("/")
+    links = _personal_links(ref, base)
 
-    # Тексты рассылок — только генерик-крючки (partner_type IS NULL).
-    msg_items = (
+    # Все активные тексты с непустым method, сгруппированы по способу. Порядок
+    # внутри способа — order_index, id. Тексты без method (NULL) не показываем.
+    rows = (
         session.query(MessageTemplate)
         .filter(MessageTemplate.is_active.is_(True))
-        .filter(MessageTemplate.partner_type.is_(None))
-        .order_by(MessageTemplate.order_index)
+        .filter(MessageTemplate.method.isnot(None))
+        .order_by(MessageTemplate.method, MessageTemplate.order_index, MessageTemplate.id)
         .all()
     )
-
-    # Партнёрский кит — материалы с непустым partner_type, сгруппированы по типу.
-    kit_rows = (
-        session.query(MessageTemplate)
-        .filter(MessageTemplate.is_active.is_(True))
-        .filter(MessageTemplate.partner_type.isnot(None))
-        .order_by(MessageTemplate.partner_type, MessageTemplate.order_index, MessageTemplate.id)
-        .all()
-    )
-    kit_groups: dict[str, list] = {}
-    for it in kit_rows:
-        kit_groups.setdefault(it.partner_type, []).append(it)
-    kit_type_keys = [k for k in PARTNER_TYPES if k in kit_groups]
+    method_groups: dict[str, list] = {}
+    for it in rows:
+        method_groups.setdefault(it.method, []).append(it)
 
     return templates.TemplateResponse(
         "tools.html",
@@ -1646,25 +1713,19 @@ def tools(request: Request, session: Session = Depends(get_session)) -> HTMLResp
             request,
             partner,
             ref_slug=ref,
-            link_consult_tg=f"{base}/ct/{ref}",
-            link_consult_wa=f"{base}/cw/{ref}",
-            link_mclass_tg=f"{base}/mt/{ref}",
-            link_mclass_wa=f"{base}/mw/{ref}",
-            link_partner_bot=f"{base}/p/{ref}",
-            # Квиз-лендинг с атрибуцией к агенту по ?ref (план 2026-06-02).
-            link_quiz=f"{base}/consultation?ref={ref}",
-            msg_items=msg_items,
-            kit_groups=kit_groups,
-            kit_type_keys=kit_type_keys,
+            methods_order=METHODS_ORDER,
+            method_groups=method_groups,
+            links=links,
             kpi=_balance_kpi(session, partner),
         ),
     )
 
 
 # Старые URL → объединённая страница (бот /links, /messages и закладки живут).
+# Якоря переехали на способы (план 2026-06-02): /links → directlinks.
 @app.get("/links")
 def links_redirect() -> RedirectResponse:
-    return RedirectResponse("/tools#links", status_code=302)
+    return RedirectResponse("/tools#directlinks", status_code=302)
 
 
 @app.get("/transfer", response_class=HTMLResponse)
@@ -1781,12 +1842,12 @@ def products(request: Request, session: Session = Depends(get_session)) -> HTMLR
 # редиректят на соответствующий якорь — bot.py /messages и закладки не ломаем.
 @app.get("/messages")
 def messages_redirect() -> RedirectResponse:
-    return RedirectResponse("/tools#messages", status_code=302)
+    return RedirectResponse("/tools#broadcast", status_code=302)
 
 
 @app.get("/kits")
 def kits_redirect() -> RedirectResponse:
-    return RedirectResponse("/tools#kits", status_code=302)
+    return RedirectResponse("/tools#intro", status_code=302)
 
 
 # FAQ переехал в самый низ дашборда. Старые ссылки (/faq, /kb/faq, футер бота)

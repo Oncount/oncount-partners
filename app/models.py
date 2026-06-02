@@ -141,6 +141,17 @@ class MessageTemplate(Base):
     # «Интро WhatsApp» / «Lead-магнит» / «Disclosure»…). EN-зеркало не нужно:
     # partner_type — внутренний ключ, ярлык берётся из PARTNER_TYPES (ru/en).
     partner_type: Mapped[str | None] = mapped_column(String(32), index=True)
+    # Способ привлечения, под который собран текст (план 2026-06-02 «переборка
+    # /tools по способам»). Ключ из METHODS в main.py (broadcast/social/event/
+    # leadmagnet/intro/directlinks). Это ось ГРУППИРОВКИ на /tools вместо
+    # partner_type (тип партнёра как ось убран по решению Николь). NULL → текст
+    # не показывается в новых вкладках /tools (мягкая деградация).
+    method: Mapped[str | None] = mapped_column(String(32), index=True)
+    # Какую персональную ссылку партнёра вшивать вместо плейсхолдера {link} в теле
+    # (resolve в main._personal_links): consult_quiz/consult_tg/consult_wa/
+    # mk_quiz/mk_tg/mk_wa/partner_bot. NULL → в теле нет {link} (напр. insider-
+    # тексты с «голым» wa.me для дискретности — намеренно без трекинг-ссылки).
+    link_key: Mapped[str | None] = mapped_column(String(16))
 
 
 class ProductBlock(Base):

@@ -371,7 +371,8 @@ TEMPLATES = [
             "ONCOUNT регистрирует бесплатно — это уже входит в стоимость "
             "обслуживания. Цены приятные, всё включено: бухгалтерия, отчёты, "
             "консультации. №1 в Дубае по бухгалтерии на русском языке.\n\n"
-            "Пиши, расскажу подробнее."
+            "Пиши, расскажу подробнее.\n\n"
+            "Записаться на бесплатную консультацию: {link}"
         ),
         "body_md_en": (
             "Hi! Just opened a company in the UAE? You'll definitely need "
@@ -379,8 +380,11 @@ TEMPLATES = [
             "ONCOUNT registers you for free — it's already included in the "
             "service. Friendly pricing, all-inclusive: accounting, reports, "
             "consultations. A top accounting firm in Dubai.\n\n"
-            "Message me, I'll tell you more."
+            "Message me, I'll tell you more.\n\n"
+            "Book a free consultation: {link}"
         ),
+        "method": "broadcast",
+        "link_key": "consult_wa",
         "order_index": 1,
     },
     {
@@ -395,7 +399,8 @@ TEMPLATES = [
             "ONCOUNT: бесплатная регистрация на VAT и сдача отчётов каждый "
             "квартал. Всё входит в стоимость ежемесячного обслуживания. "
             "Цены приятные, всё включено, никаких скрытых доплат.\n\n"
-            "Обратись в ONCOUNT."
+            "Обратись в ONCOUNT.\n\n"
+            "Записаться на бесплатную консультацию: {link}"
         ),
         "body_md_en": (
             "Hi! Your company's revenue is picking up — so it's time to "
@@ -403,8 +408,11 @@ TEMPLATES = [
             "ONCOUNT: free VAT registration and quarterly report filing. "
             "It's all included in the monthly service. Friendly pricing, "
             "all-inclusive, no hidden charges.\n\n"
-            "Get in touch with ONCOUNT."
+            "Get in touch with ONCOUNT.\n\n"
+            "Book a free consultation: {link}"
         ),
+        "method": "broadcast",
+        "link_key": "consult_wa",
         "order_index": 2,
     },
     {
@@ -418,15 +426,19 @@ TEMPLATES = [
             "отвечают, отчёты не сдают и вообще бесят?\n\n"
             "Запишись на бесплатную консультацию ONCOUNT. Эксперты за "
             "15–20 минут ответят на твои вопросы, подберут тариф и расскажут, "
-            "как лучше всё устроить."
+            "как лучше всё устроить.\n\n"
+            "Записаться (3 вопроса): {link}"
         ),
         "body_md_en": (
             "Fed up with people who talk in riddles, don't reply on time, "
             "don't file reports and just drive you crazy?\n\n"
             "Book a free ONCOUNT consultation. In 15–20 minutes the experts "
             "will answer your questions, suggest a plan and explain how best "
-            "to set everything up."
+            "to set everything up.\n\n"
+            "Sign up (3 questions): {link}"
         ),
+        "method": "broadcast",
+        "link_key": "consult_quiz",
         "order_index": 3,
     },
     {
@@ -440,7 +452,8 @@ TEMPLATES = [
             "Бухгалтер ONCOUNT проводит бесплатный мастер-класс — там можно "
             "задать любые вопросы, получить консультацию от специалиста и "
             "познакомиться с другими предпринимателями в Дубае.\n\n"
-            "Регистрируйся, скину детали."
+            "Регистрируйся, скину детали.\n\n"
+            "Регистрация на мастер-класс: {link}"
         ),
         "body_md_en": (
             "I remember you said you were having trouble with your "
@@ -448,8 +461,11 @@ TEMPLATES = [
             "An ONCOUNT accountant runs a free masterclass — you can ask any "
             "questions, get advice from a specialist and meet other "
             "entrepreneurs in Dubai.\n\n"
-            "Sign up and I'll send the details."
+            "Sign up and I'll send the details.\n\n"
+            "Register for the masterclass: {link}"
         ),
+        "method": "broadcast",
+        "link_key": "mk_quiz",
         "order_index": 4,
     },
     {
@@ -463,15 +479,19 @@ TEMPLATES = [
             "Делал ONCOUNT — №1 в Дубае на русском: всё технологично, "
             "личный кабинет, страховка профрисков 1 000 000 AED. Штрафы — "
             "больше не твоя проблема.\n\n"
-            "Пиши, пришлю чек-лист."
+            "Пиши, пришлю чек-лист.\n\n"
+            "Или сразу записаться на консультацию: {link}"
         ),
         "body_md_en": (
             "You asked how to register for VAT — here's a checklist.\n\n"
             "Made by ONCOUNT — a top firm in Dubai: fully tech-driven, a "
             "client portal, 1,000,000 AED professional indemnity insurance. "
             "Fines are no longer your problem.\n\n"
-            "Message me, I'll send the checklist."
+            "Message me, I'll send the checklist.\n\n"
+            "Or book a consultation right away: {link}"
         ),
+        "method": "leadmagnet",
+        "link_key": "consult_wa",
         "order_index": 5,
     },
     {
@@ -484,7 +504,8 @@ TEMPLATES = [
             "Ты говорил, что сомневаешься в своём бухгалтере — фрилансер, без "
             "лицензии, не живёт в Дубае, непонятно, всё ли точно сдаёт.\n\n"
             "Держи чек-лист — как проверить бухгалтера и не словить штраф.\n\n"
-            "Пиши, пришлю."
+            "Пиши, пришлю.\n\n"
+            "Или сразу записаться на консультацию: {link}"
         ),
         "body_md_en": (
             "You said you have doubts about your accountant — a freelancer, "
@@ -492,16 +513,88 @@ TEMPLATES = [
             "filed correctly.\n\n"
             "Here's a checklist — how to vet an accountant and avoid a "
             "fine.\n\n"
-            "Message me, I'll send it."
+            "Message me, I'll send it.\n\n"
+            "Or book a consultation right away: {link}"
         ),
+        "method": "leadmagnet",
+        "link_key": "consult_wa",
         "order_index": 6,
+    },
+    # ── Квиз-крючки на бесплатную консультацию (перенесены из tools.html,
+    #    план 2026-06-02). method=broadcast, ссылка — персональный квиз
+    #    /consultation?ref= (наш домен, ?ref метит лида нативно). {link} в теле.
+    {
+        "slug": "quiz-hook-1",
+        "segment": "Квиз-консультация",
+        "segment_en": "Quiz consultation",
+        "title": "Квиз: разбор ситуации (тёплым)",
+        "title_en": "Quiz: situation review (warm)",
+        "body_md": (
+            "Привет! Если ведёшь бизнес в ОАЭ или только планируешь — у ONCOUNT "
+            "можно бесплатно разобрать свою ситуацию с бухгалтером: налоги, VAT, "
+            "открытие компании или счёта. Ответь на 3 коротких вопроса — и на "
+            "созвон придут уже с конкретными цифрами:\n{link}"
+        ),
+        "body_md_en": (
+            "Hi! If you run a business in the UAE — or are just planning one — "
+            "ONCOUNT offers a free situation review with an accountant: taxes, "
+            "VAT, opening a company or a bank account. Answer 3 quick questions "
+            "and they'll come to the call with concrete numbers:\n{link}"
+        ),
+        "method": "broadcast",
+        "link_key": "consult_quiz",
+        "order_index": 7,
+    },
+    {
+        "slug": "quiz-hook-2",
+        "segment": "Квиз-консультация",
+        "segment_en": "Quiz consultation",
+        "title": "Квиз: не переплатить по налогам",
+        "title_en": "Quiz: don't overpay on taxes",
+        "body_md": (
+            "Знаю, что бухгалтерия и налоги в ОАЭ — головная боль. ONCOUNT "
+            "(200+ клиентов в Дубае) даёт бесплатную консультацию: подскажут, "
+            "как не переплатить по VAT и Corporate Tax и навести порядок в "
+            "учёте. Заполни анкету из 3 вопросов — подберут решение под тебя:\n{link}"
+        ),
+        "body_md_en": (
+            "Accounting and taxes in the UAE can be a real headache. ONCOUNT "
+            "(200+ clients in Dubai) gives a free consultation: how not to "
+            "overpay on VAT and Corporate Tax and put your books in order. Fill "
+            "a 3-question quiz — they'll tailor a solution for you:\n{link}"
+        ),
+        "method": "broadcast",
+        "link_key": "consult_quiz",
+        "order_index": 8,
+    },
+    {
+        "slug": "quiz-hook-3",
+        "segment": "Квиз-консультация",
+        "segment_en": "Quiz consultation",
+        "title": "Квиз: короткая рекомендация",
+        "title_en": "Quiz: short recommendation",
+        "body_md": (
+            "Рекомендую ONCOUNT — бухгалтеры для бизнеса в ОАЭ. Бесплатная "
+            "консультация, 3 вопроса и удобное время созвона:\n{link}"
+        ),
+        "body_md_en": (
+            "I recommend ONCOUNT — accountants for businesses in the UAE. Free "
+            "consultation, 3 questions and a convenient call time:\n{link}"
+        ),
+        "method": "broadcast",
+        "link_key": "consult_quiz",
+        "order_index": 9,
     },
 ]
 
 
-# Партнёрский кит (/kits, Фаза C+G, план 2026-05-27). Материалы сегментированы по
-# ТИПУ ПАРТНЁРА (partner_type, ключи PARTNER_TYPES в main.py). segment = тип
-# ассета (чип над карточкой), это ДРУГАЯ ось, чем partner_type.
+# Партнёрский кит (Фаза C+G, план 2026-05-27). partner_type сохранён (тип, под
+# который собран материал), но ось ГРУППИРОВКИ на /tools теперь method (способ
+# привлечения, план 2026-06-02 «переборка по способам»): intro/social/…
+# segment = тип ассета (чип над карточкой). Персональная ссылка вшивается через
+# плейсхолдер {link} (link_key → main._personal_links). ⚠️ insider-киты намеренно
+# БЕЗ {link} (link_key не задан): «голый» wa.me/971589217784 для полной
+# дискретности — трекинг-ссылка раскрыла бы партнёрский мотив.
 #
 # Тексты УТВЕРЖДЕНЫ Николь 2026-06-02 (копилка финалов
 # .business/marketing/partner-kits-final-2026-06-02.md). Это финальные сообщения,
@@ -527,7 +620,7 @@ KITS = [
             "бухучёт для бизнеса в Дубае, помогают с налогами, отчётами и "
             "зарплатой. Я с ними сам работаю.\n"
             "\n"
-            "Если актуально, то напиши им напрямую: wa.me/971589217784 "
+            "Если актуально, то напиши им напрямую: {link} "
             "(скажи, что от меня)."
         ),
         "body_md_en": (
@@ -538,9 +631,11 @@ KITS = [
             "bookkeeping for businesses in Dubai, help with taxes, reports, and "
             "payroll. I work with them myself.\n"
             "\n"
-            "If it's relevant, just message them directly: wa.me/971589217784 "
+            "If it's relevant, just message them directly: {link} "
             "(mention you're from me)."
         ),
+        "method": "intro",
+        "link_key": "consult_wa",
         "order_index": 1,
     },
     {
@@ -558,7 +653,7 @@ KITS = [
             "в Дубае, помогают с налогами, отчётами и зарплатой.\n"
             "\n"
             "Их менеджер свяжется с вами в течение часа в рабочее время. Если "
-            "удобнее — напишите им сами: wa.me/971589217784 (упомяните, что от "
+            "удобнее — напишите им сами: {link} (упомяните, что от "
             "[моё имя]).\n"
             "\n"
             "По нашим вопросам остаюсь на связи."
@@ -572,11 +667,13 @@ KITS = [
             "payroll.\n"
             "\n"
             "Their manager will reach out within an hour during business hours. "
-            "If it's easier, message them yourself: wa.me/971589217784 (please "
+            "If it's easier, message them yourself: {link} (please "
             "mention I sent you — [my name]).\n"
             "\n"
             "I remain available on our matters."
         ),
+        "method": "intro",
+        "link_key": "consult_wa",
         "order_index": 1,
     },
     {
@@ -599,7 +696,7 @@ KITS = [
             "\n"
             "Это не лекция — это разбор вашей ситуации с бухгалтером.\n"
             "\n"
-            "Записаться можно по ссылке: [URL мастеркласса + UTM партнёра]"
+            "Записаться можно по ссылке: {link}"
         ),
         "body_md_en": (
             "🔶 For [event] attendees only\n"
@@ -615,8 +712,10 @@ KITS = [
             "This isn't a lecture — it's a review of your situation with an "
             "accountant.\n"
             "\n"
-            "Register here: [masterclass URL + UTM]"
+            "Register here: {link}"
         ),
+        "method": "social",
+        "link_key": "mk_quiz",
         "order_index": 1,
     },
     {
@@ -657,7 +756,7 @@ KITS = [
             "3. Убедиться, что бухучёт ведётся по IFRS — это требование банков.\n"
             "\n"
             "Кому интересно разобраться в своей ситуации — записаться на разбор "
-            "с бухгалтером ONCOUNT: [URL мастеркласса + UTM]\n"
+            "с бухгалтером ONCOUNT: {link}\n"
             "\n"
             "═══════════════════════════════════════\n"
             "📌 ВАРИАНТ Б — РЕАЛЬНЫЙ КЕЙС\n"
@@ -676,7 +775,7 @@ KITS = [
             "freezone-освобождение сохранили, штрафа избежали.\n"
             "\n"
             "Если у вас бизнес в ОАЭ и вы не на 100% уверены в бухучёте — "
-            "записаться на разбор: [URL + UTM]"
+            "записаться на разбор: {link}"
         ),
         "body_md_en": (
             "═══════════════════════════════════════\n"
@@ -712,7 +811,7 @@ KITS = [
             "it.\n"
             "\n"
             "If you'd like to make sense of your own situation, book a review "
-            "with an ONCOUNT accountant: [masterclass URL + UTM]\n"
+            "with an ONCOUNT accountant: {link}\n"
             "\n"
             "═══════════════════════════════════════\n"
             "📌 OPTION B — A REAL CASE\n"
@@ -734,8 +833,10 @@ KITS = [
             "freezone exemption, and avoided the fine.\n"
             "\n"
             "If you run a business in the UAE and aren't 100% sure about your "
-            "bookkeeping, book a review: [URL + UTM]"
+            "bookkeeping, book a review: {link}"
         ),
+        "method": "social",
+        "link_key": "mk_quiz",
         "order_index": 1,
     },
     {
@@ -799,7 +900,7 @@ KITS = [
             "подход и слаженная работа.\n"
             "\n"
             "Кстати, консультация первая бесплатно — напишите им: "
-            "wa.me/971589217784 (упомяните: «от [моё имя]»)."
+            "{link} (упомяните: «от [моё имя]»)."
         ),
         "body_md_en": (
             "═══════════════════════════════════════\n"
@@ -857,8 +958,10 @@ KITS = [
             "approach and well-coordinated work.\n"
             "\n"
             "By the way, the first consultation is free — message them: "
-            "wa.me/971589217784 (mention: «from [my name]»)."
+            "{link} (mention: «from [my name]»)."
         ),
+        "method": "intro",
+        "link_key": "consult_wa",
         "order_index": 1,
     },
     {
@@ -970,6 +1073,7 @@ KITS = [
             "And they no longer write about accounting in that chat — it's a "
             "privacy rule."
         ),
+        "method": "intro",
         "order_index": 1,
     },
     {
@@ -1008,6 +1112,7 @@ KITS = [
             "\n"
             "Anyway, I recommend them. Here's the number: wa.me/971589217784"
         ),
+        "method": "intro",
         "order_index": 2,
     },
     {
@@ -1042,6 +1147,7 @@ KITS = [
             "I'll leave you to it — [Manager name] takes it from here. Have a "
             "good chat!"
         ),
+        "method": "intro",
         "order_index": 3,
     },
     {
@@ -1101,6 +1207,7 @@ KITS = [
             "I've known for a long time: wa.me/971589217784. Pros, everything "
             "sharp and clear."
         ),
+        "method": "intro",
         "order_index": 4,
     },
 ]
