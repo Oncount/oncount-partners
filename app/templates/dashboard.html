@@ -30,7 +30,7 @@
     <span class="balance-item-value">${{ '{:,}'.format(kpi.expected_usd_low) }} – ${{ '{:,}'.format(kpi.expected_usd_high) }}</span>
   </div>
   {% endif %}
-  <div class="balance-item">
+  <div class="balance-item" style="flex-direction: row; align-items: baseline; gap: 8px; flex-wrap: wrap;">
     <span class="balance-item-label">{{ 'Your partner code:' if lang == 'en' else 'Ваш код партнёра:' }}</span>
     <span class="balance-item-value">{{ partner.ref_slug }}</span>
   </div>
@@ -40,10 +40,6 @@
 </div>
 
 <div class="kpi-grid">
-  <div class="kpi">
-    <div class="kpi-label">{{ 'Conversion' if lang == 'en' else 'Конверсия' }}</div>
-    <div class="kpi-value accent">{{ kpi.conversion }}%</div>
-  </div>
   <div class="kpi">
     <div class="kpi-label">{{ 'Requests' if lang == 'en' else 'Заявки' }}</div>
     <div class="kpi-value">{{ kpi.leads }}</div>
@@ -132,7 +128,7 @@
       <a class="btn btn-primary manager-contact" href="{{ link.href }}" target="_blank" rel="noopener">
         {% if link.channel == 'whatsapp' %}{{ 'Message on WhatsApp' if lang == 'en' else 'Написать в WhatsApp' }}
         {% elif link.channel == 'telegram' %}{{ 'Message on Telegram' if lang == 'en' else 'Написать в Telegram' }}
-        {% else %}{{ 'Email the manager' if lang == 'en' else 'Написать на email' }}{% endif %}{% if link.display %} · {{ link.display }}{% endif %}
+        {% else %}{{ 'Email the manager' if lang == 'en' else 'Написать на email' }}{% endif %}
       </a>
       {% endfor %}
       {% for ch in mgr.pending_channels %}
@@ -168,21 +164,4 @@
 </div>
 {% endif %}
 
-{% if partner.onboarded_at %}
-<div class="card">
-  {% if lang == 'en' %}
-  <h3>What to do next</h3>
-  <p>1. Open <a href="/links">“Partner links”</a> — copy your personal link.</p>
-  <p>2. Grab a ready-made <a href="/messages">message template</a> matching your client's need.</p>
-  <p>3. Send the text and your link to the client, or introduce them via the <a href="/transfer">“Introduce a client”</a> section in your dashboard or straight from the Telegram bot.</p>
-  <p>4. Open your dashboard anytime — you'll see each client's stage and your partner reward for clients who paid.</p>
-  {% else %}
-  <h3>Что делать дальше</h3>
-  <p>1. Откройте <a href="/links">«Партнёрские ссылки»</a> — скопируйте личную ссылку.</p>
-  <p>2. Возьмите готовый <a href="/messages">текст рассылки</a> под запрос вашего клиента.</p>
-  <p>3. Отправьте текст и свою ссылку клиенту или передавайте через раздел <a href="/transfer">«Передать клиента»</a> в личном кабинете или прямо из Telegram-бота.</p>
-  <p>4. Заходите в кабинет — по каждому клиенту видна стадия и партнёрское вознаграждение за оплативших клиентов.</p>
-  {% endif %}
-</div>
-{% endif %}
 {% endblock %}
