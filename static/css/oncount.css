@@ -233,8 +233,8 @@ table.list td {
 @media (prefers-reduced-motion: reduce) {
   .status-won { animation: none; box-shadow: 0 0 10px rgba(22, 163, 74, 0.6); }
 }
-/* «Отказ» (lost) — красный. */
-.status-lost { background: rgba(226, 59, 46, 0.12); color: #dc2626; }
+/* «Отказ» (lost) — серый. */
+.status-lost { background: rgba(100, 116, 139, 0.14); color: #64748b; }
 /* Сумма оплаты клиента рядом со статусом «Оплачено» — крупно и зелёным. */
 .lead-paid-amount {
   margin-top: 6px;

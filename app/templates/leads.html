@@ -27,7 +27,7 @@
       <td data-label="{{ 'Created' if lang == 'en' else 'Создано' }}">{{ row.created_at.strftime('%d.%m.%Y') }}</td>
       <td data-label="{{ 'Status' if lang == 'en' else 'Статус' }}">
         {% set stage = lead_stage(row.status, lang) %}
-        <span class="status-pill status-{{ row.status }}">{{ stage.icon }} {{ stage.label }}</span>
+        <span class="status-pill status-{{ row.status }}">{{ stage.label }}</span>
         {# Сумма, которую оплатил клиент — крупно и зелёным рядом со статусом «Оплачено» (won). #}
         {% if row.status == 'won' and row.amount_aed %}
         <div class="lead-paid-amount">💰 {{ '%.0f'|format(row.amount_aed) }} AED</div>
@@ -40,7 +40,7 @@
         {% if payout %}
         <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border);">
           <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--sage); margin-bottom: 4px;">{{ 'Reward' if lang == 'en' else 'Вознаграждение' }}</div>
-          <span class="status-pill payout-{{ payout.state }}">{{ payout.icon }} {{ payout.label }}</span>
+          <span class="status-pill payout-{{ payout.state }}">{{ payout.label }}</span>
           {% if payout.hint %}<div style="font-size: 12px; color: var(--sage); margin-top: 4px;">{{ payout.hint }}</div>{% endif %}
           {# Дата выплаты (Фаза K): 10-е число месяца, следующего за оплатой. Якорь — won_at; для won без won_at деградирует в «после оплаты». #}
           {% set due = payout_due_date(row, lang) %}

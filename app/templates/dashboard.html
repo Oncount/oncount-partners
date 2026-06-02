@@ -51,15 +51,15 @@
   {% set in_calc = kpi.successful - kpi.payout_to_pay - kpi.payout_paid %}
   <div style="display: flex; flex-wrap: wrap; gap: 12px;">
     <div style="flex: 1; min-width: 140px;">
-      <span class="status-pill payout-in_calc">🧾 {{ 'Being calculated' if lang == 'en' else 'В расчёте' }}</span>
+      <span class="status-pill payout-in_calc">{{ 'Being calculated' if lang == 'en' else 'В расчёте' }}</span>
       <div style="font-size: 28px; font-weight: 700; color: var(--deep-green); margin-top: 8px;">{{ in_calc }}</div>
     </div>
     <div style="flex: 1; min-width: 140px;">
-      <span class="status-pill payout-to_pay">⏳ {{ 'To be paid' if lang == 'en' else 'К выплате' }}</span>
+      <span class="status-pill payout-to_pay">{{ 'To be paid' if lang == 'en' else 'К выплате' }}</span>
       <div style="font-size: 28px; font-weight: 700; color: var(--deep-green); margin-top: 8px;">{{ kpi.payout_to_pay }}</div>
     </div>
     <div style="flex: 1; min-width: 140px;">
-      <span class="status-pill payout-paid">✅ {{ 'Paid' if lang == 'en' else 'Выплачено' }}</span>
+      <span class="status-pill payout-paid">{{ 'Paid' if lang == 'en' else 'Выплачено' }}</span>
       <div style="font-size: 28px; font-weight: 700; color: var(--deep-green); margin-top: 8px;">{{ kpi.payout_paid }}</div>
     </div>
   </div>
