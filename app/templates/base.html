@@ -46,7 +46,6 @@
     <div class="sidebar-section">{{ 'Knowledge base' if lang == 'en' else 'База знаний' }}</div>
     <a class="menu-item {% if '/courses' in request.url.path %}active{% endif %}" href="/courses">🎓 {{ 'Courses' if lang == 'en' else 'Курсы' }}</a>
     <a class="menu-item {% if '/products' in request.url.path %}active{% endif %}" href="/products">📦 {{ 'Plans and services' if lang == 'en' else 'Тарифы и сервисы' }}</a>
-    <a class="menu-item" href="/dashboard#faq">❓ FAQ</a>
 
     <div class="spacer"></div>
     <div class="sidebar-bottom">
