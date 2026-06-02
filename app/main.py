@@ -1425,7 +1425,7 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
             "label": "Скопируй свою партнёрскую ссылку",
             "label_en": "Copy your partner link",
             "done": partner.links_viewed_at is not None,
-            "href": "/links",
+            "href": "/tools#links",
         },
         {
             "label": "Передай первого клиента",
@@ -1451,6 +1451,17 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
         and request.cookies.get(SURVEY_SNOOZE_COOKIE) != "1"
     )
 
+    # FAQ перенесён в самый низ дашборда (раньше — отдельная страница /faq).
+    faq_items = (
+        session.query(FaqItem)
+        .filter_by(is_active=True)
+        .order_by(FaqItem.category, FaqItem.order_index)
+        .all()
+    )
+    faq_categories: dict[str, list[FaqItem]] = {}
+    for item in faq_items:
+        faq_categories.setdefault(item.category, []).append(item)
+
     return templates.TemplateResponse(
         "dashboard.html",
         _ctx(
@@ -1473,6 +1484,7 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
             checklist_steps=checklist_steps,
             show_checklist=show_checklist,
             show_survey_banner=show_survey_banner,
+            faq_categories=faq_categories,
         ),
     )
 
@@ -1562,11 +1574,19 @@ def short_partner_bot(slug: str) -> RedirectResponse:
     )
 
 
-@app.get("/links", response_class=HTMLResponse)
-def links(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
+@app.get("/tools", response_class=HTMLResponse)
+def tools(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
+    """Раздел «Инструменты → Тексты и ссылки» — объединение трёх бывших страниц
+    в одну (решение Николь 2026-06-02): партнёрские ссылки (/links) + тексты
+    рассылок (/messages, partner_type IS NULL) + партнёрский кит (/kits,
+    partner_type IS NOT NULL). Вкладки переключаются на клиенте; глубокий вход
+    по #links / #messages / #kits (бот и дашборд ведут на якорь). Старые URL
+    /links, /messages, /kits — 302-редиректы сюда (deep-link бота не ломаем).
+    """
     partner = current_partner(request, session)
     if not partner:
         return RedirectResponse("/login", status_code=302)
+    # Чек-лист дашборда: «скопируй ссылку» = факт открытия инструментов.
     if partner.links_viewed_at is None:
         partner.links_viewed_at = datetime.utcnow()
         session.commit()
@@ -1574,8 +1594,30 @@ def links(request: Request, session: Session = Depends(get_session)) -> HTMLResp
     ref = partner.ref_slug
     base = str(request.base_url).rstrip("/")
 
+    # Тексты рассылок — только генерик-крючки (partner_type IS NULL).
+    msg_items = (
+        session.query(MessageTemplate)
+        .filter(MessageTemplate.is_active.is_(True))
+        .filter(MessageTemplate.partner_type.is_(None))
+        .order_by(MessageTemplate.order_index)
+        .all()
+    )
+
+    # Партнёрский кит — материалы с непустым partner_type, сгруппированы по типу.
+    kit_rows = (
+        session.query(MessageTemplate)
+        .filter(MessageTemplate.is_active.is_(True))
+        .filter(MessageTemplate.partner_type.isnot(None))
+        .order_by(MessageTemplate.partner_type, MessageTemplate.order_index, MessageTemplate.id)
+        .all()
+    )
+    kit_groups: dict[str, list] = {}
+    for it in kit_rows:
+        kit_groups.setdefault(it.partner_type, []).append(it)
+    kit_type_keys = [k for k in PARTNER_TYPES if k in kit_groups]
+
     return templates.TemplateResponse(
-        "links.html",
+        "tools.html",
         _ctx(
             request,
             partner,
@@ -1587,8 +1629,17 @@ def links(request: Request, session: Session = Depends(get_session)) -> HTMLResp
             link_partner_bot=f"{base}/p/{ref}",
             # Квиз-лендинг с атрибуцией к агенту по ?ref (план 2026-06-02).
             link_quiz=f"{base}/consultation?ref={ref}",
+            msg_items=msg_items,
+            kit_groups=kit_groups,
+            kit_type_keys=kit_type_keys,
         ),
     )
+
+
+# Старые URL → объединённая страница (бот /links, /messages и закладки живут).
+@app.get("/links")
+def links_redirect() -> RedirectResponse:
+    return RedirectResponse("/tools#links", status_code=302)
 
 
 @app.get("/transfer", response_class=HTMLResponse)
@@ -1698,82 +1749,24 @@ def products(request: Request, session: Session = Depends(get_session)) -> HTMLR
     return templates.TemplateResponse("products.html", _ctx(request, partner, items=items))
 
 
-@app.get("/messages", response_class=HTMLResponse)
-def messages(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
-    partner = current_partner(request, session)
-    if not partner:
-        return RedirectResponse("/login", status_code=302)
-    # Только генерик-крючки (partner_type IS NULL). Материалы с типом партнёра
-    # живут в /kits — иначе черновики-киты протекли бы сюда с кнопкой «Скопировать».
-    items = (
-        session.query(MessageTemplate)
-        .filter(MessageTemplate.is_active.is_(True))
-        .filter(MessageTemplate.partner_type.is_(None))
-        .order_by(MessageTemplate.order_index)
-        .all()
-    )
-    return templates.TemplateResponse("messages.html", _ctx(request, partner, items=items))
+# Тексты рассылок и партнёрский кит объединены в /tools (вкладки). Старые URL
+# редиректят на соответствующий якорь — bot.py /messages и закладки не ломаем.
+@app.get("/messages")
+def messages_redirect() -> RedirectResponse:
+    return RedirectResponse("/tools#messages", status_code=302)
 
 
-@app.get("/kits", response_class=HTMLResponse)
-def kits(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
-    """Раздел «Материалы / Партнёрский кит» (Фаза C, план 2026-05-27).
-
-    Готовые ассеты, сегментированные по ТИПУ ПАРТНЁРА (PARTNER_TYPES). Партнёр сам
-    выбирает свой тип вкладкой (?type=), видит карточки этого типа с кнопкой
-    «Скопировать». Материалы = MessageTemplate с непустым partner_type (генерик
-    /messages с partner_type IS NULL сюда не попадают — другая ось).
-    """
-    partner = current_partner(request, session)
-    if not partner:
-        return RedirectResponse("/login", status_code=302)
-    lang = _lang(request)
-    items = (
-        session.query(MessageTemplate)
-        .filter(MessageTemplate.is_active.is_(True))
-        .filter(MessageTemplate.partner_type.isnot(None))
-        # id — стабильный тай-брейк: при равных order_index в одном типе порядок
-        # карточек иначе не определён (Николь добавит несколько ассетов на тип).
-        .order_by(MessageTemplate.partner_type, MessageTemplate.order_index, MessageTemplate.id)
-        .all()
-    )
-    # Группируем по типу партнёра, сохраняя порядок PARTNER_TYPES (для вкладок).
-    grouped: dict[str, list] = {}
-    for it in items:
-        grouped.setdefault(it.partner_type, []).append(it)
-    # Вкладки = только типы, у которых есть материалы, в порядке PARTNER_TYPES.
-    type_keys = [k for k in PARTNER_TYPES if k in grouped]
-    # Выбранный тип: ?type= из числа доступных, иначе первый доступный (если есть).
-    requested = request.query_params.get("type")
-    selected = requested if requested in type_keys else (type_keys[0] if type_keys else None)
-    return templates.TemplateResponse(
-        "kits.html",
-        _ctx(
-            request,
-            partner,
-            type_keys=type_keys,
-            selected=selected,
-            items=grouped.get(selected, []),
-        ),
-    )
+@app.get("/kits")
+def kits_redirect() -> RedirectResponse:
+    return RedirectResponse("/tools#kits", status_code=302)
 
 
-@app.get("/faq", response_class=HTMLResponse)
-@app.get("/kb/faq", response_class=HTMLResponse)
-def faq(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
-    partner = current_partner(request, session)
-    if not partner:
-        return RedirectResponse("/login", status_code=302)
-    items = (
-        session.query(FaqItem)
-        .filter_by(is_active=True)
-        .order_by(FaqItem.category, FaqItem.order_index)
-        .all()
-    )
-    categories: dict[str, list[FaqItem]] = {}
-    for item in items:
-        categories.setdefault(item.category, []).append(item)
-    return templates.TemplateResponse("faq.html", _ctx(request, partner, categories=categories))
+# FAQ переехал в самый низ дашборда. Старые ссылки (/faq, /kb/faq, футер бота)
+# редиректим на якорь #faq, чтобы ничего не сломалось.
+@app.get("/faq")
+@app.get("/kb/faq")
+def faq() -> RedirectResponse:
+    return RedirectResponse("/dashboard#faq", status_code=302)
 
 
 @app.get("/courses", response_class=HTMLResponse)

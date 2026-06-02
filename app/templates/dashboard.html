@@ -133,4 +133,21 @@
   </div>
 </div>
 
+{# FAQ — перенесён сюда, в самый низ дашборда (раньше отдельная страница /faq).
+   Якорь #faq: на него ведут пункт меню «❓ FAQ» и редирект со старого /faq. #}
+{% if faq_categories %}
+<div class="card" id="faq">
+  <h3 style="margin: 0 0 16px;">❓ {{ 'Frequently asked questions' if lang == 'en' else 'Часто задаваемые вопросы' }}</h3>
+  {% for category, items in faq_categories.items() %}
+    <div class="faq-category">{{ (items[0].category_en or category) if lang == 'en' else category }}</div>
+    {% for item in items %}
+    <details class="faq-item">
+      <summary>{{ (item.question_en or item.question) if lang == 'en' else item.question }}</summary>
+      <div style="white-space: pre-wrap; margin-top: 8px;">{{ (item.answer_md_en or item.answer_md) if lang == 'en' else item.answer_md }}</div>
+    </details>
+    {% endfor %}
+  {% endfor %}
+</div>
+{% endif %}
+
 {% endblock %}

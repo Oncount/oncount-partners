@@ -1107,6 +1107,7 @@ KITS = [
 
 
 FAQ = [
+    # ── Передача клиента ────────────────────────────────────────────────
     {
         "category": "Передача клиента",
         "category_en": "Introducing a client",
@@ -1125,6 +1126,74 @@ FAQ = [
         "order_index": 1,
     },
     {
+        "category": "Передача клиента",
+        "category_en": "Introducing a client",
+        "question": "Клиент уже писал в ONCOUNT раньше — он всё равно засчитается мне?",
+        "question_en": "The client contacted ONCOUNT before — will they still count as mine?",
+        "answer_md": (
+            "Клиент закрепляется за тем партнёром, кто передал его первым. Если человек "
+            "уже был у нас в работе или его раньше передал другой партнёр — повторная "
+            "передача не перекрывает закрепление. Если сомневаетесь — лучше передать: "
+            "система сверяет по номеру телефона и менеджер всё проверит."
+        ),
+        "answer_md_en": (
+            "A client is assigned to the partner who introduced them first. If the person "
+            "was already in progress with us, or was introduced earlier by another partner, "
+            "a repeat introduction doesn't override that. If in doubt — introduce them "
+            "anyway: the system matches by phone number and the manager will verify it."
+        ),
+        "order_index": 2,
+    },
+    {
+        "category": "Передача клиента",
+        "category_en": "Introducing a client",
+        "question": "Можно передавать клиентов не из ОАЭ?",
+        "question_en": "Can I introduce clients who aren't based in the UAE?",
+        "answer_md": (
+            "Главное — чтобы у клиента был бизнес в ОАЭ или он планирует его открыть. "
+            "Сам клиент может находиться в любой стране: мы работаем с предпринимателями "
+            "по всему миру, которым нужны бухгалтерия, компания, счёт или виза в Эмиратах."
+        ),
+        "answer_md_en": (
+            "What matters is that the client has a business in the UAE or plans to open one. "
+            "The client themselves can be based anywhere: we work with entrepreneurs "
+            "worldwide who need accounting, a company, a bank account or a visa in the UAE."
+        ),
+        "order_index": 3,
+    },
+    {
+        "category": "Передача клиента",
+        "category_en": "Introducing a client",
+        "question": "Как узнать, на каком этапе мой клиент сейчас?",
+        "question_en": "How do I see what stage my client is at?",
+        "answer_md": (
+            "Откройте раздел «Все заявки» в кабинете — там по каждому переданному клиенту "
+            "виден статус: в работе, успешно, отказ. Сводка по числам — на дашборде."
+        ),
+        "answer_md_en": (
+            "Open the “All requests” section in your dashboard — there you'll see the status "
+            "of every client you introduced: in progress, won, or rejected. The numbers "
+            "summary is on the dashboard."
+        ),
+        "order_index": 4,
+    },
+    {
+        "category": "Передача клиента",
+        "category_en": "Introducing a client",
+        "question": "Есть ли лимит — сколько клиентов можно приводить?",
+        "question_en": "Is there a limit on how many clients I can introduce?",
+        "answer_md": (
+            "Лимита нет. Чем больше клиентов вы приводите, тем больше вознаграждения "
+            "получаете — и тем лучше условия партнёрства."
+        ),
+        "answer_md_en": (
+            "There's no limit. The more clients you introduce, the more reward you earn — "
+            "and the better your partnership terms become."
+        ),
+        "order_index": 5,
+    },
+    # ── Выплаты ─────────────────────────────────────────────────────────
+    {
         "category": "Выплаты",
         "category_en": "Payouts",
         "question": "Сколько и когда я получу за приведённого клиента?",
@@ -1141,39 +1210,207 @@ FAQ = [
             "We send payouts and reports once a month, by the 10th of each month, "
             "to your preferred payment details."
         ),
+        "order_index": 1,
+    },
+    {
+        "category": "Выплаты",
+        "category_en": "Payouts",
+        "question": "За какие услуги и сколько платится вознаграждение?",
+        "question_en": "Which services pay a reward, and how much?",
+        "answer_md": (
+            "Вознаграждение зависит от услуги, которую заказал клиент. Ориентиры:\n"
+            "• Бухгалтерское обслуживание — 100% оплаты за 1-й месяц.\n"
+            "• Открытие компании / бизнес-лицензия — $1 000.\n"
+            "• Открытие банковского счёта — $1 000.\n"
+            "• Резидентские визы, включая золотую — $300–1 000.\n"
+            "• Аудит и восстановление учёта — от $300.\n"
+            "• Отчётность (CIT/VAT) и эквайринг — по запросу.\n"
+            "Точные суммы по каждой услуге — в разделе «Тарифы и сервисы» в кабинете."
+        ),
+        "answer_md_en": (
+            "The reward depends on the service the client orders. Guideline amounts:\n"
+            "• Accounting service — 100% of the 1st month's payment.\n"
+            "• Company setup / business license — $1,000.\n"
+            "• Opening a bank account — $1,000.\n"
+            "• Residence visas, incl. the Golden Visa — $300–1,000.\n"
+            "• Audit and accounting restoration — from $300.\n"
+            "• Reporting (CIT/VAT) and acquiring — on request.\n"
+            "Exact amounts per service are in the “Plans and services” section of your dashboard."
+        ),
         "order_index": 2,
     },
+    {
+        "category": "Выплаты",
+        "category_en": "Payouts",
+        "question": "Вознаграждение разовое или платится каждый месяц?",
+        "question_en": "Is the reward one-time or paid every month?",
+        "answer_md": (
+            "Вознаграждение начисляется за факт оплаты клиентом. По бухгалтерскому "
+            "обслуживанию это 100% первого месяца; по разовым услугам (компания, счёт, "
+            "виза и т.д.) — фиксированная сумма с одной оплаты."
+        ),
+        "answer_md_en": (
+            "The reward is earned when the client pays. For the accounting service it's "
+            "100% of the first month; for one-off services (company, account, visa, etc.) "
+            "it's a fixed amount from a single payment."
+        ),
+        "order_index": 3,
+    },
+    {
+        "category": "Выплаты",
+        "category_en": "Payouts",
+        "question": "В какой валюте и каким способом приходит выплата?",
+        "question_en": "In what currency and how is the payout sent?",
+        "answer_md": (
+            "Выплату отправляем раз в месяц, до 10-го числа месяца, следующего за оплатой "
+            "клиента, на удобные вам реквизиты. Способ и валюту согласуете с менеджером — "
+            "его контакты в карточке на дашборде."
+        ),
+        "answer_md_en": (
+            "We send the payout once a month, by the 10th of the month following the "
+            "client's payment, to your preferred payment details. You agree the method and "
+            "currency with your manager — their contacts are on the dashboard card."
+        ),
+        "order_index": 4,
+    },
+    {
+        "category": "Выплаты",
+        "category_en": "Payouts",
+        "question": "Нужно ли мне платить налоги с вознаграждения?",
+        "question_en": "Do I need to pay taxes on the reward?",
+        "answer_md": (
+            "Вы получаете вознаграждение как партнёр и сами отвечаете за свои налоги в "
+            "своей юрисдикции — ONCOUNT налоги за вас не удерживает. Если нужен документ "
+            "по выплате, попросите менеджера."
+        ),
+        "answer_md_en": (
+            "You receive the reward as a partner and are responsible for your own taxes in "
+            "your jurisdiction — ONCOUNT does not withhold taxes for you. If you need a "
+            "document confirming the payout, just ask your manager."
+        ),
+        "order_index": 5,
+    },
+    {
+        "category": "Выплаты",
+        "category_en": "Payouts",
+        "question": "Что будет с вознаграждением, если клиент уйдёт через месяц?",
+        "question_en": "What happens to my reward if the client leaves after a month?",
+        "answer_md": (
+            "Вознаграждение начисляется за факт оплаты клиентом. Если клиент уже оплатил и "
+            "вознаграждение начислено — оно остаётся за вами, даже если позже клиент "
+            "перестанет обслуживаться."
+        ),
+        "answer_md_en": (
+            "The reward is earned when the client pays. Once the client has paid and the "
+            "reward is accrued, it stays yours — even if the client later stops using our "
+            "services."
+        ),
+        "order_index": 6,
+    },
+    # ── Партнёрская программа ───────────────────────────────────────────
+    {
+        "category": "Партнёрская программа",
+        "category_en": "Partner program",
+        "question": "Кого мне искать — кто идеальный клиент для ONCOUNT?",
+        "question_en": "Who should I look for — who's the ideal ONCOUNT client?",
+        "answer_md": (
+            "Предприниматели и компании, у которых есть бизнес в ОАЭ или которые только "
+            "его открывают, и которым нужна бухгалтерия, налоги, открытие компании, "
+            "банковский счёт или виза. Особенно легко заходят те, кто только открыл "
+            "компанию, у кого пошли обороты, или кто недоволен текущим бухгалтером."
+        ),
+        "answer_md_en": (
+            "Entrepreneurs and companies that have a business in the UAE or are just opening "
+            "one, and who need accounting, taxes, company setup, a bank account or a visa. "
+            "It lands especially well with those who just opened a company, whose revenue is "
+            "picking up, or who are unhappy with their current accountant."
+        ),
+        "order_index": 1,
+    },
+    {
+        "category": "Партнёрская программа",
+        "category_en": "Partner program",
+        "question": "Есть ли уровни партнёрства и как улучшить условия?",
+        "question_en": "Are there partnership levels, and how do I improve my terms?",
+        "answer_md": (
+            "Да. Чем больше клиентов вы приводите, тем выше ваш статус и тем лучше условия "
+            "партнёрства. Что именно меняется на вашем уровне и как перейти на следующий — "
+            "обсудите с вашим менеджером, его контакты в карточке на дашборде."
+        ),
+        "answer_md_en": (
+            "Yes. The more clients you introduce, the higher your status and the better your "
+            "partnership terms. What exactly changes at your level and how to move to the "
+            "next one — discuss it with your manager, whose contacts are on the dashboard card."
+        ),
+        "order_index": 2,
+    },
+    {
+        "category": "Партнёрская программа",
+        "category_en": "Partner program",
+        "question": "Можно использовать ваши материалы и логотип в моих каналах?",
+        "question_en": "Can I use your materials and logo in my own channels?",
+        "answer_md": (
+            "Да. В разделе «Тексты и ссылки» в кабинете есть готовые тексты для рассылок и "
+            "партнёрский кит, которые можно отправлять клиентам, а в «Курсах» — обучающие "
+            "материалы. Логотип и фирменные материалы можно использовать при продвижении "
+            "ONCOUNT. Нужен конкретный материал — попросите менеджера."
+        ),
+        "answer_md_en": (
+            "Yes. The “Texts and links” section of your dashboard has ready-made outreach "
+            "texts and a partner kit you can send to clients, and “Courses” has training "
+            "materials. You may use the logo and brand materials when promoting ONCOUNT. "
+            "Need a specific asset? Just ask your manager."
+        ),
+        "order_index": 3,
+    },
+    # ── Партнёрские ссылки ──────────────────────────────────────────────
     {
         "category": "Партнёрские ссылки",
         "category_en": "Partner links",
         "question": "Где взять партнёрскую ссылку?",
         "question_en": "Where do I get my partner link?",
         "answer_md": (
-            "Раздел «Партнёрские ссылки» в личном кабинете — там твоя личная ссылка "
+            "Раздел «Тексты и ссылки» в личном кабинете — там твоя личная ссылка "
             "на Telegram и WhatsApp ONCOUNT и кнопка «Скопировать»."
         ),
         "answer_md_en": (
-            "The “Partner links” section in your dashboard — there you'll find "
+            "The “Texts and links” section in your dashboard — there you'll find "
             "your personal link to ONCOUNT's Telegram and WhatsApp and a “Copy” button."
         ),
-        "order_index": 3,
+        "order_index": 1,
     },
+    # ── Вход и кабинет ──────────────────────────────────────────────────
     {
-        "category": "Ошибки",
-        "category_en": "Errors",
-        "question": "Не приходит код подтверждения / не могу войти в ЛК",
-        "question_en": "The confirmation code isn't arriving / I can't log in",
+        "category": "Вход и кабинет",
+        "category_en": "Login & dashboard",
+        "question": "Не могу войти в кабинет / не приходит код",
+        "question_en": "I can't log in / the code isn't arriving",
         "answer_md": (
-            "Авторизация в ЛК — через Telegram Login Widget, кодов нет. Просто нажми "
-            "кнопку «Login with Telegram» на странице /login и подтверди в Telegram. "
-            "Если кнопка не работает — напиши Николь в WhatsApp: wa.me/971589217784."
+            "Войти в кабинет можно через Telegram — кнопка «Войти через Telegram» на "
+            "странице входа, подтвердите в Telegram. Что-то не получается — напишите Николь "
+            "в WhatsApp: wa.me/971589217784, поможем войти."
         ),
         "answer_md_en": (
-            "Login uses the Telegram Login Widget — there are no codes. Just click "
-            "“Login with Telegram” on the /login page and confirm in Telegram. "
-            "If the button doesn't work, message Nicole on WhatsApp: wa.me/971589217784."
+            "You can sign in via Telegram — use the “Sign in via Telegram” button on the "
+            "login page and confirm in Telegram. If something doesn't work, message Nicole "
+            "on WhatsApp: wa.me/971589217784 and we'll help you get in."
         ),
-        "order_index": 5,
+        "order_index": 1,
+    },
+    {
+        "category": "Вход и кабинет",
+        "category_en": "Login & dashboard",
+        "question": "Как сменить язык кабинета?",
+        "question_en": "How do I change the dashboard language?",
+        "answer_md": (
+            "Переключатель языка RU/EN — справа вверху, рядом с вашим именем. Кабинет, "
+            "тексты и FAQ доступны на русском и английском."
+        ),
+        "answer_md_en": (
+            "The RU/EN language toggle is at the top right, next to your name. The dashboard, "
+            "texts and FAQ are available in Russian and English."
+        ),
+        "order_index": 2,
     },
 ]
 
