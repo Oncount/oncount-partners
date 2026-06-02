@@ -39,6 +39,7 @@ from app.models import (
     Partner,
     PhoneLoginToken,
     ProductBlock,
+    QuizSubmission,
     Referral,
 )
 from app.refgen import generate_ref_slug
@@ -379,7 +380,7 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 
 
 _RL_HITS: dict[str, "deque"] = {}
-_RL_PATHS = ("/auth/", "/login", "/invite/")
+_RL_PATHS = ("/auth/", "/login", "/invite/", "/consultation/submit")
 _RL_MAX = 30          # запросов с одного IP
 _RL_WINDOW = 60       # за столько секунд
 
@@ -508,6 +509,13 @@ async def on_startup() -> None:
         # расхождения dev/prod. ПД: номера карт/кошельков в JSON НЕ пишем.
         conn.execute(text("ALTER TABLE partners ADD COLUMN IF NOT EXISTS onboarding_answers JSON"))
         conn.execute(text("ALTER TABLE partners ADD COLUMN IF NOT EXISTS survey_completed_at TIMESTAMP"))
+        # Дискриминатор лендинга у заявок квиза (план 2026-06-02): отделяет
+        # регистрации мастер-класса от заявок /consultation. Аддитивно и
+        # идемпотентно: одна nullable-колонка + индекс. NULL = /consultation
+        # (старые строки не трогаются). create_all создаёт колонку на чистой БД,
+        # ALTER — на случай уже существующей таблицы quiz_submissions.
+        conn.execute(text("ALTER TABLE quiz_submissions ADD COLUMN IF NOT EXISTS event_slug VARCHAR(64)"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_quiz_submissions_event_slug ON quiz_submissions (event_slug)"))
     with SessionLocal() as session:
         seed_if_empty(session)
 
@@ -599,6 +607,200 @@ def index(request: Request, session: Session = Depends(get_session)) -> HTMLResp
     if partner:
         return RedirectResponse("/dashboard", status_code=302)
     return RedirectResponse("/login", status_code=302)
+
+
+# ─── Квиз-лендинг «Консультация» (план 2026-06-02) ───────────────────────────
+# Публичный квиз: 3 вопроса → имя+телефон → лид в Kommo воронку 1.1 + Postgres.
+# Атрибуция к агенту по ?ref=<ref_slug>. Запись в Kommo под предохранителем
+# settings.QUIZ_KOMMO_LIVE (см. app/kommo_lead.py).
+
+def _quiz_mask_phone(norm: str) -> str:
+    return f"{norm[:4]}***{norm[-2:]}" if len(norm) > 6 else "***"
+
+
+@app.get("/consultation", response_class=HTMLResponse)
+def consultation_page(request: Request) -> HTMLResponse:
+    from app import quiz_config
+    return templates.TemplateResponse("quiz.html", {
+        "request": request,
+        "intro": quiz_config.INTRO,
+        "questions": quiz_config.QUESTIONS,
+        "final": quiz_config.FINAL,
+        "thanks": quiz_config.THANKS,
+        "submit_url": "/consultation/submit",
+    })
+
+
+@app.post("/consultation/submit")
+async def consultation_submit(request: Request,
+                              session: Session = Depends(get_session)) -> dict:
+    """Приём заявки квиза /consultation → лид в воронку 1.1 + Postgres + TG-пуш."""
+    from app import quiz_config
+    return await _handle_quiz_submit(
+        request, session,
+        valid_options=quiz_config.VALID_OPTIONS,
+        question_titles=quiz_config.QUESTION_TITLES,
+        event_slug=None,
+        notify_header="🟢 Новая заявка с квиза /consultation",
+        lead_prefix="Квиз-консультация",
+        lead_tag="quiz",
+        note_intro="Заявка с квиз-лендинга /consultation.",
+    )
+
+
+# ─── Мастер-класс с главбухом: обложка-оффер + те же 3 вопроса (план 2026-06-02) ──
+
+@app.get("/mk", response_class=HTMLResponse)
+def mk_page(request: Request) -> HTMLResponse:
+    from app import mk_config
+    return templates.TemplateResponse("quiz.html", {
+        "request": request,
+        "page_title": "ONCOUNT — мастер-класс с главбухом",
+        "cover": mk_config.COVER,
+        "intro": mk_config.INTRO,
+        "questions": mk_config.QUESTIONS,
+        "final": mk_config.FINAL,
+        "thanks": mk_config.THANKS,
+        "submit_url": "/mk/submit",
+    })
+
+
+@app.post("/mk/submit")
+async def mk_submit(request: Request,
+                    session: Session = Depends(get_session)) -> dict:
+    """Приём регистрации на мастер-класс → лид в воронку 1.1 + Postgres + TG-пуш.
+    Та же машинерия, что у /consultation, но с event_slug и своими текстами лида."""
+    from app import mk_config
+    return await _handle_quiz_submit(
+        request, session,
+        valid_options=mk_config.VALID_OPTIONS,
+        question_titles=mk_config.QUESTION_TITLES,
+        event_slug=mk_config.EVENT_SLUG,
+        notify_header="🎓 Новая регистрация на мастер-класс (11 июня)",
+        lead_prefix=mk_config.KOMMO_LEAD_PREFIX,
+        lead_tag=mk_config.KOMMO_LEAD_TAG,
+        note_intro=mk_config.KOMMO_NOTE_INTRO,
+    )
+
+
+async def _handle_quiz_submit(
+    request: Request, session: Session, *,
+    valid_options: dict, question_titles: dict,
+    event_slug: str | None, notify_header: str,
+    lead_prefix: str, lead_tag: str, note_intro: str,
+) -> dict:
+    """Общее ядро приёма заявок квиз-лендингов (/consultation и /mk). Клиенту
+    ВСЕГДА отвечаем ok (идемпотентно, без утечки внутренней логики). Порядок:
+    валидация → honeypot/дедуп → Postgres → Kommo (под гардом) → TG-пуш админу.
+    Сырой ввод НЕ рендерим обратно (анти-XSS)."""
+    from app.kommo_lead import create_consultation_lead
+
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    if not isinstance(data, dict):
+        data = {}
+
+    # Honeypot: поле website видно только ботам — заполнено → тихо «ok», ничего не пишем.
+    if (data.get("website") or "").strip():
+        return {"ok": True}
+
+    name = (data.get("name") or "").strip()[:200] or None
+    phone_norm = normalize_phone(data.get("phone") or "")
+    if len(phone_norm) < PHONE_MIN_DIGITS:
+        return {"ok": False, "error": "phone"}
+
+    # Ответы — только белый список вариантов (анти-инъекция произвольных строк).
+    raw_answers = data.get("answers") or {}
+    answers = {}
+    if isinstance(raw_answers, dict):
+        for qid, valid in valid_options.items():
+            v = raw_answers.get(qid)
+            if isinstance(v, str) and v in valid:
+                answers[qid] = v
+
+    def _s(key, n=180):
+        v = data.get(key)
+        return v.strip()[:n] if isinstance(v, str) and v.strip() else None
+
+    ref_slug = _s("ref", 16)
+    utm = {k: _s(k) for k in ("utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term")}
+
+    # Дедуп в пределах ОДНОГО события: та же заявка (телефон+event_slug) за 2 минуты
+    # → не плодим строку/лид. Разные события (МК vs консультация) не глушим.
+    recent = (session.query(QuizSubmission)
+              .filter(QuizSubmission.phone == phone_norm,
+                      QuizSubmission.event_slug == event_slug,
+                      QuizSubmission.created_at >= datetime.utcnow() - timedelta(minutes=2))
+              .first())
+    if recent is not None:
+        return {"ok": True}
+
+    # Атрибуция агента по ref_slug → Partner (строго по совпадению, не угадываем).
+    partner = None
+    if ref_slug:
+        partner = session.query(Partner).filter_by(ref_slug=ref_slug).first()
+
+    sub = QuizSubmission(
+        name=name, phone=phone_norm, answers=answers or None, event_slug=event_slug,
+        ref_slug=ref_slug, partner_id=partner.id if partner else None,
+        referrer=_s("referrer", 400), landing_url=_s("landing_url", 400),
+        kommo_status="pending", **{k: v for k, v in utm.items()},
+    )
+    session.add(sub)
+    session.commit()
+
+    # Kommo воронка 1.1 (под предохранителем). Лид не создаётся — заявка уже в БД.
+    agent_enum_id = partner.kommo_agent_enum_id if partner else None
+    result = create_consultation_lead(
+        name=name, phone_norm=phone_norm, answers=answers,
+        agent_enum_id=agent_enum_id, utm=utm, ref_slug=ref_slug,
+        lead_prefix=lead_prefix, lead_tag=lead_tag, note_intro=note_intro,
+        question_titles=question_titles,
+    )
+    sub.kommo_status = result["status"]
+    sub.kommo_lead_id = result.get("kommo_lead_id")
+    session.commit()
+
+    # TG-пуш админу (Николь) — внутреннее уведомление в наш бот, не сторонний сервис.
+    _notify_admin_new_quiz(sub, partner, answers,
+                           header=notify_header, question_titles=question_titles)
+    log.info("quiz submit event=%s phone=%s agent=%s kommo=%s",
+             event_slug or "consultation", _quiz_mask_phone(phone_norm),
+             partner.id if partner else "-", result["status"])
+    return {"ok": True}
+
+
+def _notify_admin_new_quiz(sub: "QuizSubmission", partner: "Partner | None",
+                           answers: dict, *, header: str, question_titles: dict) -> None:
+    """Уведомить Николь о новой заявке через наш бот. Best-effort: провал не
+    влияет на приём (строка уже в БД). Шлём ПОЛНЫЙ телефон — это наш лид для звонка."""
+    if not settings.BOT_TOKEN:
+        return
+    lines = [header, ""]
+    lines.append(f"Имя: {sub.name or '—'}")
+    lines.append(f"Телефон: +{sub.phone}")
+    for qid, title in question_titles.items():
+        if answers.get(qid):
+            lines.append(f"• {title} — {answers[qid]}")
+    if partner:
+        lines.append("")
+        lines.append(f"Агент: {partner.kommo_agent_name or partner.first_name or partner.ref_slug}")
+    elif sub.ref_slug:
+        lines.append(f"\nРеф-метка (агент не найден): {sub.ref_slug}")
+    utm_src = sub.utm_source or sub.utm_campaign
+    if utm_src:
+        lines.append(f"UTM: source={sub.utm_source or '-'}, campaign={sub.utm_campaign or '-'}")
+    lines.append(f"\nKommo: {sub.kommo_status}" + (f" (#{sub.kommo_lead_id})" if sub.kommo_lead_id else ""))
+    try:
+        httpx.post(
+            f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendMessage",
+            json={"chat_id": settings.ADMIN_TG_ID, "text": "\n".join(lines)},
+            timeout=10,
+        )
+    except Exception as exc:
+        log.warning("quiz admin notify failed: %s", type(exc).__name__)
 
 
 @app.get("/join")
@@ -1102,7 +1304,6 @@ def onboarding_survey_submit(
     social_channels: list[str] = Form(default=[]),
     social_audience: str = Form(""),
     payout_method: str = Form(""),
-    payout_other: str = Form(""),
     session: Session = Depends(get_session),
 ) -> HTMLResponse:
     partner = current_partner(request, session)
@@ -1112,14 +1313,6 @@ def onboarding_survey_submit(
 
     def clean_other(v: str) -> str:
         return (v or "").strip()[:SURVEY_OTHER_MAXLEN]
-
-    def safe_payout_other(v: str) -> str:
-        # Предохранитель ПД (фин-данные): «другое» — это НАЗВАНИЕ способа
-        # (PayPal/Wise/…), не реквизиты. Если партнёр вопреки подсказке вписал
-        # длинную цепочку цифр (карта/IBAN/счёт ≥8 цифр) — текст НЕ сохраняем,
-        # реквизиты в БД не попадают. Сам ключ payout_method='other' остаётся.
-        t = clean_other(v)
-        return "" if re.search(r"\d{8,}", t.replace(" ", "")) else t
 
     # Сборка ответов СТРОГО по белым спискам (всё вне списка отбрасывается).
     answers: dict = {}
@@ -1152,10 +1345,6 @@ def onboarding_survey_submit(
         txt = clean_other(sphere_other)
         if txt:
             answers["sphere_other"] = txt
-    if answers.get("payout_method") == "other":
-        txt = safe_payout_other(payout_other)
-        if txt:
-            answers["payout_other"] = txt
 
     # Серверная валидация обязательных вопросов.
     missing = [f for f in SURVEY_REQUIRED if f not in answers]
@@ -1395,6 +1584,8 @@ def links(request: Request, session: Session = Depends(get_session)) -> HTMLResp
             link_mclass_tg=f"{base}/mt/{ref}",
             link_mclass_wa=f"{base}/mw/{ref}",
             link_partner_bot=f"{base}/p/{ref}",
+            # Квиз-лендинг с атрибуцией к агенту по ?ref (план 2026-06-02).
+            link_quiz=f"{base}/consultation?ref={ref}",
         ),
     )
 

@@ -340,3 +340,47 @@ class EventRegistration(Base):
     registered_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     attended: Mapped[bool] = mapped_column(Boolean, default=False)
     meta: Mapped[dict | None] = mapped_column(JSON)
+
+
+class QuizSubmission(Base):
+    """Заявки с квиз-лендинга /consultation (план 2026-06-02).
+
+    Публичный квиз: 3 вопроса с вариантами → имя + телефон. Каждая заявка пишется
+    сюда (источник правды НЕЗАВИСИМО от Kommo) и — под предохранителем
+    settings.QUIZ_KOMMO_LIVE — уходит лидом в Kommo воронку 1.1.
+
+    Атрибуция к агенту: `ref_slug` из ссылки (?ref=<slug>) → `Partner.ref_slug` →
+    `partner_id` + `Partner.kommo_agent_enum_id` (на лиде ставится поле «ID AGENT»
+    #961886). Дальше существующий kommo_sync сам привяжет лид к партнёру.
+
+    Безопасность («опасная тройка»: ПД клиента + отправка наружу): `phone`/`name` —
+    ПД, в общий лог пишем только маску телефона + статус, не сырой ввод. `answers`
+    и UTM — наши данные, не ПД. Сырой пользовательский ввод НЕ рендерим в HTML.
+    """
+    __tablename__ = "quiz_submissions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str | None] = mapped_column(String(255))
+    phone: Mapped[str] = mapped_column(String(32), index=True)  # normalize_phone (digits-only)
+    # Дискриминатор лендинга: NULL = квиз /consultation (по умолчанию), либо slug
+    # события (напр. 'mk-buh-2026-06-11' — регистрация на мастер-класс). Позволяет
+    # отделять регистрации МК от заявок-консультаций в одной таблице (план 2026-06-02).
+    event_slug: Mapped[str | None] = mapped_column(String(64), index=True)
+    # Ответы белого списка: {"service": "...", "company": "...", "timing": "..."}.
+    answers: Mapped[dict | None] = mapped_column(JSON)
+    # Атрибуция агента
+    ref_slug: Mapped[str | None] = mapped_column(String(16), index=True)
+    partner_id: Mapped[int | None] = mapped_column(ForeignKey("partners.id"), index=True)
+    # UTM/источник трафика (для аналитики даже когда агента в метке нет)
+    utm_source: Mapped[str | None] = mapped_column(String(128))
+    utm_medium: Mapped[str | None] = mapped_column(String(128))
+    utm_campaign: Mapped[str | None] = mapped_column(String(128))
+    utm_content: Mapped[str | None] = mapped_column(String(128))
+    utm_term: Mapped[str | None] = mapped_column(String(128))
+    referrer: Mapped[str | None] = mapped_column(Text)
+    landing_url: Mapped[str | None] = mapped_column(Text)
+    # Kommo: 'pending' (ещё не обрабатывали) | 'dry' (гард off, в сеть не ходили) |
+    # 'sent' (лид создан) | 'failed' (ошибка API). kommo_lead_id — id созданного лида.
+    kommo_lead_id: Mapped[int | None] = mapped_column(BigInteger)
+    kommo_status: Mapped[str] = mapped_column(String(16), default="pending", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)

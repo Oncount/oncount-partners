@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#10463E">
+  <meta name="robots" content="noindex">
+  <title>{{ page_title or 'ONCOUNT — бесплатная консультация' }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Raleway:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
+  <style>
+    :root{
+      --green:#10463E; --green-2:#1c6a5c; --ink:#15211e; --muted:#5d6b67;
+      --line:#e2e8e5; --bg:#f5f7f6; --card:#ffffff; --accent:#10463E;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Raleway,system-ui,sans-serif;color:var(--ink);
+      background:var(--bg);-webkit-font-smoothing:antialiased}
+    .wrap{max-width:640px;margin:0 auto;padding:24px 18px 60px;min-height:100dvh;
+      display:flex;flex-direction:column}
+    .brand{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+    .brand img{height:30px}
+    .progress{height:6px;border-radius:999px;background:var(--line);overflow:hidden;margin-bottom:8px}
+    .progress > i{display:block;height:100%;width:0;background:var(--green);transition:width .3s ease}
+    .step-label{font-size:13px;color:var(--muted);margin-bottom:18px;font-weight:500}
+    .intro{font-size:15px;color:var(--muted);line-height:1.5;margin:0 0 22px;
+      padding-bottom:18px;border-bottom:1px solid var(--line)}
+    h1.q{font-family:Outfit,sans-serif;font-size:26px;line-height:1.25;margin:0 0 8px}
+    .hint{font-size:14px;color:var(--muted);line-height:1.5;margin:0 0 20px}
+    .options{display:flex;flex-direction:column;gap:12px;margin:0 0 26px}
+    .opt{display:flex;align-items:center;gap:12px;padding:16px 18px;background:var(--card);
+      border:1.5px solid var(--line);border-radius:14px;cursor:pointer;font-size:16px;
+      font-weight:500;transition:border-color .15s, background .15s}
+    .opt:hover{border-color:var(--green-2)}
+    .opt .dot{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex:0 0 auto;
+      display:flex;align-items:center;justify-content:center;transition:border-color .15s}
+    .opt.sel{border-color:var(--green);background:#f0f6f4}
+    .opt.sel .dot{border-color:var(--green)}
+    .opt.sel .dot::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--green)}
+    .field{margin:0 0 16px}
+    .field label{display:block;font-size:14px;color:var(--muted);margin-bottom:6px;font-weight:500}
+    .field input{width:100%;padding:15px 16px;border:1.5px solid var(--line);border-radius:12px;
+      font-size:16px;font-family:inherit;background:var(--card)}
+    .field input:focus{outline:none;border-color:var(--green)}
+    .err{color:#c0392b;font-size:13px;margin:-8px 0 14px;display:none}
+    .consent{font-size:12px;color:var(--muted);line-height:1.5;margin:6px 0 18px}
+    .nav{display:flex;align-items:center;gap:12px;margin-top:auto;padding-top:10px}
+    .btn{appearance:none;border:none;border-radius:12px;font-family:Outfit,sans-serif;
+      font-weight:600;font-size:16px;cursor:pointer;padding:15px 26px}
+    .btn-primary{background:var(--green);color:#fff;flex:1}
+    .btn-primary:disabled{opacity:.45;cursor:not-allowed}
+    .btn-back{background:transparent;color:var(--muted);border:1.5px solid var(--line);padding:15px 18px}
+    .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+    .step,.final,.thanks{display:none}
+    .step.active,.final.active,.thanks.active{display:block}
+    .thanks{text-align:center;padding-top:30px}
+    .thanks .ok{font-size:46px;margin-bottom:8px}
+    .thanks h1{font-family:Outfit,sans-serif;font-size:26px;margin:0 0 10px}
+    .thanks p{color:var(--muted);line-height:1.5}
+    /* Обложка-оффер (шаг 0) — показывается только если передан cover */
+    .cover{display:flex;flex-direction:column}
+    .cover-title{font-family:Outfit,sans-serif;font-size:30px;line-height:1.2;margin:0 0 14px}
+    .cover-meta{display:inline-block;align-self:flex-start;background:#f0f6f4;color:var(--green);
+      font-weight:600;font-size:15px;padding:8px 14px;border-radius:999px;margin-bottom:18px}
+    .cover-lead{font-size:16px;color:var(--ink);line-height:1.55;margin:0 0 20px}
+    .cover-bullets{list-style:none;padding:0;margin:0 0 26px;display:flex;flex-direction:column;gap:12px}
+    .cover-bullets li{position:relative;padding-left:30px;font-size:15px;line-height:1.45}
+    .cover-bullets li::before{content:"→";position:absolute;left:0;top:0;color:var(--green);font-weight:700}
+    .cover-cta{align-self:stretch;margin-bottom:14px}
+    .cover-note{font-size:13px;color:var(--muted);text-align:center;margin:0}
+    @media (max-width:480px){ .wrap{padding-top:18px} h1.q{font-size:22px} .cover-title{font-size:25px} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand"><img src="/static/img/logo.png" alt="ONCOUNT"></div>
+
+    {% if cover %}
+    <section class="cover" id="cover">
+      <h1 class="cover-title">{{ cover.title }}</h1>
+      <div class="cover-meta">{{ cover.date }} · 📍 {{ cover.place }}</div>
+      <p class="cover-lead">{{ cover.lead }}</p>
+      <ul class="cover-bullets">
+        {% for b in cover.bullets %}<li>{{ b }}</li>{% endfor %}
+      </ul>
+      <button type="button" class="btn btn-primary cover-cta" id="coverStart">{{ cover.cta }}</button>
+      <p class="cover-note">{{ cover.note }}</p>
+    </section>
+    {% endif %}
+
+    <div id="quizBody"{% if cover %} style="display:none"{% endif %}>
+    <div class="progress"><i id="bar"></i></div>
+    <div class="step-label" id="stepLabel"></div>
+
+    <p class="intro">{{ intro }}</p>
+
+    <form id="quizForm" autocomplete="off" novalidate>
+      <!-- honeypot: настоящий пользователь это поле не видит и не заполняет -->
+      <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+      {% for q in questions %}
+      <section class="step" data-qid="{{ q.id }}" data-index="{{ loop.index0 }}">
+        <h1 class="q">{{ q.title }}</h1>
+        {% if q.hint %}<p class="hint">{{ q.hint }}</p>{% endif %}
+        <div class="options">
+          {% for opt in q.options %}
+          <div class="opt" role="button" tabindex="0" data-value="{{ opt }}">
+            <span class="dot"></span><span>{{ opt }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+      {% endfor %}
+
+      <section class="final" data-index="{{ questions|length }}">
+        <h1 class="q">{{ final.title }}</h1>
+        <p class="hint">{{ final.subtitle }}</p>
+        <div class="field">
+          <label for="name">Введите имя</label>
+          <input id="name" name="name" type="text" placeholder="Имя" maxlength="120">
+        </div>
+        <div class="err" id="errName">Пожалуйста, укажите имя.</div>
+        <div class="field">
+          <label for="phone">Введите телефон</label>
+          <input id="phone" name="phone" type="tel" inputmode="tel" placeholder="+971 50 000 0000" value="+971 ">
+        </div>
+        <div class="err" id="errPhone">Пожалуйста, укажите корректный номер.</div>
+        <p class="consent">{{ final.consent }}</p>
+      </section>
+
+      <div class="nav" id="nav">
+        <button type="button" class="btn btn-back" id="back" style="display:none">←</button>
+        <button type="button" class="btn btn-primary" id="next" disabled>Далее →</button>
+      </div>
+    </form>
+    </div><!-- /#quizBody -->
+
+    <section class="thanks">
+      <div class="ok">✅</div>
+      <h1>{{ thanks.title }}</h1>
+      <p>{{ thanks.subtitle }}</p>
+    </section>
+  </div>
+
+  <script>
+  (function(){
+    var SUBMIT_URL = {{ (submit_url or '/consultation/submit')|tojson }};
+    var TOTAL = {{ questions|length }};         // число шагов-вопросов
+    var steps = Array.prototype.slice.call(document.querySelectorAll('.step'));
+    var finalEl = document.querySelector('.final');
+    var thanksEl = document.querySelector('.thanks');
+    var navEl = document.getElementById('nav');
+    var bar = document.getElementById('bar');
+    var stepLabel = document.getElementById('stepLabel');
+    var btnNext = document.getElementById('next');
+    var btnBack = document.getElementById('back');
+    var answers = {};   // {qid: value}
+    var idx = 0;        // 0..TOTAL-1 = вопросы, TOTAL = финал
+
+    // ── UTM / ref из URL (НЕ рендерим в HTML — только в JS-объект и в JSON) ──
+    var qs = new URLSearchParams(window.location.search);
+    function pick(k){ var v = qs.get(k); return v ? v.slice(0,180) : null; }
+    var tracking = {
+      ref: pick('ref') || pick('utm_content'),
+      utm_source: pick('utm_source'), utm_medium: pick('utm_medium'),
+      utm_campaign: pick('utm_campaign'), utm_content: pick('utm_content'),
+      utm_term: pick('utm_term'),
+      referrer: (document.referrer || '').slice(0,400),
+      landing_url: window.location.href.slice(0,400)
+    };
+
+    function render(){
+      var atFinal = idx >= TOTAL;
+      steps.forEach(function(s,i){ s.classList.toggle('active', !atFinal && i===idx); });
+      finalEl.classList.toggle('active', atFinal);
+      var shown = Math.min(idx, TOTAL) + 1;
+      bar.style.width = ((Math.min(idx,TOTAL)) / TOTAL * 100) + '%';
+      stepLabel.textContent = atFinal ? 'Последний шаг' : ('Шаг ' + shown + ' из ' + TOTAL);
+      btnBack.style.display = idx>0 ? '' : 'none';
+      btnNext.textContent = atFinal ? '{{ final.submit }}' : (idx===TOTAL-1 ? 'Последний шаг →' : 'Далее →');
+      refreshNext();
+    }
+
+    function refreshNext(){
+      if (idx < TOTAL){
+        var qid = steps[idx].getAttribute('data-qid');
+        btnNext.disabled = !answers[qid];
+      } else {
+        btnNext.disabled = false; // на финале валидируем при клике
+      }
+    }
+
+    // выбор варианта
+    steps.forEach(function(step){
+      var qid = step.getAttribute('data-qid');
+      step.querySelectorAll('.opt').forEach(function(opt){
+        function choose(){
+          step.querySelectorAll('.opt').forEach(function(o){ o.classList.remove('sel'); });
+          opt.classList.add('sel');
+          answers[qid] = opt.getAttribute('data-value');
+          refreshNext();
+        }
+        opt.addEventListener('click', choose);
+        opt.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); choose(); } });
+      });
+    });
+
+    // Обложка-оффер (если есть): «Зарегистрироваться» → прячем обложку, показываем квиз.
+    var coverStart = document.getElementById('coverStart');
+    if (coverStart){
+      coverStart.addEventListener('click', function(){
+        var cover = document.getElementById('cover');
+        if (cover) cover.style.display = 'none';
+        document.getElementById('quizBody').style.display = '';
+        window.scrollTo(0,0);
+      });
+    }
+
+    btnBack.addEventListener('click', function(){ if(idx>0){ idx--; render(); } });
+
+    btnNext.addEventListener('click', function(){
+      if (idx < TOTAL){ idx++; render(); return; }
+      submit();
+    });
+
+    function submit(){
+      var name = document.getElementById('name').value.trim();
+      var phone = document.getElementById('phone').value.trim();
+      var digits = phone.replace(/\D/g,'');
+      document.getElementById('errName').style.display = name ? 'none':'block';
+      document.getElementById('errPhone').style.display = digits.length>=9 ? 'none':'block';
+      if (!name || digits.length<9) return;
+
+      btnNext.disabled = true;
+      var payload = {
+        name: name, phone: phone, answers: answers,
+        website: document.querySelector('input[name=website]').value, // honeypot
+        ref: tracking.ref, referrer: tracking.referrer, landing_url: tracking.landing_url,
+        utm_source: tracking.utm_source, utm_medium: tracking.utm_medium,
+        utm_campaign: tracking.utm_campaign, utm_content: tracking.utm_content,
+        utm_term: tracking.utm_term
+      };
+      fetch(SUBMIT_URL, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      }).then(function(r){ return r.json().catch(function(){ return {}; }); })
+        .then(function(){ showThanks(); })
+        .catch(function(){ showThanks(); }); // приём идемпотентен, клиенту всегда «спасибо»
+    }
+
+    function showThanks(){
+      navEl.style.display='none';
+      document.getElementById('quizForm').style.display='none';
+      bar.style.width='100%';
+      stepLabel.textContent='';
+      thanksEl.classList.add('active');
+      window.scrollTo(0,0);
+    }
+
+    render();
+  })();
+  </script>
+</body>
+</html>
