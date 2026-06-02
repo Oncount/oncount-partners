@@ -97,28 +97,6 @@ def _find_contact_by_phone(phone_norm: str, headers: dict) -> tuple[int | None, 
     return chosen.get("id"), tags
 
 
-def _mark_existing_contact(contact_id: int, existing_tags: list[dict], headers: dict,
-                           *, note_text: str, tag: str) -> None:
-    """Отметить существующий контакт: примечание + тег (без сделки). Best-effort.
-
-    Тег ДОБАВЛЯЕМ к существующим (PATCH tags в Kommo заменяет список целиком —
-    иначе стёрли бы прежние теги контакта)."""
-    try:
-        httpx.post(f"{_base()}/contacts/{contact_id}/notes",
-                   json=[{"note_type": "common", "params": {"text": note_text}}],
-                   headers=headers, timeout=_TIMEOUT)
-    except Exception as exc:
-        log.warning("mark contact note failed (%s): %s", contact_id, type(exc).__name__)
-    names = {t["name"] for t in existing_tags}
-    if tag and tag not in names:
-        try:
-            httpx.patch(f"{_base()}/contacts/{contact_id}",
-                        json={"_embedded": {"tags": existing_tags + [{"name": tag}]}},
-                        headers=headers, timeout=_TIMEOUT)
-        except Exception as exc:
-            log.warning("mark contact tag failed (%s): %s", contact_id, type(exc).__name__)
-
-
 def create_consultation_lead(
     *,
     name: str | None,
@@ -132,13 +110,12 @@ def create_consultation_lead(
     note_intro: str = "Заявка с квиз-лендинга /consultation.",
     question_titles: dict[str, str] | None = None,
 ) -> dict:
-    """Создать лид в воронке 1.1 ИЛИ отметить существующий контакт.
+    """Создать сделку в воронке 1.1. Контакт дедупится (не сделка).
 
     Возвращает {status, kommo_lead_id, error}:
     - 'dry'    — гард off / нет конфига (в сеть не ходили);
-    - 'sent'   — создана новая сделка (kommo_lead_id = id сделки);
-    - 'exists' — телефон уже в Kommo: сделку НЕ создавали, отметили контакт
-                 примечанием + тегом (kommo_lead_id = id контакта);
+    - 'sent'   — сделка создана (kommo_lead_id = id сделки). Если телефон уже был
+                 в Kommo, сделка привязана к существующему контакту (без дубля);
     - 'failed' — ошибка API/сети.
     Никогда не бросает — приём заявки не должен падать из-за CRM.
 
@@ -160,32 +137,28 @@ def create_consultation_lead(
     note_text = _answers_note(answers, utm, ref_slug, note_intro=note_intro,
                               question_titles=question_titles)
 
-    # Дедуп по телефону: если контакт УЖЕ есть в Kommo — новую сделку НЕ создаём,
-    # а отмечаем существующий контакт (примечание + тег `lead_tag`), что прошла
-    # регистрация/заявка (для /mk тег = 'masterclass'). Дублей сделок нет, но
-    # факт регистрации виден в CRM.
-    contact_id, existing_tags = _find_contact_by_phone(phone_norm, headers)
+    # Дедуп КОНТАКТА (не сделки): сделка создаётся ВСЕГДА (заявка = сделка в воронке
+    # 1.1), но если телефон уже есть в Kommo — привязываем сделку к СУЩЕСТВУЮЩЕМУ
+    # контакту (без дубля человека). Поиск строго по точному телефону.
+    contact_id, _tags = _find_contact_by_phone(phone_norm, headers)
     if contact_id:
-        _mark_existing_contact(
-            contact_id, existing_tags, headers,
-            note_text=note_text + "\n\n(Контакт уже в CRM — новая сделка не создавалась.)",
-            tag=lead_tag,
-        )
-        log.info("quiz: контакт уже в Kommo (id=%s) — отметили, сделку не создавали", contact_id)
-        return {"status": "exists", "kommo_lead_id": contact_id, "error": None}
+        contact_block = {"id": contact_id}  # линк существующего контакта
+        note_text += "\n\n(Контакт уже был в CRM — сделка привязана к существующему контакту.)"
+    else:
+        contact_block = {
+            "name": display,
+            "custom_fields_values": [{
+                "field_code": "PHONE",
+                "values": [{"value": f"+{phone_norm}", "enum_code": "WORK"}],
+            }],
+        }
 
     lead: dict = {
-        "name": display[:250],  # название сделки = имя клиента (источник — в теге + примечании)
+        "name": display[:250],  # название сделки = имя клиента
         "pipeline_id": int(settings.QUIZ_KOMMO_PIPELINE_ID),
         "status_id": int(settings.QUIZ_KOMMO_STATUS_ID),
         "_embedded": {
-            "contacts": [{
-                "name": display,
-                "custom_fields_values": [{
-                    "field_code": "PHONE",
-                    "values": [{"value": f"+{phone_norm}", "enum_code": "WORK"}],
-                }],
-            }],
+            "contacts": [contact_block],
             "tags": [{"name": lead_tag}],
         },
     }
