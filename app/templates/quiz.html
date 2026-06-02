@@ -72,6 +72,12 @@
     .cover-bullets li::before{content:"→";position:absolute;left:0;top:0;color:var(--green);font-weight:700}
     .cover-cta{align-self:stretch;margin-bottom:14px}
     .cover-note{font-size:13px;color:var(--muted);text-align:center;margin:0}
+    /* Консультация: оранжевый бейдж «БЕСПЛАТНО», блок команды, заголовок пунктов */
+    .cover-badge{align-self:flex-start;color:#EC6442;font-family:Outfit,sans-serif;
+      font-weight:800;font-size:16px;letter-spacing:.04em;margin:0 0 12px}
+    .cover-team{margin:0 0 22px;display:flex;flex-direction:column;gap:3px}
+    .cover-team p{margin:0;font-weight:700;font-size:16px;line-height:1.45;color:var(--ink)}
+    .cover-bullets-title{font-weight:700;font-size:17px;margin:0 0 14px;color:var(--ink)}
     /* Текстовый логотип ONCOUNT — всегда виден на светлом фоне (оранжевое on + тёмное count) */
     .logo-text{font-family:Outfit,sans-serif;font-weight:800;font-size:28px;
       letter-spacing:-0.02em;line-height:1;color:#15211e}
@@ -94,14 +100,17 @@
     {% if cover %}
     <section class="cover" id="cover">
       {% if cover.image %}<img class="cover-img" src="{{ cover.image }}" alt="ONCOUNT — we count, you succeed">{% endif %}
+      {% if cover.badge %}<div class="cover-badge">{{ cover.badge }}</div>{% endif %}
       <h1 class="cover-title">{{ cover.title }}</h1>
-      <div class="cover-meta">🕕 {{ cover.date }} · 📍 {{ cover.place }}</div>
-      <p class="cover-lead">{{ cover.lead }}</p>
-      <ul class="cover-bullets">
+      {% if cover.date %}<div class="cover-meta">🕕 {{ cover.date }} · 📍 {{ cover.place }}</div>{% endif %}
+      {% if cover.lead %}<p class="cover-lead">{{ cover.lead }}</p>{% endif %}
+      {% if cover.team %}<div class="cover-team">{% for t in cover.team %}<p>{{ t }}</p>{% endfor %}</div>{% endif %}
+      {% if cover.bullets_title %}<p class="cover-bullets-title">{{ cover.bullets_title }}</p>{% endif %}
+      {% if cover.bullets %}<ul class="cover-bullets">
         {% for b in cover.bullets %}<li>{{ b }}</li>{% endfor %}
-      </ul>
+      </ul>{% endif %}
       <button type="button" class="btn btn-primary cover-cta" id="coverStart">{{ cover.cta }}</button>
-      <p class="cover-note">{{ cover.note }}</p>
+      {% if cover.note %}<p class="cover-note">{{ cover.note }}</p>{% endif %}
     </section>
     {% endif %}
 
