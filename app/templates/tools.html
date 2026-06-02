@@ -57,9 +57,28 @@
       {% endif %}
     </div>
     {% endfor %}
-  {% elif key != 'intro' %}
+  {% elif key not in ['intro', 'event'] %}
     <div class="card">
       <p>{% if lang == 'en' %}Texts are being prepared and will appear here shortly.{% else %}Тексты готовятся и скоро появятся здесь.{% endif %}</p>
+    </div>
+  {% endif %}
+
+  {# ─── Совместное событие: пояснение для партнёра + CTA менеджеру ───────── #}
+  {% if key == 'event' %}
+    <div class="card">
+      {% if lang == 'en' %}
+      <p>We run joint events with partners on an audience-exchange basis: you invite your clients and we invite ours. Two speakers present — you talk about your product, and we cover accounting and taxes in the UAE.</p>
+      <p>Around 40 people usually attend — about 20 from your side and 20 from ours. Both sides exchange audiences, warm up their clients and give everyone double the value. That is exactly why this format works so well.</p>
+      <p>If you have a base of 100+ clients, discuss a two-speaker format with your partner manager.</p>
+      <a class="btn btn-primary" href="https://wa.me/{{ manager_wa }}?text={{ 'Hello! I would like to discuss a joint event with two speakers — an audience exchange with ONCOUNT.' | urlencode }}" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;text-decoration:none">Message your manager about a joint event</a>
+      <p class="ref-hint" style="margin-top:14px">Example of such an event: <a href="https://ecom.padvice-it.com/" target="_blank" rel="noopener">ecom.padvice-it.com</a></p>
+      {% else %}
+      <p>Мы проводим совместные мероприятия с партнёрами по принципу обмена аудиториями: вы приглашаете своих клиентов, а мы — своих. Выступают двое: вы рассказываете о своём продукте, а мы — о бухгалтерии и налогах в ОАЭ.</p>
+      <p>Обычно собирается около 40 участников — примерно 20 с вашей стороны и 20 с нашей. Стороны обмениваются аудиториями, прогревают своих клиентов и дают людям двойную пользу. Именно поэтому такой формат так хорошо работает.</p>
+      <p>Если у вас в базе от 100 клиентов — обсудите формат с двумя спикерами с вашим партнёрским менеджером.</p>
+      <a class="btn btn-primary" href="https://wa.me/{{ manager_wa }}?text={{ 'Здравствуйте! Хочу обсудить совместное мероприятие с двумя спикерами — обмен аудиториями с ONCOUNT.' | urlencode }}" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;text-decoration:none">Написать менеджеру о совместном мероприятии</a>
+      <p class="ref-hint" style="margin-top:14px">Пример такого мероприятия: <a href="https://ecom.padvice-it.com/" target="_blank" rel="noopener">ecom.padvice-it.com</a></p>
+      {% endif %}
     </div>
   {% endif %}
 

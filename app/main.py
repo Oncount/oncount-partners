@@ -1905,6 +1905,16 @@ def tools(request: Request, session: Session = Depends(get_session)) -> HTMLResp
     for it in rows:
         method_groups.setdefault(it.method, []).append(it)
 
+    # Контакт партнёрского менеджера для CTA вкладки «События» (написать о
+    # совместном мероприятии). Берём подтверждённый WhatsApp из PARTNER_MANAGER
+    # (единый источник), fallback — общий контакт. Цифры номера: ссылку
+    # wa.me + предзаполненный текст шаблон строит сам.
+    manager_wa = next(
+        (c["value"] for c in PARTNER_MANAGER["contacts"]
+         if c["channel"] == "whatsapp" and c.get("confirmed")),
+        settings.CONTACT_WA_NUMBER,
+    )
+
     return templates.TemplateResponse(
         "tools.html",
         _ctx(
@@ -1914,6 +1924,7 @@ def tools(request: Request, session: Session = Depends(get_session)) -> HTMLResp
             methods_order=METHODS_ORDER,
             method_groups=method_groups,
             links=links,
+            manager_wa=manager_wa,
             kpi=_balance_kpi(session, partner),
         ),
     )
