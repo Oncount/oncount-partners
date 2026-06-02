@@ -11,7 +11,8 @@
       <img class="acc-photo" src="{{ a.photo }}" alt="{{ a.name_en if _l == 'en' else a.name }}" loading="lazy">
       <div class="acc-name">{{ a.name_en if _l == 'en' else a.name }}</div>
       <div class="acc-role">{{ a.role_en if _l == 'en' else a.role }}</div>
-      <div class="acc-flags">{{ a.flags }}</div>
+      {% if a.exp %}<div class="acc-exp">{{ a.exp_en if _l == 'en' else a.exp }}</div>{% endif %}
+      {% if a.langs %}<div class="acc-flags">{% for c in a.langs %}<img class="acc-flag" src="https://flagcdn.com/24x18/{{ c }}.png" srcset="https://flagcdn.com/48x36/{{ c }}.png 2x" width="24" height="18" alt="{{ c }}" loading="lazy">{% endfor %}</div>{% endif %}
     </div>
     {% endfor %}
   </div>
@@ -24,5 +25,7 @@
 .acc-photo{width:76px;height:76px;border-radius:50%;object-fit:cover;border:2px solid #e2e8e5;background:#0e0e10}
 .acc-name{font-weight:600;font-size:13px;margin-top:8px;color:#15211e}
 .acc-role{font-size:12px;color:#5d6b67;line-height:1.3;margin-top:1px}
-.acc-flags{font-size:15px;margin-top:3px;line-height:1}
+.acc-exp{font-size:11.5px;color:#8a9692;margin-top:2px}
+.acc-flags{display:flex;gap:5px;justify-content:center;margin-top:5px}
+.acc-flag{width:24px;height:18px;border-radius:3px;display:inline-block}
 </style>

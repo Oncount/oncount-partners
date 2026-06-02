@@ -186,21 +186,24 @@ LEGACY_TOOL_ANCHORS: dict[str, str] = {
 # 2026-06-02): на квиз-лендинге /consultation и в кабинете у приглашения на
 # консультацию. Только визуал доверия (без клика). Майя — реальное имя/роль
 # (главбух, фото 391), Омер — ведущий бухгалтер (фото 394, с волосами и очками);
-# Радж/Нихил — условные ИНДИЙСКИЕ имена (по просьбе Николь), языки — текстовыми кодами RU/EN/AR (флаг-эмодзи не рендерятся).
+# Радж — условное индийское имя (по просьбе Николь); Майя/Омер/Леся — реальные.
+# Языки — текстовыми кодами RU/EN/AR (флаг-эмодзи не рендерятся на Windows).
 # Фото в static/img/accountants/.
 ACCOUNTANTS: list[dict] = [
     {"photo": "/static/img/accountants/maya.jpg", "name": "Майя Мандзюк",
      "name_en": "Maya Mandziuk", "role": "Главный бухгалтер",
-     "role_en": "Chief accountant", "flags": "RU · EN"},
+     "role_en": "Chief accountant", "langs": ["ru", "gb"],
+     "exp": "10+ лет опыта", "exp_en": "10+ yrs"},
     {"photo": "/static/img/accountants/omer.jpg", "name": "Омер",
      "name_en": "Omer", "role": "Ведущий бухгалтер",
-     "role_en": "Lead accountant", "flags": "EN · AR"},
+     "role_en": "Lead accountant", "langs": ["gb", "ae"],
+     "exp": "5+ лет опыта", "exp_en": "5+ yrs"},
     {"photo": "/static/img/accountants/raj.jpg", "name": "Радж",
      "name_en": "Raj", "role": "Бухгалтер", "role_en": "Accountant",
-     "flags": "EN"},
-    {"photo": "/static/img/accountants/nikhil.jpg", "name": "Нихил",
-     "name_en": "Nikhil", "role": "Бухгалтер", "role_en": "Accountant",
-     "flags": "EN"},
+     "langs": ["gb"], "exp": "3+ лет опыта", "exp_en": "3+ yrs"},
+    {"photo": "/static/img/accountants/lesia.jpg", "name": "Леся",
+     "name_en": "Lesia", "role": "Бухгалтер", "role_en": "Accountant",
+     "langs": ["ru", "gb"], "exp": "8+ лет опыта", "exp_en": "8+ yrs"},
 ]
 
 
