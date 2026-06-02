@@ -372,6 +372,10 @@ templates.env.globals["partner_manager"] = partner_manager
 # Дата выплаты по won-лиду (Фаза K) — единый источник для leads.html.
 from app.notifications import payout_due_date as _payout_due_date  # noqa: E402
 templates.env.globals["payout_due_date"] = _payout_due_date
+# Контакты для футера — из конфига (правило репо №1: не хардкодить ссылки).
+# Тот же источник, что и короткие ссылки /ct /cw (settings.CONTACT_*).
+templates.env.globals["contact_tg"] = settings.CONTACT_TG_USERNAME
+templates.env.globals["contact_wa"] = settings.CONTACT_WA_NUMBER
 
 app = FastAPI(title="ONCOUNT Partner Platform")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -596,6 +600,23 @@ def _ctx(request: Request, partner: Partner | None, **extra) -> dict:
         "year": datetime.utcnow().year,
         "lang": _lang(request),
         **extra,
+    }
+
+
+def _balance_kpi(session: Session, partner: Partner) -> dict:
+    """Минимум данных для верхней «балансовой» полосы (шаблон _balance.html):
+    заработано + ожидаемое вознаграждение по числу заявок + код партнёра.
+    Используется на /leads, /tools, /products. На дашборде те же ключи считаются
+    вместе с полным kpi, поэтому полоса там работает на своём наборе данных."""
+    leads_q = session.query(Lead).filter_by(partner_id=partner.id)
+    leads_count = leads_q.count()
+    won_rows = leads_q.filter(Lead.status == "won").all()
+    total_aed = sum((l.amount_aed or 0) for l in won_rows)
+    return {
+        "leads": leads_count,
+        "earned_aed": float(total_aed),
+        "expected_usd_low": leads_count * 300,
+        "expected_usd_high": leads_count * 1000,
     }
 
 
@@ -1501,7 +1522,10 @@ def leads(request: Request, session: Session = Depends(get_session)) -> HTMLResp
         .limit(100)
         .all()
     )
-    return templates.TemplateResponse("leads.html", _ctx(request, partner, rows=rows))
+    return templates.TemplateResponse(
+        "leads.html",
+        _ctx(request, partner, rows=rows, kpi=_balance_kpi(session, partner)),
+    )
 
 
 CONSULT_TEXT_TPL = (
@@ -1632,6 +1656,7 @@ def tools(request: Request, session: Session = Depends(get_session)) -> HTMLResp
             msg_items=msg_items,
             kit_groups=kit_groups,
             kit_type_keys=kit_type_keys,
+            kpi=_balance_kpi(session, partner),
         ),
     )
 
@@ -1746,7 +1771,10 @@ def products(request: Request, session: Session = Depends(get_session)) -> HTMLR
         .order_by(ProductBlock.order_index)
         .all()
     )
-    return templates.TemplateResponse("products.html", _ctx(request, partner, items=items))
+    return templates.TemplateResponse(
+        "products.html",
+        _ctx(request, partner, items=items, kpi=_balance_kpi(session, partner)),
+    )
 
 
 # Тексты рассылок и партнёрский кит объединены в /tools (вкладки). Старые URL

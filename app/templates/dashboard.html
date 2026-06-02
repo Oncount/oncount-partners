@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_icons.html" as icons %}
 {% block title %}{{ 'Dashboard' if lang == 'en' else 'Дашборд' }} — ONCOUNT Partners{% endblock %}
 {% block heading %}{{ 'Dashboard' if lang == 'en' else 'Дашборд' }}{% endblock %}
 
@@ -19,24 +20,7 @@
   </div>
 </div>
 {% endif %}
-<div class="balance">
-  <div class="balance-item">
-    <span class="balance-item-label">{{ 'Earned:' if lang == 'en' else 'Заработано:' }}</span>
-    <span class="balance-item-value">{{ '%.0f'|format(kpi.earned_aed) }} AED</span>
-  </div>
-  <div class="balance-item">
-    <span class="balance-item-label">{{ 'Expected reward:' if lang == 'en' else 'Ожидаемое вознаграждение:' }}</span>
-    {# У новичка с 0 заявок показываем мотивирующий потенциал, а не «$0 – $0». #}
-    <span class="balance-item-value">{% if kpi.leads %}${{ '{:,}'.format(kpi.expected_usd_low) }} – ${{ '{:,}'.format(kpi.expected_usd_high) }}{% else %}{{ '$300–$1,000 per client' if lang == 'en' else '$300–$1 000 за каждого клиента' }}{% endif %}</span>
-  </div>
-  <div class="balance-item" style="flex-direction: row; align-items: baseline; gap: 8px; flex-wrap: wrap;">
-    <span class="balance-item-label">{{ 'Your partner code:' if lang == 'en' else 'Ваш код партнёра:' }}</span>
-    <span class="balance-item-value">{{ partner.ref_slug }}</span>
-  </div>
-  <div style="margin-left: auto;">
-    <a class="btn btn-primary" href="/transfer">+ {{ 'Introduce a client' if lang == 'en' else 'Передать клиента' }}</a>
-  </div>
-</div>
+{% include "_balance.html" %}
 
 <div class="kpi-grid">
   <div class="kpi">
@@ -98,11 +82,13 @@
     <p class="manager-sla">⏱ {{ mgr.sla }}</p>
     <div class="manager-contacts">
       {% for link in mgr.links %}
-      <a class="btn btn-primary manager-contact" href="{{ link.href }}" target="_blank" rel="noopener">
-        {% if link.channel == 'whatsapp' %}{{ 'Message on WhatsApp' if lang == 'en' else 'Написать в WhatsApp' }}
-        {% elif link.channel == 'telegram' %}{{ 'Message on Telegram' if lang == 'en' else 'Написать в Telegram' }}
-        {% else %}{{ 'Email the manager' if lang == 'en' else 'Написать на email' }}{% endif %}
-      </a>
+        {% if link.channel == 'whatsapp' %}
+        <a class="mgr-msgr mgr-msgr--whatsapp" href="{{ link.href }}" target="_blank" rel="noopener" title="WhatsApp">{{ icons.whatsapp() }}<span>{{ 'WhatsApp' if lang == 'en' else 'Ватсап' }}</span></a>
+        {% elif link.channel == 'telegram' %}
+        <a class="mgr-msgr mgr-msgr--telegram" href="{{ link.href }}" target="_blank" rel="noopener" title="Telegram">{{ icons.telegram() }}<span>{{ 'Telegram' if lang == 'en' else 'ТГ' }}</span></a>
+        {% else %}
+        <a class="btn btn-primary manager-contact" href="{{ link.href }}" target="_blank" rel="noopener">{{ 'Email the manager' if lang == 'en' else 'Написать на email' }}</a>
+        {% endif %}
       {% endfor %}
       {% for ch in mgr.pending_channels %}
       <span class="manager-pending manager-pending-contact">

@@ -3,6 +3,7 @@
 {% block heading %}{{ 'All requests' if lang == 'en' else 'Все заявки' }}{% endblock %}
 
 {% block content %}
+{% include "_balance.html" %}
 {% if not rows %}
   <div class="card">
     <p>{% if lang == 'en' %}Nothing here yet. <a href="/transfer">Introduce your first client</a> and they'll show up in this table.{% else %}Пока пусто. <a href="/transfer">Передай первого клиента</a>, и он появится в этой таблице.{% endif %}</p>

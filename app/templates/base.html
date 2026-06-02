@@ -1,3 +1,4 @@
+{% import "_icons.html" as icons %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -33,23 +34,16 @@
       <img src="/static/img/logo.png" alt="ONCOUNT">
     </div>
 
-    <div class="sidebar-section">{{ 'Main' if lang == 'en' else 'Главное' }}</div>
     <a class="menu-item {% if request.url.path == '/dashboard' %}active{% endif %}" href="/dashboard">🏠 {{ 'Dashboard' if lang == 'en' else 'Дашборд' }}</a>
     <a class="menu-item {% if request.url.path == '/leads' %}active{% endif %}" href="/leads">📋 {{ 'All requests' if lang == 'en' else 'Все заявки' }}</a>
 
-    <div class="sidebar-section">{{ 'Create a request' if lang == 'en' else 'Создать заявку' }}</div>
-    <a class="menu-item {% if request.url.path == '/transfer' %}active{% endif %}" href="/transfer">➡️ {{ 'Introduce a client' if lang == 'en' else 'Передать клиента' }}</a>
-
-    <div class="sidebar-section">{{ 'Tools' if lang == 'en' else 'Инструменты' }}</div>
     <a class="menu-item {% if request.url.path == '/tools' %}active{% endif %}" href="/tools">🔗 {{ 'Texts and links' if lang == 'en' else 'Тексты и ссылки' }}</a>
 
-    <div class="sidebar-section">{{ 'Knowledge base' if lang == 'en' else 'База знаний' }}</div>
     <a class="menu-item {% if '/courses' in request.url.path %}active{% endif %}" href="/courses">🎓 {{ 'Courses' if lang == 'en' else 'Курсы' }}</a>
-    <a class="menu-item {% if '/products' in request.url.path %}active{% endif %}" href="/products">📦 {{ 'Plans and services' if lang == 'en' else 'Тарифы и сервисы' }}</a>
+    <a class="menu-item {% if '/products' in request.url.path %}active{% endif %}" href="/products">🏷️ {{ 'Plans' if lang == 'en' else 'Тарифы' }}</a>
 
     <div class="spacer"></div>
     <div class="sidebar-bottom">
-      <a href="https://t.me/{{ bot_username }}" target="_blank">💬 {{ 'TG' if lang == 'en' else 'ТГ' }}</a>
       <a href="/logout">↩️ {{ 'Log out' if lang == 'en' else 'Выход' }}</a>
     </div>
   </aside>
@@ -77,13 +71,20 @@
       <div class="footer-col">
         <div class="footer-title">{{ 'Contact' if lang == 'en' else 'Связаться' }}</div>
         <a href="tel:+971589217784">📞 +971 58 921 77 84</a>
-        <a href="https://wa.me/971589217784" target="_blank" rel="noopener">💬 WhatsApp +971 58 921 77 84</a>
+        <div class="brand-btns">
+          <a class="brand-btn brand-btn--whatsapp" href="https://wa.me/{{ contact_wa }}" target="_blank" rel="noopener" title="WhatsApp" aria-label="WhatsApp">{{ icons.whatsapp() }}</a>
+          <a class="brand-btn brand-btn--telegram" href="https://t.me/{{ contact_tg }}" target="_blank" rel="noopener" title="Telegram" aria-label="Telegram">{{ icons.telegram() }}</a>
+        </div>
         <a href="https://oncount.com" target="_blank" rel="noopener">🌐 oncount.com</a>
       </div>
 
       <div class="footer-col">
         <div class="footer-title">{{ 'Social' if lang == 'en' else 'Соцсети' }}</div>
-        <a href="https://www.linkedin.com/company/oncount" target="_blank" rel="noopener">in&nbsp;·&nbsp;LinkedIn OnCount</a>
+        <div class="brand-btns">
+          <a class="brand-btn brand-btn--linkedin" href="https://www.linkedin.com/company/oncount" target="_blank" rel="noopener" title="LinkedIn" aria-label="LinkedIn">{{ icons.linkedin() }}</a>
+          <a class="brand-btn brand-btn--instagram" href="https://instagram.com/nikol_hillton" target="_blank" rel="noopener" title="Instagram" aria-label="Instagram">{{ icons.instagram() }}</a>
+          <a class="brand-btn brand-btn--telegram" href="https://t.me/oncountt" target="_blank" rel="noopener" title="Telegram" aria-label="Telegram">{{ icons.telegram() }}</a>
+        </div>
       </div>
 
       <div class="footer-col footer-col-legal">

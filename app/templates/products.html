@@ -3,6 +3,7 @@
 {% block heading %}{{ 'ONCOUNT plans and services' if lang == 'en' else 'Тарифы и сервисы ONCOUNT' }}{% endblock %}
 
 {% block content %}
+{% include "_balance.html" %}
 <div class="card">
   <p>{% if lang == 'en' %}All ONCOUNT products you can recommend to your clients. Click “Details” for the full description.{% else %}Все продукты ONCOUNT, которые Вы можете рекомендовать своим клиентам. Жмите «Подробнее» — там полное описание.{% endif %}</p>
 </div>
