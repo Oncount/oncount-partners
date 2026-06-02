@@ -61,6 +61,7 @@
     .thanks p{color:var(--muted);line-height:1.5}
     /* Обложка-оффер (шаг 0) — показывается только если передан cover */
     .cover{display:flex;flex-direction:column}
+    .cover-img{width:100%;max-width:440px;height:auto;border-radius:16px;display:block;margin:0 0 22px}
     .cover-title{font-family:Outfit,sans-serif;font-size:30px;line-height:1.2;margin:0 0 14px}
     .cover-meta{display:inline-block;align-self:flex-start;background:#f0f6f4;color:var(--green);
       font-weight:600;font-size:15px;padding:8px 14px;border-radius:999px;margin-bottom:18px}
@@ -91,8 +92,9 @@
 
     {% if cover %}
     <section class="cover" id="cover">
+      {% if cover.image %}<img class="cover-img" src="{{ cover.image }}" alt="ONCOUNT — we count, you succeed">{% endif %}
       <h1 class="cover-title">{{ cover.title }}</h1>
-      <div class="cover-meta">{{ cover.date }} · 📍 {{ cover.place }}</div>
+      <div class="cover-meta">🕕 {{ cover.date }} · 📍 {{ cover.place }}</div>
       <p class="cover-lead">{{ cover.lead }}</p>
       <ul class="cover-bullets">
         {% for b in cover.bullets %}<li>{{ b }}</li>{% endfor %}
