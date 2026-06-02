@@ -358,211 +358,607 @@ TEMPLATES = [
 ]
 
 
-# Партнёрский кит (/kits, Фаза C, план 2026-05-27). Материалы сегментированы по
+# Партнёрский кит (/kits, Фаза C+G, план 2026-05-27). Материалы сегментированы по
 # ТИПУ ПАРТНЁРА (partner_type, ключи PARTNER_TYPES в main.py). segment = тип
 # ассета (чип над карточкой), это ДРУГАЯ ось, чем partner_type.
 #
-# ⚠️ ВНИМАНИЕ: это КАРКАС — ЧЕРНОВИКИ-ЗАГЛУШКИ, НЕ живые тексты для клиента.
-# slug заканчивается на `-draft` → шаблон рисует плашку «черновик · не утверждён»
-# и НЕ даёт копировать. body_md здесь — пометка «что тут будет», а не сообщение,
-# которое можно отправить наружу. Финальные тексты пишет/одобряет Николь
-# (опасная тройка: текст уходит клиенту наружу). После утверждения: заменить
-# body_md/body_md_en на согласованный текст и убрать суффикс `-draft` в slug.
-_DRAFT_RU = "⚠️ Черновик на утверждении Николь. "
-_DRAFT_EN = "⚠️ Draft pending Nikole's approval. "
+# Тексты УТВЕРЖДЕНЫ Николь 2026-06-02 (копилка финалов
+# .business/marketing/partner-kits-final-2026-06-02.md). Это финальные сообщения,
+# которые партнёр КОПИРУЕТ и шлёт клиенту — НЕ черновики. slug БЕЗ суффикса
+# `-draft` → шаблон даёт копировать. Фаза J: тело прогоняется через
+# _kit_body_clean при сидинге (на финальном ките money-word → ValueError, сидер
+# падает явно). Плейсхолдеры в квадратных скобках ([имя]/[тема]/[событие]/
+# [моё имя]/[URL мастеркласса + UTM]/…) партнёр подставляет сам. EN — параллельная
+# локаль; insider-киты #8/#10 намеренно БЕЗ бренда ONCOUNT (полная дискретность).
 KITS = [
     {
-        "slug": "kit-employee-wa-intro-draft",
+        "slug": "kit-employee-wa-intro",
         "partner_type": "employee",
         "segment": "Интро WhatsApp",
         "segment_en": "WhatsApp intro",
         "title": "Интро клиенту в WhatsApp",
         "title_en": "WhatsApp intro to a client",
-        "body_md": _DRAFT_RU + (
-            "Здесь будет готовое интро-сообщение в WhatsApp от лица партнёра в "
-            "найме — солидный профессиональный тон, представление ONCOUNT как "
-            "личной рекомендации, без «купонного» оттенка."
+        "body_md": (
+            "Привет, [имя]!\n"
+            "\n"
+            "Ты как-то говорил, что нужен бухгалтер по адекватной цене и "
+            "качеству в ОАЭ — хочу познакомить тебя с ONCOUNT. Они ведут "
+            "бухучёт для бизнеса в Дубае, помогают с налогами, отчётами и "
+            "зарплатой. Я с ними сам работаю.\n"
+            "\n"
+            "Если актуально, то напиши им напрямую: wa.me/971589217784 "
+            "(скажи, что от меня)."
         ),
-        "body_md_en": _DRAFT_EN + (
-            "A ready WhatsApp intro for an employed partner will go here — a "
-            "solid professional tone, ONCOUNT presented as a personal "
-            "recommendation, no «coupon» feel."
+        "body_md_en": (
+            "Hi [name]!\n"
+            "\n"
+            "You once mentioned you needed a solid accountant in the UAE at a "
+            "fair price — let me introduce you to ONCOUNT. They handle "
+            "bookkeeping for businesses in Dubai, help with taxes, reports, and "
+            "payroll. I work with them myself.\n"
+            "\n"
+            "If it's relevant, just message them directly: wa.me/971589217784 "
+            "(mention you're from me)."
         ),
         "order_index": 1,
     },
     {
-        "slug": "kit-solo-intro-draft",
+        "slug": "kit-solo-intro",
         "partner_type": "solo",
         "segment": "Интро / письмо",
         "segment_en": "Intro / email",
         "title": "Интро клиенту (WhatsApp или письмо)",
         "title_en": "Client intro (WhatsApp or email)",
-        "body_md": _DRAFT_RU + (
-            "Здесь будет интро для соло-консультанта — факты без хайпа, чистый "
-            "хэндофф «передал и забыл», понятно, что дальше делает ONCOUNT."
+        "body_md": (
+            "Добрый день, [имя]!\n"
+            "\n"
+            "В нашей работе по [теме] вы упомянули, что нужна бухгалтерия в "
+            "ОАЭ. Передаю вас команде ONCOUNT — они ведут бухучёт для бизнеса "
+            "в Дубае, помогают с налогами, отчётами и зарплатой.\n"
+            "\n"
+            "Их менеджер свяжется с вами в течение часа в рабочее время. Если "
+            "удобнее — напишите им сами: wa.me/971589217784 (упомяните, что от "
+            "[моё имя]).\n"
+            "\n"
+            "По нашим вопросам остаюсь на связи."
         ),
-        "body_md_en": _DRAFT_EN + (
-            "An intro for a solo operator will go here — facts without hype, a "
-            "clean «hand off and forget» handover, clear next steps by ONCOUNT."
+        "body_md_en": (
+            "Hello [name]!\n"
+            "\n"
+            "In our work on [topic], you mentioned you needed accounting in the "
+            "UAE. I'm handing this over to the ONCOUNT team — they handle "
+            "bookkeeping for UAE businesses, help with taxes, reports, and "
+            "payroll.\n"
+            "\n"
+            "Their manager will reach out within an hour during business hours. "
+            "If it's easier, message them yourself: wa.me/971589217784 (please "
+            "mention I sent you — [my name]).\n"
+            "\n"
+            "I remain available on our matters."
         ),
         "order_index": 1,
     },
     {
-        "slug": "kit-events-lead-magnet-draft",
+        "slug": "kit-events-lead-magnet",
         "partner_type": "events",
         "segment": "Lead-магнит (RU)",
         "segment_en": "Lead magnet (RU)",
         "title": "Lead-магнит для аудитории события",
         "title_en": "Lead magnet for an event audience",
-        "body_md": _DRAFT_RU + (
-            "Здесь будет готовый RU-ассет под событие (текст-врезка + ссылка на "
-            "материал/лендинг) — премиум-подача «доступ и авторитет», оффер "
-            "зафиксирован на момент создания."
+        "body_md": (
+            "🔶 Только для участников [событие]\n"
+            "\n"
+            "В ОАЭ сейчас непростое время для бизнеса — корпоративный налог, "
+            "новые правила отчётности, требования банков. Один промах в "
+            "бухгалтерии = штраф или блокировка счёта.\n"
+            "\n"
+            "Команда ONCOUNT проводит закрытый мастеркласс для предпринимателей "
+            "в ОАЭ: реальные кейсы клиентов, как платить меньше налогов "
+            "легально и что налоговая сейчас спрашивает на проверках.\n"
+            "\n"
+            "Это не лекция — это разбор вашей ситуации с бухгалтером.\n"
+            "\n"
+            "Записаться можно по ссылке: [URL мастеркласса + UTM партнёра]"
         ),
-        "body_md_en": _DRAFT_EN + (
-            "A ready RU asset for an event will go here (intro blurb + link to "
-            "the material/landing) — a premium «access and authority» framing, "
-            "offer fixed at creation time."
+        "body_md_en": (
+            "🔶 For [event] attendees only\n"
+            "\n"
+            "The UAE is a tricky place for business right now — corporate tax, "
+            "new reporting rules, bank requirements. One slip in your accounting "
+            "= a fine or a frozen account.\n"
+            "\n"
+            "The ONCOUNT team runs a closed masterclass for entrepreneurs in the "
+            "UAE: real client cases, how to pay less tax legally, and what the "
+            "tax authority is asking about in audits right now.\n"
+            "\n"
+            "This isn't a lecture — it's a review of your situation with an "
+            "accountant.\n"
+            "\n"
+            "Register here: [masterclass URL + UTM]"
         ),
         "order_index": 1,
     },
     {
-        "slug": "kit-agency-white-label-draft",
-        "partner_type": "agency",
-        "segment": "White-label материал",
-        "segment_en": "White-label asset",
-        "title": "White-label материал для команды агентства",
-        "title_en": "White-label asset for the agency team",
-        "body_md": _DRAFT_RU + (
-            "Здесь будет white-label материал для команды агентства — бэк-офис "
-            "ONCOUNT не «светится» перед клиентом агентства; для внутреннего "
-            "использования продавцами."
-        ),
-        "body_md_en": _DRAFT_EN + (
-            "A white-label asset for the agency team will go here — the ONCOUNT "
-            "back office stays invisible to the agency's client; for internal "
-            "use by the sales team."
-        ),
-        "order_index": 1,
-    },
-    {
-        "slug": "kit-media-disclosure-draft",
+        "slug": "kit-media-disclosure",
         "partner_type": "media",
         "segment": "Disclosure-шаблон",
         "segment_en": "Disclosure template",
         "title": "Шаблон раскрытия + образовательный брифинг",
         "title_en": "Disclosure template + educational briefing",
-        "body_md": _DRAFT_RU + (
-            "Здесь будет шаблон раскрытия для медиа/блога + сырой "
-            "образовательный брифинг (регуляторный апдейт / реальный кейс), а не "
-            "рекламная брошюра — чтобы аудитория видела рекомендацию, не рекламу."
+        "body_md": (
+            "═══════════════════════════════════════\n"
+            "📌 DISCLOSURE-СТРОКА (в начале поста / в подписи)\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "В начале:\n"
+            "«Партнёрский материал с ONCOUNT — командой, которая ведёт бухучёт "
+            "для бизнеса в ОАЭ.»\n"
+            "\n"
+            "В конце (альтернатива):\n"
+            "«При поддержке ONCOUNT — бухучёт для бизнеса в ОАЭ. Я выбрал их за "
+            "[причина]: [например, отвечают за час, ведут IFRS, опыт 8+ лет].»\n"
+            "\n"
+            "═══════════════════════════════════════\n"
+            "📌 ВАРИАНТ А — РЕГУЛЯТОРНЫЙ АПДЕЙТ\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "Корпоративный налог в ОАЭ: что изменилось\n"
+            "\n"
+            "С 2024 года в ОАЭ работает корпоративный налог 9% для прибыли "
+            "свыше 375 000 AED. К 2026 году правила ужесточились: ФНС требует "
+            "подтверждение substance, банки запрашивают аудиторские отчёты при "
+            "открытии счетов, штрафы за просрочку отчётности выросли до "
+            "50 000 AED.\n"
+            "\n"
+            "Что должен сделать предприниматель сейчас:\n"
+            "1. Проверить, оформлено ли freezone-освобождение по новым правилам.\n"
+            "2. Подготовить отчётность за 2025 год до конца апреля 2026.\n"
+            "3. Убедиться, что бухучёт ведётся по IFRS — это требование банков.\n"
+            "\n"
+            "Кому интересно разобраться в своей ситуации — записаться на разбор "
+            "с бухгалтером ONCOUNT: [URL мастеркласса + UTM]\n"
+            "\n"
+            "═══════════════════════════════════════\n"
+            "📌 ВАРИАНТ Б — РЕАЛЬНЫЙ КЕЙС\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "Кейс: владелец e-commerce в DMCC чуть не получил штраф 50 000 AED\n"
+            "\n"
+            "Клиент пришёл в ONCOUNT в феврале — нужно было сдать первый "
+            "корпоративный отчёт. Бывший бухгалтер уверял: «у вас freezone, "
+            "налог 0%». Команда ONCOUNT за 2 часа проверки нашла:\n"
+            "• substance не оформлен → freezone-освобождение под угрозой\n"
+            "• учёт ведётся в Excel → IFRS не подтвердить\n"
+            "• 3 операции с UAE mainland → попадают под обязательную отчётность\n"
+            "\n"
+            "Команда подготовила правильный пакет за 2 недели, "
+            "freezone-освобождение сохранили, штрафа избежали.\n"
+            "\n"
+            "Если у вас бизнес в ОАЭ и вы не на 100% уверены в бухучёте — "
+            "записаться на разбор: [URL + UTM]"
         ),
-        "body_md_en": _DRAFT_EN + (
-            "A disclosure template for media/blog + a raw educational briefing "
-            "(regulatory update / real case) will go here, not an ad — so the "
-            "audience sees a recommendation, not advertising."
+        "body_md_en": (
+            "═══════════════════════════════════════\n"
+            "📌 DISCLOSURE LINE (at the start of the post / in the caption)\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "At the start:\n"
+            "\"Partner content with ONCOUNT — the team that handles bookkeeping "
+            "for businesses in the UAE.\"\n"
+            "\n"
+            "At the end (alternative):\n"
+            "\"Supported by ONCOUNT — bookkeeping for businesses in the UAE. I "
+            "chose them for [reason]: [e.g. they reply within an hour, run "
+            "IFRS, 8+ years of experience].\"\n"
+            "\n"
+            "═══════════════════════════════════════\n"
+            "📌 OPTION A — REGULATORY UPDATE\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "Corporate tax in the UAE: what's changed\n"
+            "\n"
+            "Since 2024 the UAE has had a 9% corporate tax on profit above "
+            "AED 375,000. By 2026 the rules have tightened: the tax authority "
+            "requires proof of substance, banks ask for audit reports when "
+            "opening accounts, and late-filing penalties have risen to "
+            "AED 50,000.\n"
+            "\n"
+            "What an entrepreneur should do now:\n"
+            "1. Check whether your freezone exemption is set up under the new "
+            "rules.\n"
+            "2. Prepare your 2025 reporting by the end of April 2026.\n"
+            "3. Make sure your bookkeeping is kept under IFRS — banks require "
+            "it.\n"
+            "\n"
+            "If you'd like to make sense of your own situation, book a review "
+            "with an ONCOUNT accountant: [masterclass URL + UTM]\n"
+            "\n"
+            "═══════════════════════════════════════\n"
+            "📌 OPTION B — A REAL CASE\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "Case: a DMCC e-commerce owner came within an inch of an "
+            "AED 50,000 fine\n"
+            "\n"
+            "The client came to ONCOUNT in February — the first corporate tax "
+            "return was due. Their former accountant kept insisting: \"you're "
+            "in a freezone, your tax is 0%.\" In a 2-hour review the ONCOUNT "
+            "team found:\n"
+            "• substance not in place → the freezone exemption at risk\n"
+            "• books kept in Excel → IFRS can't be confirmed\n"
+            "• 3 transactions with the UAE mainland → fall under mandatory "
+            "reporting\n"
+            "\n"
+            "The team prepared the correct package in 2 weeks, kept the "
+            "freezone exemption, and avoided the fine.\n"
+            "\n"
+            "If you run a business in the UAE and aren't 100% sure about your "
+            "bookkeeping, book a review: [URL + UTM]"
         ),
         "order_index": 1,
     },
     {
-        "slug": "kit-consultant-pre-referral-draft",
+        "slug": "kit-consultant-pre-referral",
         "partner_type": "consultant",
         "segment": "Pre-referral: ожидания",
         "segment_en": "Pre-referral: expectations",
         "title": "Документ ожиданий + интро",
         "title_en": "Expectations doc + intro",
-        "body_md": _DRAFT_RU + (
-            "Здесь будет pre-referral документ ожиданий (что реально требует "
-            "комплаенс ОАЭ и в каком темпе) + интро с сигналом комплаенс/тех-"
-            "экспертизы — чтобы у клиента не было «Дубай — это просто»."
+        "body_md": (
+            "═══════════════════════════════════════\n"
+            "📌 ЧАСТЬ 1: ДОКУМЕНТ ОЖИДАНИЙ\n"
+            "(для клиента, ДО знакомства с ONCOUNT)\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "Что вам нужно знать о налогах в ОАЭ перед стартом\n"
+            "\n"
+            "1. Корпоративный налог не нулевой\n"
+            "   В ОАЭ работает корп.налог 9% на прибыль свыше 375K AED. "
+            "Freezone-освобождение возможно, но требует подтверждения substance "
+            "(физ.офис, штат, операции). Без правильного оформления — теряете "
+            "льготу.\n"
+            "\n"
+            "2. Отчётность ведётся по IFRS\n"
+            "   Не «как в России» и не «по упрощённой» — налоговая и аудиторы "
+            "требуют именно IFRS. Если бухучёт в Excel — не пройдёте проверку "
+            "при продлении лицензии. Обязательно в одобренной программе на "
+            "сайте FTA.\n"
+            "\n"
+            "3. Сроки\n"
+            "   • Декларация корп.налога: до 9 месяцев после конца финансового "
+            "года.\n"
+            "   • Аудит для freezone (DMCC/JAFZA/etc): ежегодно.\n"
+            "   • НДС-отчёты: ежеквартально.\n"
+            "   • Просрочка = штраф от 1 000 AED, растёт прогрессивно.\n"
+            "\n"
+            "4. Что нужно собирать сразу\n"
+            "   • Учёт всех операций с момента регистрации (включая расчёты с "
+            "учредителем), чеки по всем платежам.\n"
+            "   • Документы по substance: офис, визы.\n"
+            "   • Банковские выписки в читаемом формате.\n"
+            "\n"
+            "5. Сколько времени займёт постановка учёта\n"
+            "   • 2-3 дня регистрация на корп.налог, 3-4 недели на НДС.\n"
+            "\n"
+            "═══════════════════════════════════════\n"
+            "📌 ЧАСТЬ 2: ИНТРО-СООБЩЕНИЕ КЛИЕНТУ\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "Добрый день, [имя]!\n"
+            "\n"
+            "Прежде чем я познакомлю вас с бухгалтером, выслал документ — "
+            "посмотрите его сначала. Это не страшилка, это реальный сценарий "
+            "ОАЭ — чтобы у вас не было иллюзии о налогах и отчётах. Налоги "
+            "низкие, но штрафы строгие. Чтоб не терять прибыль из-за ошибок, "
+            "рекомендую вести бухучёт с командой ONCOUNT.\n"
+            "\n"
+            "Они ведут бухучёт для бизнеса в ОАЭ: корп.налог, НДС, "
+            "IFRS-отчётность, аудит — всё по приятным ценам и с высоким "
+            "качеством. Более 200+ компаний ведут в Дубае, индивидуальный "
+            "подход и слаженная работа.\n"
+            "\n"
+            "Кстати, консультация первая бесплатно — напишите им: "
+            "wa.me/971589217784 (упомяните: «от [моё имя]»)."
         ),
-        "body_md_en": _DRAFT_EN + (
-            "A pre-referral expectations document (what UAE compliance really "
-            "requires and at what pace) + an intro signalling compliance/tech "
-            "expertise will go here — so the client avoids «Dubai is easy»."
+        "body_md_en": (
+            "═══════════════════════════════════════\n"
+            "📌 PART 1: EXPECTATIONS DOCUMENT\n"
+            "(for the client, BEFORE meeting ONCOUNT)\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "What you need to know about UAE taxes before you start\n"
+            "\n"
+            "1. Corporate tax is not zero\n"
+            "   The UAE has a 9% corporate tax on profit above AED 375K. A "
+            "freezone exemption is possible but requires proof of substance (a "
+            "physical office, staff, operations). Without proper setup, you "
+            "lose the benefit.\n"
+            "\n"
+            "2. Reporting is kept under IFRS\n"
+            "   Not «the way it's done back home» and not «simplified» — the tax "
+            "authority and auditors require IFRS specifically. If your "
+            "bookkeeping is in Excel, you won't pass the check at licence "
+            "renewal. It must be in an approved software listed on the FTA "
+            "site.\n"
+            "\n"
+            "3. Deadlines\n"
+            "   • Corporate tax return: within 9 months of the financial year "
+            "end.\n"
+            "   • Audit for freezones (DMCC/JAFZA/etc): annually.\n"
+            "   • VAT returns: quarterly.\n"
+            "   • A delay = a fine from AED 1,000 that grows progressively.\n"
+            "\n"
+            "4. What to gather right away\n"
+            "   • A record of every transaction since incorporation (including "
+            "settlements with the founder) and receipts for all payments.\n"
+            "   • Substance documents: office, visas.\n"
+            "   • Bank statements in a readable format.\n"
+            "\n"
+            "5. How long it takes to set up the books\n"
+            "   • 2-3 days to register for corporate tax, 3-4 weeks for VAT.\n"
+            "\n"
+            "═══════════════════════════════════════\n"
+            "📌 PART 2: INTRO MESSAGE TO THE CLIENT\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "Hello [name]!\n"
+            "\n"
+            "Before I introduce you to an accountant, I've sent over a "
+            "document — please look at it first. It's not a scare story, it's "
+            "the real UAE scenario — so you don't go in with illusions about "
+            "taxes and reporting. Taxes are low, but the penalties are strict. "
+            "To avoid losing profit to mistakes, I recommend keeping your books "
+            "with the ONCOUNT team.\n"
+            "\n"
+            "They handle bookkeeping for businesses in the UAE: corporate tax, "
+            "VAT, IFRS reporting, audit — all at pleasant prices and high "
+            "quality. They run 200+ companies in Dubai, with an individual "
+            "approach and well-coordinated work.\n"
+            "\n"
+            "By the way, the first consultation is free — message them: "
+            "wa.me/971589217784 (mention: «from [my name]»)."
         ),
         "order_index": 1,
     },
     {
-        "slug": "kit-insider-intro-script-draft",
+        "slug": "kit-insider-intro-script",
         "partner_type": "insider",
         "segment": "Скрипт интро",
         "segment_en": "Intro script",
         "title": "Дискретный скрипт интро",
         "title_en": "Discreet intro script",
-        "body_md": _DRAFT_RU + (
-            "Здесь будет дискретный скрипт интро (приватный тон): что говорю "
-            "клиенту и чего НЕ говорю никогда. Формулировки без компрометирующих "
-            "слов — финальная вычитка под «увидит ли это работодатель» в Фазе G."
+        "body_md": (
+            "═══════════════════════════════════════\n"
+            "📌 ЧТО МОЖНО ГОВОРИТЬ\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "✅ «Я с ними сам сотрудничаю»\n"
+            "✅ «Мне их рекомендовали»\n"
+            "✅ «Это надёжная команда, знаю их давно»\n"
+            "✅ «Я узнавал — у них хороший подход»\n"
+            "✅ «По моему опыту с ними всё спокойно»\n"
+            "\n"
+            "═══════════════════════════════════════\n"
+            "📌 ЧЕГО НЕ ГОВОРИТЬ НИКОГДА\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "❌ «За это мне платят»\n"
+            "❌ «У нас с ними договорённость»\n"
+            "❌ «Я получаю процент»\n"
+            "❌ «Это специальная программа от меня»\n"
+            "❌ «По специальной ссылке от меня»\n"
+            "❌ «Они меня вознаграждают»\n"
+            "\n"
+            "═══════════════════════════════════════\n"
+            "📌 УНИВЕРСАЛЬНЫЙ ШАБЛОН ИНТРО\n"
+            "(любой канал — WhatsApp, личка, email)\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "«[Имя], знаю, что вам нужна бухгалтерия в ОАЭ — могу рекомендовать "
+            "команду, с которой сам работаю. Это ONCOUNT, они ведут бухучёт для "
+            "бизнеса в Дубае. Если интересно — соединю с их менеджером, "
+            "расскажет под вашу ситуацию.»\n"
+            "\n"
+            "═══════════════════════════════════════\n"
+            "📌 ЕСЛИ КЛИЕНТ СПРОСИТ «А ВАМ ЧТО С ЭТОГО?»\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "✅ «Нет, я просто рекомендую тех, кому доверяю.»\n"
+            "✅ «Сам пользуюсь — рад, когда у моих знакомых тоже хорошо "
+            "складывается.»\n"
+            "\n"
+            "═══════════════════════════════════════\n"
+            "📌 ЕСЛИ КЛИЕНТ В 3-СТОРОННЕМ ЧАТЕ\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "После знакомства партнёр выходит:\n"
+            "«[Клиент], [менеджер ONCOUNT] — знакомлю. Дальше с вами на связи. "
+            "Хорошего разбора.»\n"
+            "\n"
+            "И больше не пишет в эту переписку про бухгалтерию — это правило "
+            "приватности."
         ),
-        "body_md_en": _DRAFT_EN + (
-            "A discreet intro script (private tone) will go here: what to say "
-            "to the client and what never to say. Wording without compromising "
-            "terms — final pass under «would an employer see this» in Phase G."
+        "body_md_en": (
+            "═══════════════════════════════════════\n"
+            "📌 WHAT YOU CAN SAY\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "✅ \"I work with them myself\"\n"
+            "✅ \"They came recommended to me\"\n"
+            "✅ \"They're a reliable team, I've known them a long time\"\n"
+            "✅ \"I looked into it — they have a good approach\"\n"
+            "✅ \"In my experience everything's been smooth with them\"\n"
+            "\n"
+            "═══════════════════════════════════════\n"
+            "📌 WHAT NEVER TO SAY\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "❌ \"I get paid for this\"\n"
+            "❌ \"I have an arrangement with them\"\n"
+            "❌ \"I get a percentage\"\n"
+            "❌ \"It's a special program from me\"\n"
+            "❌ \"Through a special link from me\"\n"
+            "❌ \"They reward me for it\"\n"
+            "\n"
+            "═══════════════════════════════════════\n"
+            "📌 UNIVERSAL INTRO TEMPLATE\n"
+            "(any channel — WhatsApp, DM, email)\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "\"[name], I know you need accounting in the UAE — I can recommend a "
+            "team I work with myself. It's ONCOUNT, they handle bookkeeping for "
+            "businesses in Dubai. If you're interested, I'll connect you with "
+            "their manager, who'll walk you through your situation.\"\n"
+            "\n"
+            "═══════════════════════════════════════\n"
+            "📌 IF THE CLIENT ASKS \"WHAT'S IN IT FOR YOU?\"\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "✅ \"Nothing, I just recommend people I trust.\"\n"
+            "✅ \"I use them myself — I'm glad when things go well for people I "
+            "know too.\"\n"
+            "\n"
+            "═══════════════════════════════════════\n"
+            "📌 IF THE CLIENT IS IN A 3-WAY CHAT\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "Once introductions are made, the partner steps out:\n"
+            "\"[Client name], meet [ONCOUNT manager]. They'll take it from here. "
+            "Have a good session.\"\n"
+            "\n"
+            "And they no longer write about accounting in that chat — it's a "
+            "privacy rule."
         ),
         "order_index": 1,
     },
     {
-        "slug": "kit-insider-personal-intro-draft",
+        "slug": "kit-insider-personal-intro",
         "partner_type": "insider",
         "segment": "Личное интро",
         "segment_en": "Personal intro",
         "title": "Личное интро клиенту в переписке",
         "title_en": "Personal intro to a client in chat",
-        "body_md": _DRAFT_RU + (
-            "Здесь будет личное интро клиенту в переписке — приватный тон от "
-            "первого лица: «знаю, кому доверять, познакомлю с ONCOUNT». Рамка — "
-            "личная рекомендация и забота, без единого слова про мотив и без "
-            "ничего, что выдавало бы договорённость."
+        "body_md": (
+            "Привет!\n"
+            "\n"
+            "Я нашёл наконец классного бухгалтера. С лицензией и страховкой "
+            "проф.рисков. Был у них на мастер-классе — чётко по делу всё "
+            "говорят. И цена фиксированная: за каждый чих не доплачиваешь, всё "
+            "включено — и регистрация, и сдача отчётов.\n"
+            "\n"
+            "Мне что нравится — они проактивные. Сами пишут, предлагают "
+            "варианты, как лучше отражать в учёте, чтоб меньше платить "
+            "налогов.\n"
+            "\n"
+            "В общем, рекомендую. Вот номер: wa.me/971589217784"
         ),
-        "body_md_en": _DRAFT_EN + (
-            "A personal intro to a client in chat will go here — a private "
-            "first-person tone: «I know who to trust, let me introduce you to "
-            "ONCOUNT». Framed as a personal recommendation and care, with not a "
-            "word about any motive and nothing that hints at an arrangement."
+        "body_md_en": (
+            "Hey!\n"
+            "\n"
+            "I've finally found a great accountant. Licensed, with professional "
+            "indemnity insurance. I went to their masterclass — they speak "
+            "clearly and to the point. And the price is fixed: you don't pay "
+            "extra for every little thing, it's all included — both "
+            "registration and filing reports.\n"
+            "\n"
+            "What I like is that they're proactive. They reach out themselves, "
+            "suggest options for how best to record things in the books so you "
+            "pay less tax.\n"
+            "\n"
+            "Anyway, I recommend them. Here's the number: wa.me/971589217784"
         ),
         "order_index": 2,
     },
     {
-        "slug": "kit-insider-group-intro-draft",
+        "slug": "kit-insider-group-intro",
         "partner_type": "insider",
         "segment": "Знакомство в чате",
         "segment_en": "Group intro",
         "title": "Знакомство клиента с ONCOUNT в общем чате",
         "title_en": "Introducing a client to ONCOUNT in a shared chat",
-        "body_md": _DRAFT_RU + (
-            "Здесь будет нейтральное сообщение-знакомство в общем чате: «давай "
-            "соединю вас с ONCOUNT» — короткий трёхсторонний хэндофф как личная "
-            "услуга. Партнёр выходит из диалога, дальше ведёт ONCOUNT; в тексте "
-            "нет упоминаний денег и роли партнёра как источника лида."
+        "body_md": (
+            "Всем привет!\n"
+            "\n"
+            "[Имя клиента], знакомлю с [Имя менеджера] — она помогает с "
+            "бухгалтерией для бизнеса в ОАЭ. Я о тебе рассказал, она в курсе "
+            "ситуации.\n"
+            "\n"
+            "[Имя менеджера], [Имя клиента] — недавно открыл компанию в ОАЭ, "
+            "нужна команда по бухучёту: налоги, отчёты, текущее обслуживание.\n"
+            "\n"
+            "Оставляю вас, дальше с [Имя менеджера]. Удачно поговорить!"
         ),
-        "body_md_en": _DRAFT_EN + (
-            "A neutral introduction message for a shared chat will go here: "
-            "«let me connect you with ONCOUNT» — a short three-way handoff as a "
-            "personal favour. The partner steps out, ONCOUNT takes it from "
-            "there; no mention of money or the partner as a lead source."
+        "body_md_en": (
+            "Hi everyone!\n"
+            "\n"
+            "[Client name], meet [Manager name] — she helps with accounting for "
+            "businesses in the UAE. I've told her about you, she's up to speed "
+            "on your situation.\n"
+            "\n"
+            "[Manager name], [Client name] recently opened a company in the UAE "
+            "and needs a team for the books: taxes, reports, ongoing support.\n"
+            "\n"
+            "I'll leave you to it — [Manager name] takes it from here. Have a "
+            "good chat!"
         ),
         "order_index": 3,
     },
     {
-        "slug": "kit-insider-email-line-draft",
+        "slug": "kit-insider-email-line",
         "partner_type": "insider",
         "segment": "Строка в письме",
         "segment_en": "Email line",
         "title": "Короткое представление в письме",
         "title_en": "Short introducer line in email",
-        "body_md": _DRAFT_RU + (
-            "Здесь будет одна строка-представление для письма или подписи: "
-            "нейтрально знакомлю клиента с ONCOUNT как тех, к кому сам обращаюсь "
-            "по вопросам бухгалтерии в ОАЭ. Формат «меня направил» — рекомендация "
-            "уважаемого знакомого, без любых компрометирующих формулировок."
+        "body_md": (
+            "═══════════════════════════════════════\n"
+            "📌 ВАРИАНТ А — EMAIL-ПОДПИСЬ\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "P.S. Если нужна бухгалтерия в ОАЭ — рекомендую команду, которую "
+            "давно знаю: wa.me/971589217784\n"
+            "\n"
+            "═══════════════════════════════════════\n"
+            "📌 ВАРИАНТ Б — FORWARD КОНТАКТА\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "[Имя клиента], как договаривались — контакт команды по бухгалтерии "
+            "в ОАЭ: wa.me/971589217784. Я их давно знаю, ребята надёжные.\n"
+            "\n"
+            "═══════════════════════════════════════\n"
+            "📌 ВАРИАНТ В — ЛИЧНОЕ ПИСЬМО\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "[Имя клиента], добрый день!\n"
+            "\n"
+            "По вашему вопросу про бухгалтерию в ОАЭ — обратитесь к ребятам, "
+            "которых давно знаю: wa.me/971589217784. Профи, всё чётко."
         ),
-        "body_md_en": _DRAFT_EN + (
-            "A single introducer line for an email or signature will go here: "
-            "a neutral note introducing the client to ONCOUNT as the people I "
-            "rely on for accounting matters in the UAE. An «introducer» "
-            "framing — a recommendation from a trusted contact, with no "
-            "compromising wording of any kind."
+        "body_md_en": (
+            "═══════════════════════════════════════\n"
+            "📌 OPTION A — EMAIL SIGNATURE\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "P.S. If you need accounting in the UAE, I recommend a team I've "
+            "known for a long time: wa.me/971589217784\n"
+            "\n"
+            "═══════════════════════════════════════\n"
+            "📌 OPTION B — FORWARDING A CONTACT\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "[Client name], as we agreed — here's the contact of an accounting "
+            "team in the UAE: wa.me/971589217784. I've known them a long time, "
+            "they're reliable people.\n"
+            "\n"
+            "═══════════════════════════════════════\n"
+            "📌 OPTION C — A PERSONAL EMAIL\n"
+            "═══════════════════════════════════════\n"
+            "\n"
+            "[Client name], hello!\n"
+            "\n"
+            "On your accounting question in the UAE — reach out to the people "
+            "I've known for a long time: wa.me/971589217784. Pros, everything "
+            "sharp and clear."
         ),
         "order_index": 4,
     },
@@ -682,11 +1078,11 @@ def seed_if_empty(session: Session) -> None:
     session.add_all([ProductBlock(**p) for p in PRODUCTS])
     session.query(MessageTemplate).delete()
     # TEMPLATES — генерик-крючки /messages (partner_type=NULL); KITS — материалы
-    # /kits по типу партнёра (Фаза C, пока ЧЕРНОВИКИ-заглушки, см. KITS выше).
+    # /kits по типу партнёра (Фаза C+G, ФИНАЛЫ утв. Николь 2026-06-02, см. KITS выше).
     # Фаза J: кит партнёр копирует и шлёт КЛИЕНТУ → ни одного money-word в теле.
     # Только KITS (partner_type IS NOT NULL); генерик TEMPLATES не валидируем
-    # (там «вознаграждение» — норма, это видит сам партнёр). На *-draft —
-    # warning+пропуск, на финальном ките со стоп-словом — ValueError (сидер падает).
+    # (там «вознаграждение» — норма, это видит сам партнёр). Киты больше не *-draft,
+    # поэтому стоп-слово в теле = ValueError (сидер падает явно, а не пишет в БД).
     for kit in KITS:
         _kit_body_clean(kit.get("body_md"), kit.get("body_md_en"), kit.get("slug", ""))
     session.add_all([MessageTemplate(**t) for t in TEMPLATES + KITS])
