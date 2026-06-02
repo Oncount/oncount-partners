@@ -64,10 +64,10 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "app" / "templates"))
 # здесь — только человекочитаемый ярлык (ru/en) + иконка. Под-статусы НЕ
 # заводим (решение Николь): рисуем поверх 4 существующих Lead.status.
 LEAD_STAGES: dict[str, dict[str, str]] = {
-    "new":         {"icon": "📥", "ru": "Принят",                "en": "Received"},
-    "in_progress": {"icon": "🧮", "ru": "В работе у бухгалтера", "en": "With accountant"},
-    "won":         {"icon": "🤝", "ru": "Клиент с нами",         "en": "Client onboarded"},
-    "lost":        {"icon": "🌙", "ru": "Не сложилось",          "en": "Didn’t work out"},
+    "new":         {"icon": "📥", "ru": "Принят",   "en": "Received"},
+    "in_progress": {"icon": "🧮", "ru": "В работе", "en": "In progress"},
+    "won":         {"icon": "✅", "ru": "Оплачено", "en": "Paid"},
+    "lost":        {"icon": "",   "ru": "Отказ",    "en": "Declined"},
 }
 
 

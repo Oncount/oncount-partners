@@ -213,8 +213,34 @@ table.list td {
 }
 .status-new { background: rgba(238, 145, 121, 0.18); color: #b04020; }
 .status-in_progress { background: rgba(236, 100, 66, 0.15); color: var(--orange); }
-.status-won { background: rgba(16, 70, 62, 0.12); color: var(--deep-green); }
-.status-lost { background: rgba(34, 34, 34, 0.08); color: var(--charcoal); }
+/* «Оплачено» (won) — ярко-зелёный, светится: главное радостное событие для партнёра. */
+.status-won {
+  background: #16a34a;
+  color: #ffffff;
+  animation: paid-glow 1.8s ease-in-out infinite;
+}
+@keyframes paid-glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(22, 163, 74, 0.45), 0 0 2px rgba(22, 163, 74, 0.35); }
+  50%      { box-shadow: 0 0 16px rgba(22, 163, 74, 0.9),  0 0 6px rgba(22, 163, 74, 0.6); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .status-won { animation: none; box-shadow: 0 0 10px rgba(22, 163, 74, 0.6); }
+}
+/* «Отказ» (lost) — приглушённый серый. */
+.status-lost { background: rgba(34, 34, 34, 0.08); color: var(--sage); }
+/* Сумма оплаты клиента рядом со статусом «Оплачено» — крупно и зелёным. */
+.lead-paid-amount {
+  margin-top: 6px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #16a34a;
+}
+/* Подпись под таблицей заявок. */
+.leads-footnote {
+  margin-top: 16px;
+  font-size: 14px;
+  color: var(--sage);
+}
 /* Статус вознаграждения по won-лиду (Фаза B): нейтральный → ожидание → успех. */
 .payout-in_calc { background: rgba(84, 124, 118, 0.14); color: var(--sage); }
 .payout-to_pay { background: rgba(236, 100, 66, 0.15); color: var(--orange); }

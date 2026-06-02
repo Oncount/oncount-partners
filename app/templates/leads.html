@@ -14,7 +14,6 @@
     <tr>
       <th>{{ 'Client' if lang == 'en' else 'Клиент' }}</th>
       <th>{{ 'Contact' if lang == 'en' else 'Контакт' }}</th>
-      <th>{{ 'Company' if lang == 'en' else 'Компания' }}</th>
       <th>{{ 'Created' if lang == 'en' else 'Создано' }}</th>
       <th>{{ 'Status' if lang == 'en' else 'Статус' }}</th>
     </tr>
@@ -24,11 +23,14 @@
     <tr>
       <td data-label="{{ 'Client' if lang == 'en' else 'Клиент' }}"><strong>{{ row.client_name }}</strong></td>
       <td data-label="{{ 'Contact' if lang == 'en' else 'Контакт' }}">{{ row.client_phone or row.client_telegram or '—' }}</td>
-      <td data-label="{{ 'Company' if lang == 'en' else 'Компания' }}">{{ row.company_name or '—' }}</td>
       <td data-label="{{ 'Created' if lang == 'en' else 'Создано' }}">{{ row.created_at.strftime('%d.%m.%Y') }}</td>
       <td data-label="{{ 'Status' if lang == 'en' else 'Статус' }}">
         {% set stage = lead_stage(row.status, lang) %}
         <span class="status-pill status-{{ row.status }}">{{ stage.icon }} {{ stage.label }}</span>
+        {# Сумма, которую оплатил клиент — крупно и зелёным рядом со статусом «Оплачено» (won). #}
+        {% if row.status == 'won' and row.amount_aed %}
+        <div class="lead-paid-amount">💰 {{ '%.0f'|format(row.amount_aed) }} AED</div>
+        {% endif %}
         {% if row.updated_at %}
         <div style="font-size: 12px; color: var(--sage); margin-top: 4px;">{{ ('upd. ' if lang == 'en' else 'обн. ') }}{{ row.updated_at.strftime('%d.%m.%Y') }}</div>
         {% endif %}
@@ -42,8 +44,6 @@
           {# Дата выплаты (Фаза K): 10-е число месяца, следующего за оплатой. Якорь — won_at; для won без won_at деградирует в «после оплаты». #}
           {% set due = payout_due_date(row, lang) %}
           {% if due %}<div style="font-size: 12px; color: var(--sage); margin-top: 4px;">📅 {{ due.label }}</div>{% endif %}
-          {# amount_aed — сумма СДЕЛКИ клиента (основа расчёта), не сумма выплаты партнёру: модели комиссий нет, % разный. Подписываем явно, чтобы не переобещать. #}
-          {% if row.amount_aed %}<div style="font-size: 12px; color: var(--sage); margin-top: 4px;">{{ 'Client deal:' if lang == 'en' else 'Сумма сделки клиента:' }} <span style="font-weight: 600; color: var(--deep-green);">{{ '%.0f'|format(row.amount_aed) }} AED</span></div>{% endif %}
         </div>
         {% endif %}
       </td>
@@ -51,5 +51,8 @@
     {% endfor %}
   </tbody>
 </table>
+<p class="leads-footnote">
+  {% if lang == 'en' %}Don’t see your client here? <a href="/dashboard">Message your manager</a>.{% else %}Если здесь нет вашего клиента — <a href="/dashboard">напишите вашему менеджеру</a>.{% endif %}
+</p>
 {% endif %}
 {% endblock %}
