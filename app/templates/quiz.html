@@ -62,7 +62,7 @@
     .thanks p{color:var(--muted);line-height:1.5}
     /* Обложка-оффер (шаг 0) — показывается только если передан cover */
     .cover{display:flex;flex-direction:column}
-    .cover-img{width:100%;max-width:440px;height:auto;border-radius:16px;display:block;margin:0 0 22px}
+    .cover-img{width:100%;height:auto;border-radius:16px;display:block;margin:0 0 22px}
     .cover-title{font-family:Outfit,sans-serif;font-size:30px;line-height:1.2;margin:0 0 14px}
     .cover-meta{display:inline-block;align-self:flex-start;background:#f0f6f4;color:var(--green);
       font-weight:600;font-size:15px;padding:8px 14px;border-radius:999px;margin-bottom:18px}
@@ -70,7 +70,12 @@
     .cover-bullets{list-style:none;padding:0;margin:0 0 26px;display:flex;flex-direction:column;gap:12px}
     .cover-bullets li{position:relative;padding-left:30px;font-size:15px;line-height:1.45}
     .cover-bullets li::before{content:"→";position:absolute;left:0;top:0;color:var(--green);font-weight:700}
-    .cover-cta{align-self:stretch;margin-bottom:14px}
+    .cover-cta{align-self:stretch;margin-bottom:14px;color:#fff;border-radius:12px;
+      background:linear-gradient(110deg,#0c3a33 0%,#10463E 28%,#2f9079 50%,#10463E 72%,#0c3a33 100%);
+      background-size:220% 100%;animation:ctaShimmer 3.2s linear infinite;
+      box-shadow:0 6px 20px rgba(16,70,62,.28)}
+    @keyframes ctaShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    @media (prefers-reduced-motion:reduce){.cover-cta{animation:none}}
     .cover-note{font-size:13px;color:var(--muted);text-align:center;margin:0}
     /* Консультация: оранжевый бейдж «БЕСПЛАТНО», блок команды, заголовок пунктов */
     .cover-badge{align-self:flex-start;color:#EC6442;font-family:Outfit,sans-serif;
