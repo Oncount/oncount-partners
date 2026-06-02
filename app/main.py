@@ -157,7 +157,7 @@ def partner_type_label(key: str, lang: str = "ru") -> dict[str, str]:
 #     каналы (мультивыбор) + ориентир аудитории;
 #   • «выплаты» — ТОЛЬКО ТИП канала (белый список). Номера карт/кошельков/IBAN
 #     в БД НЕ пишем — критерий безопасности (ПД, «опасная тройка»).
-SURVEY_DRAFT = True  # тексты не утверждены Николь → форма помечает «черновик»
+SURVEY_DRAFT = False  # формулировки утверждены Николь 2026-06-02
 
 # Каждый вариант: (value, ru, en). value — стабильный ключ в JSON-ответах.
 SURVEY_OPTIONS: dict[str, list[tuple[str, str, str]]] = {
@@ -174,11 +174,10 @@ SURVEY_OPTIONS: dict[str, list[tuple[str, str, str]]] = {
         ("other",             "Другое",                       "Other"),
     ],
     "uae_experience": [
-        ("lt1",    "До 1 года",  "Under 1 year"),
-        ("1-3",    "1–3 года",   "1–3 years"),
-        ("3-5",    "3–5 лет",    "3–5 years"),
-        ("5-10",   "5–10 лет",   "5–10 years"),
-        ("10plus", "10+ лет",    "10+ years"),
+        ("lt1",   "До 1 года",   "Under 1 year"),
+        ("lt3",   "До 3 лет",    "Under 3 years"),
+        ("lt5",   "До 5 лет",    "Under 5 years"),
+        ("5plus", "Свыше 5 лет", "Over 5 years"),
     ],
     "b2b_flow": [
         ("steady",     "Да, постоянно",      "Yes, steady"),
@@ -217,7 +216,6 @@ SURVEY_OPTIONS: dict[str, list[tuple[str, str, str]]] = {
         ("card",   "Банковская карта",       "Bank card"),
         ("bank",   "Банковский счёт (IBAN)", "Bank account (IBAN)"),
         ("crypto", "Криптовалюта (USDT)",    "Crypto (USDT)"),
-        ("other",  "Другое",                 "Other"),
     ],
 }
 
@@ -226,16 +224,16 @@ SURVEY_OPTIONS: dict[str, list[tuple[str, str, str]]] = {
 SURVEY_LABELS: dict[str, tuple[str, str]] = {
     "sphere":          ("В какой сфере вы работаете?",
                         "What's your field?"),
-    "uae_experience":  ("Сколько вы работаете с бизнесом в ОАЭ?",
-                        "How long have you worked with UAE business?"),
+    "uae_experience":  ("Как долго вы работаете в B2B?",
+                        "How long have you worked in B2B?"),
     "b2b_flow":        ("Есть ли у вас поток клиентов-предпринимателей?",
                         "Do you have a flow of business clients?"),
     "b2b_volume":      ("Сколько примерно клиентов в месяц?",
                         "Roughly how many clients a month?"),
     "base_size":       ("Насколько большая у вас база контактов?",
                         "How large is your contact base?"),
-    "social_channels": ("Где вы могли бы рекомендовать ONCOUNT?",
-                        "Where could you recommend ONCOUNT?"),
+    "social_channels": ("У вас есть развитые соцсети, в которых вы можете продвигать услуги бухгалтерии?",
+                        "Do you have established social channels to promote accounting services?"),
     "social_audience": ("Ориентир по размеру аудитории",
                         "Approximate audience size"),
     "payout_method":   ("Как удобнее получать партнёрское вознаграждение?",
@@ -1102,7 +1100,6 @@ def onboarding_survey_submit(
     social_channels: list[str] = Form(default=[]),
     social_audience: str = Form(""),
     payout_method: str = Form(""),
-    payout_other: str = Form(""),
     session: Session = Depends(get_session),
 ) -> HTMLResponse:
     partner = current_partner(request, session)
@@ -1112,14 +1109,6 @@ def onboarding_survey_submit(
 
     def clean_other(v: str) -> str:
         return (v or "").strip()[:SURVEY_OTHER_MAXLEN]
-
-    def safe_payout_other(v: str) -> str:
-        # Предохранитель ПД (фин-данные): «другое» — это НАЗВАНИЕ способа
-        # (PayPal/Wise/…), не реквизиты. Если партнёр вопреки подсказке вписал
-        # длинную цепочку цифр (карта/IBAN/счёт ≥8 цифр) — текст НЕ сохраняем,
-        # реквизиты в БД не попадают. Сам ключ payout_method='other' остаётся.
-        t = clean_other(v)
-        return "" if re.search(r"\d{8,}", t.replace(" ", "")) else t
 
     # Сборка ответов СТРОГО по белым спискам (всё вне списка отбрасывается).
     answers: dict = {}
@@ -1152,10 +1141,6 @@ def onboarding_survey_submit(
         txt = clean_other(sphere_other)
         if txt:
             answers["sphere_other"] = txt
-    if answers.get("payout_method") == "other":
-        txt = safe_payout_other(payout_other)
-        if txt:
-            answers["payout_other"] = txt
 
     # Серверная валидация обязательных вопросов.
     missing = [f for f in SURVEY_REQUIRED if f not in answers]

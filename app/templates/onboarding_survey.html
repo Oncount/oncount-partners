@@ -132,12 +132,6 @@
         </label>
         {% endfor %}
       </div>
-      <input type="text" name="payout_other" maxlength="120"
-             value="{{ answers.get('payout_other', '') }}"
-             placeholder="{{ 'If “Other” — please specify' if lang == 'en' else 'Если «Другое» — уточните' }}">
-      <p style="color: var(--sage); font-size: 13px; margin: 4px 0 0;">
-        {% if lang == 'en' %}🔒 Don't enter card or wallet details here — the manager will request them privately.{% else %}🔒 Не вводите здесь номер карты или кошелька — менеджер уточнит реквизиты в личной переписке.{% endif %}
-      </p>
     </div>
 
     <div style="display: flex; gap: 12px; align-items: center; margin-top: 8px;">
