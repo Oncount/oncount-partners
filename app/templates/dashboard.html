@@ -75,18 +75,26 @@
   <img class="manager-photo" src="{{ mgr.photo }}" alt="{{ mgr.name }}" width="72" height="72">
   <div class="manager-body">
     <div class="manager-role">{{ mgr.role }}</div>
-    <div class="manager-name">
-      {{ mgr.name }}
-      {% if mgr.name_pending %}<span class="manager-pending">{{ 'name pending Nicole’s approval' if lang == 'en' else 'имя на утверждении Николь' }}</span>{% endif %}
+    <div class="manager-name-row">
+      <div class="manager-name">
+        {{ mgr.name }}
+        {% if mgr.name_pending %}<span class="manager-pending">{{ 'name pending Nicole’s approval' if lang == 'en' else 'имя на утверждении Николь' }}</span>{% endif %}
+      </div>
+      {# Значки мессенджера справа от имени: маленькие круглые, только иконка. #}
+      <div class="manager-msgrs">
+        {% for link in mgr.links %}
+          {% if link.channel == 'whatsapp' %}
+          <a class="mgr-msgr" href="{{ link.href }}" target="_blank" rel="noopener" title="WhatsApp" aria-label="WhatsApp">{{ icons.whatsapp() }}</a>
+          {% elif link.channel == 'telegram' %}
+          <a class="mgr-msgr" href="{{ link.href }}" target="_blank" rel="noopener" title="Telegram" aria-label="Telegram">{{ icons.telegram() }}</a>
+          {% endif %}
+        {% endfor %}
+      </div>
     </div>
     <p class="manager-sla">⏱ {{ mgr.sla }}</p>
     <div class="manager-contacts">
       {% for link in mgr.links %}
-        {% if link.channel == 'whatsapp' %}
-        <a class="mgr-msgr mgr-msgr--whatsapp" href="{{ link.href }}" target="_blank" rel="noopener" title="WhatsApp">{{ icons.whatsapp() }}<span>{{ 'WhatsApp' if lang == 'en' else 'Ватсап' }}</span></a>
-        {% elif link.channel == 'telegram' %}
-        <a class="mgr-msgr mgr-msgr--telegram" href="{{ link.href }}" target="_blank" rel="noopener" title="Telegram">{{ icons.telegram() }}<span>{{ 'Telegram' if lang == 'en' else 'ТГ' }}</span></a>
-        {% else %}
+        {% if link.channel not in ('whatsapp', 'telegram') %}
         <a class="btn btn-primary manager-contact" href="{{ link.href }}" target="_blank" rel="noopener">{{ 'Email the manager' if lang == 'en' else 'Написать на email' }}</a>
         {% endif %}
       {% endfor %}
