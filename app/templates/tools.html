@@ -29,9 +29,12 @@
 {% for key in methods_order %}
 {% set m = method_label(key, lang) %}
 <section class="tool-panel" id="panel-{{ key }}" {% if not loop.first %}hidden{% endif %}>
+  {# У «События» подсказку-карточку не показываем — ниже идёт подробный текст. #}
+  {% if key != 'event' %}
   <div class="card">
     <p>{{ m.hint }}</p>
   </div>
+  {% endif %}
 
   {# Блок доверия: сертифицированные бухгалтеры — у приглашения на консультацию #}
   {% if key == 'broadcast' and accountants %}
