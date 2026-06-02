@@ -1,24 +1,70 @@
 {% extends "base.html" %}
 {% block title %}{{ 'Plans and services' if lang == 'en' else 'Тарифы и сервисы' }} — ONCOUNT Partners{% endblock %}
-{% block heading %}{{ 'Plans and services' if lang == 'en' else 'Тарифы и сервисы' }}{% endblock %}
+{% block heading %}{{ 'ONCOUNT plans and services' if lang == 'en' else 'Тарифы и сервисы ONCOUNT' }}{% endblock %}
 
 {% block content %}
 <div class="card">
-  <p>{% if lang == 'en' %}All ONCOUNT products you can recommend to your clients. Click “Details” for the full description, which you can copy into your own outreach.{% else %}Все продукты ONCOUNT, которые Вы можете рекомендовать своим клиентам. Жмите «Подробнее» — там полное описание, которое можно скопировать в свою рассылку.{% endif %}</p>
+  <p>{% if lang == 'en' %}All ONCOUNT products you can recommend to your clients. Click “Details” for the full description.{% else %}Все продукты ONCOUNT, которые Вы можете рекомендовать своим клиентам. Жмите «Подробнее» — там полное описание.{% endif %}</p>
 </div>
 
-<div class="product-grid">
-  {% for item in items %}
-  <div class="product-card">
-    <h3>{{ (item.title_en or item.title) if lang == 'en' else item.title }}</h3>
-    {% set price = (item.price_aed_en or item.price_aed) if lang == 'en' else item.price_aed %}
-    {% if price %}<div class="meta-block">{{ price | safe }}</div>{% endif %}
-    <div class="summary">{{ (item.summary_md_en or item.summary_md) if lang == 'en' else item.summary_md }}</div>
-    <details>
-      <summary>{{ 'Details' if lang == 'en' else 'Подробнее' }}</summary>
-      <div class="product-details" style="margin-top: 12px;">{{ ((item.full_md_en or item.full_md) if lang == 'en' else item.full_md) | safe }}</div>
-    </details>
+{# --- Иконки-картинки по слугу. Inline SVG: без внешних файлов и битых ссылок. --- #}
+{% set icons = {
+  'accounting': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4a1 1 0 0 1 1-1h11l3 3v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z"/><path d="M17 3v3h3"/><path d="M8 9h6M8 12h8M8 15h5"/></svg>',
+  'audit': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6"/><path d="m19.5 19.5-4.7-4.7"/><path d="m7.8 10.6 1.9 1.9 3.4-3.8"/></svg>',
+  'accounting-restore': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"/><path d="M20.5 4v5h-5"/></svg>',
+  'tax-reports': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l5 5v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5"/><path d="m9.5 17 5-6"/><circle cx="9.7" cy="12.3" r="1"/><circle cx="14.3" cy="16.7" r="1"/></svg>',
+  'company-setup': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="13" rx="1.5"/><path d="M8 7.5h8M8 11h5"/><circle cx="12" cy="17.5" r="2.6"/><path d="m10.4 19.6-1 2.4 2.6-1.3 2.6 1.3-1-2.4"/></svg>',
+  'uae-visa': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><circle cx="12" cy="9.5" r="2.4"/><path d="M8.5 16c.8-1.7 2-2.5 3.5-2.5s2.7.8 3.5 2.5"/></svg>',
+  'acquiring': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/><path d="M7 14.5h4"/></svg>',
+  'bank-account': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 7v2h16V7z"/><path d="M6 9v7M10 9v7M14 9v7M18 9v7"/><path d="M3 20h18"/></svg>',
+} %}
+{% set fin_slugs = ['accounting', 'audit', 'accounting-restore', 'tax-reports'] %}
+{% set fin_items = items | selectattr('slug', 'in', fin_slugs) | list %}
+{% set biz_items = items | rejectattr('slug', 'in', fin_slugs) | list %}
+
+{# ============ БЛОК 1 — финансы и бухгалтерия, сетка 2×2, один цвет ============ #}
+{% if fin_items %}
+<section class="svc-block">
+  <h2 class="svc-block-title">{{ 'Finance & accounting' if lang == 'en' else 'Финансы и бухгалтерия' }}</h2>
+  <div class="fin-grid">
+    {% for item in fin_items %}
+    <div class="biz-card">
+      <div class="biz-thumb biz-thumb--{{ item.slug }}">{{ icons.get(item.slug, '') | safe }}</div>
+      <div class="biz-body">
+        <h3>{{ (item.title_en or item.title) if lang == 'en' else item.title }}</h3>
+        {% set price = (item.price_aed_en or item.price_aed) if lang == 'en' else item.price_aed %}
+        {% if price %}<div class="meta-block">{{ price | safe }}</div>{% endif %}
+        <details>
+          <summary>{{ 'Details' if lang == 'en' else 'Подробнее' }}</summary>
+          <div class="product-details" style="margin-top: 12px;">{{ ((item.full_md_en or item.full_md) if lang == 'en' else item.full_md) | safe }}</div>
+        </details>
+      </div>
+    </div>
+    {% endfor %}
   </div>
-  {% endfor %}
-</div>
+</section>
+{% endif %}
+
+{# ============ БЛОК 2 — сервисы для бизнеса, карточки с картинками ============ #}
+{% if biz_items %}
+<section class="svc-block">
+  <h2 class="svc-block-title">{{ 'Business services' if lang == 'en' else 'Сервисы для бизнеса' }}</h2>
+  <div class="biz-grid">
+    {% for item in biz_items %}
+    <div class="biz-card">
+      <div class="biz-thumb biz-thumb--{{ item.slug }}">{{ icons.get(item.slug, '') | safe }}</div>
+      <div class="biz-body">
+        <h3>{{ (item.title_en or item.title) if lang == 'en' else item.title }}</h3>
+        {% set price = (item.price_aed_en or item.price_aed) if lang == 'en' else item.price_aed %}
+        {% if price %}<div class="meta-block">{{ price | safe }}</div>{% endif %}
+        <details>
+          <summary>{{ 'Details' if lang == 'en' else 'Подробнее' }}</summary>
+          <div class="product-details" style="margin-top: 12px;">{{ ((item.full_md_en or item.full_md) if lang == 'en' else item.full_md) | safe }}</div>
+        </details>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
 {% endblock %}

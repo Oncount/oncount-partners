@@ -340,6 +340,51 @@ details.faq-item[open] summary { margin-bottom: 12px; }
 .product-card details { font-size: 14px; }
 .product-card details summary { cursor: pointer; color: var(--deep-green); font-weight: 600; }
 
+/* === Тарифы и сервисы: два блока === */
+.svc-block { margin: 28px 0 8px; }
+.svc-block-title {
+  font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 600;
+  color: var(--deep-green); margin: 0 0 16px;
+}
+
+/* Блок 1 — финансы и бухгалтерия: карточки в стиле блока 2, один цвет, по 4 в ряд */
+.fin-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+/* Обложки финансовых карточек — оранжевые оттенки ONCOUNT, ступень яркости:
+   бухгалтерия (самая яркая) → отчётность → восстановление → аудит (самый светлый) */
+.biz-thumb--accounting { background: linear-gradient(135deg, #E5532F 0%, #EC6442 100%); }
+.biz-thumb--tax-reports { background: linear-gradient(135deg, #EC6442 0%, #EE9179 100%); }
+.biz-thumb--accounting-restore { background: linear-gradient(135deg, #F2A88F 0%, #F6C6B5 100%); }
+/* Аудит — тем же цветом, что и отчётность (CIT и VAT) */
+.biz-thumb--audit { background: linear-gradient(135deg, #EC6442 0%, #EE9179 100%); }
+/* На светлой обложке восстановления — тёмно-оранжевая иконка для читаемости */
+.biz-thumb--accounting-restore { color: #C73E1A; }
+
+/* Блок 2 — сервисы для бизнеса: карточки с картинкой-обложкой */
+.biz-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.biz-card {
+  background: white; border: 1px solid var(--border); border-radius: 14px;
+  overflow: hidden; display: flex; flex-direction: column;
+}
+.biz-thumb {
+  height: 132px; display: flex; align-items: center; justify-content: center;
+  color: var(--cream);
+}
+.biz-thumb svg { width: 56px; height: 56px; opacity: 0.96; }
+/* Обложки сервисных карточек — зелёные оттенки ONCOUNT (разные тона) */
+.biz-thumb--company-setup { background: linear-gradient(135deg, #0C3A33 0%, #10463E 100%); }
+.biz-thumb--uae-visa { background: linear-gradient(135deg, #10463E 0%, #1D6155 100%); }
+.biz-thumb--acquiring { background: linear-gradient(135deg, #1D6155 0%, #2F7D6F 100%); }
+.biz-thumb--bank-account { background: linear-gradient(135deg, #547C76 0%, #3A6B63 100%); }
+.biz-body { padding: 20px 22px 22px; display: flex; flex-direction: column; flex: 1; }
+.biz-body h3 { margin: 0 0 8px; font-size: 17px; line-height: 1.3; color: var(--deep-green); min-height: 44px; }
+.biz-body .meta-block { margin: 6px 0 12px; }
+.biz-body .meta-row { font-size: 14px; color: var(--deep-green); margin: 4px 0; line-height: 1.4; }
+.biz-body .meta-row .meta-label { color: var(--sage); font-weight: 500; margin-right: 4px; }
+.biz-body .meta-row strong { color: var(--orange); font-weight: 600; }
+.biz-body .summary { color: var(--sage); font-size: 14px; margin-bottom: 12px; }
+.biz-body details { font-size: 14px; margin-top: auto; }
+.biz-body details summary { cursor: pointer; color: var(--deep-green); font-weight: 600; }
+
 /* Link cards */
 .link-card {
   background: white;
@@ -735,6 +780,7 @@ details.faq-item[open] summary { margin-bottom: 12px; }
   /* Products / messages / links */
   .product-grid { grid-template-columns: 1fr; }
   .product-card { padding: 18px; }
+  .fin-grid, .biz-grid { grid-template-columns: 1fr; }
   .msg-card { padding: 16px; }
   .msg-card .body { font-size: 13px; }
   .copy-btn { width: 100%; }

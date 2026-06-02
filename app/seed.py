@@ -16,7 +16,7 @@ PRICE_EN = "https://drive.google.com/file/d/1fs1vJi5X6AgARmv7B0NOtaYE5Y69wqOs/vi
 def _meta(commission: str, price: str) -> str:
     """Две строки под названием карточки: Комиссия + Цена."""
     return (
-        f"<div class=\"meta-row\"><span class=\"meta-label\">Вознаграждение:</span> "
+        f"<div class=\"meta-row\"><span class=\"meta-label\">Выплата:</span> "
         f"<strong>{commission}</strong></div>"
         f"<div class=\"meta-row\"><span class=\"meta-label\">Цена:</span> "
         f"<strong>{price}</strong></div>"
@@ -26,7 +26,7 @@ def _meta(commission: str, price: str) -> str:
 def _meta_en(commission: str, price: str) -> str:
     """EN-вариант блока «Комиссия + Цена»."""
     return (
-        f"<div class=\"meta-row\"><span class=\"meta-label\">Reward:</span> "
+        f"<div class=\"meta-row\"><span class=\"meta-label\">Payout:</span> "
         f"<strong>{commission}</strong></div>"
         f"<div class=\"meta-row\"><span class=\"meta-label\">Price:</span> "
         f"<strong>{price}</strong></div>"
@@ -38,8 +38,8 @@ PRODUCTS = [
         "slug": "accounting",
         "title": "Бухгалтерское обслуживание",
         "title_en": "Accounting services",
-        "price_aed": _meta("100% за 1й месяц", "от 550 AED/мес"),
-        "price_aed_en": _meta_en("100% for the 1st month", "from 550 AED/mo"),
+        "price_aed": _meta("100% за 1й месяц", "от $149/мес"),
+        "price_aed_en": _meta_en("100% for the 1st month", "from $149/mo"),
         "summary_md": (
             "Основная услуга ONCOUNT. Бухгалтерия полного цикла для компаний в ОАЭ. "
             "В тариф всё включено: от регистрации на налоги и консультаций — "
@@ -107,112 +107,253 @@ PRODUCTS = [
         "summary_md": "Независимая проверка финансовой отчётности компании лицензированным аудитором в ОАЭ.",
         "summary_md_en": "Independent review of a company's financial statements by a licensed auditor in the UAE.",
         "full_md": (
-            "<p>Независимая проверка финансовой отчётности компании лицензированным аудитором в ОАЭ.</p>"
+            "<p>Независимая проверка финансовой отчётности компании сертифицированным "
+            "аудитором в ОАЭ.</p>"
+            "<h4>Когда нужен аудит</h4>"
+            "<ul>"
+            "<li>Перед продлением лицензии — ряд фри-зон требует аудированную отчётность.</li>"
+            "<li>При закрытии или ликвидации компании.</li>"
+            "<li>Для получения кредита или иного финансирования в банке.</li>"
+            "<li>При привлечении инвесторов, продаже доли или подготовке к сделке (due diligence).</li>"
+            "<li>По требованию фри-зоны или регулятора — во многих юрисдикциях ОАЭ "
+            "ежегодный аудит обязателен.</li>"
+            "<li>Для подтверждения отчётности по корпоративному налогу перед FTA.</li>"
+            "</ul>"
+            "<h4>Как мы это делаем</h4>"
+            "<p>Аудит проводят сертифицированные аудиторы, одобренные вашей фри-зоной и "
+            "профильным регулятором. Мы работаем с проверенными партнёрами-аудиторами и "
+            "берём процесс на себя под ключ: организуем сам аудит, готовим и прикрепляем "
+            "аудиторские отчёты к нужным порталам фри-зоны и госорганов. От вас — документы, "
+            "остальное доводим до результата.</p>"
         ),
         "full_md_en": (
-            "<p>Independent review of a company's financial statements by a licensed auditor in the UAE.</p>"
+            "<p>Independent review of a company's financial statements by a certified "
+            "auditor in the UAE.</p>"
+            "<h4>When an audit is needed</h4>"
+            "<ul>"
+            "<li>Before license renewal — several free zones require audited statements.</li>"
+            "<li>When closing or liquidating a company.</li>"
+            "<li>To obtain a bank loan or other financing.</li>"
+            "<li>When raising investors, selling a stake or preparing for a deal (due diligence).</li>"
+            "<li>At the request of a free zone or regulator — in many UAE jurisdictions an "
+            "annual audit is mandatory.</li>"
+            "<li>To support corporate tax reporting before the FTA.</li>"
+            "</ul>"
+            "<h4>How we do it</h4>"
+            "<p>The audit is performed by certified auditors approved by your free zone and "
+            "the relevant regulator. We work with trusted partner auditors and handle the "
+            "whole process turnkey: we run the audit itself and prepare and attach the audit "
+            "reports to the required free-zone and government portals. You provide the "
+            "documents — we take care of the rest.</p>"
         ),
-        "order_index": 2,
+        "order_index": 4,
     },
     {
         "slug": "accounting-restore",
         "title": "Восстановление бухгалтерского учёта",
         "title_en": "Accounting restoration",
-        "price_aed": _meta("по запросу", "по запросу"),
-        "price_aed_en": _meta_en("on request", "on request"),
+        "price_aed": _meta("от $300", "от $1 500"),
+        "price_aed_en": _meta_en("from $300", "from $1,500"),
         "summary_md": "Восстановление учёта за прошлые периоды, когда бухгалтерия не велась или велась с ошибками.",
         "summary_md_en": "Restoring records for past periods when accounting wasn't kept or was kept with errors.",
         "full_md": (
-            "<p>Восстановление учёта за прошлые периоды, когда бухгалтерия не велась или велась с ошибками. "
-            "Готовим корректную отчётность под VAT, корпоративный налог, аудит или передачу нового бухгалтера.</p>"
+            "<p>Восстановление учёта за прошлые периоды, когда бухгалтерия не велась или "
+            "велась с ошибками. Готовим корректную отчётность под VAT, корпоративный налог, "
+            "аудит или передачу нового бухгалтера.</p>"
+            "<h4>Когда требуется</h4>"
+            "<p>Восстановление необходимо, чтобы корректно сдать отчётность за прошлые "
+            "периоды и пройти аудит: без полной и проверенной первичной документации сдать "
+            "отчёты и подтвердить их аудитору невозможно.</p>"
+            "<h4>Что входит в работу</h4>"
+            "<p>Это полноценный процесс: мы собираем всю первичную документацию, вносим её "
+            "в сертифицированную бухгалтерскую программу и отражаем каждую транзакцию. "
+            "Договоры, инвойсы и прочие документы прикрепляются и проверяются — чтобы вся "
+            "первичка была на месте и подтверждена.</p>"
+            "<h4>Почему лучше не запускать</h4>"
+            "<p>Восстановление не менее трудоёмко, чем ежемесячное бухгалтерское "
+            "обслуживание, а нередко и сложнее: документы за два-три года теряются, и "
+            "восстановить утерянные счета, инвойсы и договоры бывает непросто. Поэтому "
+            "надёжнее вести учёт ежемесячно и не накапливать — тогда сдача отчётности "
+            "проходит легко.</p>"
         ),
         "full_md_en": (
-            "<p>Restoring records for past periods when accounting wasn't kept or was kept with errors. "
-            "We prepare correct statements for VAT, corporate tax, an audit or handover to a new accountant.</p>"
+            "<p>Restoring records for past periods when accounting wasn't kept or was kept "
+            "with errors. We prepare correct statements for VAT, corporate tax, an audit or "
+            "handover to a new accountant.</p>"
+            "<h4>When it's needed</h4>"
+            "<p>Restoration is required to correctly file reporting for past periods and "
+            "pass an audit: without complete and verified source documents, returns can't be "
+            "filed or confirmed by the auditor.</p>"
+            "<h4>What the work involves</h4>"
+            "<p>It's a full process: we collect all source documents, enter them into "
+            "certified accounting software and record every transaction. Contracts, invoices "
+            "and other documents are attached and verified — so that all primary records are "
+            "in place and confirmed.</p>"
+            "<h4>Why not to let it pile up</h4>"
+            "<p>Restoration is no less labour-intensive than monthly accounting — and often "
+            "harder: documents from two or three years back get lost, and recovering missing "
+            "invoices, statements and contracts can be difficult. It's safer to keep the "
+            "books monthly and not accumulate — then filing is easy.</p>"
         ),
         "order_index": 3,
     },
     {
         "slug": "tax-reports",
-        "title": "Сдача налоговых отчётов",
-        "title_en": "Filing tax reports",
+        "title": "Отчётность: CIT и VAT",
+        "title_en": "Reporting: CIT & VAT",
         "price_aed": _meta("по запросу", "по запросу"),
         "price_aed_en": _meta_en("on request", "on request"),
-        "summary_md": "Подготовка и сдача VAT, корпоративного налога и прочей обязательной отчётности.",
-        "summary_md_en": "Preparing and filing VAT, corporate tax and other mandatory reporting.",
+        "summary_md": "Подготовка и сдача отчётности по корпоративному налогу (CIT) и НДС (VAT), а также прочей обязательной отчётности.",
+        "summary_md_en": "Preparing and filing corporate tax (CIT) and VAT returns, plus other mandatory reporting.",
         "full_md": (
-            "<p>Подготовка и сдача VAT, корпоративного налога и прочей обязательной отчётности FTA. "
-            "Берёмся, даже если основное обслуживание ведётся не у нас.</p>"
+            "<p>Подготовка и сдача VAT, корпоративного налога и прочей обязательной "
+            "отчётности FTA. Берёмся, даже если основное обслуживание ведётся не у нас.</p>"
+            "<h4>На бухгалтерском обслуживании — всё включено</h4>"
+            "<p>При полном сопровождении регистрация на корпоративный налог (CIT) и VAT, "
+            "а также своевременная сдача всех обязательных отчётов уже входят в стоимость "
+            "бухгалтерского обслуживания — без отдельной оплаты.</p>"
+            "<h4>Только отчётность — отдельной услугой</h4>"
+            "<p>Если клиент ведёт учёт самостоятельно или у другого подрядчика, мы берём "
+            "на себя подготовку и сдачу отчётности как отдельную услугу.</p>"
         ),
         "full_md_en": (
-            "<p>Preparing and filing VAT, corporate tax and other mandatory FTA reporting. "
-            "We take it on even if the main service isn't with us.</p>"
+            "<p>Preparing and filing corporate tax (CIT) and VAT returns, plus other "
+            "mandatory FTA reporting. We take it on even if the main service isn't with us.</p>"
+            "<h4>On our accounting service — all included</h4>"
+            "<p>With full support, registration for corporate tax (CIT) and VAT, as well as "
+            "the timely filing of all mandatory returns, is already included in the accounting "
+            "service fee — at no extra charge.</p>"
+            "<h4>Reporting only — as a standalone service</h4>"
+            "<p>If the client keeps the books themselves or with another provider, we handle "
+            "the preparation and filing of the returns as a standalone service.</p>"
         ),
-        "order_index": 4,
+        "order_index": 2,
     },
     {
-        "slug": "consultation",
-        "title": "Консультация бухгалтера",
-        "title_en": "Accountant consultation",
-        "price_aed": _meta("$100", "от $350"),
-        "price_aed_en": _meta_en("$100", "from $350"),
-        "summary_md": "Подробный глубокий разбор ситуации клиента по налогам, учёту и оптимизации в ОАЭ.",
-        "summary_md_en": "A detailed, in-depth review of the client's situation on taxes, accounting and optimisation in the UAE.",
+        "slug": "company-setup",
+        "title": "Бизнес-лицензии",
+        "title_en": "Business licenses",
+        "price_aed": _meta("$1 000", "от $2 000"),
+        "price_aed_en": _meta_en("$1,000", "from $2,000"),
+        "summary_md": "Открытие или закрытие компании во фри-зоне или мейнленде: подбор и оформление бизнес-лицензии в ОАЭ.",
+        "summary_md_en": "Opening or closing a free-zone or mainland company: selecting and obtaining a UAE business license.",
         "full_md": (
-            "<p>Подробный глубокий разбор ситуации клиента по налогам, учёту и оптимизации в ОАЭ.</p>"
+            "<p>Открытие или закрытие компании на мейнленде и во фри-зонах ОАЭ — под ключ, "
+            "через проверенных партнёров.</p>"
+            "<h4>Подбираем под ваш бизнес</h4>"
+            "<p>Мы глубоко знаем специфику Дубая и подбираем правильную фри-зону под ваш "
+            "запрос — и по цене, и по наполнению. Заранее закладываем корректные "
+            "бизнес-активности, которые позволят открыть корпоративный счёт и вести "
+            "деятельность правильно — чтобы ваш бизнес работал без штрафов.</p>"
+            "<h4>Под ключ</h4>"
+            "<p>Сопровождаем весь процесс: от выбора юрисдикции и формы компании до "
+            "получения лицензии.</p>"
         ),
         "full_md_en": (
-            "<p>A detailed, in-depth review of the client's situation on taxes, accounting and optimisation in the UAE.</p>"
+            "<p>Opening or closing a mainland or free-zone company in the UAE — turnkey, "
+            "through trusted partners.</p>"
+            "<h4>Tailored to your business</h4>"
+            "<p>We know Dubai's specifics in depth and select the right free zone for your "
+            "needs — on price and on scope. We set the correct business activities up front "
+            "so you can open a corporate account and operate properly — so your business runs "
+            "without fines.</p>"
+            "<h4>Turnkey</h4>"
+            "<p>We handle the whole process: from choosing the jurisdiction and company form "
+            "to obtaining the license.</p>"
         ),
         "order_index": 5,
     },
     {
-        "slug": "company-setup",
-        "title": "Открытие компании в UAE",
-        "title_en": "Company setup in the UAE",
-        "price_aed": _meta("$1 000", "по запросу"),
-        "price_aed_en": _meta_en("$1,000", "on request"),
-        "summary_md": "Открытие или закрытие компании фри зона или мейнленд.",
-        "summary_md_en": "Opening or closing a free-zone or mainland company.",
+        "slug": "uae-visa",
+        "title": "Визы резидента ОАЭ",
+        "title_en": "UAE resident visas",
+        "price_aed": _meta("$300–1 000", "от $1 500"),
+        "price_aed_en": _meta_en("$300–1,000", "from $1,500"),
+        "summary_md": "Оформление резидентской визы ОАЭ, включая золотую визу на 10 лет.",
+        "summary_md_en": "Arranging a UAE residence visa, including the 10-year Golden Visa.",
         "full_md": (
-            "<p>Открытие или закрытие компании фри зона или мейнленд.</p>"
+            "<p>Оформление резидентских виз ОАЭ под ключ — через проверенных партнёров.</p>"
+            "<h4>Какие визы открываем</h4>"
+            "<ul>"
+            "<li>Рабочие визы (инвесторские, партнёрские) на 2 года.</li>"
+            "<li>Пятилетние резидентские визы.</li>"
+            "<li>Десятилетние золотые визы — за 3 дня, на основании покупки недвижимости.</li>"
+            "</ul>"
+            "<h4>Полное сопровождение</h4>"
+            "<p>Всё под ключ: встречаем, привозим и возим на автомобилях бизнес-класса, "
+            "сопровождаем на всех этапах и помогаем на каждом шаге.</p>"
         ),
         "full_md_en": (
-            "<p>Opening or closing a free-zone or mainland company.</p>"
+            "<p>Arranging UAE residence visas turnkey — through trusted partners.</p>"
+            "<h4>Visas we arrange</h4>"
+            "<ul>"
+            "<li>Work visas (investor, partner) for 2 years.</li>"
+            "<li>5-year residence visas.</li>"
+            "<li>10-year Golden Visas — in 3 days, based on a property purchase.</li>"
+            "</ul>"
+            "<h4>Full support</h4>"
+            "<p>Everything turnkey: we meet you, drive you in business-class cars, accompany "
+            "you at every stage and help at every step.</p>"
         ),
         "order_index": 6,
     },
     {
+        "slug": "acquiring",
+        "title": "Эквайринг",
+        "title_en": "Acquiring",
+        "price_aed": _meta("по запросу", "от $300"),
+        "price_aed_en": _meta_en("on request", "from $300"),
+        "summary_md": "Подключение эквайринга и онлайн-приёма платежей для бизнеса в ОАЭ.",
+        "summary_md_en": "Setting up acquiring and online payment acceptance for a business in the UAE.",
+        "full_md": (
+            "<p>Подключение эквайринга и онлайн-приёма платежей для бизнеса в ОАЭ — "
+            "через проверенных партнёров.</p>"
+            "<h4>Платежи со всего мира</h4>"
+            "<p>Подключаем ведущие эквайринговые платёжные системы, которые позволяют "
+            "принимать оплату со всего мира — с дебетовых и кредитных карт любых стран.</p>"
+        ),
+        "full_md_en": (
+            "<p>Connecting acquiring and online payment acceptance for a UAE business — "
+            "through trusted partners.</p>"
+            "<h4>Payments from around the world</h4>"
+            "<p>We connect leading acquiring payment systems that let you accept payments "
+            "worldwide — from debit and credit cards in any country.</p>"
+        ),
+        "order_index": 8,
+    },
+    {
         "slug": "bank-account",
-        "title": "Банковский счёт",
-        "title_en": "Bank account",
-        "price_aed": _meta("$1 000", "по запросу"),
-        "price_aed_en": _meta_en("$1,000", "on request"),
+        "title": "Банковские счета",
+        "title_en": "Bank accounts",
+        "price_aed": _meta("$1 000", "от $2 500"),
+        "price_aed_en": _meta_en("$1,000", "from $2,500"),
         "summary_md": "Открытие корпоративного или личного счёта НЕ резидента в банке ОАЭ.",
         "summary_md_en": "Opening a corporate or personal non-resident account at a UAE bank.",
         "full_md": (
-            "<p>Открытие корпоративного или личного счёта НЕ резидента в банке ОАЭ.</p>"
+            "<p>Открытие корпоративных счетов и счетов для нерезидентов в ОАЭ — полностью "
+            "под ключ, через проверенных партнёров.</p>"
+            "<h4>Что входит</h4>"
+            "<p>Ведём весь процесс: от подготовки и подачи документов до подбора подходящего "
+            "банка и полного открытия счёта в ведущих банках Эмиратов.</p>"
+            "<h4>Условия</h4>"
+            "<ul>"
+            "<li>Счета в разных валютах, в том числе мультивалютные (current accounts).</li>"
+            "<li>Без депозитов — не нужно вносить и замораживать деньги на счёте.</li>"
+            "</ul>"
         ),
         "full_md_en": (
-            "<p>Opening a corporate or personal non-resident account at a UAE bank.</p>"
+            "<p>Opening corporate and non-resident accounts in the UAE — fully turnkey, "
+            "through trusted partners.</p>"
+            "<h4>What's included</h4>"
+            "<p>We run the whole process: from preparing and submitting documents to "
+            "selecting the right bank and fully opening the account at leading UAE banks.</p>"
+            "<h4>Terms</h4>"
+            "<ul>"
+            "<li>Accounts in multiple currencies, including multi-currency (current) accounts.</li>"
+            "<li>No deposits — no need to place or freeze funds on the account.</li>"
+            "</ul>"
         ),
         "order_index": 7,
-    },
-    {
-        "slug": "uae-visa",
-        "title": "Виза резидента ОАЭ",
-        "title_en": "UAE resident visa",
-        "price_aed": _meta("$300–1 000", "по запросу"),
-        "price_aed_en": _meta_en("$300–1,000", "on request"),
-        "summary_md": "Оформление резидентской визы ОАЭ, включая золотую визу на 10 лет.",
-        "summary_md_en": "Arranging a UAE residence visa, including the 10-year Golden Visa.",
-        "full_md": (
-            "<p>Оформление резидентской визы ОАЭ, включая золотую визу на 10 лет.</p>"
-        ),
-        "full_md_en": (
-            "<p>Arranging a UAE residence visa, including the 10-year Golden Visa.</p>"
-        ),
-        "order_index": 8,
     },
 ]
 
