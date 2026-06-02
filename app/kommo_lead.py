@@ -85,7 +85,7 @@ def create_consultation_lead(
 
     display = (name or "").strip() or f"+{phone_norm}"
     lead: dict = {
-        "name": f"{lead_prefix}: {display}"[:250],
+        "name": display[:250],  # название сделки = имя клиента (источник — в теге + примечании)
         "pipeline_id": int(settings.QUIZ_KOMMO_PIPELINE_ID),
         "status_id": int(settings.QUIZ_KOMMO_STATUS_ID),
         "_embedded": {
