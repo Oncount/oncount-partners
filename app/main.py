@@ -444,6 +444,9 @@ templates.env.globals["payout_due_date"] = _payout_due_date
 # Тот же источник, что и короткие ссылки /ct /cw (settings.CONTACT_*).
 templates.env.globals["contact_tg"] = settings.CONTACT_TG_USERNAME
 templates.env.globals["contact_wa"] = settings.CONTACT_WA_NUMBER
+# Telegram-id админа (Николь) — чтобы шаблон показывал пункт меню «Аналитика»
+# только ей (раздел /admin/*). Гейт всё равно на сервере (require_admin).
+templates.env.globals["admin_tg_id"] = settings.ADMIN_TG_ID
 
 app = FastAPI(title="ONCOUNT Partner Platform")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -676,6 +679,125 @@ def _ctx(request: Request, partner: Partner | None, **extra) -> dict:
         "lang": _lang(request),
         **extra,
     }
+
+
+def require_admin(request: Request, session: Session) -> Partner:
+    """Гейт раздела /admin/* — ТОЛЬКО Николь по её Telegram (settings.ADMIN_TG_ID).
+    Чужой партнёр или аноним → 404 (не 403: не раскрываем существование раздела).
+    Здесь видны чувствительные данные по ВСЕМ агентам + финансовые ПД (реквизиты),
+    поэтому доступ строго один аккаунт ([[plans/2026-06-02-partner-analytics-dashboard]])."""
+    partner = current_partner(request, session)
+    if partner is None or partner.telegram_id != settings.ADMIN_TG_ID:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    return partner
+
+
+KOMMO_LEAD_URL = "https://primeadvice.kommo.com/leads/detail/"
+
+
+def _humanize_survey(answers: dict) -> list[tuple[str, str]]:
+    """Ответы анкеты L → [(вопрос, человекочитаемый ответ)] по белым спискам."""
+    out: list[tuple[str, str]] = []
+    for field in SURVEY_FIELD_ORDER:
+        if field not in answers:
+            continue
+        label = SURVEY_LABELS.get(field, (field, field))[0]
+        opts = {o[0]: o[1] for o in SURVEY_OPTIONS.get(field, [])}
+        val = answers[field]
+        if isinstance(val, list):
+            human = ", ".join(opts.get(v, v) for v in val)
+        else:
+            human = opts.get(val, str(val))
+        out.append((label, human))
+    if answers.get("sphere_other"):
+        out.append(("Сфера (другое)", str(answers["sphere_other"])))
+    return out
+
+
+@app.get("/admin/partner-stats", response_class=HTMLResponse)
+def admin_partner_stats(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
+    """Дашборд лидеров (Фаза 2, план 2026-06-02). Только админ (Telegram-гейт)."""
+    admin = require_admin(request, session)
+    from sqlalchemy import case, func
+
+    agg = (
+        session.query(
+            Lead.partner_id.label("pid"),
+            func.count(Lead.id).label("total"),
+            func.sum(case((Lead.status.in_(("new", "in_progress")), 1), else_=0)).label("active"),
+            func.sum(case((Lead.status == "won", 1), else_=0)).label("won"),
+            func.sum(case((Lead.status == "lost", 1), else_=0)).label("lost"),
+            func.coalesce(func.sum(case((Lead.status == "won", Lead.amount_aed), else_=0)), 0).label("paid_sum"),
+        )
+        .group_by(Lead.partner_id)
+        .all()
+    )
+    pids = [r.pid for r in agg if r.pid is not None]
+    partners = (
+        {p.id: p for p in session.query(Partner).filter(Partner.id.in_(pids)).all()}
+        if pids else {}
+    )
+    rows = []
+    for r in agg:
+        p = partners.get(r.pid)
+        if p is None:
+            continue
+        total, won = r.total or 0, r.won or 0
+        rows.append({
+            "id": p.id,
+            "name": p.first_name or p.kommo_agent_name or f"#{p.id}",
+            "ref_slug": p.ref_slug or "—",
+            "total": total,
+            "active": r.active or 0,
+            "won": won,
+            "lost": r.lost or 0,
+            "paid_sum": float(r.paid_sum or 0),
+            "conv": round(won / total * 100) if total else 0,
+            "last_login_at": p.last_login_at,
+            "onboarded": p.survey_completed_at is not None,
+        })
+    rows.sort(key=lambda x: (x["won"], x["total"], x["paid_sum"]), reverse=True)
+    totals = {
+        "agents": len(rows),
+        "total": sum(x["total"] for x in rows),
+        "active": sum(x["active"] for x in rows),
+        "won": sum(x["won"] for x in rows),
+        "lost": sum(x["lost"] for x in rows),
+        "paid_sum": sum(x["paid_sum"] for x in rows),
+    }
+    return templates.TemplateResponse(
+        "admin_partner_stats.html", _ctx(request, admin, rows=rows, totals=totals)
+    )
+
+
+@app.get("/admin/partner/{pid}", response_class=HTMLResponse)
+def admin_partner_detail(pid: int, request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
+    """Карточка агента (Фазы 2б/3/7): клиенты со ссылками на Kommo, профиль из
+    анкеты и точный предпросмотр digest/win-отчёта. Только админ."""
+    admin = require_admin(request, session)
+    agent = session.get(Partner, pid)
+    if agent is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    leads = (
+        session.query(Lead)
+        .filter_by(partner_id=pid)
+        .order_by(Lead.created_at.desc())
+        .all()
+    )
+    from app.notifications import build_digest_text, build_win_text
+
+    digest_preview = build_digest_text(agent, session, datetime.utcnow())
+    last_won = next((l for l in leads if l.status == "won"), None)
+    win_preview = build_win_text(agent, last_won, session) if last_won else None
+    return templates.TemplateResponse(
+        "admin_partner_detail.html",
+        _ctx(
+            request, admin,
+            agent=agent, leads=leads, kommo_url=KOMMO_LEAD_URL,
+            profile=_humanize_survey(agent.onboarding_answers or {}),
+            digest_preview=digest_preview, win_preview=win_preview,
+        ),
+    )
 
 
 def _balance_kpi(session: Session, partner: Partner) -> dict:

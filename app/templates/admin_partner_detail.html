@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ agent.first_name or agent.kommo_agent_name or agent.id }} — Аналитика{% endblock %}
+{% block heading %}Агент: {{ agent.first_name or agent.kommo_agent_name or ('#' ~ agent.id) }}{% endblock %}
+
+{% block content %}
+<p style="margin-top:0;"><a href="/admin/partner-stats">← ко всем агентам</a></p>
+
+<div class="card">
+  <h3 style="margin-top:0;">Профиль (анкета)</h3>
+  {% if profile %}
+  <table style="font-size:14px;">
+    {% for q, a in profile %}
+    <tr><td style="padding:3px 16px 3px 0; color:#888; vertical-align:top;">{{ q }}</td><td><b>{{ a }}</b></td></tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p style="color:#888; margin:0;">Анкета не заполнена.</p>
+  {% endif %}
+</div>
+
+<div class="card" style="overflow-x:auto;">
+  <h3 style="margin-top:0;">Клиенты ({{ leads|length }})</h3>
+  <table style="width:100%; border-collapse:collapse; font-size:14px;">
+    <thead>
+      <tr style="text-align:left; border-bottom:2px solid #e5e0d5;">
+        <th style="padding:6px;">Клиент</th>
+        <th>Статус</th>
+        <th style="text-align:right;">Сумма</th>
+        <th>Создан</th>
+        <th>Kommo</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for l in leads %}
+      <tr style="border-bottom:1px solid #eee;">
+        <td style="padding:6px;">{{ l.client_name }}</td>
+        <td>{{ l.status }}</td>
+        <td style="text-align:right;">{{ ('%.0f'|format(l.amount_aed)) if l.amount_aed else '—' }}</td>
+        <td>{{ l.created_at.strftime('%d.%m.%y') if l.created_at else '—' }}</td>
+        <td>{% if l.kommo_lead_id %}<a href="{{ kommo_url }}{{ l.kommo_lead_id }}" target="_blank" rel="noopener">открыть ↗</a>{% else %}<span style="color:#aaa;">не синкан</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+      {% if not leads %}
+      <tr><td colspan="5" style="padding:12px; color:#888;">Заявок нет.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;">Предпросмотр отчёта агенту</h3>
+  <p style="color:#888; margin:.2em 0;">Недельный digest (как уйдёт сейчас):</p>
+  <pre style="white-space:pre-wrap; background:#f7f5ef; padding:12px; border-radius:8px; font-family:inherit; margin:0 0 12px;">{{ digest_preview }}</pre>
+  {% if win_preview %}
+  <p style="color:#888; margin:.2em 0;">Win-пуш по последнему оплаченному клиенту:</p>
+  <pre style="white-space:pre-wrap; background:#f7f5ef; padding:12px; border-radius:8px; font-family:inherit; margin:0;">{{ win_preview }}</pre>
+  {% endif %}
+</div>
+{% endblock %}

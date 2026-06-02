@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Аналитика партнёров — ONCOUNT{% endblock %}
+{% block heading %}Аналитика партнёров{% endblock %}
+
+{% block content %}
+<div class="card">
+  <p style="margin:0; line-height:1.7;">
+    Агентов с заявками: <b>{{ totals.agents }}</b> ·
+    Лидов всего: <b>{{ totals.total }}</b> ·
+    В работе: <b>{{ totals.active }}</b> ·
+    Оплачено: <b>{{ totals.won }}</b> ·
+    Отказ: <b>{{ totals.lost }}</b> ·
+    Сумма оплат: <b>{{ '%.0f'|format(totals.paid_sum) }} AED</b>
+  </p>
+</div>
+
+<div class="card" style="overflow-x:auto;">
+  <table style="width:100%; border-collapse:collapse; font-size:14px;">
+    <thead>
+      <tr style="text-align:left; border-bottom:2px solid #e5e0d5;">
+        <th style="padding:8px;">Агент</th>
+        <th>Код</th>
+        <th style="text-align:right;">Всего</th>
+        <th style="text-align:right;">В работе</th>
+        <th style="text-align:right;">Оплачено</th>
+        <th style="text-align:right;">Отказ</th>
+        <th style="text-align:right;">Конв.</th>
+        <th style="text-align:right;">Сумма оплат</th>
+        <th>Вход</th>
+        <th>Анкета</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr style="border-bottom:1px solid #eee;">
+        <td style="padding:8px;"><a href="/admin/partner/{{ r.id }}"><b>{{ r.name }}</b></a></td>
+        <td style="color:#999;">{{ r.ref_slug }}</td>
+        <td style="text-align:right;">{{ r.total }}</td>
+        <td style="text-align:right;">{{ r.active }}</td>
+        <td style="text-align:right; font-weight:600; color:#10463E;">{{ r.won }}</td>
+        <td style="text-align:right; color:#b00;">{{ r.lost }}</td>
+        <td style="text-align:right;">{{ r.conv }}%</td>
+        <td style="text-align:right;">{{ '%.0f'|format(r.paid_sum) }}</td>
+        <td>{{ r.last_login_at.strftime('%d.%m.%y') if r.last_login_at else '—' }}</td>
+        <td style="text-align:center;">{{ '✓' if r.onboarded else '—' }}</td>
+      </tr>
+      {% endfor %}
+      {% if not rows %}
+      <tr><td colspan="10" style="padding:16px; color:#888;">Пока нет агентов с заявками.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
