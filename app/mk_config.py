@@ -64,6 +64,14 @@ THANKS = {
     ),
 }
 
+# Соцсети на экране «спасибо» — три квадрата-ссылки (правило репо №1: URL здесь,
+# не в вёрстке). type ∈ {instagram, telegram, site} → иконка в quiz.html.
+SOCIALS = [
+    {"type": "instagram", "label": "Instagram Николь", "url": "https://www.instagram.com/nikol_hillton"},
+    {"type": "telegram",  "label": "Telegram-канал ONCOUNT", "url": "https://t.me/oncountt"},
+    {"type": "site",      "label": "Сайт ONCOUNT", "url": "https://oncount.com"},
+]
+
 # Параметры лида в Kommo воронку 1.1 (под предохранителем QUIZ_KOMMO_LIVE).
 KOMMO_LEAD_PREFIX = "Мастер-класс 11 июня"
 KOMMO_LEAD_TAG = "masterclass"

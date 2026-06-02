@@ -70,12 +70,24 @@
     .cover-bullets li::before{content:"→";position:absolute;left:0;top:0;color:var(--green);font-weight:700}
     .cover-cta{align-self:stretch;margin-bottom:14px}
     .cover-note{font-size:13px;color:var(--muted);text-align:center;margin:0}
+    /* Текстовый логотип ONCOUNT — всегда виден на светлом фоне (оранжевое on + тёмное count) */
+    .logo-text{font-family:Outfit,sans-serif;font-weight:800;font-size:28px;
+      letter-spacing:-0.02em;line-height:1;color:#15211e}
+    .logo-text .on{color:#EC6442}
+    /* Ряд соцсетей на экране «спасибо» */
+    .socials{display:flex;justify-content:center;gap:14px;margin-top:28px}
+    .social{width:54px;height:54px;border-radius:14px;border:1.5px solid var(--line);
+      background:var(--card);display:flex;align-items:center;justify-content:center;
+      color:var(--green);transition:border-color .15s,background .15s,transform .1s}
+    .social:hover{border-color:var(--green);background:#f0f6f4}
+    .social:active{transform:scale(.96)}
+    .social svg{width:26px;height:26px;display:block}
     @media (max-width:480px){ .wrap{padding-top:18px} h1.q{font-size:22px} .cover-title{font-size:25px} }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="brand"><img src="/static/img/logo.png" alt="ONCOUNT"></div>
+    <div class="brand"><span class="logo-text"><span class="on">on</span>count</span></div>
 
     {% if cover %}
     <section class="cover" id="cover">
@@ -141,6 +153,21 @@
       <div class="ok">✅</div>
       <h1>{{ thanks.title }}</h1>
       <p>{{ thanks.subtitle }}</p>
+      {% if socials %}
+      <div class="socials">
+        {% for s in socials %}
+        <a class="social" href="{{ s.url }}" target="_blank" rel="noopener" aria-label="{{ s.label }}" title="{{ s.label }}">
+          {% if s.type == 'instagram' %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.6" cy="6.4" r="1.1" fill="currentColor" stroke="none"/></svg>
+          {% elif s.type == 'telegram' %}
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.94 4.3 18.9 19.1c-.23 1.02-.84 1.27-1.7.79l-4.7-3.46-2.27 2.18c-.25.25-.46.46-.94.46l.34-4.79 8.72-7.88c.38-.34-.08-.53-.59-.19L6.7 13.06l-4.64-1.45c-1.01-.32-1.03-1.01.21-1.5l18.14-6.99c.84-.31 1.58.19 1.31 1.18z"/></svg>
+          {% else %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.6 2.5 4 5.8 4 9.5s-1.4 7-4 9.5c-2.6-2.5-4-5.8-4-9.5s1.4-7 4-9.5z"/></svg>
+          {% endif %}
+        </a>
+        {% endfor %}
+      </div>
+      {% endif %}
     </section>
   </div>
 
@@ -253,6 +280,8 @@
     function showThanks(){
       navEl.style.display='none';
       document.getElementById('quizForm').style.display='none';
+      var introEl = document.querySelector('.intro');
+      if (introEl) introEl.style.display='none';   // не показываем интро на экране «спасибо»
       bar.style.width='100%';
       stepLabel.textContent='';
       thanksEl.classList.add('active');

@@ -661,6 +661,7 @@ def mk_page(request: Request) -> HTMLResponse:
         "questions": mk_config.QUESTIONS,
         "final": mk_config.FINAL,
         "thanks": mk_config.THANKS,
+        "socials": mk_config.SOCIALS,
         "submit_url": "/mk/submit",
     })
 
