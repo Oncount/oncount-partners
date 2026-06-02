@@ -132,7 +132,7 @@
       <span style="font-size: 22px; line-height: 1; min-width: 28px;">
         {% if step.done %}✅{% else %}⚪{% endif %}
       </span>
-      <span style="flex: 1; {% if step.done %}text-decoration: line-through; color: var(--sage);{% endif %}">{{ step.label_en if lang == 'en' else step.label }}</span>
+      <span style="flex: 1; {% if step.done %}color: var(--sage);{% endif %}">{{ step.label_en if lang == 'en' else step.label }}</span>
       <span style="color: var(--sage); font-size: 18px;">›</span>
     </a>
     {% endfor %}
