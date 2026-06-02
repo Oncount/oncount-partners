@@ -80,9 +80,9 @@
     /* Консультация: оранжевый бейдж «БЕСПЛАТНО», блок команды, заголовок пунктов */
     .cover-badge{align-self:flex-start;color:#EC6442;font-family:Outfit,sans-serif;
       font-weight:800;font-size:16px;letter-spacing:.04em;margin:0 0 12px}
-    .cover-team{margin:0 0 22px;display:flex;flex-direction:column;gap:3px}
-    .cover-team p{margin:0;font-weight:700;font-size:16px;line-height:1.45;color:var(--ink)}
-    .cover-bullets-title{font-weight:700;font-size:17px;margin:0 0 14px;color:var(--ink)}
+    .cover-team{margin:0 0 22px;display:flex;flex-direction:column;gap:4px}
+    .cover-team p{margin:0;font-weight:800;font-size:19px;line-height:1.4;color:var(--ink)}
+    .cover-bullets-title{font-weight:800;font-size:20px;margin:0 0 14px;color:var(--ink)}
     .cover-main{display:flex;flex-direction:column}
     /* Двухколоночная обложка (консультация): на мобиле фото ПОД кнопкой,
        на десктопе (≥640px) текст слева, фото СПРАВА. /mk это не затрагивает. */
@@ -157,7 +157,7 @@
 
       <section class="final" data-index="{{ questions|length }}">
         <h1 class="q">{{ final.title }}</h1>
-        <p class="hint">{{ final.subtitle }}</p>
+        {% if final.subtitle %}<p class="hint">{{ final.subtitle }}</p>{% endif %}
         <div class="field">
           <label for="name">Введите имя</label>
           <input id="name" name="name" type="text" placeholder="Имя" maxlength="120">
