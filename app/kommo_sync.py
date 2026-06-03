@@ -10,6 +10,7 @@ kommo_lead_id. Запускается планировщиком (см. main.on_
 from __future__ import annotations
 
 import logging
+import re
 from datetime import datetime
 
 import httpx
@@ -29,7 +30,7 @@ PIPELINE_FIRST = 9617055   # воронка 1 «1. Fist line»
 # Синк читает 1.1 + воронку 1 (фильтр по ID AGENT в коде, см. ниже). НЕ читаем
 # «6. Agents партнеры» (9707963): там карточки агентов с проставленным ID AGENT —
 # иначе синк создал бы мусорный «лид-клиент» = сам агент.
-SYNC_PIPELINES = [PIPELINE_AGENT, PIPELINE_FIRST]
+SYNC_PIPELINES = [PIPELINE_AGENT]  # только 1.1; воронки 1 и 4 НЕ сканируем (решение Николь 2026-06-03) — won берём точечно из WON_BACKFILL
 WON, LOST = 142, 143
 
 # Успешные сделки из комиссионного Excel (источник истины «оплачено», решение Николь
@@ -92,19 +93,75 @@ def _agent_enum_id(lead: dict):
     return f["values"][0].get("enum_id") if f and f.get("values") else None
 
 
-def _client_name(lead: dict) -> str:
+# Хвост названия сделки в Kommo: «… - Заявка от (X)», «… агент Y». В колонку
+# «Клиент» и в win-пуш он не нужен — режем, оставляя осмысленную «голову»
+# (обычно компанию). Используется ТОЛЬКО как фолбэк, если у лида нет контакта.
+_DEAL_NOISE = re.compile(r"\s*[-—]?\s*(заявка\s+от|агент)\b.*$", re.IGNORECASE)
+
+
+def _clean_deal_name(name: str) -> str:
+    cleaned = _DEAL_NOISE.sub("", name).strip(" -—()")
+    return cleaned or name
+
+
+def _main_contact_id(lead: dict) -> int | None:
+    """id основного контакта лида (is_main, иначе первый)."""
+    contacts = (lead.get("_embedded") or {}).get("contacts") or []
+    if not contacts:
+        return None
+    main = next((c for c in contacts if c.get("is_main")), contacts[0])
+    return main.get("id")
+
+
+def _fetch_contacts(client: httpx.Client, ids: list[int]) -> dict[int, dict]:
+    """id контакта → {'name','phone'} из Kommo. Батчами по 50 (filter[id][]).
+    Имя/телефон в списке лидов не приходят — берём из карточки контакта. Только чтение."""
+    out: dict[int, dict] = {}
+    uniq = [i for i in dict.fromkeys(ids) if i]
+    for i in range(0, len(uniq), 50):
+        chunk = uniq[i:i + 50]
+        params = [("filter[id][]", c) for c in chunk] + [("limit", 50)]
+        try:
+            r = client.get(f"{BASE}/contacts", params=params)
+        except httpx.HTTPError:
+            continue
+        if r.status_code != 200:
+            continue
+        for ct in (r.json().get("_embedded") or {}).get("contacts") or []:
+            phone = None
+            for f in (ct.get("custom_fields_values") or []):
+                if f.get("field_code") == "PHONE":
+                    vals = f.get("values") or []
+                    if vals:
+                        phone = (vals[0].get("value") or "").strip() or None
+                    break
+            out[ct.get("id")] = {
+                "name": (ct.get("name") or "").strip() or None,
+                "phone": phone,
+            }
+    return out
+
+
+def _client_name(lead: dict, contact: dict | None = None) -> str:
+    """Имя клиента для портала: ПРИОРИТЕТ — чистое имя контакта (решение Николь
+    2026-06-03), иначе очищенное название сделки (без «Заявка от …»)."""
+    if contact and contact.get("name"):
+        return str(contact["name"])[:255]
     name = (lead.get("name") or "").strip()
     if name and not name.lower().startswith(("lead #", "сделка #", "сделка по")):
-        return name[:255]
-    contacts = (lead.get("_embedded") or {}).get("contacts") or []
-    if contacts and contacts[0].get("name"):
-        return str(contacts[0]["name"])[:255]
+        return _clean_deal_name(name)[:255]
+    embedded = (lead.get("_embedded") or {}).get("contacts") or []
+    if embedded and embedded[0].get("name"):
+        return str(embedded[0]["name"])[:255]
     return name[:255] or f"#{lead.get('id')}"
 
 
-def _upsert_lead(session, kommo_id, pid, st, amount, client_name, backfill_won, newly_won):
+def _upsert_lead(session, kommo_id, pid, st, amount, client_name, client_phone,
+                 backfill_won, newly_won):
     """Upsert портал-Lead по kommo_lead_id. backfill_won=True → форсим статус won
-    БЕЗ win-пуша (история из Excel). Возвращает True если создан, False если обновлён."""
+    БЕЗ win-пуша (история из Excel). Возвращает True если создан, False если обновлён.
+    Имя/телефон клиента бэкфиллим и у существующих строк (источник истины — Kommo),
+    но НЕ затираем уже сохранённое пустым значением."""
     if backfill_won:
         st = "won"
     row = session.query(Lead).filter_by(kommo_lead_id=kommo_id).first()
@@ -115,6 +172,10 @@ def _upsert_lead(session, kommo_id, pid, st, amount, client_name, backfill_won, 
         row.partner_id = pid
         if amount is not None:
             row.amount_aed = amount
+        if client_name:
+            row.client_name = client_name
+        if client_phone:
+            row.client_phone = client_phone
         if st == "won" and old != "won":
             if row.won_at is None:
                 row.won_at = now
@@ -126,6 +187,7 @@ def _upsert_lead(session, kommo_id, pid, st, amount, client_name, backfill_won, 
         return False
     session.add(Lead(
         partner_id=pid, kommo_lead_id=kommo_id, client_name=client_name,
+        client_phone=client_phone or None,
         status=st, amount_aed=amount,
         won_at=now if st == "won" else None,
         won_notified_at=now if st == "won" else None,
@@ -180,14 +242,17 @@ def sync_agent_leads() -> dict:
                 if r.status_code == 204 or r.status_code >= 400:
                     break
                 leads = (r.json().get("_embedded") or {}).get("leads") or []
-                for l in leads:
-                    pid = by_enum.get(_agent_enum_id(l))
-                    if not pid:
-                        continue
+                # Контакты (имя+телефон) догружаем ОДНИМ батчем на страницу и только
+                # для лидов с известным агентом — лишних запросов в Kommo не делаем.
+                matched = [(l, pid) for l in leads if (pid := by_enum.get(_agent_enum_id(l)))]
+                cmap = _fetch_contacts(client, [_main_contact_id(l) for l, _ in matched])
+                for l, pid in matched:
                     kommo_id = l.get("id")
                     seen.add(kommo_id)
+                    contact = cmap.get(_main_contact_id(l))
+                    phone = contact.get("phone") if contact else None
                     if _upsert_lead(session, kommo_id, pid, _status(l.get("status_id")),
-                                    l.get("price") or None, _client_name(l),
+                                    l.get("price") or None, _client_name(l, contact), phone,
                                     kommo_id in WON_BACKFILL, newly_won):
                         created += 1
                     else:
@@ -214,8 +279,11 @@ def sync_agent_leads() -> dict:
                 pid = by_enum.get(_agent_enum_id(l))
                 if not pid:
                     continue
+                cid = _main_contact_id(l)
+                contact = _fetch_contacts(client, [cid]).get(cid) if cid else None
+                phone = contact.get("phone") if contact else None
                 if _upsert_lead(session, kid, pid, "won", l.get("price") or None,
-                                _client_name(l), True, newly_won):
+                                _client_name(l, contact), phone, True, newly_won):
                     created += 1
                 else:
                     updated += 1
