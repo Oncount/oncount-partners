@@ -236,8 +236,9 @@ def _personal_links(ref: str, base: str) -> dict[str, str]:
         "mk_tg":        f"{base}/mt/{ref}",
         "mk_wa":        f"{base}/mw/{ref}",
         # Лид-магниты: квиз → PDF чек-листа ссылкой в WhatsApp (?ref метит лида).
-        "leadmagnet_corptax":    f"{base}/guide/corp-tax?ref={ref}",
-        "leadmagnet_5mistakes":  f"{base}/guide/5-mistakes?ref={ref}",
+        # Ключи ≤16 символов — ограничение колонки MessageTemplate.link_key VARCHAR(16).
+        "lm_corptax":   f"{base}/guide/corp-tax?ref={ref}",
+        "lm_5mistakes": f"{base}/guide/5-mistakes?ref={ref}",
         "partner_bot":  f"{base}/p/{ref}",
     }
 

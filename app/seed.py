@@ -523,7 +523,8 @@ TEMPLATES = [
     # ── Лид-магниты-квизы с АВТО-выдачей PDF в WhatsApp (планы 2026-06-02 / -03).
     #    Клиент проходит 3 вопроса по персональной ?ref-ссылке → чек-лист
     #    приходит ему в WhatsApp автоматически, лид падает в воронку 1.1 на агента.
-    #    link_key → main._personal_links (leadmagnet_corptax / leadmagnet_5mistakes).
+    #    link_key → main._personal_links (lm_corptax / lm_5mistakes). Ключи ≤16
+    #    символов — ограничение колонки link_key VARCHAR(16).
     {
         "slug": "leadmagnet-quiz-corptax",
         "segment": "Лид-магнит · авто-выдача",
@@ -543,7 +544,7 @@ TEMPLATES = [
             "WhatsApp 👇\n{link}"
         ),
         "method": "leadmagnet",
-        "link_key": "leadmagnet_corptax",
+        "link_key": "lm_corptax",
         "order_index": 1,
     },
     {
@@ -563,7 +564,7 @@ TEMPLATES = [
             "Answer 3 questions and the PDF will arrive in your WhatsApp 👇\n{link}"
         ),
         "method": "leadmagnet",
-        "link_key": "leadmagnet_5mistakes",
+        "link_key": "lm_5mistakes",
         "order_index": 2,
     },
     # ── Квиз-крючки на бесплатную консультацию (перенесены из tools.html,
