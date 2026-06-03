@@ -32,6 +32,18 @@ PIPELINE_FIRST = 9617055   # воронка 1 «1. Fist line»
 SYNC_PIPELINES = [PIPELINE_AGENT, PIPELINE_FIRST]
 WON, LOST = 142, 143
 
+# Успешные сделки из комиссионного Excel (источник истины «оплачено», решение Николь
+# 2026-06-03). Их помечаем won в портале ТОЧЕЧНО по id — воронку «4. Production»
+# целиком НЕ читаем. Удалённые id (404 в Kommo) тихо пропускаются.
+WON_BACKFILL = frozenset({
+    15004438, 20095641, 20244435, 19820817, 20094653, 20874532, 20680617, 19862707,
+    21020769, 22084042, 19566821, 21390245, 19916917, 21295713, 22188816, 21652955,
+    21798843, 22362692, 22591576, 22575846, 19176687, 22269880, 23412046, 23476242,
+    23069317, 23166707, 20851299, 23357551, 23477216, 24015149, 23983590, 17166610,
+    22824655, 21965547, 20484903, 24866910, 21827517, 23187991, 23995422, 25880202,
+    25016652, 26311040,
+})
+
 
 def seed_partners_from_enums(dry: bool = False) -> dict:
     """Фаза 0.7: создать Partner на каждого агента из enum-справочника «ID AGENT».
@@ -90,6 +102,37 @@ def _client_name(lead: dict) -> str:
     return name[:255] or f"#{lead.get('id')}"
 
 
+def _upsert_lead(session, kommo_id, pid, st, amount, client_name, backfill_won, newly_won):
+    """Upsert портал-Lead по kommo_lead_id. backfill_won=True → форсим статус won
+    БЕЗ win-пуша (история из Excel). Возвращает True если создан, False если обновлён."""
+    if backfill_won:
+        st = "won"
+    row = session.query(Lead).filter_by(kommo_lead_id=kommo_id).first()
+    now = datetime.utcnow()
+    if row:
+        old = row.status
+        row.status = st
+        row.partner_id = pid
+        if amount is not None:
+            row.amount_aed = amount
+        if st == "won" and old != "won":
+            if row.won_at is None:
+                row.won_at = now
+            if row.won_notified_at is None:
+                if backfill_won:
+                    row.won_notified_at = now   # история — помечаем обработанным, не пушим
+                else:
+                    newly_won.append(kommo_id)
+        return False
+    session.add(Lead(
+        partner_id=pid, kommo_lead_id=kommo_id, client_name=client_name,
+        status=st, amount_aed=amount,
+        won_at=now if st == "won" else None,
+        won_notified_at=now if st == "won" else None,
+    ))
+    return True
+
+
 def sync_agent_leads() -> dict:
     """Тянет лиды воронок 1.1 + «1. Fist line» (SYNC_PIPELINES) и раскладывает по
     партнёрам по полю ID AGENT. Возвращает счётчики. Только чтение Kommo."""
@@ -122,6 +165,7 @@ def sync_agent_leads() -> dict:
             return {"agents": 0, "note": "нет партнёров с kommo_agent_enum_id"}
 
         with httpx.Client(timeout=30, headers={"Authorization": f"Bearer {token}"}) as client:
+            seen: set[int] = set()
             page = 1
             while True:
                 r = client.get(
@@ -137,48 +181,44 @@ def sync_agent_leads() -> dict:
                     break
                 leads = (r.json().get("_embedded") or {}).get("leads") or []
                 for l in leads:
-                    eid = _agent_enum_id(l)
-                    pid = by_enum.get(eid)
+                    pid = by_enum.get(_agent_enum_id(l))
                     if not pid:
                         continue
                     kommo_id = l.get("id")
-                    row = session.query(Lead).filter_by(kommo_lead_id=kommo_id).first()
-                    st = _status(l.get("status_id"))
-                    amount = l.get("price") or None
-                    if row:
-                        old_status = row.status
-                        row.status = st
-                        row.partner_id = pid
-                        if amount is not None:
-                            row.amount_aed = amount
-                        # Переход в won (Фаза K): фиксируем якорь выплаты один раз
-                        # и помечаем лид на извещение партнёра (после commit).
-                        if st == "won" and old_status != "won":
-                            if row.won_at is None:
-                                row.won_at = datetime.utcnow()
-                            if row.won_notified_at is None:
-                                newly_won.append(kommo_id)
-                        updated += 1
-                    else:
-                        # Лид впервые виден синком. Если он уже won — это история
-                        # (бэкфилл): ставим якорь, но помечаем извещённым БЕЗ
-                        # отправки, чтобы при go-live не ушла лавина старых пушей.
-                        now = datetime.utcnow()
-                        session.add(Lead(
-                            partner_id=pid,
-                            kommo_lead_id=kommo_id,
-                            client_name=_client_name(l),
-                            status=st,
-                            amount_aed=amount,
-                            won_at=now if st == "won" else None,
-                            won_notified_at=now if st == "won" else None,
-                        ))
+                    seen.add(kommo_id)
+                    if _upsert_lead(session, kommo_id, pid, _status(l.get("status_id")),
+                                    l.get("price") or None, _client_name(l),
+                                    kommo_id in WON_BACKFILL, newly_won):
                         created += 1
+                    else:
+                        updated += 1
                 if len(leads) < 250:
                     break
                 page += 1
                 if page > 80:
                     break
+
+            # Успешные сделки из Excel, которых НЕ было в прочитанных воронках
+            # (например, ушли в «4. Production»): берём ТОЧЕЧНО по id и помечаем won.
+            # Воронку 4 целиком не читаем; удалённые id (404) тихо пропускаем.
+            for kid in WON_BACKFILL:
+                if kid in seen:
+                    continue
+                row = session.query(Lead).filter_by(kommo_lead_id=kid).first()
+                if row is not None and row.status == "won":
+                    continue
+                lr = client.get(f"{BASE}/leads/{kid}", params={"with": "contacts"})
+                if lr.status_code != 200:
+                    continue
+                l = lr.json()
+                pid = by_enum.get(_agent_enum_id(l))
+                if not pid:
+                    continue
+                if _upsert_lead(session, kid, pid, "won", l.get("price") or None,
+                                _client_name(l), True, newly_won):
+                    created += 1
+                else:
+                    updated += 1
         session.commit()
         # Извещаем партнёров о только что выигранных лидах (Фаза K). Делаем ПОСЛЕ
         # commit статусов: уведомление — отдельная забота, его сбой не должен
