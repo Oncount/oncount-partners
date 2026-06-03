@@ -170,8 +170,11 @@ def build_win_text(partner: Partner, lead: Lead, session: Session) -> str:
     lang = _plang(partner)
     name = _greet_name(partner, lang)
     client = (lead.client_name or "").strip() or ("ваш клиент" if lang == "ru" else "your client")
+    # Контакт клиента в скобках: телефон, а если его нет — Telegram (решение Николь
+    # 2026-06-03: у kommo-синканных лидов телефон часто пуст, тянем TG-контакт).
     phone = (lead.client_phone or "").strip()
-    phone_part = f" ({phone})" if phone else ""
+    contact = phone or (lead.client_telegram or "").strip()
+    phone_part = f" ({contact})" if contact else ""
     due = payout_due_date(lead, lang)
     if due and due.get("date"):
         payout_line = WIN_PAYOUT_WITH_DATE[lang].format(date=due["date"])

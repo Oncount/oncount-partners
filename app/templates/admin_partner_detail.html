@@ -22,15 +22,15 @@
 </div>
 
 <div class="card" style="overflow-x:auto;">
-  <h3 style="margin-top:0;">Клиенты ({{ rows|length }})</h3>
+  <h3 style="margin-top:0;">Клиенты</h3>
   <table style="width:100%; border-collapse:collapse; font-size:14px;">
     <thead>
       <tr style="text-align:left; border-bottom:2px solid #e5e0d5;">
         <th style="padding:6px;">Клиент</th>
         <th>Передан</th>
         <th>Статус</th>
-        <th style="text-align:right;">Комиссия</th>
         <th>Kommo</th>
+        <th style="text-align:right; padding-left:40px;">Комиссия</th>
       </tr>
     </thead>
     <tbody>
@@ -43,14 +43,14 @@
         </td>
         <td style="white-space:nowrap;">{{ l.kommo_created_at.strftime('%d.%m.%y') if l.kommo_created_at else '—' }}</td>
         <td><span class="status-pill status-{{ l.status }}">{{ lead_stage(l.status, 'ru').label }}</span></td>
-        <td style="text-align:right; white-space:nowrap;">
+        <td>{% if l.kommo_lead_id %}<a href="{{ kommo_url }}{{ l.kommo_lead_id }}" target="_blank" rel="noopener">открыть ↗</a>{% else %}<span style="color:#aaa;">не синкан</span>{% endif %}</td>
+        <td style="text-align:right; white-space:nowrap; padding-left:40px;">
           {% if row.payments %}
             {% for p in row.payments %}
             <div{% if p.status != 'paid' %} style="color:#999;"{% endif %}>{{ '%.0f'|format(p.fee) }} AED{% if p.status == 'onboarding' %} <span style="font-size:11px;">(ждёт)</span>{% elif p.status == 'not_rendered' %} <span style="font-size:11px;">(возврат)</span>{% endif %}</div>
             {% endfor %}
           {% else %}—{% endif %}
         </td>
-        <td>{% if l.kommo_lead_id %}<a href="{{ kommo_url }}{{ l.kommo_lead_id }}" target="_blank" rel="noopener">открыть ↗</a>{% else %}<span style="color:#aaa;">не синкан</span>{% endif %}</td>
       </tr>
       {% endfor %}
       {% if not rows %}
@@ -60,9 +60,10 @@
     {% if rows %}
     <tfoot>
       <tr style="border-top:2px solid #e5e0d5; font-weight:700;">
-        <td style="padding:6px;" colspan="3">Итого (комиссия выплачена)</td>
-        <td style="text-align:right;">{{ '%.0f'|format(fee_total) }} AED</td>
+        <td style="padding:6px;" colspan="2">Итого</td>
+        <td>{{ rows|length }} клиентов</td>
         <td></td>
+        <td style="text-align:right; padding-left:40px;">{{ '%.0f'|format(fee_total) }} AED</td>
       </tr>
     </tfoot>
     {% endif %}

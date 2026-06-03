@@ -113,9 +113,31 @@ def _main_contact_id(lead: dict) -> int | None:
     return main.get("id")
 
 
+# Поля Telegram-контакта от интеграции Wazzup в карточке контакта Kommo.
+# У них нет field_code — матчим по field_id. Username полезнее агенту, чем числовой id.
+_TG_USERNAME_FIELD = 930884   # TelegramUsername_WZ (текст, напр. «username»)
+_TG_ID_FIELD = 953978         # TelegramID_WZ (числовой chat_id, fallback)
+
+
+def _tg_handle(ct: dict) -> str | None:
+    """Telegram-контакт клиента из карточки: @username (приоритет) или tg-id."""
+    by_id = {f.get("field_id"): f for f in (ct.get("custom_fields_values") or [])}
+    fu = by_id.get(_TG_USERNAME_FIELD)
+    if fu and (fu.get("values") or []):
+        u = (fu["values"][0].get("value") or "").strip()
+        if u:
+            return u if u.startswith("@") else "@" + u
+    fid = by_id.get(_TG_ID_FIELD)
+    if fid and (fid.get("values") or []):
+        v = (fid["values"][0].get("value") or "").strip()
+        if v:
+            return f"tg id: {v}"
+    return None
+
+
 def _fetch_contacts(client: httpx.Client, ids: list[int]) -> dict[int, dict]:
-    """id контакта → {'name','phone'} из Kommo. Батчами по 50 (filter[id][]).
-    Имя/телефон в списке лидов не приходят — берём из карточки контакта. Только чтение."""
+    """id контакта → {'name','phone','telegram'} из Kommo. Батчами по 50 (filter[id][]).
+    Имя/телефон/TG в списке лидов не приходят — берём из карточки контакта. Только чтение."""
     out: dict[int, dict] = {}
     uniq = [i for i in dict.fromkeys(ids) if i]
     for i in range(0, len(uniq), 50):
@@ -138,6 +160,7 @@ def _fetch_contacts(client: httpx.Client, ids: list[int]) -> dict[int, dict]:
             out[ct.get("id")] = {
                 "name": (ct.get("name") or "").strip() or None,
                 "phone": phone,
+                "telegram": _tg_handle(ct),
             }
     return out
 
@@ -167,10 +190,10 @@ def _kommo_created_dt(lead: dict) -> datetime | None:
 
 
 def _upsert_lead(session, kommo_id, pid, st, amount, client_name, client_phone,
-                 backfill_won, newly_won, kommo_created=None):
+                 backfill_won, newly_won, kommo_created=None, client_telegram=None):
     """Upsert портал-Lead по kommo_lead_id. backfill_won=True → форсим статус won
     БЕЗ win-пуша (история из Excel). Возвращает True если создан, False если обновлён.
-    Имя/телефон/дату-сделки клиента бэкфиллим и у существующих строк (источник
+    Имя/телефон/TG/дату-сделки клиента бэкфиллим и у существующих строк (источник
     истины — Kommo), но НЕ затираем уже сохранённое пустым значением."""
     if backfill_won:
         st = "won"
@@ -186,6 +209,8 @@ def _upsert_lead(session, kommo_id, pid, st, amount, client_name, client_phone,
             row.client_name = client_name
         if client_phone:
             row.client_phone = client_phone
+        if client_telegram and not row.client_telegram:
+            row.client_telegram = client_telegram
         if kommo_created and row.kommo_created_at is None:
             row.kommo_created_at = kommo_created
         if st == "won" and old != "won":
@@ -199,7 +224,8 @@ def _upsert_lead(session, kommo_id, pid, st, amount, client_name, client_phone,
         return False
     session.add(Lead(
         partner_id=pid, kommo_lead_id=kommo_id, client_name=client_name,
-        client_phone=client_phone or None, kommo_created_at=kommo_created,
+        client_phone=client_phone or None, client_telegram=client_telegram or None,
+        kommo_created_at=kommo_created,
         status=st, amount_aed=amount,
         won_at=now if st == "won" else None,
         won_notified_at=now if st == "won" else None,
@@ -263,10 +289,11 @@ def sync_agent_leads() -> dict:
                     seen.add(kommo_id)
                     contact = cmap.get(_main_contact_id(l))
                     phone = contact.get("phone") if contact else None
+                    tg = contact.get("telegram") if contact else None
                     if _upsert_lead(session, kommo_id, pid, _status(l.get("status_id")),
                                     l.get("price") or None, _client_name(l, contact), phone,
                                     kommo_id in WON_BACKFILL, newly_won,
-                                    kommo_created=_kommo_created_dt(l)):
+                                    kommo_created=_kommo_created_dt(l), client_telegram=tg):
                         created += 1
                     else:
                         updated += 1
@@ -295,9 +322,10 @@ def sync_agent_leads() -> dict:
                 cid = _main_contact_id(l)
                 contact = _fetch_contacts(client, [cid]).get(cid) if cid else None
                 phone = contact.get("phone") if contact else None
+                tg = contact.get("telegram") if contact else None
                 if _upsert_lead(session, kid, pid, "won", l.get("price") or None,
                                 _client_name(l, contact), phone, True, newly_won,
-                                kommo_created=_kommo_created_dt(l)):
+                                kommo_created=_kommo_created_dt(l), client_telegram=tg):
                     created += 1
                 else:
                     updated += 1
