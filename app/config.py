@@ -29,31 +29,21 @@ class Settings:
     # иначе Resend отклоняет отправку. Имя отправителя — ONCOUNT (бренд).
     RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
     EMAIL_FROM: str = os.getenv("EMAIL_FROM", "ONCOUNT <noreply@nikole-ai.com>")
-    # Wazzup24 — доставка кода входа в WhatsApp (план 2026-05-27, вход по номеру).
-    # Пустой ключ/канал → dev-режим: код в сеть не уходит (см. app/wazzup.py).
-    # WAZZUP_TEST_ONLY_NUMBER — предохранитель теста: если задан, код шлётся ТОЛЬКО
-    # на этот номер. Слать с НЕ основного номера (не жечь основной 84).
+    # Централизация Kommo (2026-06-03): партнёр-сервис обращается к Kommo ТОЛЬКО
+    # через наш api-сервис (NestJS), префикс /api/partner/* под ключом x-api-key.
+    # Глобальный префикс /api добавляется в путях клиента (см. app/api_client.py).
+    # Пусто → dev-режим: синк Kommo не регистрируется, лиды квиза остаются 'dry'.
+    ONCOUNT_API_URL: str = os.getenv("ONCOUNT_API_URL", "")
+    # Ключ к /api/partner/* (выдан api). Пусто в dev. Сетевой рубеж — Security Group
+    # на EC2 (см. Documentation/PARTNER_API_SECURITY_DESIGN.md §4).
+    PARTNER_API_KEY: str = os.getenv("PARTNER_API_KEY", "")
+    # Wazzup24 — доставка кода входа / уведомлений в WhatsApp. ПОКА напрямую (план:
+    # следующий PR переведёт отправку на api /api/partner/notify). Пустой ключ/канал
+    # → dev-режим: в сеть ничего не уходит (см. app/wazzup.py).
+    # WAZZUP_TEST_ONLY_NUMBER — предохранитель теста: если задан, шлём ТОЛЬКО на него.
     WAZZUP_API_KEY: str = os.getenv("WAZZUP_API_KEY", "")
     WAZZUP_CHANNEL_ID: str = os.getenv("WAZZUP_CHANNEL_ID", "")
     WAZZUP_TEST_ONLY_NUMBER: str = os.getenv("WAZZUP_TEST_ONLY_NUMBER", "")
-    KOMMO_DOMAIN: str = os.getenv("KOMMO_DOMAIN", "primeadvice.kommo.com")
-    KOMMO_TOKEN: str = os.getenv("KOMMO_TOKEN", "")
-    KOMMO_PIPELINE_ID: str = os.getenv("KOMMO_PIPELINE_ID", "")
-    # Квиз-лендинг /consultation (план 2026-06-02). Лид создаётся в Kommo воронке 1.1
-    # с привязкой к агенту через поле «ID AGENT». ПРЕДОХРАНИТЕЛЬ QUIZ_KOMMO_LIVE
-    # (default false, как NOTIFICATIONS_LIVE): пока false — в Kommo НЕ ходим, заявка
-    # живёт только в Postgres + TG-пуш админу (kommo_status='dry'). Снять ТОЛЬКО
-    # осознанно в Railway env (QUIZ_KOMMO_LIVE=true) по команде Николь.
-    # id воронки/этапа 1.1 — из конфига (правило репо №1), сверены ниже.
-    # Поле «ID AGENT» = #961886 (см. Partner.kommo_agent_enum_id).
-    QUIZ_KOMMO_LIVE: bool = os.getenv("QUIZ_KOMMO_LIVE", "") in ("1", "true", "True")
-    # Дефолты сверены kommo_quiz_discover 2026-06-02. Воронка «1.1 Line agent lid»
-    # pipeline_id=11126307. ВАЖНО: «Incoming leads» (85364779) — это unsorted-этап,
-    # API его НЕ принимает (NotSupportedChoice). Берём первый РЕГУЛЯРНЫЙ этап
-    # «Первый ход» status_id=85364783 (проверено live-тестом 2026-06-02).
-    QUIZ_KOMMO_PIPELINE_ID: str = os.getenv("QUIZ_KOMMO_PIPELINE_ID", "11126307")
-    QUIZ_KOMMO_STATUS_ID: str = os.getenv("QUIZ_KOMMO_STATUS_ID", "85364783")
-    KOMMO_ID_AGENT_FIELD_ID: int = int(os.getenv("KOMMO_ID_AGENT_FIELD_ID", "961886"))
     # Предохранитель Telegram-дайджеста (Фаза 4). По умолчанию OFF: планировщик 5/20
     # работает в dry (превью в лог), реально НЕ шлёт. Включить только осознанно:
     # DIGEST_ENABLED=1 в Railway, когда агенты уже в боте и формат подтверждён.

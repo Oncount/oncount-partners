@@ -645,7 +645,7 @@ async def on_startup() -> None:
 
     # Периодический синк лидов агентов из Kommo в локальный Lead (кабинет читает его).
     # Фаза 1/кабинет (план 2026-05-26). Запускается в отдельном потоке APScheduler.
-    if settings.KOMMO_TOKEN:
+    if settings.ONCOUNT_API_URL:
         from datetime import datetime as _dt
         from apscheduler.schedulers.background import BackgroundScheduler
         from app.kommo_sync import sync_agent_leads

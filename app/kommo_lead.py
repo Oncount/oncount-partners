@@ -1,100 +1,18 @@
-"""Создание лида с квиза в Kommo воронку 1.1 (план 2026-06-02).
+"""Создание лида с квиза — делегирует в наш api (централизация Kommo, 2026-06-03).
 
-`POST /leads/complex` — лид + контакт + телефон одним вызовом. Привязка к агенту:
-поле «ID AGENT» (#961886) = `Partner.kommo_agent_enum_id`. Дальше существующий
-`kommo_sync` (ежечасно) сам подтянет лид и привяжет его к партнёру по этому полю —
-отдельной логики привязки не пишем.
-
-ГЛАВНЫЙ ПРЕДОХРАНИТЕЛЬ — settings.QUIZ_KOMMO_LIVE (default false). Пока не "true":
-в Kommo НЕ ходим, возвращаем status='dry' (заявка живёт в Postgres + TG-пуш).
-id воронки/этапа — из конфига (правило репо №1), сверяются скриптом
-scripts/kommo_quiz_discover.js ПЕРЕД снятием гарда.
-
-Безопасность: телефон/имя клиента уходят в НАШ Kommo (не сторонний сервис) —
-это и есть назначение заявки. В общий лог пишем только статус и id лида,
-не телефон.
+Партнёр-сервис НЕ ходит в Kommo напрямую: payload собирается здесь, отправляется в
+api (POST /api/partner/leads/consultation), вся работа с CRM (дедуп контакта,
+/leads/complex, перенос воронки, примечание) живёт на стороне api. Контракт ответа
+неизменен — {status, kommo_lead_id, error} — чтобы вызывающий код не менялся.
 """
 from __future__ import annotations
 
 import logging
 
-import httpx
-
-from app.config import settings
+from app import api_client
 from app.quiz_config import QUESTION_TITLES
 
 log = logging.getLogger("oncount.kommo_lead")
-
-# Таймаут на сетевой вызов Kommo: приём заявки не должен висеть на медленном CRM —
-# в Postgres запись уже есть, при провале помечаем 'failed' и отвечаем клиенту ok.
-_TIMEOUT = 12
-
-
-def _base() -> str:
-    domain = settings.KOMMO_DOMAIN or "primeadvice.kommo.com"
-    return f"https://{domain}/api/v4"
-
-
-def _answers_note(answers: dict | None, utm: dict | None, ref_slug: str | None,
-                  *, note_intro: str, question_titles: dict[str, str]) -> str:
-    """Человекочитаемое примечание к лиду: ответы квиза + источник трафика."""
-    lines: list[str] = [note_intro, ""]
-    for qid, title in question_titles.items():
-        val = (answers or {}).get(qid)
-        if val:
-            lines.append(f"• {title} — {val}")
-    if ref_slug:
-        lines.append("")
-        lines.append(f"Реф-метка агента: {ref_slug}")
-    utm = {k: v for k, v in (utm or {}).items() if v}
-    if utm:
-        lines.append("UTM: " + ", ".join(f"{k}={v}" for k, v in utm.items()))
-    return "\n".join(lines)
-
-
-def _digits(s) -> str:
-    return "".join(ch for ch in str(s or "") if ch.isdigit())
-
-
-def _find_contact_by_phone(phone_norm: str, headers: dict) -> tuple[int | None, list[dict]]:
-    """Ищет контакт в Kommo по телефону. → (contact_id, существующие_теги) или (None, []).
-
-    Поиск через ?query=<цифры телефона> (Kommo матчит по телефону). Подтверждаем
-    совпадение по последним 9 цифрам, чтобы не зацепить чужой контакт. Теги
-    существующего контакта возвращаем, чтобы при отметке ДОБАВИТЬ тег, а не стереть."""
-    try:
-        r = httpx.get(_base() + "/contacts", params={"query": phone_norm},
-                      headers=headers, timeout=_TIMEOUT)
-        if r.status_code != 200:
-            return None, []
-        contacts = (r.json().get("_embedded") or {}).get("contacts") or []
-    except Exception as exc:
-        log.warning("contact search failed: %s", type(exc).__name__)
-        return None, []
-
-    def _match(d: str) -> bool:
-        # Точное совпадение: либо все цифры равны, либо совпадают последние 10
-        # (учёт разного префикса страны). НИКАКОГО «первого попавшегося» —
-        # fuzzy-поиск Kommo легко цепляет чужой контакт по подстроке.
-        if not d or not phone_norm:
-            return False
-        return d == phone_norm or (len(d) >= 10 and len(phone_norm) >= 10
-                                   and d[-10:] == phone_norm[-10:])
-
-    chosen = None
-    for c in contacts:
-        for f in (c.get("custom_fields_values") or []):
-            if f.get("field_code") == "PHONE" and any(
-                    _match(_digits(v.get("value"))) for v in (f.get("values") or [])):
-                chosen = c
-                break
-        if chosen:
-            break
-    if chosen is None:  # точного совпадения нет → не дедупим, создаём новую сделку
-        return None, []
-    tags = [{"name": t["name"]} for t in ((chosen.get("_embedded") or {}).get("tags") or [])
-            if t.get("name")]
-    return chosen.get("id"), tags
 
 
 def create_consultation_lead(
@@ -110,98 +28,21 @@ def create_consultation_lead(
     note_intro: str = "Заявка с квиз-лендинга /consultation.",
     question_titles: dict[str, str] | None = None,
 ) -> dict:
-    """Создать сделку в воронке 1.1. Контакт дедупится (не сделка).
-
-    Возвращает {status, kommo_lead_id, error}:
-    - 'dry'    — гард off / нет конфига (в сеть не ходили);
-    - 'sent'   — сделка создана (kommo_lead_id = id сделки). Если телефон уже был
-                 в Kommo, сделка привязана к существующему контакту (без дубля);
-    - 'failed' — ошибка API/сети.
-    Никогда не бросает — приём заявки не должен падать из-за CRM.
-
-    lead_prefix/lead_tag/note_intro/question_titles параметризуют лид под событие
-    (по умолчанию — квиз /consultation; мастер-класс передаёт свои, план 2026-06-02).
-    """
-    if question_titles is None:
-        question_titles = QUESTION_TITLES
-    # Предохранитель + проверка конфига: без него молча НЕ ходим в сеть.
-    if not settings.QUIZ_KOMMO_LIVE:
-        return {"status": "dry", "kommo_lead_id": None, "error": None}
-    if not (settings.KOMMO_TOKEN and settings.QUIZ_KOMMO_PIPELINE_ID
-            and settings.QUIZ_KOMMO_STATUS_ID):
-        log.warning("quiz lead: QUIZ_KOMMO_LIVE=true, но не задан token/pipeline/status — пропуск")
-        return {"status": "dry", "kommo_lead_id": None, "error": "config_missing"}
-
-    headers = {"Authorization": f"Bearer {settings.KOMMO_TOKEN}"}
-    display = (name or "").strip() or f"+{phone_norm}"
-    note_text = _answers_note(answers, utm, ref_slug, note_intro=note_intro,
-                              question_titles=question_titles)
-
-    # Дедуп КОНТАКТА (не сделки): сделка создаётся ВСЕГДА (заявка = сделка в воронке
-    # 1.1), но если телефон уже есть в Kommo — привязываем сделку к СУЩЕСТВУЮЩЕМУ
-    # контакту (без дубля человека). Поиск строго по точному телефону.
-    contact_id, _tags = _find_contact_by_phone(phone_norm, headers)
-    if contact_id:
-        contact_block = {"id": contact_id}  # линк существующего контакта
-        note_text += "\n\n(Контакт уже был в CRM — сделка привязана к существующему контакту.)"
-    else:
-        contact_block = {
-            "name": display,
-            "custom_fields_values": [{
-                "field_code": "PHONE",
-                "values": [{"value": f"+{phone_norm}", "enum_code": "WORK"}],
-            }],
-        }
-
-    lead: dict = {
-        "name": display[:250],  # название сделки = имя клиента
-        "pipeline_id": int(settings.QUIZ_KOMMO_PIPELINE_ID),
-        "status_id": int(settings.QUIZ_KOMMO_STATUS_ID),
-        "_embedded": {
-            "contacts": [contact_block],
-            "tags": [{"name": lead_tag}],
-        },
+    """Отправить заявку в api для создания сделки в Kommo. Возвращает
+    {status, kommo_lead_id, error}; 'dry' если api не настроен. Никогда не бросает."""
+    payload = {
+        "name": name,
+        "phone": phone_norm,
+        "answers": answers or {},
+        "agent_enum_id": agent_enum_id,
+        "utm": utm or {},
+        "ref_slug": ref_slug,
+        "lead_prefix": lead_prefix,
+        "lead_tag": lead_tag,
+        "note_intro": note_intro,
+        "question_titles": question_titles or QUESTION_TITLES,
     }
-    # Привязка к агенту через поле «ID AGENT» (enum). Нет enum_id → лид без агента
-    # + тег для ручного разбора (премортем: не угадываем агента).
-    if agent_enum_id:
-        lead["custom_fields_values"] = [{
-            "field_id": settings.KOMMO_ID_AGENT_FIELD_ID,
-            "values": [{"enum_id": int(agent_enum_id)}],
-        }]
-    else:
-        lead["_embedded"]["tags"].append({"name": "no-agent"})
-
-    try:
-        r = httpx.post(_base() + "/leads/complex", json=[lead], headers=headers, timeout=_TIMEOUT)
-        if r.status_code >= 300:
-            log.error("quiz lead create failed: HTTP %s", r.status_code)
-            return {"status": "failed", "kommo_lead_id": None, "error": f"http_{r.status_code}"}
-        data = r.json()
-        lead_id = (data[0].get("id") if isinstance(data, list) and data else None)
-    except Exception as exc:  # сеть/JSON — не валим приём заявки
-        log.error("quiz lead create error: %s", type(exc).__name__)
-        return {"status": "failed", "kommo_lead_id": None, "error": type(exc).__name__}
-
-    # /leads/complex кладёт лид в unsorted/главную воронку — принудительно
-    # переносим в 1.1 на регулярный этап (PATCH, проверено live-тестом 2026-06-02).
-    if lead_id:
-        try:
-            httpx.patch(f"{_base()}/leads/{lead_id}",
-                        json={"pipeline_id": int(settings.QUIZ_KOMMO_PIPELINE_ID),
-                              "status_id": int(settings.QUIZ_KOMMO_STATUS_ID)},
-                        headers=headers, timeout=_TIMEOUT)
-        except Exception as exc:
-            log.warning("quiz lead pipeline PATCH failed (lead=%s): %s", lead_id, type(exc).__name__)
-
-    # Примечание с ответами/UTM — best-effort: лид уже создан, провал не критичен.
-    if lead_id:
-        try:
-            note = {"note_type": "common", "params": {"text": note_text}}
-            httpx.post(f"{_base()}/leads/{lead_id}/notes", json=[note],
-                       headers=headers, timeout=_TIMEOUT)
-        except Exception as exc:
-            log.warning("quiz lead note failed (lead=%s): %s", lead_id, type(exc).__name__)
-
-    log.info("quiz lead created kommo_id=%s agent_enum=%s", lead_id, agent_enum_id)
-    return {"status": "sent", "kommo_lead_id": lead_id, "error": None}
+    result = api_client.kommo_create_consultation_lead(payload)
+    log.info("consultation lead via api status=%s kommo_id=%s agent_enum=%s",
+             result.get("status"), result.get("kommo_lead_id"), agent_enum_id)
+    return result

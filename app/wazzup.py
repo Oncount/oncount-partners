@@ -1,5 +1,10 @@
 """Отправка кода входа в WhatsApp через Wazzup24 API (план 2026-05-27, Фаза 4).
 
+ПРИМЕЧАНИЕ (2026-06-03): централизация Kommo уже выполнена (см. app/api_client.py),
+а централизация Wazzup запланирована СЛЕДУЮЩИМ PR — отправка WhatsApp переедет на
+api (POST /api/partner/notify, шаблонные типы). Пока этого endpoint нет, отправка
+идёт НАПРЯМУЮ в Wazzup24, как раньше.
+
 Тонкий слой поверх httpx (как app/email.py) — без SDK. Wazzup24 v3:
 POST https://api.wazzup24.com/v3/message
   headers: Authorization: Bearer <WAZZUP_API_KEY>
