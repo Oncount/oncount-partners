@@ -29,16 +29,20 @@ class Settings:
     # иначе Resend отклоняет отправку. Имя отправителя — ONCOUNT (бренд).
     RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
     EMAIL_FROM: str = os.getenv("EMAIL_FROM", "ONCOUNT <noreply@nikole-ai.com>")
-    # Wazzup24 — доставка кода входа в WhatsApp (план 2026-05-27, вход по номеру).
-    # Пустой ключ/канал → dev-режим: код в сеть не уходит (см. app/wazzup.py).
-    # WAZZUP_TEST_ONLY_NUMBER — предохранитель теста: если задан, код шлётся ТОЛЬКО
-    # на этот номер. Слать с НЕ основного номера (не жечь основной 84).
-    # Централизация (2026-06-03): партнёр-сервис обращается к Kommo и Wazzup ТОЛЬКО
-    # через наш api-сервис (NestJS). База api; глобальный префикс /api добавляется
-    # в самих путях клиента (см. app/api_client.py). Пусто → dev-режим: наружу 0
-    # пакетов, синк Kommo не регистрируется, лиды квиза остаются 'dry'.
+    # Централизация Kommo (2026-06-03): партнёр-сервис обращается к Kommo ТОЛЬКО
+    # через наш api-сервис (NestJS), префикс /api/partner/* под ключом x-api-key.
+    # Глобальный префикс /api добавляется в путях клиента (см. app/api_client.py).
+    # Пусто → dev-режим: синк Kommo не регистрируется, лиды квиза остаются 'dry'.
     ONCOUNT_API_URL: str = os.getenv("ONCOUNT_API_URL", "")
-    # Предохранитель теста WhatsApp — остаётся на стороне партнёра (см. app/wazzup.py).
+    # Ключ к /api/partner/* (выдан api). Пусто в dev. Сетевой рубеж — Security Group
+    # на EC2 (см. Documentation/PARTNER_API_SECURITY_DESIGN.md §4).
+    PARTNER_API_KEY: str = os.getenv("PARTNER_API_KEY", "")
+    # Wazzup24 — доставка кода входа / уведомлений в WhatsApp. ПОКА напрямую (план:
+    # следующий PR переведёт отправку на api /api/partner/notify). Пустой ключ/канал
+    # → dev-режим: в сеть ничего не уходит (см. app/wazzup.py).
+    # WAZZUP_TEST_ONLY_NUMBER — предохранитель теста: если задан, шлём ТОЛЬКО на него.
+    WAZZUP_API_KEY: str = os.getenv("WAZZUP_API_KEY", "")
+    WAZZUP_CHANNEL_ID: str = os.getenv("WAZZUP_CHANNEL_ID", "")
     WAZZUP_TEST_ONLY_NUMBER: str = os.getenv("WAZZUP_TEST_ONLY_NUMBER", "")
     # Предохранитель Telegram-дайджеста (Фаза 4). По умолчанию OFF: планировщик 5/20
     # работает в dry (превью в лог), реально НЕ шлёт. Включить только осознанно:
