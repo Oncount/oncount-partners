@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="card">
-  <p style="margin:0 0 .6em;">{{ 'You can sign in to this same cabinet via Telegram and via any confirmed phone number.' if lang == 'en' else 'В этот кабинет можно входить через Telegram и через любой подтверждённый номер телефона.' }}</p>
+  <p style="margin:0 0 .6em;">{{ 'You can sign in to this cabinet via Telegram or WhatsApp.' if lang == 'en' else 'В этот кабинет можно входить через Telegram или WhatsApp.' }}</p>
   <p style="margin:.2em 0;">
     <b>Telegram:</b>
     {% if partner.telegram_id %}<span style="color:var(--sage,#3a7);">{{ '✓ connected' if lang == 'en' else '✓ подключён' }}</span>{% if partner.username %} (@{{ partner.username }}){% endif %}
