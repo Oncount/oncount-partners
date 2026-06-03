@@ -2038,11 +2038,20 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
         ],
     }
 
+    # Каналы входа в этот кабинет (план 2026-06-02): Telegram + подтверждённые
+    # номера. Показываем прямо на дашборде (вместо отдельного пункта меню).
+    account_phones = (
+        session.query(PartnerIdentity)
+        .filter_by(partner_id=partner.id, kind="phone")
+        .all()
+    )
+
     return templates.TemplateResponse(
         "dashboard.html",
         _ctx(
             request,
             partner,
+            account_phones=account_phones,
             kpi={
                 "conversion": conversion,
                 "leads": leads_count,

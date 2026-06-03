@@ -22,6 +22,19 @@
 {% endif %}
 {% include "_balance.html" %}
 
+<div class="card">
+  <p style="margin:0 0 .5em;">{{ 'You can sign in to this cabinet via Telegram or via any confirmed phone number (WhatsApp).' if lang == 'en' else 'В этот кабинет можно входить через Telegram или через любой подтверждённый номер телефона (WhatsApp).' }}</p>
+  <p style="margin:.2em 0;">
+    <b>Telegram:</b>
+    {% if partner.telegram_id %}<span style="color:var(--sage,#3a7);">{{ '✓ connected' if lang == 'en' else '✓ подключён' }}</span>{% else %}<span style="color:#999;">{{ 'not connected' if lang == 'en' else 'не подключён' }}</span>{% endif %}
+  </p>
+  <p style="margin:.2em 0;">
+    <b>{{ 'Phone numbers:' if lang == 'en' else 'Номера телефона:' }}</b>
+    {% if account_phones %}{% for p in account_phones %}+{{ p.value }}{% if not loop.last %}, {% endif %}{% endfor %}{% else %}<span style="color:#999;">{{ 'none yet' if lang == 'en' else 'пока нет' }}</span>{% endif %}
+  </p>
+  <a class="btn btn-primary" href="/account" style="margin-top:.4em;">{{ 'Add a phone number' if lang == 'en' else 'Добавить номер телефона' }}</a>
+</div>
+
 <div class="kpi-grid">
   <div class="kpi">
     <div class="kpi-label">{{ 'Requests' if lang == 'en' else 'Заявки' }}</div>
