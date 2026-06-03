@@ -101,6 +101,19 @@ def _plang(partner: Partner) -> str:
     return "en" if getattr(partner, "lang", None) == "en" else "ru"
 
 
+def _greet_name(partner: Partner, lang: str) -> str:
+    """Имя для обращения в рассылках — ТОЛЬКО имя, без фамилии и номера
+    (решение Николь 2026-06-03). Источник (first_name / kommo_agent_name) часто
+    приходит из Kommo как «Zhanara Issagaliyeva 0072» — берём первое слово,
+    не являющееся числовым кодом. Если ничего пригодного нет — обезличенный fallback."""
+    raw = (partner.first_name or partner.kommo_agent_name or "").strip()
+    for token in raw.split():
+        cleaned = token.strip(".,").replace("-", "")
+        if cleaned and not cleaned.isdigit():
+            return token.strip(".,")
+    return "партнёр" if lang == "ru" else "partner"
+
+
 def _next_month_tenth(dt: datetime) -> date:
     y, m = dt.year, dt.month
     if m == 12:
@@ -155,7 +168,7 @@ def build_win_text(partner: Partner, lead: Lead, session: Session) -> str:
     """Пуш на оплату клиента. Телефон клиента — в тексте (правка Николь 2026-06-02).
     Выплата — после онбординга клиента и получения документов (см. WIN_PAYOUT_*)."""
     lang = _plang(partner)
-    name = partner.first_name or partner.kommo_agent_name or ("партнёр" if lang == "ru" else "partner")
+    name = _greet_name(partner, lang)
     client = (lead.client_name or "").strip() or ("ваш клиент" if lang == "ru" else "your client")
     phone = (lead.client_phone or "").strip()
     phone_part = f" ({phone})" if phone else ""
@@ -180,7 +193,7 @@ def build_digest_text(partner: Partner, session: Session, now: datetime) -> str:
     won = sum(1 for l in rows if l.status == "won")
     lost = sum(1 for l in rows if l.status == "lost")
     total = len(rows)
-    name = partner.first_name or partner.kommo_agent_name or ("партнёр" if lang == "ru" else "partner")
+    name = _greet_name(partner, lang)
     head = DIGEST_HEAD[lang].format(name=name)
     body = DIGEST_BODY[lang].format(in_progress=in_progress, won=won, lost=lost, total=total)
     return f"{head}\n{body}\n\n{DIGEST_CLOSE[lang]}"
