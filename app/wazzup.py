@@ -1,12 +1,13 @@
-"""Отправка кода входа в WhatsApp через Wazzup24 API (план 2026-05-27, Фаза 4).
+"""Отправка кода входа / текста в WhatsApp — через наш api (централизация Wazzup,
+2026-06-03).
 
-Тонкий слой поверх httpx (как app/email.py) — без SDK. Wazzup24 v3:
-POST https://api.wazzup24.com/v3/message
-  headers: Authorization: Bearer <WAZZUP_API_KEY>
-  json:    {channelId, chatType:"whatsapp", chatId:<digits>, text}
+Партнёр-сервис БОЛЬШЕ НЕ ходит в api.wazzup24.com напрямую: текст формируется здесь,
+отправка делегируется в api (POST /api/wazzup/messages) через app.api_client. Сам
+канал/ключ Wazzup живёт на стороне api.
 
-Предохранители (опасная тройка — персональные данные + отправка наружу):
-- Пустой WAZZUP_API_KEY/WAZZUP_CHANNEL_ID → dev-режим: НИЧЕГО не шлём в сеть.
+Предохранители (опасная тройка — персональные данные + отправка наружу) остаются
+на стороне партнёра:
+- Пустой ONCOUNT_API_URL → dev-режим: НИЧЕГО не шлём в сеть.
 - WAZZUP_TEST_ONLY_NUMBER задан → шлём ТОЛЬКО на этот номер, остальные молча
   пропускаем (предохранитель на тесте, пока канал не подтверждён живьём).
 - Сам код и полный телефон в логи НЕ пишем.
@@ -15,14 +16,11 @@ from __future__ import annotations
 
 import logging
 
-import httpx
-
+from app import api_client
 from app.auth import normalize_phone
 from app.config import settings
 
 log = logging.getLogger("oncount.wazzup")
-
-WAZZUP_ENDPOINT = "https://api.wazzup24.com/v3/message"
 
 
 def _mask(phone: str) -> str:
@@ -51,8 +49,8 @@ def send_wa_code(phone: str, code: str, lang: str = "ru") -> bool:
     lang = "en" if lang == "en" else "ru"
     norm = normalize_phone(phone)
 
-    if not settings.WAZZUP_API_KEY or not settings.WAZZUP_CHANNEL_ID:
-        log.warning("WAZZUP не настроен → код не отправлен (dev), %s", _mask(norm))
+    if not settings.ONCOUNT_API_URL:
+        log.warning("ONCOUNT_API_URL не задан → код не отправлен (dev), %s", _mask(norm))
         return True
 
     # Предохранитель теста: пока канал не подтверждён живьём, шлём только на свой номер.
@@ -61,25 +59,7 @@ def send_wa_code(phone: str, code: str, lang: str = "ru") -> bool:
         log.info("WAZZUP test-guard: пропуск %s (разрешён только тестовый номер)", _mask(norm))
         return True
 
-    try:
-        resp = httpx.post(
-            WAZZUP_ENDPOINT,
-            headers={"Authorization": f"Bearer {settings.WAZZUP_API_KEY}"},
-            json={
-                "channelId": settings.WAZZUP_CHANNEL_ID,
-                "chatType": "whatsapp",
-                "chatId": norm,
-                "text": _text(code, lang),
-            },
-            timeout=10.0,
-        )
-        if resp.status_code >= 400:
-            log.error("Wazzup вернул %s для %s: %s", resp.status_code, _mask(norm), resp.text[:300])
-            return False
-        return True
-    except httpx.HTTPError as exc:
-        log.error("Wazzup недоступен для %s: %s", _mask(norm), exc)
-        return False
+    return api_client.wazzup_send(norm, _text(code, lang))
 
 
 def send_wa_text(phone: str, text: str) -> bool:
@@ -89,17 +69,17 @@ def send_wa_text(phone: str, text: str) -> bool:
     приходит готовым извне (банк формулировок в app/notifications.py). Возвращает
     True при успешной отправке, False при сетевой/HTTP-ошибке.
 
-    ВАЖНО: эта функция выполняет реальный сетевой вызов ВСЕГДА, когда задан
-    ключ/канал и номер прошёл test-guard. Главный предохранитель Фазы K
-    (NOTIFICATIONS_LIVE) живёт ВЫШЕ — в send_notification: при live=false сюда
-    вообще не заходим. Здесь — только WA-специфичные гарды (dev + test-only)."""
+    ВАЖНО: эта функция делегирует отправку в api ВСЕГДА, когда задан ONCOUNT_API_URL
+    и номер прошёл test-guard. Главный предохранитель Фазы K (NOTIFICATIONS_LIVE)
+    живёт ВЫШЕ — в send_notification: при live=false сюда вообще не заходим. Здесь —
+    только WA-специфичные гарды (dev + test-only)."""
     norm = normalize_phone(phone)
     if not norm:
         log.warning("WAZZUP send_wa_text: пустой/мусорный номер — пропуск")
         return False
 
-    if not settings.WAZZUP_API_KEY or not settings.WAZZUP_CHANNEL_ID:
-        log.warning("WAZZUP не настроен → текст не отправлен (dev), %s", _mask(norm))
+    if not settings.ONCOUNT_API_URL:
+        log.warning("ONCOUNT_API_URL не задан → текст не отправлен (dev), %s", _mask(norm))
         return False
 
     # Предохранитель теста: пока канал не подтверждён живьём, шлём только на свой номер.
@@ -108,22 +88,4 @@ def send_wa_text(phone: str, text: str) -> bool:
         log.info("WAZZUP test-guard: пропуск %s (разрешён только тестовый номер)", _mask(norm))
         return False
 
-    try:
-        resp = httpx.post(
-            WAZZUP_ENDPOINT,
-            headers={"Authorization": f"Bearer {settings.WAZZUP_API_KEY}"},
-            json={
-                "channelId": settings.WAZZUP_CHANNEL_ID,
-                "chatType": "whatsapp",
-                "chatId": norm,
-                "text": text,
-            },
-            timeout=10.0,
-        )
-        if resp.status_code >= 400:
-            log.error("Wazzup вернул %s для %s: %s", resp.status_code, _mask(norm), resp.text[:300])
-            return False
-        return True
-    except httpx.HTTPError as exc:
-        log.error("Wazzup недоступен для %s: %s", _mask(norm), exc)
-        return False
+    return api_client.wazzup_send(norm, text)

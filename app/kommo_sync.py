@@ -1,8 +1,14 @@
 """Синхронизация лидов агентов из Kommo в локальную таблицу Lead (Фаза 1 + кабинет).
 
 Идея: кабинет (/dashboard, /leads) читает локальный Lead по partner_id мгновенно.
-Этот модуль периодически тянет из Kommo (воронка 1.1) лиды, сгруппированные по
-полю «ID AGENT» (enum_id), и раскладывает их по Partner.kommo_agent_enum_id.
+Этот модуль периодически тянет лиды агентов через наш api (воронка 1.1) и
+раскладывает их по Partner.kommo_agent_enum_id.
+
+Централизация (2026-06-03): партнёр-сервис НЕ ходит в Kommo напрямую. api отдаёт
+лиды в ПЛОСКОЙ форме (api сам маппит статус/агента/имя из Kommo): каждый элемент —
+{kommo_lead_id, agent_enum_id, status, amount_aed, client_name}, status уже приведён
+к 'won' | 'lost' | 'in_progress'. Словарь вокабуляра Kommo (поле «ID AGENT»,
+status_id 142/143) живёт на стороне api, не здесь.
 
 Ключ агента — enum_id (стабильный), НЕ текст-снимок. Идемпотентно: upsert по
 kommo_lead_id. Запускается планировщиком (см. main.on_startup).
@@ -12,31 +18,25 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 
-import httpx
 from sqlalchemy.orm import Session
 
-from app.config import settings
+from app import api_client
 from app.db import SessionLocal
 from app.models import Lead, Partner
 from app.refgen import generate_ref_slug
 
 log = logging.getLogger("oncount.kommo_sync")
 
-BASE = "https://primeadvice.kommo.com/api/v4"
-AGENT_FIELD = 961886       # поле «ID AGENT»
-PIPELINE_AGENT = 11126307  # воронка 1.1 «Line agent lid»
-WON, LOST = 142, 143
+PIPELINE_AGENT = 11126307  # воронка 1.1 «Line agent lid» (контракт фильтра с api)
 
 
 def seed_partners_from_enums(dry: bool = False) -> dict:
     """Фаза 0.7: создать Partner на каждого агента из enum-справочника «ID AGENT».
     Идемпотентно (upsert по kommo_agent_enum_id), быстро (без скана лидов).
-    У каждого ref_slug для персональной инвайт-ссылки."""
-    token = settings.KOMMO_TOKEN
-    if not token:
-        return {"error": "KOMMO_TOKEN пуст"}
-    with httpx.Client(timeout=30, headers={"Authorization": f"Bearer {token}"}) as c:
-        enums = (c.get(f"{BASE}/leads/custom_fields/{AGENT_FIELD}").json().get("enums") or [])
+    У каждого ref_slug для персональной инвайт-ссылки. Enum'ы тянет через api."""
+    enums = api_client.kommo_agent_enums()
+    if enums is None:
+        return {"error": "api недоступен или ONCOUNT_API_URL не задан"}
     session = SessionLocal()
     created = updated = 0
     try:
@@ -61,35 +61,11 @@ def seed_partners_from_enums(dry: bool = False) -> dict:
     return {"agents_in_field": len(enums), "created": created, "updated": updated, "dry": dry}
 
 
-def _status(status_id: int) -> str:
-    if status_id == WON:
-        return "won"
-    if status_id == LOST:
-        return "lost"
-    return "in_progress"
-
-
-def _agent_enum_id(lead: dict):
-    f = next((x for x in (lead.get("custom_fields_values") or [])
-              if x.get("field_name") == "ID AGENT"), None)
-    return f["values"][0].get("enum_id") if f and f.get("values") else None
-
-
-def _client_name(lead: dict) -> str:
-    name = (lead.get("name") or "").strip()
-    if name and not name.lower().startswith(("lead #", "сделка #", "сделка по")):
-        return name[:255]
-    contacts = (lead.get("_embedded") or {}).get("contacts") or []
-    if contacts and contacts[0].get("name"):
-        return str(contacts[0]["name"])[:255]
-    return name[:255] or f"#{lead.get('id')}"
-
-
 def sync_agent_leads() -> dict:
-    """Тянет лиды воронки 1.1 и раскладывает по партнёрам. Возвращает счётчики."""
-    token = settings.KOMMO_TOKEN
-    if not token:
-        log.warning("KOMMO_TOKEN пуст — синк пропущен")
+    """Тянет лиды воронки 1.1 через api и раскладывает по партнёрам. Возвращает счётчики."""
+    leads_all = api_client.kommo_agent_leads(PIPELINE_AGENT)
+    if leads_all is None:
+        log.warning("api недоступен / ONCOUNT_API_URL не задан — синк пропущен")
         return {"skipped": True}
 
     session: Session = SessionLocal()
@@ -107,64 +83,44 @@ def sync_agent_leads() -> dict:
         if not by_enum:
             return {"agents": 0, "note": "нет партнёров с kommo_agent_enum_id"}
 
-        with httpx.Client(timeout=30, headers={"Authorization": f"Bearer {token}"}) as client:
-            page = 1
-            while True:
-                r = client.get(
-                    f"{BASE}/leads",
-                    params={
-                        "filter[pipeline_id][]": PIPELINE_AGENT,
-                        "with": "contacts",
-                        "limit": 250,
-                        "page": page,
-                    },
-                )
-                if r.status_code == 204 or r.status_code >= 400:
-                    break
-                leads = (r.json().get("_embedded") or {}).get("leads") or []
-                for l in leads:
-                    eid = _agent_enum_id(l)
-                    pid = by_enum.get(eid)
-                    if not pid:
-                        continue
-                    kommo_id = l.get("id")
-                    row = session.query(Lead).filter_by(kommo_lead_id=kommo_id).first()
-                    st = _status(l.get("status_id"))
-                    amount = l.get("price") or None
-                    if row:
-                        old_status = row.status
-                        row.status = st
-                        row.partner_id = pid
-                        if amount is not None:
-                            row.amount_aed = amount
-                        # Переход в won (Фаза K): фиксируем якорь выплаты один раз
-                        # и помечаем лид на извещение партнёра (после commit).
-                        if st == "won" and old_status != "won":
-                            if row.won_at is None:
-                                row.won_at = datetime.utcnow()
-                            if row.won_notified_at is None:
-                                newly_won.append(kommo_id)
-                        updated += 1
-                    else:
-                        # Лид впервые виден синком. Если он уже won — это история
-                        # (бэкфилл): ставим якорь, но помечаем извещённым БЕЗ
-                        # отправки, чтобы при go-live не ушла лавина старых пушей.
-                        now = datetime.utcnow()
-                        session.add(Lead(
-                            partner_id=pid,
-                            kommo_lead_id=kommo_id,
-                            client_name=_client_name(l),
-                            status=st,
-                            amount_aed=amount,
-                            won_at=now if st == "won" else None,
-                            won_notified_at=now if st == "won" else None,
-                        ))
-                        created += 1
-                if len(leads) < 250:
-                    break
-                page += 1
-                if page > 80:
-                    break
+        for l in leads_all:
+            eid = l.get("agent_enum_id")
+            pid = by_enum.get(eid)
+            if not pid:
+                continue
+            kommo_id = l.get("kommo_lead_id")
+            row = session.query(Lead).filter_by(kommo_lead_id=kommo_id).first()
+            st = l.get("status") or "in_progress"
+            amount = l.get("amount_aed") or None
+            if row:
+                old_status = row.status
+                row.status = st
+                row.partner_id = pid
+                if amount is not None:
+                    row.amount_aed = amount
+                # Переход в won (Фаза K): фиксируем якорь выплаты один раз
+                # и помечаем лид на извещение партнёра (после commit).
+                if st == "won" and old_status != "won":
+                    if row.won_at is None:
+                        row.won_at = datetime.utcnow()
+                    if row.won_notified_at is None:
+                        newly_won.append(kommo_id)
+                updated += 1
+            else:
+                # Лид впервые виден синком. Если он уже won — это история
+                # (бэкфилл): ставим якорь, но помечаем извещённым БЕЗ
+                # отправки, чтобы при go-live не ушла лавина старых пушей.
+                now = datetime.utcnow()
+                session.add(Lead(
+                    partner_id=pid,
+                    kommo_lead_id=kommo_id,
+                    client_name=l.get("client_name") or f"#{kommo_id}",
+                    status=st,
+                    amount_aed=amount,
+                    won_at=now if st == "won" else None,
+                    won_notified_at=now if st == "won" else None,
+                ))
+                created += 1
         session.commit()
         # Извещаем партнёров о только что выигранных лидах (Фаза K). Делаем ПОСЛЕ
         # commit статусов: уведомление — отдельная забота, его сбой не должен
