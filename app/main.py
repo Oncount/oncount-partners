@@ -2028,46 +2028,18 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
     for item in faq_items:
         faq_categories.setdefault(item.category, []).append(item)
 
-    # ── Блок «Сообщество» (соц-доказательство): сколько у нас агентов всего,
-    # сколько из них уже передали хотя бы один контакт, сколько контактов
-    # передано суммарно и топ-5 по числу переданных контактов. Цифры глобальные
-    # (одинаковы для всех агентов). В топе — ТОЛЬКО имя, без компании.
-    from sqlalchemy import func
-
-    lang = _lang(request)
-    total_agents = session.query(func.count(Partner.id)).scalar() or 0
-    lead_counts = (
-        session.query(Lead.partner_id, func.count(Lead.id).label("n"))
-        .filter(Lead.partner_id.isnot(None))
-        .group_by(Lead.partner_id)
-        .all()
-    )
-    agents_with_leads = len(lead_counts)
-    total_contacts = sum(r.n for r in lead_counts)
-    top_rows = sorted(lead_counts, key=lambda r: r.n, reverse=True)[:5]
-    top_ids = [r.partner_id for r in top_rows]
-    top_partners = (
-        {p.id: p for p in session.query(Partner).filter(Partner.id.in_(top_ids)).all()}
-        if top_ids else {}
-    )
-
-    def _community_name(p: Partner | None) -> str:
-        if p is None:
-            return "Партнёр" if lang == "ru" else "Partner"
-        if p.first_name and p.first_name.strip():
-            return p.first_name.strip()
-        # Имя из Kommo может быть «Имя Фамилия (Компания)» — оставляем только имя.
-        if p.kommo_agent_name and p.kommo_agent_name.strip():
-            return p.kommo_agent_name.split("(")[0].strip().split()[0]
-        return "Партнёр" if lang == "ru" else "Partner"
-
+    # ── Блок «Сообщество» — КУРАТОРСКАЯ соц-витрина: фиксированные цифры и имена,
+    # утверждённые Николь (это НЕ живые данные из БД). Цель — соц-доказательство
+    # масштаба партнёрской сети. В топе — только имя, по убыванию числа контактов.
     community = {
-        "total_agents": total_agents,
-        "agents_with_leads": agents_with_leads,
-        "total_contacts": total_contacts,
+        "partners": 139,
+        "total_contacts": 187,  # ⚠️ значение на подтверждении Николь
         "top": [
-            {"name": _community_name(top_partners.get(r.partner_id)), "count": r.n}
-            for r in top_rows
+            {"name": "Евгений", "count": 45},
+            {"name": "Ильяс", "count": 28},
+            {"name": "Даниил", "count": 21},
+            {"name": "Мари", "count": 16},
+            {"name": "Ольга", "count": 12},
         ],
     }
 

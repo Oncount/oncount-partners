@@ -134,15 +134,11 @@
   <h3 style="margin: 0 0 16px;">🤝 {{ 'Community' if lang == 'en' else 'Сообщество' }}</h3>
   <div class="kpi-grid" style="margin-bottom: 4px;">
     <div class="kpi">
-      <div class="kpi-label">{{ 'Agents in the network' if lang == 'en' else 'Агентов в сети' }}</div>
-      <div class="kpi-value">{{ community.total_agents }}</div>
+      <div class="kpi-label">{{ 'Partners' if lang == 'en' else 'Партнёры' }}</div>
+      <div class="kpi-value">{{ community.partners }}</div>
     </div>
     <div class="kpi">
-      <div class="kpi-label">{{ 'Already sharing clients' if lang == 'en' else 'Уже передают клиентов' }}</div>
-      <div class="kpi-value">{{ community.agents_with_leads }}</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-label">{{ 'Contacts shared with us' if lang == 'en' else 'Контактов передано нам' }}</div>
+      <div class="kpi-label">{{ 'Contacts shared' if lang == 'en' else 'Переданных контактов' }}</div>
       <div class="kpi-value">{{ community.total_contacts }}</div>
     </div>
   </div>
