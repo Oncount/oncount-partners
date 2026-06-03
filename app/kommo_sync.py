@@ -25,6 +25,11 @@ log = logging.getLogger("oncount.kommo_sync")
 BASE = "https://primeadvice.kommo.com/api/v4"
 AGENT_FIELD = 961886       # поле «ID AGENT»
 PIPELINE_AGENT = 11126307  # воронка 1.1 «Line agent lid»
+PIPELINE_FIRST = 9617055   # воронка 1 «1. Fist line»
+# Синк читает 1.1 + воронку 1 (фильтр по ID AGENT в коде, см. ниже). НЕ читаем
+# «6. Agents партнеры» (9707963): там карточки агентов с проставленным ID AGENT —
+# иначе синк создал бы мусорный «лид-клиент» = сам агент.
+SYNC_PIPELINES = [PIPELINE_AGENT, PIPELINE_FIRST]
 WON, LOST = 142, 143
 
 
@@ -86,7 +91,8 @@ def _client_name(lead: dict) -> str:
 
 
 def sync_agent_leads() -> dict:
-    """Тянет лиды воронки 1.1 и раскладывает по партнёрам. Возвращает счётчики."""
+    """Тянет лиды воронок 1.1 + «1. Fist line» (SYNC_PIPELINES) и раскладывает по
+    партнёрам по полю ID AGENT. Возвращает счётчики. Только чтение Kommo."""
     token = settings.KOMMO_TOKEN
     if not token:
         log.warning("KOMMO_TOKEN пуст — синк пропущен")
@@ -121,7 +127,7 @@ def sync_agent_leads() -> dict:
                 r = client.get(
                     f"{BASE}/leads",
                     params={
-                        "filter[pipeline_id][]": PIPELINE_AGENT,
+                        "filter[pipeline_id][]": SYNC_PIPELINES,
                         "with": "contacts",
                         "limit": 250,
                         "page": page,
