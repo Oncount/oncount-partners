@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Sign-in & numbers' if lang == 'en' else 'Вход и номера' }} — ONCOUNT{% endblock %}
+{% block heading %}{{ 'Sign-in channels' if lang == 'en' else 'Каналы входа' }}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <p style="margin:0 0 .6em;">{{ 'You can sign in to this same cabinet via Telegram and via any confirmed phone number.' if lang == 'en' else 'В этот кабинет можно входить через Telegram и через любой подтверждённый номер телефона.' }}</p>
+  <p style="margin:.2em 0;">
+    <b>Telegram:</b>
+    {% if partner.telegram_id %}<span style="color:var(--sage,#3a7);">{{ '✓ connected' if lang == 'en' else '✓ подключён' }}</span>{% if partner.username %} (@{{ partner.username }}){% endif %}
+    {% else %}<span style="color:#999;">{{ 'not connected' if lang == 'en' else 'не подключён' }}</span>{% endif %}
+  </p>
+  <p style="margin:.2em 0;"><b>{{ 'Phone numbers:' if lang == 'en' else 'Номера телефона:' }}</b></p>
+  <ul style="margin:.2em 0 0;">
+    {% for p in phones %}<li>+{{ p.value }}</li>{% endfor %}
+    {% if not phones %}<li style="color:#999;">{{ 'none yet' if lang == 'en' else 'пока нет' }}</li>{% endif %}
+  </ul>
+</div>
+
+{% if message %}
+<div class="alert" style="background:rgba(236,100,66,.12); color:var(--orange,#c50); border:1px solid var(--orange,#c50);">{{ message }}</div>
+{% endif %}
+
+<div class="card">
+  <h3 style="margin-top:0;">{{ 'Add a phone number' if lang == 'en' else 'Добавить номер телефона' }}</h3>
+  {% if not code_sent %}
+  <form class="form" method="POST" action="/account/phone/request">
+    <label>{{ 'Phone (with country code)' if lang == 'en' else 'Телефон (с кодом страны)' }}
+      <input type="tel" name="phone" required placeholder="+971 50 000 0000">
+    </label>
+    <button type="submit" class="btn btn-primary">{{ 'Send code to WhatsApp' if lang == 'en' else 'Прислать код в WhatsApp' }}</button>
+  </form>
+  {% else %}
+  <p style="margin:.2em 0 .6em;">{{ 'We sent a 6-digit code to WhatsApp at' if lang == 'en' else 'Мы отправили 6-значный код в WhatsApp на' }} +{{ code_phone }}.</p>
+  <form class="form" method="POST" action="/account/phone/verify">
+    <input type="hidden" name="phone" value="{{ code_phone }}">
+    <label>{{ 'Confirmation code' if lang == 'en' else 'Код подтверждения' }}
+      <input type="text" name="code" required inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="123456">
+    </label>
+    <div style="display:flex; gap:10px;">
+      <button type="submit" class="btn btn-primary">{{ 'Confirm and link' if lang == 'en' else 'Подтвердить и привязать' }}</button>
+      <a class="btn btn-ghost" href="/account">{{ 'Cancel' if lang == 'en' else 'Отмена' }}</a>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

@@ -37,6 +37,7 @@ from app.models import (
     LoginSession,
     MessageTemplate,
     Partner,
+    PartnerIdentity,
     PhoneLoginToken,
     ProductBlock,
     QuizSubmission,
@@ -1665,6 +1666,92 @@ def logout() -> RedirectResponse:
     response = RedirectResponse("/login", status_code=302)
     response.delete_cookie(COOKIE_NAME)
     return response
+
+
+# ─── Аккаунт: каналы входа (план 2026-06-02) ────────────────────────────────
+# Один кабинет ↔ много каналов: Telegram (telegram_id) + номера (PartnerIdentity
+# kind='phone'). Авторизованный агент добавляет ещё номер к СВОЕМУ кабинету —
+# подтверждение кодом в WhatsApp. Так вход с Telegram и с WhatsApp ведёт в один
+# и тот же кабинет (требование Николь 2026-06-02).
+def _account_render(request: Request, session: Session, partner: Partner, **extra) -> HTMLResponse:
+    phones = (session.query(PartnerIdentity)
+              .filter_by(partner_id=partner.id, kind="phone").all())
+    code = 400 if extra.pop("_bad", False) else 200
+    return templates.TemplateResponse(
+        "account.html", _ctx(request, partner, phones=phones, **extra), status_code=code)
+
+
+@app.get("/account", response_class=HTMLResponse)
+def account_page(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
+    partner = current_partner(request, session)
+    if not partner:
+        return RedirectResponse("/login", status_code=302)
+    return _account_render(request, session, partner, code_sent=False, message=None)
+
+
+@app.post("/account/phone/request", response_class=HTMLResponse)
+def account_phone_request(request: Request, phone: str = Form(...),
+                          session: Session = Depends(get_session)) -> HTMLResponse:
+    partner = current_partner(request, session)
+    if not partner:
+        return RedirectResponse("/login", status_code=302)
+    en = _lang(request) == "en"
+    norm = normalize_phone(phone)
+    if len(norm) < PHONE_MIN_DIGITS:
+        return _account_render(request, session, partner, code_sent=False, _bad=True,
+                               message=("The phone looks invalid." if en else "Номер выглядит некорректным."))
+    other = find_partner_by_phone(session, norm)
+    if other is not None and other.id != partner.id:
+        return _account_render(request, session, partner, code_sent=False, _bad=True,
+                               message=("This number is already linked to another account." if en
+                                        else "Этот номер уже привязан к другому кабинету. Напишите менеджеру для объединения."))
+    window = datetime.utcnow() - PHONE_CODE_TTL
+    recent = (session.query(PhoneLoginToken)
+              .filter(PhoneLoginToken.phone == norm, PhoneLoginToken.created_at >= window).count())
+    if recent < PHONE_RATE_LIMIT:
+        code = f"{secrets.randbelow(900_000) + 100_000}"
+        session.add(PhoneLoginToken(phone=norm, code_hash=hash_login_code(code)))
+        session.commit()
+        send_wa_code(norm, code, _lang(request))
+    return _account_render(request, session, partner, code_sent=True, code_phone=norm, message=None)
+
+
+@app.post("/account/phone/verify", response_class=HTMLResponse)
+def account_phone_verify(request: Request, phone: str = Form(...), code: str = Form(...),
+                         session: Session = Depends(get_session)):
+    partner = current_partner(request, session)
+    if not partner:
+        return RedirectResponse("/login", status_code=302)
+    en = _lang(request) == "en"
+    norm = normalize_phone(phone)
+    code = (code or "").strip()
+    bad = ("Code is invalid or expired." if en else "Код неверный или истёк.")
+    rec = (session.query(PhoneLoginToken)
+           .filter(PhoneLoginToken.phone == norm, PhoneLoginToken.consumed_at.is_(None))
+           .order_by(PhoneLoginToken.created_at.desc()).first())
+    if (rec is None or datetime.utcnow() - rec.created_at > PHONE_CODE_TTL
+            or rec.attempts >= PHONE_CODE_MAX_ATTEMPTS):
+        return _account_render(request, session, partner, code_sent=True, code_phone=norm, _bad=True, message=bad)
+    rec.attempts += 1
+    session.commit()
+    if not verify_login_code(code, rec.code_hash):
+        return _account_render(request, session, partner, code_sent=True, code_phone=norm, _bad=True, message=bad)
+    rec.consumed_at = datetime.utcnow()
+    session.commit()
+    other = find_partner_by_phone(session, norm)
+    if other is not None and other.id != partner.id:
+        return _account_render(request, session, partner, code_sent=False, _bad=True,
+                               message=("This number is already linked to another account." if en
+                                        else "Этот номер уже привязан к другому кабинету."))
+    if session.query(PartnerIdentity).filter_by(kind="phone", value=norm).first() is None:
+        session.add(PartnerIdentity(kind="phone", value=norm, partner_id=partner.id))
+    if not (partner.phone or "").strip():
+        partner.phone = norm
+    try:
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+    return RedirectResponse("/account", status_code=303)
 
 
 # (slug, RU-подпись, EN-подпись) — шаблон онбординга выбирает подпись по lang.
