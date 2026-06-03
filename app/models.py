@@ -93,6 +93,10 @@ class Lead(Base):
     # kommo_sync и легаси-ТГ-бота этого поля не заполняют.
     do_not_offer: Mapped[str | None] = mapped_column(Text)
     kommo_lead_id: Mapped[int | None] = mapped_column(BigInteger)
+    # Дата СОЗДАНИЯ сделки в Kommo = момент передачи лида агентом (НЕ created_at
+    # портальной строки, которая ставится при синке). Заполняет kommo_sync из
+    # поля Kommo `created_at`. Показываем в админ-карточке агента как «Передан».
+    kommo_created_at: Mapped[datetime | None] = mapped_column(DateTime)
     status: Mapped[str] = mapped_column(String(32), default="new", index=True)
     amount_aed: Mapped[float | None] = mapped_column(Numeric(12, 2))
     # Статус партнёрского вознаграждения по ВЫИГРАННОМУ лиду (Фаза B, план

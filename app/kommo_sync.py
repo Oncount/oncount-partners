@@ -156,12 +156,22 @@ def _client_name(lead: dict, contact: dict | None = None) -> str:
     return name[:255] or f"#{lead.get('id')}"
 
 
+def _kommo_created_dt(lead: dict) -> datetime | None:
+    """Дата создания сделки в Kommo (unix `created_at`) → datetime. Это момент
+    передачи лида агентом; для админ-карточки («Передан»)."""
+    ts = lead.get("created_at")
+    try:
+        return datetime.utcfromtimestamp(int(ts)) if ts else None
+    except (ValueError, TypeError, OverflowError):
+        return None
+
+
 def _upsert_lead(session, kommo_id, pid, st, amount, client_name, client_phone,
-                 backfill_won, newly_won):
+                 backfill_won, newly_won, kommo_created=None):
     """Upsert портал-Lead по kommo_lead_id. backfill_won=True → форсим статус won
     БЕЗ win-пуша (история из Excel). Возвращает True если создан, False если обновлён.
-    Имя/телефон клиента бэкфиллим и у существующих строк (источник истины — Kommo),
-    но НЕ затираем уже сохранённое пустым значением."""
+    Имя/телефон/дату-сделки клиента бэкфиллим и у существующих строк (источник
+    истины — Kommo), но НЕ затираем уже сохранённое пустым значением."""
     if backfill_won:
         st = "won"
     row = session.query(Lead).filter_by(kommo_lead_id=kommo_id).first()
@@ -176,6 +186,8 @@ def _upsert_lead(session, kommo_id, pid, st, amount, client_name, client_phone,
             row.client_name = client_name
         if client_phone:
             row.client_phone = client_phone
+        if kommo_created and row.kommo_created_at is None:
+            row.kommo_created_at = kommo_created
         if st == "won" and old != "won":
             if row.won_at is None:
                 row.won_at = now
@@ -187,7 +199,7 @@ def _upsert_lead(session, kommo_id, pid, st, amount, client_name, client_phone,
         return False
     session.add(Lead(
         partner_id=pid, kommo_lead_id=kommo_id, client_name=client_name,
-        client_phone=client_phone or None,
+        client_phone=client_phone or None, kommo_created_at=kommo_created,
         status=st, amount_aed=amount,
         won_at=now if st == "won" else None,
         won_notified_at=now if st == "won" else None,
@@ -253,7 +265,8 @@ def sync_agent_leads() -> dict:
                     phone = contact.get("phone") if contact else None
                     if _upsert_lead(session, kommo_id, pid, _status(l.get("status_id")),
                                     l.get("price") or None, _client_name(l, contact), phone,
-                                    kommo_id in WON_BACKFILL, newly_won):
+                                    kommo_id in WON_BACKFILL, newly_won,
+                                    kommo_created=_kommo_created_dt(l)):
                         created += 1
                     else:
                         updated += 1
@@ -283,7 +296,8 @@ def sync_agent_leads() -> dict:
                 contact = _fetch_contacts(client, [cid]).get(cid) if cid else None
                 phone = contact.get("phone") if contact else None
                 if _upsert_lead(session, kid, pid, "won", l.get("price") or None,
-                                _client_name(l, contact), phone, True, newly_won):
+                                _client_name(l, contact), phone, True, newly_won,
+                                kommo_created=_kommo_created_dt(l)):
                     created += 1
                 else:
                     updated += 1

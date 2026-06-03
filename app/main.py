@@ -594,6 +594,8 @@ async def on_startup() -> None:
         # пуш уже обработан. create_all не делает ALTER, а leads уже есть в проде.
         conn.execute(text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS won_at TIMESTAMP"))
         conn.execute(text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS won_notified_at TIMESTAMP"))
+        # Дата создания сделки в Kommo (= передача лида). Заполняет kommo_sync.
+        conn.execute(text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS kommo_created_at TIMESTAMP"))
         # Модуль выплат (план 2026-06-02, замена Excel). Аддитивно и идемпотентно:
         # nullable-колонки без DB-default (кроме payout_urgent). create_all не делает
         # ALTER, а leads уже есть в проде. Заполняет менеджер на /admin/payouts.
@@ -729,6 +731,35 @@ def require_admin(request: Request, session: Session) -> Partner:
 
 KOMMO_LEAD_URL = "https://primeadvice.kommo.com/leads/detail/"
 
+# Точечные замены кривых имён агентов из справочника Kommo на нормальные
+# (ключ — в нижнем регистре). Хвост-код («Natalya 5828») чистится отдельно,
+# здесь — только то, что не сводится к стрижке цифр (решение Николь 2026-06-03).
+AGENT_NAME_OVERRIDES = {
+    "ostrovok": "Анна Островок",
+    "островок": "Анна Островок",
+}
+
+
+def agent_display_name(partner) -> str:
+    """Имя агента для шапки/таблиц: точечная замена → иначе чистим хвост-код
+    (убираем токены из одних цифр: «Natalya 5828» → «Natalya»)."""
+    raw = (getattr(partner, "first_name", None)
+           or getattr(partner, "kommo_agent_name", None) or "").strip()
+    if not raw:
+        return f"#{getattr(partner, 'id', '')}"
+    if raw.lower() in AGENT_NAME_OVERRIDES:
+        return AGENT_NAME_OVERRIDES[raw.lower()]
+    cleaned = " ".join(t for t in raw.split() if not t.isdigit()).strip()
+    return cleaned or raw
+
+
+def agent_kommo_card_url(partner) -> str | None:
+    """Ссылка на карточку агента в Kommo. ПОКА None: карточки воронки 6 (2180 шт.)
+    почти не содержат поля ID AGENT (покрытие ~1%, проверено 2026-06-03), поэтому
+    связать Partner.kommo_agent_enum_id с конкретной карточкой нечем. Возвращаем
+    None (в шаблоне ссылка просто не показывается) до решения, как линковать агентов."""
+    return None
+
 
 def _humanize_survey(answers: dict) -> list[tuple[str, str]]:
     """Ответы анкеты L → [(вопрос, человекочитаемый ответ)] по белым спискам."""
@@ -820,6 +851,19 @@ def admin_partner_detail(pid: int, request: Request, session: Session = Depends(
         .all()
     )
     from app.notifications import build_digest_text, build_win_text
+    from app.commissions_snapshot import commissions_by_lead
+
+    # Комиссии из снимка листа (источник истины выплат), по kommo_lead_id. Один лид
+    # может иметь несколько платежей — показываем раздельно (решение Николь 2026-06-03).
+    comm = commissions_by_lead()
+    rows = []
+    fee_total = 0.0
+    for l in leads:
+        pays = comm.get(l.kommo_lead_id or 0, [])
+        for p in pays:
+            if p["status"] == "paid":
+                fee_total += p["fee"]
+        rows.append({"lead": l, "payments": pays})
 
     digest_preview = build_digest_text(agent, session, datetime.utcnow())
     last_won = next((l for l in leads if l.status == "won"), None)
@@ -828,7 +872,10 @@ def admin_partner_detail(pid: int, request: Request, session: Session = Depends(
         "admin_partner_detail.html",
         _ctx(
             request, admin,
-            agent=agent, leads=leads, kommo_url=KOMMO_LEAD_URL,
+            agent=agent, leads=leads, rows=rows, kommo_url=KOMMO_LEAD_URL,
+            agent_name=agent_display_name(agent),
+            agent_card_url=agent_kommo_card_url(agent),
+            fee_total=fee_total,
             profile=_humanize_survey(agent.onboarding_answers or {}),
             digest_preview=digest_preview, win_preview=win_preview,
         ),
