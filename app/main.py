@@ -1700,11 +1700,9 @@ def account_phone_request(request: Request, phone: str = Form(...),
     if len(norm) < PHONE_MIN_DIGITS:
         return _account_render(request, session, partner, code_sent=False, _bad=True,
                                message=("The phone looks invalid." if en else "Номер выглядит некорректным."))
-    other = find_partner_by_phone(session, norm)
-    if other is not None and other.id != partner.id:
-        return _account_render(request, session, partner, code_sent=False, _bad=True,
-                               message=("This number is already linked to another account." if en
-                                        else "Этот номер уже привязан к другому кабинету. Напишите менеджеру для объединения."))
+    # Код шлём, даже если номер сейчас висит на другом кабинете: подтверждение кода
+    # = доказательство владения номером → на verify заберём его в текущий кабинет
+    # (самолечение дублей; чужой номер не перехватить — код приходит владельцу).
     window = datetime.utcnow() - PHONE_CODE_TTL
     recent = (session.query(PhoneLoginToken)
               .filter(PhoneLoginToken.phone == norm, PhoneLoginToken.created_at >= window).count())
@@ -1738,19 +1736,16 @@ def account_phone_verify(request: Request, phone: str = Form(...), code: str = F
         return _account_render(request, session, partner, code_sent=True, code_phone=norm, _bad=True, message=bad)
     rec.consumed_at = datetime.utcnow()
     session.commit()
-    other = find_partner_by_phone(session, norm)
-    if other is not None and other.id != partner.id:
-        return _account_render(request, session, partner, code_sent=False, _bad=True,
-                               message=("This number is already linked to another account." if en
-                                        else "Этот номер уже привязан к другому кабинету."))
-    if session.query(PartnerIdentity).filter_by(kind="phone", value=norm).first() is None:
+    # Владение номером доказано кодом. Если номер уже есть как identity — забираем
+    # его в текущий кабинет (перепривязка при дублях/старых тестах); иначе создаём.
+    existing = session.query(PartnerIdentity).filter_by(kind="phone", value=norm).first()
+    if existing is not None:
+        existing.partner_id = partner.id
+    else:
         session.add(PartnerIdentity(kind="phone", value=norm, partner_id=partner.id))
     if not (partner.phone or "").strip():
         partner.phone = norm
-    try:
-        session.commit()
-    except IntegrityError:
-        session.rollback()
+    session.commit()
     return RedirectResponse("/account", status_code=303)
 
 
