@@ -127,6 +127,42 @@
   </div>
 </div>
 
+{# Блок «Сообщество» — соц-доказательство масштаба партнёрской сети.
+   Три цифры (всего агентов / передали контакты / контактов передано) и топ-5
+   по числу переданных контактов. В топе — ТОЛЬКО имя, без компании. #}
+<div class="card" id="community">
+  <h3 style="margin: 0 0 16px;">🤝 {{ 'Community' if lang == 'en' else 'Сообщество' }}</h3>
+  <div class="kpi-grid" style="margin-bottom: 4px;">
+    <div class="kpi">
+      <div class="kpi-label">{{ 'Agents in the network' if lang == 'en' else 'Агентов в сети' }}</div>
+      <div class="kpi-value">{{ community.total_agents }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">{{ 'Already sharing clients' if lang == 'en' else 'Уже передают клиентов' }}</div>
+      <div class="kpi-value">{{ community.agents_with_leads }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">{{ 'Contacts shared with us' if lang == 'en' else 'Контактов передано нам' }}</div>
+      <div class="kpi-value">{{ community.total_contacts }}</div>
+    </div>
+  </div>
+
+  {% if community.top %}
+  <div style="margin-top: 20px;">
+    <div class="faq-category">{{ 'Top contributors' if lang == 'en' else 'Топ участников' }}</div>
+    {% for item in community.top %}
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border);">
+      <span style="min-width: 22px; color: var(--sage); font-weight: 600;">{{ loop.index }}.</span>
+      <span style="flex: 1; color: var(--charcoal);">{{ item.name }}</span>
+      <span style="color: var(--sage); font-size: 14px;">
+        {{ item.count }} {{ 'contacts' if lang == 'en' else 'контактов' }}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
 {# FAQ — перенесён сюда, в самый низ дашборда (раньше отдельная страница /faq).
    Якорь #faq: на него ведут пункт меню «❓ FAQ» и редирект со старого /faq. #}
 {% if faq_categories %}

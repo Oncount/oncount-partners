@@ -2028,6 +2028,49 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
     for item in faq_items:
         faq_categories.setdefault(item.category, []).append(item)
 
+    # ── Блок «Сообщество» (соц-доказательство): сколько у нас агентов всего,
+    # сколько из них уже передали хотя бы один контакт, сколько контактов
+    # передано суммарно и топ-5 по числу переданных контактов. Цифры глобальные
+    # (одинаковы для всех агентов). В топе — ТОЛЬКО имя, без компании.
+    from sqlalchemy import func
+
+    lang = _lang(request)
+    total_agents = session.query(func.count(Partner.id)).scalar() or 0
+    lead_counts = (
+        session.query(Lead.partner_id, func.count(Lead.id).label("n"))
+        .filter(Lead.partner_id.isnot(None))
+        .group_by(Lead.partner_id)
+        .all()
+    )
+    agents_with_leads = len(lead_counts)
+    total_contacts = sum(r.n for r in lead_counts)
+    top_rows = sorted(lead_counts, key=lambda r: r.n, reverse=True)[:5]
+    top_ids = [r.partner_id for r in top_rows]
+    top_partners = (
+        {p.id: p for p in session.query(Partner).filter(Partner.id.in_(top_ids)).all()}
+        if top_ids else {}
+    )
+
+    def _community_name(p: Partner | None) -> str:
+        if p is None:
+            return "Партнёр" if lang == "ru" else "Partner"
+        if p.first_name and p.first_name.strip():
+            return p.first_name.strip()
+        # Имя из Kommo может быть «Имя Фамилия (Компания)» — оставляем только имя.
+        if p.kommo_agent_name and p.kommo_agent_name.strip():
+            return p.kommo_agent_name.split("(")[0].strip().split()[0]
+        return "Партнёр" if lang == "ru" else "Partner"
+
+    community = {
+        "total_agents": total_agents,
+        "agents_with_leads": agents_with_leads,
+        "total_contacts": total_contacts,
+        "top": [
+            {"name": _community_name(top_partners.get(r.partner_id)), "count": r.n}
+            for r in top_rows
+        ],
+    }
+
     return templates.TemplateResponse(
         "dashboard.html",
         _ctx(
@@ -2051,6 +2094,7 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
             show_checklist=show_checklist,
             show_survey_banner=show_survey_banner,
             faq_categories=faq_categories,
+            community=community,
         ),
     )
 
