@@ -520,6 +520,52 @@ TEMPLATES = [
         "link_key": "consult_wa",
         "order_index": 6,
     },
+    # ── Лид-магниты-квизы с АВТО-выдачей PDF в WhatsApp (планы 2026-06-02 / -03).
+    #    Клиент проходит 3 вопроса по персональной ?ref-ссылке → чек-лист
+    #    приходит ему в WhatsApp автоматически, лид падает в воронку 1.1 на агента.
+    #    link_key → main._personal_links (leadmagnet_corptax / leadmagnet_5mistakes).
+    {
+        "slug": "leadmagnet-quiz-corptax",
+        "segment": "Лид-магнит · авто-выдача",
+        "segment_en": "Lead magnet · auto-delivery",
+        "title": "Чек-лист «0% Corporate Tax» (PDF придёт клиенту в WhatsApp)",
+        "title_en": "Checklist «0% Corporate Tax» (PDF auto-sent to client's WhatsApp)",
+        "body_md": (
+            "Бесплатный чек-лист: попадает ли ваша компания под 0% налог в ОАЭ — "
+            "или вы рискуете 9%.\n\n"
+            "Ответьте на 3 коротких вопроса — и PDF придёт прямо к вам в "
+            "WhatsApp 👇\n{link}"
+        ),
+        "body_md_en": (
+            "Free checklist: does your company qualify for 0% tax in the UAE — or "
+            "are you risking 9%?\n\n"
+            "Answer 3 quick questions and the PDF will be sent straight to your "
+            "WhatsApp 👇\n{link}"
+        ),
+        "method": "leadmagnet",
+        "link_key": "leadmagnet_corptax",
+        "order_index": 1,
+    },
+    {
+        "slug": "leadmagnet-quiz-5mistakes",
+        "segment": "Лид-магнит · авто-выдача",
+        "segment_en": "Lead magnet · auto-delivery",
+        "title": "Чек-лист «5 ошибок при открытии бизнеса» (PDF придёт клиенту в WhatsApp)",
+        "title_en": "Checklist «5 mistakes opening a business» (PDF auto-sent to client's WhatsApp)",
+        "body_md": (
+            "Бесплатный чек-лист: 5 ошибок при открытии бизнеса в ОАЭ, которые "
+            "стоят 50 000–200 000 AED в год.\n\n"
+            "Ответьте на 3 вопроса — и PDF придёт вам в WhatsApp 👇\n{link}"
+        ),
+        "body_md_en": (
+            "Free checklist: 5 mistakes when launching a business in the UAE that "
+            "cost 50,000–200,000 AED a year.\n\n"
+            "Answer 3 questions and the PDF will arrive in your WhatsApp 👇\n{link}"
+        ),
+        "method": "leadmagnet",
+        "link_key": "leadmagnet_5mistakes",
+        "order_index": 2,
+    },
     # ── Квиз-крючки на бесплатную консультацию (перенесены из tools.html,
     #    план 2026-06-02). method=broadcast, ссылка — персональный квиз
     #    /consultation?ref= (наш домен, ?ref метит лида нативно). {link} в теле.

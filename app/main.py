@@ -235,6 +235,9 @@ def _personal_links(ref: str, base: str) -> dict[str, str]:
         "mk_quiz":      f"{base}/mk?ref={ref}",
         "mk_tg":        f"{base}/mt/{ref}",
         "mk_wa":        f"{base}/mw/{ref}",
+        # Лид-магниты: квиз → PDF чек-листа ссылкой в WhatsApp (?ref метит лида).
+        "leadmagnet_corptax":    f"{base}/guide/corp-tax?ref={ref}",
+        "leadmagnet_5mistakes":  f"{base}/guide/5-mistakes?ref={ref}",
         "partner_bot":  f"{base}/p/{ref}",
     }
 
@@ -479,7 +482,7 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 
 _RL_HITS: dict[str, "deque"] = {}
 _RL_PATHS = ("/auth/", "/login", "/invite/", "/consultation/submit", "/mk/submit",
-             "/guide/corp-tax/submit")
+             "/guide/corp-tax/submit", "/guide/5-mistakes/submit")
 _RL_MAX = 30          # запросов с одного IP
 _RL_WINDOW = 60       # за столько секунд
 
@@ -1152,12 +1155,55 @@ async def guide_corp_tax_submit(request: Request,
     )
 
 
+# ─── Лид-магнит «5 ошибок при открытии бизнеса» (2026-06-03) ────────────────────
+# Тот же движок, что у /guide/corp-tax, но другая тема и улучшение: после заявки
+# клиенту уходит ПЕРСОНАЛИЗИРОВАННОЕ WhatsApp-сообщение (ссылка на PDF + подсказка,
+# какая из 5 ошибок ближе к его зоне риска — по ответу `worry`). Текст строит
+# leadmagnet5_config.wa_text(answers) через deliver_wa_text_builder.
+
+@app.get("/guide/5-mistakes", response_class=HTMLResponse)
+def guide_5mistakes_page(request: Request) -> HTMLResponse:
+    from app import leadmagnet5_config as lm5
+    return templates.TemplateResponse("quiz.html", {
+        "request": request,
+        "page_title": "ONCOUNT — чек-лист «5 ошибок при открытии бизнеса в ОАЭ»",
+        "cover": lm5.COVER,
+        "intro": lm5.INTRO,
+        "questions": lm5.QUESTIONS,
+        "final": lm5.FINAL,
+        "thanks": lm5.THANKS,
+        "socials": lm5.SOCIALS,
+        "submit_url": "/guide/5-mistakes/submit",
+    })
+
+
+@app.post("/guide/5-mistakes/submit")
+async def guide_5mistakes_submit(request: Request,
+                                 session: Session = Depends(get_session)) -> dict:
+    """Приём заявки лид-магнита «5 ошибок» → лид в воронку 1.1 + персональная
+    PDF-ссылка в WhatsApp. Тот же движок, плюс билдер персонального WA-текста."""
+    from app import leadmagnet5_config as lm5
+    return await _handle_quiz_submit(
+        request, session,
+        valid_options=lm5.VALID_OPTIONS,
+        question_titles=lm5.QUESTION_TITLES,
+        event_slug=lm5.EVENT_SLUG,
+        notify_header="📥 Новая заявка с лид-магнита «5 ошибок при открытии бизнеса»",
+        lead_prefix=lm5.KOMMO_LEAD_PREFIX,
+        lead_tag=lm5.KOMMO_LEAD_TAG,
+        note_intro=lm5.KOMMO_NOTE_INTRO,
+        deliver_wa_text=lm5.WA_TEXT.format(link=lm5.GUIDE_PDF_URL),  # фоллбэк
+        deliver_wa_text_builder=lm5.wa_text,                        # персонализация
+    )
+
+
 async def _handle_quiz_submit(
     request: Request, session: Session, *,
     valid_options: dict, question_titles: dict,
     event_slug: str | None, notify_header: str,
     lead_prefix: str, lead_tag: str, note_intro: str,
     deliver_wa_text: str | None = None,
+    deliver_wa_text_builder=None,
 ) -> dict:
     """Общее ядро приёма заявок квиз-лендингов (/consultation и /mk). Клиенту
     ВСЕГДА отвечаем ok (идемпотентно, без утечки внутренней логики). Порядок:
@@ -1236,10 +1282,18 @@ async def _handle_quiz_submit(
     # Доставка чек-листа клиенту в WhatsApp (лид-магнит). Best-effort: лид уже
     # создан, провал доставки не валит приём. Предохранители — внутри send_wa_text
     # (dev / WAZZUP_TEST_ONLY_NUMBER): на тесте PDF уходит только на тестовый номер.
-    if deliver_wa_text:
+    # deliver_wa_text_builder(answers) → персональный текст (например, подсказка по
+    # релевантной ошибке у /guide/5-mistakes); ошибка билдера → фоллбэк на статичный.
+    wa_text = deliver_wa_text
+    if deliver_wa_text_builder is not None:
+        try:
+            wa_text = deliver_wa_text_builder(answers) or deliver_wa_text
+        except Exception as exc:
+            log.warning("leadmagnet WA text builder error: %s", type(exc).__name__)
+    if wa_text:
         try:
             from app.wazzup import send_wa_text
-            ok = send_wa_text(phone_norm, deliver_wa_text)
+            ok = send_wa_text(phone_norm, wa_text)
             log.info("leadmagnet PDF link → WA event=%s sent=%s", event_slug, ok)
         except Exception as exc:  # сеть/конфиг — не валим приём заявки
             log.warning("leadmagnet WA delivery error: %s", type(exc).__name__)
