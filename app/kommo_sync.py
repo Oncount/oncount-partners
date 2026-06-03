@@ -99,6 +99,14 @@ def sync_agent_leads() -> dict:
     # истории), сюда НЕ попадают: им ставим won_notified_at без отправки.
     newly_won: list[int] = []
     try:
+        # Шаг 1 (план backfill 2026-06): перед привязкой лидов убеждаемся, что на
+        # КАЖДОГО агента из справочника «ID AGENT» есть Partner. Идемпотентно
+        # (upsert по kommo_agent_enum_id) — новые опции справочника получают Partner,
+        # иначе их лиды не к чему привязать. Свой сбой не валит синк.
+        try:
+            seed_partners_from_enums()
+        except Exception as exc:
+            log.warning("seed_partners_from_enums пропущен: %s", type(exc).__name__)
         # карта enum_id агента -> partner_id
         by_enum = {
             p.kommo_agent_enum_id: p.id
