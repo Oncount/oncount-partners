@@ -39,14 +39,12 @@
         {% endif %}
       </td>
       {# Комиссия отдельным столбцом справа (решение Николь 2026-07-21):
-         зелёным — фактическая по оплаченным; серым — ориентир по ещё не закрытым
-         (AVG_COMMISSION_AED). У отказов прочерк: дохода не будет, серая сумма
-         там читалась бы как обещание. #}
+         только фактическая по оплаченным лидам, зелёным. Потенциальные суммы по
+         открытым (серые AVG_COMMISSION_AED) убраны 2026-07-21 по решению Николь —
+         не показываем агенту предполагаемый доход, только заработанный по факту. #}
       <td data-label="{{ 'Your commission' if lang == 'en' else 'Ваша комиссия' }}" class="lead-commission">
         {% if row.status == 'won' and row.commission_aed %}
           <span class="commission-earned">{{ '%.0f'|format(row.commission_aed) }} AED</span>
-        {% elif row.status in ('new', 'in_progress') %}
-          <span class="commission-potential">{{ '%.0f'|format(kpi.avg_commission_aed) }} AED</span>
         {% else %}
           <span class="commission-none">—</span>
         {% endif %}
