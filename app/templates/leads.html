@@ -51,21 +51,30 @@
       </td>
     </tr>
     {% endfor %}
-    {# Доход 2-го уровня — одной строкой в общем списке (решение Николь 2026-07-21):
-       не отдельная таблица, просто пометка «за приведённых суб-агентов». Виден,
-       только если проставлен (l2_income_aed). Зелёным — это уже заработанное. #}
-    {% if partner.l2_income_aed %}
+    {# Доход 2-го уровня — строкой в общем списке (решение Николь 2026-07-21):
+       НЕ отдельная таблица. Под заголовком «2-й уровень» перечисляем суб-агентов
+       с их суммами (l2_income = [{name, aed}, …]), справа — общая. Если разбивки
+       нет, показываем старое число одной суммой. Зелёным — уже выплачено. #}
+    {% set l2_items = partner.l2_income %}
+    {% set l2_sum = (l2_items | sum(attribute='aed')) if l2_items else partner.l2_income_aed %}
+    {% if l2_sum %}
     <tr>
       <td data-label="{{ 'Client' if lang == 'en' else 'Клиент' }}">
         <strong>{{ '2nd level' if lang == 'en' else '2-й уровень' }}</strong>
-        <div class="lead-contact">{{ 'commission for your sub-agents' if lang == 'en' else 'комиссия за ваших суб-агентов' }}</div>
+        {% if l2_items %}
+          {% for it in l2_items %}
+          <div class="lead-contact">{{ it.name }} — {{ '%.0f'|format(it.aed) }} AED</div>
+          {% endfor %}
+        {% else %}
+          <div class="lead-contact">{{ 'commission for your sub-agents' if lang == 'en' else 'комиссия за ваших суб-агентов' }}</div>
+        {% endif %}
       </td>
       <td data-label="{{ 'Created' if lang == 'en' else 'Создано' }}">—</td>
       <td data-label="{{ 'Status' if lang == 'en' else 'Статус' }}">
         <span class="status-pill status-won">{{ 'Paid' if lang == 'en' else 'Выплачено' }}</span>
       </td>
       <td data-label="{{ 'Your commission' if lang == 'en' else 'Ваша комиссия' }}" class="lead-commission">
-        <span class="commission-earned">{{ '%.0f'|format(partner.l2_income_aed) }} AED</span>
+        <span class="commission-earned">{{ '%.0f'|format(l2_sum) }} AED</span>
       </td>
     </tr>
     {% endif %}

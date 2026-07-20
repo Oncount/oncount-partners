@@ -643,6 +643,9 @@ async def on_startup() -> None:
         # Доход 2-го уровня (решение Николь 2026-07-21). Аддитивно, идемпотентно,
         # nullable — NULL значит 0. Ручной ввод из комиссионного Excel.
         conn.execute(text("ALTER TABLE partners ADD COLUMN IF NOT EXISTS l2_income_aed NUMERIC(12,2)"))
+        # Разбивка 2-го уровня по суб-агентам (решение Николь 2026-07-21).
+        # Аддитивно, идемпотентно, nullable JSON. NULL = показываем старое число.
+        conn.execute(text("ALTER TABLE partners ADD COLUMN IF NOT EXISTS l2_income JSON"))
         # Дискриминатор лендинга у заявок квиза (план 2026-06-02): отделяет
         # регистрации мастер-класса от заявок /consultation. Аддитивно и
         # идемпотентно: одна nullable-колонка + индекс. NULL = /consultation
@@ -1029,6 +1032,17 @@ def admin_payout_save(
     return RedirectResponse("/admin/payouts", status_code=303)
 
 
+def l2_total(partner: Partner) -> float:
+    """Суммарный доход партнёра 2-го уровня (AED). Источник истины — разбивка
+    по суб-агентам l2_income (список [{name, aed}, …]); если её нет, падаем на
+    старое число l2_income_aed. Так «Заработано» всегда сходится с тем, что
+    показано в строке «2-й уровень»."""
+    items = getattr(partner, "l2_income", None)
+    if items:
+        return float(sum((x.get("aed") or 0) for x in items))
+    return float(getattr(partner, "l2_income_aed", None) or 0)
+
+
 def _balance_kpi(session: Session, partner: Partner) -> dict:
     """Минимум данных для верхней «балансовой» полосы (шаблон _balance.html):
     заработано + ожидаемое вознаграждение по числу заявок + код партнёра.
@@ -1040,9 +1054,9 @@ def _balance_kpi(session: Session, partner: Partner) -> dict:
     # «Заработано» — комиссия ПАРТНЁРА по оплаченным лидам (решение Николь
     # 2026-07-21), а не сумма чеков клиентов: партнёру показываем его доход,
     # чужой оборот его не касается. NULL-комиссии дают 0. Плюс доход 2-го уровня
-    # (l2_income_aed) — комиссия за суб-агентов, не привязана к лидам.
+    # (l2_total) — комиссия за суб-агентов, не привязана к лидам.
     earned_aed = (sum((getattr(l, "commission_aed", None) or 0) for l in won_rows)
-                  + (getattr(partner, "l2_income_aed", None) or 0))
+                  + l2_total(partner))
     return {
         "leads": leads_count,
         "earned_aed": float(earned_aed),
@@ -2056,7 +2070,7 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
     # «Заработано» — комиссия партнёра, не сумма чеков клиентов (решение Николь
     # 2026-07-21). NULL-комиссии дают 0. Плюс доход 2-го уровня (за суб-агентов).
     earned_total = (sum((getattr(l, "commission_aed", None) or 0) for l in won_rows)
-                    + (getattr(partner, "l2_income_aed", None) or 0))
+                    + l2_total(partner))
     # Сводка по вознаграждению (Фаза B): из тех же won-лидов, без доп. запроса.
     # Дефолт «в расчёте» = won без явного payout_state — как в payout_label.
     payout_to_pay = sum(1 for l in won_rows if l.payout_state == "to_pay")
