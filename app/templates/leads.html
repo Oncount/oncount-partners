@@ -60,6 +60,7 @@
     <tr>
       <td data-label="{{ 'Client' if lang == 'en' else 'Клиент' }}">
         <strong>{{ it.name }}</strong>
+        <span class="l2-badge">{{ '2nd level' if lang == 'en' else '2-й уровень' }}</span>
         {% if it.phone %}<div class="lead-contact">{{ it.phone }}</div>{% endif %}
       </td>
       <td data-label="{{ 'Created' if lang == 'en' else 'Создано' }}">{{ it.date or '—' }}</td>

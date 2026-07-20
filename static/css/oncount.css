@@ -267,6 +267,21 @@ table.list td {
   color: var(--sage);
   opacity: 0.45;
 }
+/* Мелкая пометка «2-й уровень» рядом с именем суб-агента в списке заявок —
+   чтобы отличать доход за суб-агентов от собственных лидов, ненавязчиво. */
+.l2-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--sage);
+  background: rgba(84, 124, 118, 0.12);
+  vertical-align: middle;
+}
 /* На узких экранах .list превращается в карточки (data-label) — там правое
    выравнивание ломает ритм, возвращаем влево. */
 @media (max-width: 720px) {
