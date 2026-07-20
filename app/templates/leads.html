@@ -60,8 +60,9 @@
     <tr>
       <td data-label="{{ 'Client' if lang == 'en' else 'Клиент' }}">
         <strong>{{ it.name }}</strong>
+        {% if it.phone %}<div class="lead-contact">{{ it.phone }}</div>{% endif %}
       </td>
-      <td data-label="{{ 'Created' if lang == 'en' else 'Создано' }}">—</td>
+      <td data-label="{{ 'Created' if lang == 'en' else 'Создано' }}">{{ it.date or '—' }}</td>
       <td data-label="{{ 'Status' if lang == 'en' else 'Статус' }}">
         <span class="status-pill status-won">{{ 'Paid' if lang == 'en' else 'Оплачено' }}</span>
       </td>
