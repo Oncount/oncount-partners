@@ -2180,16 +2180,30 @@ def leads(request: Request, session: Session = Depends(get_session)) -> HTMLResp
     partner = current_partner(request, session)
     if not partner:
         return RedirectResponse("/login", status_code=302)
-    rows = (
+    leads = (
         session.query(Lead)
         .filter_by(partner_id=partner.id)
         .order_by(Lead.created_at.desc())
         .limit(100)
         .all()
     )
+    # Единый список для сортировки по дате (решение Николь 2026-07-21): обычные
+    # лиды + строки дохода 2-го уровня (за суб-агентов) должны идти вперемешку по
+    # дате, а не блоком в конце. Тип помечаем ключом "kind" для шаблона. Дата
+    # 2-го уровня приходит строкой "дд.мм.гггг" — парсим для сортировки, при
+    # кривом формате роняем в самый низ (min date), не падаем.
+    def _l2_date(s: str):
+        try:
+            return datetime.strptime((s or "").strip(), "%d.%m.%Y")
+        except (ValueError, TypeError):
+            return datetime.min
+    items = [{"kind": "lead", "lead": l, "sort_dt": l.created_at} for l in leads]
+    for it in (partner.l2_income or []):
+        items.append({"kind": "l2", "l2": it, "sort_dt": _l2_date(it.get("date"))})
+    items.sort(key=lambda x: x["sort_dt"] or datetime.min, reverse=True)
     return templates.TemplateResponse(
         "leads.html",
-        _ctx(request, partner, rows=rows, kpi=_balance_kpi(session, partner)),
+        _ctx(request, partner, items=items, kpi=_balance_kpi(session, partner)),
     )
 
 

@@ -4,7 +4,7 @@
 
 {% block content %}
 {% include "_balance.html" %}
-{% if not rows %}
+{% if not items %}
   <div class="card">
     <p>{% if lang == 'en' %}Nothing here yet. <a href="/transfer">Introduce your first client</a> and they'll show up in this table.{% else %}Пока пусто. <a href="/transfer">Передай первого клиента</a>, и он появится в этой таблице.{% endif %}</p>
   </div>
@@ -19,7 +19,11 @@
     </tr>
   </thead>
   <tbody>
-    {% for row in rows %}
+    {# Единый список: обычные лиды и строки 2-го уровня идут вперемешку по дате
+       (сортировка в роуте /leads). item.kind = "lead" | "l2". #}
+    {% for item in items %}
+      {% if item.kind == 'lead' %}
+        {% set row = item.lead %}
     <tr>
       <td data-label="{{ 'Client' if lang == 'en' else 'Клиент' }}">
         <strong>{{ row.client_name }}</strong>
@@ -29,19 +33,12 @@
       <td data-label="{{ 'Status' if lang == 'en' else 'Статус' }}">
         {% set stage = lead_stage(row.status, lang) %}
         <span class="status-pill status-{{ row.status }}">{{ stage.label }}</span>
-        {# Показываем ТОЛЬКО дату оплаты (won_at) и только у оплаченных. Убраны
-           2026-07-21 по решению Николь: сумма чека клиента (amount_aed) — партнёру
-           не показываем чужой оборот; «обн. <дата>» (updated_at) — она шевелится
-           при каждом синке ([[project_lead_updated_at_tech_debt]]) и создавала
-           ложное впечатление движения по мёртвым лидам. #}
+        {# Только дата оплаты (won_at) у оплаченных; чек клиента и «обн.» убраны
+           2026-07-21 по решению Николь. #}
         {% if row.status == 'won' and row.won_at %}
         <div style="font-size: 12px; color: var(--sage); margin-top: 4px;">{{ ('paid ' if lang == 'en' else 'оплачено ') }}{{ row.won_at.strftime('%d.%m.%Y') }}</div>
         {% endif %}
       </td>
-      {# Комиссия отдельным столбцом справа (решение Николь 2026-07-21):
-         только фактическая по оплаченным лидам, зелёным. Потенциальные суммы по
-         открытым (серые AVG_COMMISSION_AED) убраны 2026-07-21 по решению Николь —
-         не показываем агенту предполагаемый доход, только заработанный по факту. #}
       <td data-label="{{ 'Your commission' if lang == 'en' else 'Ваша комиссия' }}" class="lead-commission">
         {% if row.status == 'won' and row.commission_aed %}
           <span class="commission-earned">{{ '%.0f'|format(row.commission_aed) }} AED</span>
@@ -50,13 +47,9 @@
         {% endif %}
       </td>
     </tr>
-    {% endfor %}
-    {# Доход 2-го уровня — КАЖДЫЙ суб-агент отдельной строкой (решение Николь
-       2026-07-21): без заголовка «2-й уровень», имя суб-агента как клиент,
-       его сумма справа, статус «Оплачено». l2_income = [{name, aed}, …].
-       Если разбивки нет — падаем на старое число одной строкой. #}
-    {% if partner.l2_income %}
-      {% for it in partner.l2_income %}
+      {% else %}
+        {% set it = item.l2 %}
+    {# Строка дохода 2-го уровня (за суб-агента). Мелкий бейдж «2-й уровень». #}
     <tr>
       <td data-label="{{ 'Client' if lang == 'en' else 'Клиент' }}">
         <strong>{{ it.name }}</strong>
@@ -71,21 +64,8 @@
         <span class="commission-earned">{{ '%.0f'|format(it.aed) }} AED</span>
       </td>
     </tr>
-      {% endfor %}
-    {% elif partner.l2_income_aed %}
-    <tr>
-      <td data-label="{{ 'Client' if lang == 'en' else 'Клиент' }}">
-        <strong>{{ '2nd level' if lang == 'en' else '2-й уровень' }}</strong>
-      </td>
-      <td data-label="{{ 'Created' if lang == 'en' else 'Создано' }}">—</td>
-      <td data-label="{{ 'Status' if lang == 'en' else 'Статус' }}">
-        <span class="status-pill status-won">{{ 'Paid' if lang == 'en' else 'Оплачено' }}</span>
-      </td>
-      <td data-label="{{ 'Your commission' if lang == 'en' else 'Ваша комиссия' }}" class="lead-commission">
-        <span class="commission-earned">{{ '%.0f'|format(partner.l2_income_aed) }} AED</span>
-      </td>
-    </tr>
-    {% endif %}
+      {% endif %}
+    {% endfor %}
   </tbody>
 </table>
 <p class="leads-footnote">
