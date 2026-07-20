@@ -103,6 +103,14 @@ PAYOUT_STATES: dict[str, dict[str, str]] = {
 # Разрешённые значения payout_state — единый список для валидации (UI и CLI).
 PAYOUT_STATE_VALUES: tuple[str, ...] = tuple(PAYOUT_STATES.keys())
 
+# Средняя комиссия партнёра с закрывшейся сделки (AED). Используется ТОЛЬКО как
+# серый ориентир в столбце «Ваша комиссия» по ещё не закрытым лидам — не для
+# расчёта реальных выплат (те лежат в Lead.commission_aed, проставляются вручную).
+# Цифра от Николь 2026-07-21. Обязана быть подписана «в среднем по партнёрам»:
+# у конкретного агента факт бывает ниже (у Dubru за сделку Павла — 550 AED), и
+# без подписи среднее читается как обещание.
+AVG_COMMISSION_AED: int = 1450
+
 
 def payout_label(lead: Lead, lang: str = "ru") -> dict[str, str] | None:
     """Статус вознаграждения по лиду → {state, label, icon, hint} для шаблонов.
@@ -588,6 +596,10 @@ async def on_startup() -> None:
         # дефолт «в расчёте» выводит payout_label. Существующие строки/колонки
         # не трогаются. create_all не делает ALTER, а leads уже есть в проде.
         conn.execute(text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS payout_state VARCHAR(16)"))
+        # Сумма комиссии партнёра по сделке (решение Николь 2026-07-21). Аддитивно
+        # и идемпотентно: nullable, без DB-default — NULL значит «не посчитана»
+        # и даёт 0 в «Заработано». Существующие строки не трогаются.
+        conn.execute(text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS commission_aed NUMERIC(12,2)"))
         # «Что НЕ предлагать клиенту» — обязательное поле формы /transfer (Фаза F,
         # план 2026-05-27): защищает репутацию партнёра. Аддитивно, идемпотентно,
         # nullable: старые лиды и лиды из kommo_sync/бота — без этого поля.
@@ -1022,12 +1034,18 @@ def _balance_kpi(session: Session, partner: Partner) -> dict:
     leads_q = session.query(Lead).filter_by(partner_id=partner.id)
     leads_count = leads_q.count()
     won_rows = leads_q.filter(Lead.status == "won").all()
-    total_aed = sum((l.amount_aed or 0) for l in won_rows)
+    # «Заработано» — комиссия ПАРТНЁРА по оплаченным лидам (решение Николь
+    # 2026-07-21), а не сумма чеков клиентов: партнёру показываем его доход,
+    # чужой оборот его не касается. NULL-комиссии дают 0.
+    earned_aed = sum((getattr(l, "commission_aed", None) or 0) for l in won_rows)
     return {
         "leads": leads_count,
-        "earned_aed": float(total_aed),
+        "earned_aed": float(earned_aed),
         "expected_usd_low": leads_count * 300,
         "expected_usd_high": leads_count * 1000,
+        # Средняя комиссия — для серого ориентира в столбце «Ваша комиссия»
+        # (leads.html). Балансовую полосу НЕ трогает.
+        "avg_commission_aed": float(AVG_COMMISSION_AED),
     }
 
 
@@ -2030,7 +2048,9 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
     conversion = round(successful / leads_count * 100, 1) if leads_count else 0.0
 
     won_rows = leads_q.filter(Lead.status == "won").all()
-    total_aed = sum((l.amount_aed or 0) for l in won_rows)
+    # «Заработано» — комиссия партнёра, не сумма чеков клиентов (решение Николь
+    # 2026-07-21). NULL-комиссии дают 0.
+    earned_total = sum((getattr(l, "commission_aed", None) or 0) for l in won_rows)
     # Сводка по вознаграждению (Фаза B): из тех же won-лидов, без доп. запроса.
     # Дефолт «в расчёте» = won без явного payout_state — как в payout_label.
     payout_to_pay = sum(1 for l in won_rows if l.payout_state == "to_pay")
@@ -2113,13 +2133,18 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
                 "successful": successful,
                 "rejected": rejected,
                 "in_progress": in_progress,
-                "earned_aed": float(total_aed),
+                # «Заработано» — комиссия партнёра, не оборот (решение Николь
+                # 2026-07-21). См. _balance_kpi.
+                "earned_aed": float(earned_total),
                 # Сводка вознаграждения (Фаза B): к выплате / выплачено.
                 "payout_to_pay": payout_to_pay,
                 "payout_paid": payout_paid,
                 # Ожидаемая комиссия: $300 (мин) … $1000 (средн) с каждого лида.
                 "expected_usd_low": leads_count * 300,
                 "expected_usd_high": leads_count * 1000,
+                # Средняя комиссия — серый ориентир в столбце «Ваша комиссия»
+                # (leads.html). Балансовую полосу НЕ трогает.
+                "avg_commission_aed": float(AVG_COMMISSION_AED),
             },
             checklist_steps=checklist_steps,
             show_checklist=show_checklist,

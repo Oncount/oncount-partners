@@ -15,6 +15,7 @@
       <th>{{ 'Client' if lang == 'en' else 'Клиент' }}</th>
       <th>{{ 'Created' if lang == 'en' else 'Создано' }}</th>
       <th>{{ 'Status' if lang == 'en' else 'Статус' }}</th>
+      <th style="text-align: right;">{{ 'Your commission' if lang == 'en' else 'Ваша комиссия' }}</th>
     </tr>
   </thead>
   <tbody>
@@ -28,24 +29,26 @@
       <td data-label="{{ 'Status' if lang == 'en' else 'Статус' }}">
         {% set stage = lead_stage(row.status, lang) %}
         <span class="status-pill status-{{ row.status }}">{{ stage.label }}</span>
-        {# Сумма, которую оплатил клиент — крупно и зелёным рядом со статусом «Оплачено» (won). #}
-        {% if row.status == 'won' and row.amount_aed %}
-        <div class="lead-paid-amount">💰 {{ '%.0f'|format(row.amount_aed) }} AED</div>
+        {# Показываем ТОЛЬКО дату оплаты (won_at) и только у оплаченных. Убраны
+           2026-07-21 по решению Николь: сумма чека клиента (amount_aed) — партнёру
+           не показываем чужой оборот; «обн. <дата>» (updated_at) — она шевелится
+           при каждом синке ([[project_lead_updated_at_tech_debt]]) и создавала
+           ложное впечатление движения по мёртвым лидам. #}
+        {% if row.status == 'won' and row.won_at %}
+        <div style="font-size: 12px; color: var(--sage); margin-top: 4px;">{{ ('paid ' if lang == 'en' else 'оплачено ') }}{{ row.won_at.strftime('%d.%m.%Y') }}</div>
         {% endif %}
-        {% if row.updated_at %}
-        <div style="font-size: 12px; color: var(--sage); margin-top: 4px;">{{ ('upd. ' if lang == 'en' else 'обн. ') }}{{ row.updated_at.strftime('%d.%m.%Y') }}</div>
-        {% endif %}
-        {# Деньги — только по выигранным лидам; payout_label вернёт None для остальных. #}
-        {% set payout = payout_label(row, lang) %}
-        {% if payout %}
-        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border);">
-          <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--sage); margin-bottom: 4px;">{{ 'Reward' if lang == 'en' else 'Вознаграждение' }}</div>
-          <span class="status-pill payout-{{ payout.state }}">{{ payout.label }}</span>
-          {% if payout.hint %}<div style="font-size: 12px; color: var(--sage); margin-top: 4px;">{{ payout.hint }}</div>{% endif %}
-          {# Дата выплаты (Фаза K): 10-е число месяца, следующего за оплатой. Якорь — won_at; для won без won_at деградирует в «после оплаты». #}
-          {% set due = payout_due_date(row, lang) %}
-          {% if due %}<div style="font-size: 12px; color: var(--sage); margin-top: 4px;">📅 {{ due.label }}</div>{% endif %}
-        </div>
+      </td>
+      {# Комиссия отдельным столбцом справа (решение Николь 2026-07-21):
+         зелёным — фактическая по оплаченным; серым — ориентир по ещё не закрытым
+         (AVG_COMMISSION_AED). У отказов прочерк: дохода не будет, серая сумма
+         там читалась бы как обещание. #}
+      <td data-label="{{ 'Your commission' if lang == 'en' else 'Ваша комиссия' }}" class="lead-commission">
+        {% if row.status == 'won' and row.commission_aed %}
+          <span class="commission-earned">{{ '%.0f'|format(row.commission_aed) }} AED</span>
+        {% elif row.status in ('new', 'in_progress') %}
+          <span class="commission-potential">{{ '%.0f'|format(kpi.avg_commission_aed) }} AED</span>
+        {% else %}
+          <span class="commission-none">—</span>
         {% endif %}
       </td>
     </tr>

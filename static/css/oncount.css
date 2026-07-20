@@ -242,6 +242,36 @@ table.list td {
   font-weight: 700;
   color: #16a34a;
 }
+/* Столбец «Ваша комиссия» (2026-07-21). Зелёный — фактически заработанное по
+   оплаченным лидам; серый — ориентир по ещё не закрытым (средняя по партнёрам),
+   намеренно приглушён, чтобы не читался как уже начисленные деньги. Цифры
+   выравниваем по правому краю табличными знаками — суммы сравнивают взглядом. */
+.lead-commission {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.commission-earned {
+  font-size: 20px;
+  font-weight: 700;
+  color: #16a34a;
+}
+.commission-potential {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--sage);
+  opacity: 0.75;
+}
+.commission-none {
+  font-size: 17px;
+  color: var(--sage);
+  opacity: 0.45;
+}
+/* На узких экранах .list превращается в карточки (data-label) — там правое
+   выравнивание ломает ритм, возвращаем влево. */
+@media (max-width: 720px) {
+  .lead-commission { text-align: left; }
+}
 /* Контакт клиента под именем (телефон/телеграм) — серым, помельче. */
 .lead-contact {
   margin-top: 3px;
