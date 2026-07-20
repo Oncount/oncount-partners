@@ -38,6 +38,12 @@ class Partner(Base):
     lang: Mapped[str | None] = mapped_column(String(2))
     tier: Mapped[str] = mapped_column(String(16), default="bronze")
     status: Mapped[str] = mapped_column(String(16), default="pending", index=True)
+    # Доход партнёра 2-го уровня (AED) — суммарная комиссия за приведённых им
+    # суб-агентов (решение Николь 2026-07-21; напр. Ostrovok: 367 Куришко + 315
+    # Salimkhan = 682). НЕ привязано к лидам (это % от чужих сделок), поэтому
+    # храним общей суммой на партнёре и вручную обновляем из комиссионного Excel.
+    # Прибавляется к «Заработано» на дашборде/полосе. NULL = 0.
+    l2_income_aed: Mapped[float | None] = mapped_column(Numeric(12, 2))
     # Связь с агентом в Kommo: enum_id значения поля «ID AGENT» (#961886) воронки 1.1.
     # Один Partner ↔ один Kommo-агент. По нему отчёт/дайджест тянут лиды агента.
     # kommo_agent_name — кэш отображаемого имени (латиница), для писем/дайджеста.

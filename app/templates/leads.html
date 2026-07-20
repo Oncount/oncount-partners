@@ -51,6 +51,24 @@
       </td>
     </tr>
     {% endfor %}
+    {# Доход 2-го уровня — одной строкой в общем списке (решение Николь 2026-07-21):
+       не отдельная таблица, просто пометка «за приведённых суб-агентов». Виден,
+       только если проставлен (l2_income_aed). Зелёным — это уже заработанное. #}
+    {% if partner.l2_income_aed %}
+    <tr>
+      <td data-label="{{ 'Client' if lang == 'en' else 'Клиент' }}">
+        <strong>{{ '2nd level' if lang == 'en' else '2-й уровень' }}</strong>
+        <div class="lead-contact">{{ 'commission for your sub-agents' if lang == 'en' else 'комиссия за ваших суб-агентов' }}</div>
+      </td>
+      <td data-label="{{ 'Created' if lang == 'en' else 'Создано' }}">—</td>
+      <td data-label="{{ 'Status' if lang == 'en' else 'Статус' }}">
+        <span class="status-pill status-won">{{ 'Paid' if lang == 'en' else 'Выплачено' }}</span>
+      </td>
+      <td data-label="{{ 'Your commission' if lang == 'en' else 'Ваша комиссия' }}" class="lead-commission">
+        <span class="commission-earned">{{ '%.0f'|format(partner.l2_income_aed) }} AED</span>
+      </td>
+    </tr>
+    {% endif %}
   </tbody>
 </table>
 <p class="leads-footnote">
