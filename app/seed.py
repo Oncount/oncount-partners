@@ -199,8 +199,8 @@ PRODUCTS = [
     },
     {
         "slug": "tax-reports",
-        "title": "Отчётность: CIT и VAT (корпоративный налог и НДС)",
-        "title_en": "Reporting: CIT & VAT",
+        "title": "Регистрация и отчёты по CIT и VAT (корпоративный налог и НДС)",
+        "title_en": "CIT & VAT registration and returns",
         "price_aed": _meta("по запросу", "по запросу"),
         "price_aed_en": _meta_en("on request", "on request"),
         "summary_md": "Подготовка и сдача отчётности по корпоративному налогу (CIT) и НДС (VAT), а также прочей обязательной отчётности.",
