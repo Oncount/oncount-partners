@@ -45,8 +45,10 @@
     {% set is_draft = item.slug.endswith('-draft') %}
     {% set url = links.get(item.link_key, '') %}
     <div class="msg-card{% if is_draft %} is-draft{% endif %}">
-      {% set seg = (item.segment_en or item.segment) if lang == 'en' else item.segment %}
-      {% if seg %}<div class="seg">{{ seg }}</div>{% endif %}
+      {# Оранжевая подпись-сегмент над заголовком (СТРОКА В ПИСЬМЕ, ЛИЧНОЕ ИНТРО
+         и т.п.) убрана 2026-07-21 по решению Николь: дублировала заголовок и
+         рябила в списке. Поле segment в БД остаётся — вернуть можно одной
+         строкой. #}
       <h3>
         {{ (item.title_en or item.title) if lang == 'en' else item.title }}
         {% if is_draft %}<span class="kit-draft">{{ 'draft · not approved' if lang == 'en' else 'черновик · не утверждён' }}</span>{% endif %}

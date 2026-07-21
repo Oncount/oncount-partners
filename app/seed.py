@@ -795,33 +795,12 @@ KITS = [
             "❌ «Они меня вознаграждают»\n"
             "\n"
             "═══════════════════════════════════════\n"
-            "📌 УНИВЕРСАЛЬНЫЙ ШАБЛОН ИНТРО\n"
-            "(любой канал — WhatsApp, личка, email)\n"
-            "═══════════════════════════════════════\n"
-            "\n"
-            "«[Имя], знаю, что вам нужна бухгалтерия в ОАЭ — могу рекомендовать "
-            "команду, с которой сам работаю. Это ONCOUNT, они ведут бухучёт для "
-            "бизнеса в Дубае. Если интересно — соединю с их менеджером, "
-            "расскажет под вашу ситуацию.»\n"
-            "\n"
-            "═══════════════════════════════════════\n"
             "📌 ЕСЛИ КЛИЕНТ СПРОСИТ «А ВАМ ЧТО С ЭТОГО?»\n"
             "═══════════════════════════════════════\n"
             "\n"
             "✅ «Нет, я просто рекомендую тех, кому доверяю.»\n"
             "✅ «Сам пользуюсь — рад, когда у моих знакомых тоже хорошо "
-            "складывается.»\n"
-            "\n"
-            "═══════════════════════════════════════\n"
-            "📌 ЕСЛИ КЛИЕНТ В 3-СТОРОННЕМ ЧАТЕ\n"
-            "═══════════════════════════════════════\n"
-            "\n"
-            "После знакомства партнёр выходит:\n"
-            "«[Клиент], [менеджер ONCOUNT] — знакомлю. Дальше с вами на связи. "
-            "Хорошего разбора.»\n"
-            "\n"
-            "И больше не пишет в эту переписку про бухгалтерию — это правило "
-            "приватности."
+            "складывается.»"
         ),
         "body_md_en": (
             "═══════════════════════════════════════\n"
@@ -846,36 +825,41 @@ KITS = [
             "❌ \"They reward me for it\"\n"
             "\n"
             "═══════════════════════════════════════\n"
-            "📌 UNIVERSAL INTRO TEMPLATE\n"
-            "(any channel — WhatsApp, DM, email)\n"
-            "═══════════════════════════════════════\n"
-            "\n"
-            "\"[name], I know you need accounting in the UAE — I can recommend a "
-            "team I work with myself. It's ONCOUNT, they handle bookkeeping for "
-            "businesses in Dubai. If you're interested, I'll connect you with "
-            "their manager, who'll walk you through your situation.\"\n"
-            "\n"
-            "═══════════════════════════════════════\n"
             "📌 IF THE CLIENT ASKS \"WHAT'S IN IT FOR YOU?\"\n"
             "═══════════════════════════════════════\n"
             "\n"
             "✅ \"Nothing, I just recommend people I trust.\"\n"
             "✅ \"I use them myself — I'm glad when things go well for people I "
-            "know too.\"\n"
-            "\n"
-            "═══════════════════════════════════════\n"
-            "📌 IF THE CLIENT IS IN A 3-WAY CHAT\n"
-            "═══════════════════════════════════════\n"
-            "\n"
-            "Once introductions are made, the partner steps out:\n"
-            "\"[Client name], meet [ONCOUNT manager]. They'll take it from here. "
-            "Have a good session.\"\n"
-            "\n"
-            "And they no longer write about accounting in that chat — it's a "
-            "privacy rule."
+            "know too.\""
         ),
         "method": "intro",
         "order_index": 1,
+    },
+    # Универсальный шаблон интро вынесен из «Дискретного скрипта» в отдельную
+    # карточку 2026-07-21 (решение Николь): это готовый текст для отправки, у
+    # него должна быть своя кнопка «Скопировать», а не тонуть внутри скрипта.
+    # Блок «если клиент в 3-стороннем чате» убран там же.
+    {
+        "slug": "kit-insider-universal-intro",
+        "partner_type": "insider",
+        "segment": "Универсальный шаблон",
+        "segment_en": "Universal template",
+        "title": "Универсальный шаблон интро — любой канал",
+        "title_en": "Universal intro template — any channel",
+        "body_md": (
+            "[Имя], знаю, что вам нужна бухгалтерия в ОАЭ — могу рекомендовать "
+            "команду, с которой сам работаю. Это ONCOUNT, они ведут бухучёт для "
+            "бизнеса в Дубае. Если интересно — соединю с их менеджером, "
+            "расскажет под вашу ситуацию."
+        ),
+        "body_md_en": (
+            "[name], I know you need accounting in the UAE — I can recommend a "
+            "team I work with myself. It's ONCOUNT, they handle bookkeeping for "
+            "businesses in Dubai. If you're interested, I'll connect you with "
+            "their manager, who'll walk you through your situation."
+        ),
+        "method": "intro",
+        "order_index": 2,
     },
     {
         "slug": "kit-insider-personal-intro",
@@ -951,57 +935,61 @@ KITS = [
         "method": "intro",
         "order_index": 3,
     },
+    # Три варианта «строки в письме» разнесены по отдельным карточкам 2026-07-21
+    # (решение Николь): у каждого своя кнопка «Скопировать», партнёр берёт ровно
+    # тот текст, который шлёт клиенту. Раньше все три лежали в одном теле через
+    # ═-разделители — копировалось всё скопом. Разделители больше не нужны.
     {
-        "slug": "kit-insider-email-line",
+        "slug": "kit-insider-email-signature",
         "partner_type": "insider",
         "segment": "Строка в письме",
         "segment_en": "Email line",
-        "title": "Короткое представление в письме",
-        "title_en": "Short introducer line in email",
+        "title": "Вариант А — подпись в письме",
+        "title_en": "Option A — email signature",
         "body_md": (
-            "═══════════════════════════════════════\n"
-            "📌 ВАРИАНТ А — EMAIL-ПОДПИСЬ\n"
-            "═══════════════════════════════════════\n"
-            "\n"
             "P.S. Если нужна бухгалтерия в ОАЭ — рекомендую команду, которую "
-            "давно знаю: wa.me/971589217784\n"
-            "\n"
-            "═══════════════════════════════════════\n"
-            "📌 ВАРИАНТ Б — FORWARD КОНТАКТА\n"
-            "═══════════════════════════════════════\n"
-            "\n"
+            "давно знаю: wa.me/971589217784"
+        ),
+        "body_md_en": (
+            "P.S. If you need accounting in the UAE, I recommend a team I've "
+            "known for a long time: wa.me/971589217784"
+        ),
+        "method": "intro",
+        "order_index": 4,
+    },
+    {
+        "slug": "kit-insider-email-forward",
+        "partner_type": "insider",
+        "segment": "Строка в письме",
+        "segment_en": "Email line",
+        "title": "Вариант Б — переслать контакт",
+        "title_en": "Option B — forwarding a contact",
+        "body_md": (
             "[Имя клиента], как договаривались — контакт команды по бухгалтерии "
-            "в ОАЭ: wa.me/971589217784. Я их давно знаю, ребята надёжные.\n"
-            "\n"
-            "═══════════════════════════════════════\n"
-            "📌 ВАРИАНТ В — ЛИЧНОЕ ПИСЬМО\n"
-            "═══════════════════════════════════════\n"
-            "\n"
+            "в ОАЭ: wa.me/971589217784. Я их давно знаю, ребята надёжные."
+        ),
+        "body_md_en": (
+            "[Client name], as we agreed — here's the contact of an accounting "
+            "team in the UAE: wa.me/971589217784. I've known them a long time, "
+            "they're reliable people."
+        ),
+        "method": "intro",
+        "order_index": 5,
+    },
+    {
+        "slug": "kit-insider-email-personal",
+        "partner_type": "insider",
+        "segment": "Строка в письме",
+        "segment_en": "Email line",
+        "title": "Вариант В — личное письмо",
+        "title_en": "Option C — a personal email",
+        "body_md": (
             "[Имя клиента], добрый день!\n"
             "\n"
             "По вашему вопросу про бухгалтерию в ОАЭ — обратитесь к ребятам, "
             "которых давно знаю: wa.me/971589217784. Профи, всё чётко."
         ),
         "body_md_en": (
-            "═══════════════════════════════════════\n"
-            "📌 OPTION A — EMAIL SIGNATURE\n"
-            "═══════════════════════════════════════\n"
-            "\n"
-            "P.S. If you need accounting in the UAE, I recommend a team I've "
-            "known for a long time: wa.me/971589217784\n"
-            "\n"
-            "═══════════════════════════════════════\n"
-            "📌 OPTION B — FORWARDING A CONTACT\n"
-            "═══════════════════════════════════════\n"
-            "\n"
-            "[Client name], as we agreed — here's the contact of an accounting "
-            "team in the UAE: wa.me/971589217784. I've known them a long time, "
-            "they're reliable people.\n"
-            "\n"
-            "═══════════════════════════════════════\n"
-            "📌 OPTION C — A PERSONAL EMAIL\n"
-            "═══════════════════════════════════════\n"
-            "\n"
             "[Client name], hello!\n"
             "\n"
             "On your accounting question in the UAE — reach out to the people "
@@ -1009,7 +997,7 @@ KITS = [
             "sharp and clear."
         ),
         "method": "intro",
-        "order_index": 4,
+        "order_index": 6,
     },
 ]
 
