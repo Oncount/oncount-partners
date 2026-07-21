@@ -199,7 +199,7 @@ PRODUCTS = [
     },
     {
         "slug": "tax-reports",
-        "title": "Отчётность: CIT и VAT",
+        "title": "Отчётность: CIT и VAT (корпоративный налог и НДС)",
         "title_en": "Reporting: CIT & VAT",
         "price_aed": _meta("по запросу", "по запросу"),
         "price_aed_en": _meta_en("on request", "on request"),
@@ -1328,10 +1328,10 @@ FAQ = [
 COURSES = [
     {
         "slug": "ai-employees-setup",
-        "title": "Настройка 2 АИ-сотрудников",
+        "title": "Ваш первый AI-сотрудник",
         "subtitle": "⏱ 2 часа · 3 шага",
         "outcome": "сайты и презентации делают AI-сотрудники",
-        "title_en": "Setting up 2 AI employees",
+        "title_en": "Your first AI employee",
         "subtitle_en": "⏱ 2 hours · 3 steps",
         "outcome_en": "AI employees build your websites and presentations",
         "done_label_en": "Completed",
@@ -1340,20 +1340,9 @@ COURSES = [
         "done_label": "Завершено",
         "order_index": 1,
     },
-    {
-        "slug": "partner-course",
-        "title": "Курс партнёра ONCOUNT",
-        "subtitle": "5 шагов к первым $2 500 вознаграждения",
-        "outcome": None,
-        "title_en": "ONCOUNT Partner Course",
-        "subtitle_en": "5 steps to your first $2,500 reward",
-        "outcome_en": None,
-        "done_label_en": "Program materials",
-        "total_steps": 5,
-        "progress_steps": 0,
-        "done_label": "Материалы программы",
-        "order_index": 2,
-    },
+    # Карточка «Курс партнёра ONCOUNT» (slug partner-course) убрана 2026-07-21 по
+    # решению Николь: контента у курса не было, CTA «Начать» уводил обратно на
+    # витрину (см. аудит 2026-07-06, п. 0.7). Вернуть — когда появятся уроки.
 ]
 
 

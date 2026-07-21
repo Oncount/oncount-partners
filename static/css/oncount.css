@@ -128,6 +128,17 @@ h3 { font-size: 18px; }
 .header-right { display: flex; align-items: center; gap: 12px; }
 .lang-toggle { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border); background: white; font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.02em; color: var(--deep-green); }
 .lang-toggle:hover { border-color: var(--orange); color: var(--orange); }
+/* Переключатель языка в мобильной шапке рядом с логотипом — светлый на тёмно-зелёном. */
+.mobile-topbar .lang-toggle {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  background: rgba(243, 249, 248, 0.12);
+  border-color: rgba(243, 249, 248, 0.2);
+  color: var(--cream);
+}
+.mobile-topbar .lang-toggle:hover,
+.mobile-topbar .lang-toggle:active { border-color: var(--cream); color: var(--cream); }
 
 /* Cards */
 .card {
@@ -430,6 +441,14 @@ details.faq-item[open] summary { margin-bottom: 12px; }
   font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 600;
   color: var(--deep-green); margin: 0 0 16px;
 }
+/* Уточнение к заголовку блока («делают наши партнёры») — тем же заголовком, но
+   приглушённо: это пояснение, а не вторая половина названия раздела. */
+.svc-block-note {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--sage);
+  white-space: nowrap;
+}
 
 /* Блок 1 — финансы и бухгалтерия: карточки в стиле блока 2, один цвет, по 4 в ряд */
 .fin-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
@@ -461,6 +480,10 @@ details.faq-item[open] summary { margin-bottom: 12px; }
 .biz-thumb--bank-account { background: linear-gradient(135deg, #547C76 0%, #3A6B63 100%); }
 .biz-body { padding: 20px 22px 22px; display: flex; flex-direction: column; flex: 1; }
 .biz-body h3 { margin: 0 0 8px; font-size: 17px; line-height: 1.3; color: var(--deep-green); min-height: 44px; }
+/* В финансовом ряду «Отчётность: CIT и VAT (корпоративный налог и НДС)» занимает
+   три строки — резерв поднимаем до трёх, иначе «Выплата/Цена» у четырёх карточек
+   в ряду встают на разной высоте. На мобильном резерв снимается (см. ≤900px). */
+.fin-grid .biz-body h3 { min-height: 66px; }
 .biz-body .meta-block { margin: 6px 0 12px; }
 .biz-body .meta-row { font-size: 14px; color: var(--deep-green); margin: 4px 0; line-height: 1.4; }
 .biz-body .meta-row .meta-label { color: var(--sage); font-weight: 500; margin-right: 4px; }
@@ -536,6 +559,17 @@ details.faq-item[open] summary { margin-bottom: 12px; }
 .msg-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
 .msg-card .seg { font-size: 11px; text-transform: uppercase; color: var(--orange); letter-spacing: 0.08em; font-weight: 600; }
 .msg-card .body { background: var(--cream); padding: 14px; border-radius: 8px; margin: 10px 0; font-size: 14px; white-space: pre-wrap; }
+/* Длинные неразрывные куски — персональная ссылка агента (~78 символов на
+   railway-домене) и ═-разделители в китах — раздували /tools до 453px на
+   телефоне: pre-wrap держит их одной «строкой» и задаёт min-content ширину
+   всей странице. Нужен именно `anywhere`, а не `break-word`: только он влияет
+   на расчёт min-content и останавливает распирание контейнера.
+   Те же места с чужим/длинным текстом: промты курса, ответы FAQ, описания
+   продуктов — правило одно на всех, чтобы не ловить это по одной странице. */
+.msg-card .body,
+.cp-prompt-body,
+details.faq-item,
+.product-details { overflow-wrap: anywhere; }
 
 /* Партнёрский кит (/kits): вкладки по типу партнёра + плашка черновика */
 .kit-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
@@ -676,8 +710,10 @@ details.faq-item[open] summary { margin-bottom: 12px; }
     padding-top: calc(10px + env(safe-area-inset-top));
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
-  .mobile-topbar-logo { height: 28px; width: auto; }
+  .mobile-topbar-logo { height: 28px; width: auto; flex-shrink: 0; }
   .user-pill-desktop { display: none; }
+  /* На мобильном язык живёт в шапке с логотипом, из заголовка страницы убираем. */
+  .lang-toggle-desktop { display: none; }
   .user-pill-mobile {
     display: inline-block;
     margin-left: auto;
@@ -696,6 +732,7 @@ details.faq-item[open] summary { margin-bottom: 12px; }
   .burger {
     width: 40px;
     height: 40px;
+    flex-shrink: 0;
     background: transparent;
     border: 0;
     padding: 9px 8px;
@@ -865,6 +902,11 @@ details.faq-item[open] summary { margin-bottom: 12px; }
   .product-grid { grid-template-columns: 1fr; }
   .product-card { padding: 18px; }
   .fin-grid, .biz-grid { grid-template-columns: 1fr; }
+  /* На десктопе у заголовка карточки min-height 44px — резерв под вторую строку,
+     чтобы «Выплата/Цена» стояли на одной высоте в ряду из 4 карточек. В одну
+     колонку выравнивать не с чем, и резерв превращается в пустоту под коротким
+     названием — снимаем. */
+  .biz-body h3, .fin-grid .biz-body h3 { min-height: 0; }
   .msg-card { padding: 16px; }
   .msg-card .body { font-size: 13px; }
   .copy-btn { width: 100%; }
@@ -960,6 +1002,10 @@ details.faq-item[open] summary { margin-bottom: 12px; }
 @media (max-width: 380px) {
   .kpi-grid { grid-template-columns: 1fr; }
   .content { padding: 12px; }
+  /* Шапка: ужимаем логотип и отступы, чтобы бургер, имя партнёра и переключатель
+     языка помещались в одну строку и имя не резалось до «Ник…». */
+  .mobile-topbar { gap: 8px; padding-left: 10px; padding-right: 10px; }
+  .mobile-topbar-logo { height: 24px; }
   /* Менеджер: на узком экране — в колонку, контакт-кнопки на всю ширину,
      чтобы кнопка с номером не давала горизонтальный скролл. */
   .manager-card { flex-direction: column; }

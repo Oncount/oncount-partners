@@ -23,6 +23,9 @@
   <div class="user-pill user-pill-mobile">
     {% if partner.first_name %}{{ partner.first_name }}{% else %}@{{ partner.username or partner.telegram_id }}{% endif %}
   </div>
+  <a class="lang-toggle lang-toggle-mobile" href="?lang={{ 'ru' if lang == 'en' else 'en' }}"
+     title="{{ 'Switch language' if lang == 'en' else 'Сменить язык' }}"
+     aria-label="{{ 'Switch language' if lang == 'en' else 'Сменить язык' }}">{{ 'EN' if lang == 'en' else 'RU' }}</a>
 </header>
 
 <div class="drawer-overlay" onclick="document.body.classList.remove('drawer-open')"></div>
@@ -56,8 +59,9 @@
     <header class="page-header">
       <h1>{% block heading %}{% endblock %}</h1>
       <div class="header-right">
-        <a class="lang-toggle" href="?lang={{ 'ru' if lang == 'en' else 'en' }}"
-           title="Сменить язык" aria-label="Сменить язык">{{ 'EN' if lang == 'en' else 'RU' }}</a>
+        <a class="lang-toggle lang-toggle-desktop" href="?lang={{ 'ru' if lang == 'en' else 'en' }}"
+           title="{{ 'Switch language' if lang == 'en' else 'Сменить язык' }}"
+           aria-label="{{ 'Switch language' if lang == 'en' else 'Сменить язык' }}">{{ 'EN' if lang == 'en' else 'RU' }}</a>
         <div class="user-pill user-pill-desktop">
           {% if partner.first_name %}{{ partner.first_name }}{% else %}@{{ partner.username or partner.telegram_id }}{% endif %}
         </div>

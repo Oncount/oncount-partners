@@ -1,7 +1,7 @@
 """Telegram-бот ONCOUNT Partners + Community.
 
 Один токен @community_oncount_bot обслуживает:
-1. Практикум «Настройка AI-сотрудников» (готовый курс в личном кабинете).
+1. Курс «Ваш первый AI-сотрудник» (готовый курс в личном кабинете).
 2. Партнёрскую программу (онбординг, реф-ссылки, передача клиента, статистика, продукты, FAQ).
 """
 from __future__ import annotations
@@ -107,8 +107,8 @@ SUPPORTED_LANGS = ("ru", "en")
 # Подписи кнопок: BTN[key][lang]. Доступ — через b(key, lang) с ru-fallback.
 BTN: dict[str, dict[str, str]] = {
     "course_practicum": {
-        "ru": "🎓 Практикум: настроить AI-сотрудника",
-        "en": "🎓 Practicum: set up an AI employee",
+        "ru": "🎓 Ваш первый AI-сотрудник",
+        "en": "🎓 Your first AI employee",
     },
     "open_practicum": {
         "ru": "🎓 Открыть практикум",
@@ -345,7 +345,7 @@ async def cb_lang_set(call) -> None:
 
 @dp.callback_query(F.data == "course:practicum")
 async def cb_course_practicum(call) -> None:
-    """Практикум «Настройка AI-сотрудников» лежит в кабинете за логином.
+    """Курс «Ваш первый AI-сотрудник» лежит в кабинете за логином.
     Выдаём одноразовую ссылку входа, ведущую сразу на курс."""
     with SessionLocal() as session:
         lang = get_lang(session, call.from_user.id)

@@ -49,7 +49,9 @@
 {# ============ БЛОК 2 — сервисы для бизнеса, карточки с картинками ============ #}
 {% if biz_items %}
 <section class="svc-block">
-  <h2 class="svc-block-title">{{ 'Business services' if lang == 'en' else 'Сервисы для бизнеса' }}</h2>
+  <h2 class="svc-block-title">{{ 'Business services' if lang == 'en' else 'Сервисы для бизнеса' }}
+    <span class="svc-block-note">{{ '(delivered by our partners)' if lang == 'en' else '(делают наши партнёры)' }}</span>
+  </h2>
   <div class="biz-grid">
     {% for item in biz_items %}
     <div class="biz-card">

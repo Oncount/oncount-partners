@@ -13,7 +13,7 @@ TEXTS: dict[str, dict[str, str]] = {
             "Привет, {first_name}! 👋\n\n"
             "Я — бот ONCOUNT: лицензированной бухгалтерии полного цикла в ОАЭ.\n\n"
             "С чего хотите начать?\n\n"
-            "🎓 <b>Практикум «Настройка AI-сотрудников»</b> — за ~2 часа настроишь "
+            "🎓 <b>«Ваш первый AI-сотрудник»</b> — за ~2 часа настроишь "
             "2 AI-сотрудников, которые делают сайты и презентации. Бесплатно.\n"
             "🤝 <b>Партнёрская программа</b> — приводите клиентов, получайте вознаграждение.\n\n"
             "Выберите внизу 👇"
@@ -22,7 +22,7 @@ TEXTS: dict[str, dict[str, str]] = {
             "Hi, {first_name}! 👋\n\n"
             "I'm the ONCOUNT bot — a licensed full-cycle accounting firm in the UAE.\n\n"
             "Where would you like to start?\n\n"
-            "🎓 <b>«Setting up AI employees» practicum</b> — in ~2 hours set up "
+            "🎓 <b>“Your first AI employee”</b> — in ~2 hours set up "
             "2 AI employees that build websites and presentations. Free.\n"
             "🤝 <b>Partner program</b> — introduce clients, earn rewards.\n\n"
             "Pick an option below 👇"
@@ -30,7 +30,7 @@ TEXTS: dict[str, dict[str, str]] = {
     },
     "PRACTICUM_INTRO": {
         "ru": (
-            "🎓 <b>Практикум «Настройка AI-сотрудников»</b>\n\n"
+            "🎓 <b>«Ваш первый AI-сотрудник»</b>\n\n"
             "За ~2 часа в 3 шага настроите 2 AI-сотрудников, которые сами делают "
             "сайты и презентации для вашего бизнеса.\n\n"
             "Что внутри:\n"
@@ -40,7 +40,7 @@ TEXTS: dict[str, dict[str, str]] = {
             "Жмите на кнопку — вход в кабинет откроется сразу на практикуме:"
         ),
         "en": (
-            "🎓 <b>«Setting up AI employees» practicum</b>\n\n"
+            "🎓 <b>“Your first AI employee”</b>\n\n"
             "In ~2 hours and 3 steps you'll set up 2 AI employees that build "
             "websites and presentations for your business.\n\n"
             "What's inside:\n"
