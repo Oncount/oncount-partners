@@ -483,6 +483,15 @@ templates.env.globals["contact_wa"] = settings.CONTACT_WA_NUMBER
 # Telegram-id админа (Николь) — чтобы шаблон показывал пункт меню «Аналитика»
 # только ей (раздел /admin/*). Гейт всё равно на сервере (require_admin).
 templates.env.globals["admin_tg_id"] = settings.ADMIN_TG_ID
+# Версия статики в ссылке на CSS (?v=…). Без неё браузер партнёра держит старый
+# oncount.css после деплоя и показывает новую разметку со СТАРЫМИ стилями —
+# ровно это поймали 2026-07-21 на блоке «Тексты и ссылки». Меняется вместе с
+# файлом, т.е. только когда стили реально правились.
+try:
+    _CSS_MTIME = int((BASE_DIR / "static" / "css" / "oncount.css").stat().st_mtime)
+except OSError:  # файла нет (тесты/битый образ) — версия не критична
+    _CSS_MTIME = 0
+templates.env.globals["static_v"] = str(_CSS_MTIME)
 
 app = FastAPI(title="ONCOUNT Partner Platform")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")

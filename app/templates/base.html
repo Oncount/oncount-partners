@@ -9,7 +9,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Raleway:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/css/oncount.css">
+  {# ?v=… — версия файла (см. static_v в app/main.py): без неё браузер держит
+     старый CSS после деплоя и рисует новую разметку старыми стилями. #}
+  <link rel="stylesheet" href="/static/css/oncount.css?v={{ static_v | default('0') }}">
   <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
   {% block head %}{% endblock %}
 </head>

@@ -22,13 +22,15 @@
 <div class="tool-tabs">
   {% for key in methods_order %}
     {% set m = method_label(key, lang) %}
-    <button class="tool-tab {% if loop.first %}active{% endif %}" type="button" data-panel="{{ key }}" onclick="showTool('{{ key }}')">{% if key == 'intro' %}{{ icons.tab_intro() }}{% elif key == 'broadcast' %}{{ icons.tab_broadcast() }}{% elif key == 'social' %}{{ icons.tab_post() }}{% elif key == 'leadmagnet' %}{{ icons.tab_checklist() }}{% elif key == 'event' %}{{ icons.tab_event() }}{% endif %}<span>{{ m.label }}</span></button>
+    {# Ни одна вкладка не активна при заходе (решение Николь 2026-07-21): партнёр
+       видит только кнопки способов, тексты раскрываются по нажатию. #}
+    <button class="tool-tab" type="button" data-panel="{{ key }}" onclick="showTool('{{ key }}')">{% if key == 'intro' %}{{ icons.tab_intro() }}{% elif key == 'broadcast' %}{{ icons.tab_broadcast() }}{% elif key == 'social' %}{{ icons.tab_post() }}{% elif key == 'leadmagnet' %}{{ icons.tab_checklist() }}{% elif key == 'event' %}{{ icons.tab_event() }}{% endif %}<span>{{ m.label }}</span></button>
   {% endfor %}
 </div>
 
 {% for key in methods_order %}
 {% set m = method_label(key, lang) %}
-<section class="tool-panel" id="panel-{{ key }}" {% if not loop.first %}hidden{% endif %}>
+<section class="tool-panel" id="panel-{{ key }}" hidden>
   <div class="card">
     <p>{{ m.hint }}</p>
   </div>
@@ -138,18 +140,23 @@ function copyLink(btn, url) {
   navigator.clipboard.writeText(url);
   _flash(btn);
 }
+// Нажатие на способ раскрывает его тексты; повторное нажатие — сворачивает
+// (решение Николь 2026-07-21). При заходе не раскрыт ни один: партнёр видит
+// вступление и четыре кнопки, а простыню текстов открывает сам.
 function showTool(name) {
+  const already = document.querySelector('.tool-tab.active[data-panel="' + name + '"]');
+  const target = already ? null : name;
   TOOL_METHODS.forEach(function (n) {
     const panel = document.getElementById('panel-' + n);
-    if (panel) panel.hidden = (n !== name);
+    if (panel) panel.hidden = (n !== target);
   });
   document.querySelectorAll('.tool-tab').forEach(function (t) {
-    t.classList.toggle('active', t.dataset.panel === name);
+    t.classList.toggle('active', t.dataset.panel === target);
   });
 }
 // Глубокий вход по #<способ> и по #tools; старые якоря мапятся на новый способ.
-// Раздел на дашборде свёрнут по умолчанию — по такой ссылке раскрываем его и
-// подскроливаем, иначе переход из чек-листа и из бота уводит «в никуда».
+// По такой ссылке сразу раскрываем нужный способ и подскроливаем к разделу,
+// иначе переход из чек-листа и из бота уводит «в никуда».
 (function () {
   var h = (location.hash || '').replace('#', '');
   if (LEGACY_ANCHORS[h]) h = LEGACY_ANCHORS[h];
@@ -157,9 +164,6 @@ function showTool(name) {
   if (!isMethod && h !== 'tools') return;
   if (isMethod) showTool(h);
   var box = document.getElementById('tools');
-  if (box) {
-    box.open = true;
-    box.scrollIntoView({ block: 'start' });
-  }
+  if (box) box.scrollIntoView({ block: 'start' });
 })();
 </script>

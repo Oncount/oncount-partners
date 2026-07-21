@@ -411,42 +411,6 @@ table.list td {
   margin-bottom: 18px; line-height: 1.45;
 }
 
-/* Сворачиваемый раздел дашборда («Тексты и ссылки», 2026-07-21). Свёрнут по
-   умолчанию: шапка читается как строка меню, раскрывается по тапу. Внутри —
-   целый раздел с вкладками, поэтому у открытого блока свой отступ сверху. */
-.dash-collapse { padding: 0; }
-.dash-collapse-summary {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 18px 24px;
-  cursor: pointer;
-  font-family: 'Outfit', sans-serif;
-}
-.dash-collapse-summary::-webkit-details-marker { display: none; }
-.dash-collapse-summary::marker { content: ''; }
-.dash-collapse-titles { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.dash-collapse-title { font-size: 18px; font-weight: 600; color: var(--deep-green); }
-.dash-collapse-hint { font-size: 13px; font-weight: 500; color: var(--sage); }
-/* Стрелка справа: вниз — свёрнуто, вверх — раскрыто. */
-.dash-collapse-summary::after {
-  content: '▾';
-  margin-left: auto;
-  flex-shrink: 0;
-  font-size: 16px;
-  line-height: 1;
-  color: var(--sage);
-  transition: transform 150ms ease;
-}
-.dash-collapse[open] > .dash-collapse-summary::after { transform: rotate(180deg); }
-/* Внутри — готовые блоки-карточки, поэтому боковой отступ маленький:
-   иначе получается «карточка в карточке» с двойными полями. */
-.dash-collapse-body { padding: 0 16px 20px; }
-@media (max-width: 900px) {
-  .dash-collapse-summary { padding: 16px; font-size: 17px; }
-  .dash-collapse-body { padding: 0 8px 14px; }
-}
-
 /* FAQ accordion */
 details.faq-item {
   background: white;
