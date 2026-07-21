@@ -10,7 +10,10 @@
      только реестр Tax Agent/Tax Agency, которого у нас нет). Пишем то, что
      проверяемо: квалификация людей + стандарты, по которым ведём отчётность.
      Блок публичный — он же на квиз-лендинге /consultation. #}
-  <p class="acc-title">{{ 'ACCA-qualified accountants. Reporting under IFRS and FTA rules' if _l == 'en' else 'Бухгалтеры с квалификацией ACCA. Отчётность по МСФО и правилам FTA' }}</p>
+  {# acc_align='left' — когда строка идёт сразу под заголовком раздела и
+     читается его продолжением (дашборд). По умолчанию по центру. #}
+  {% set _al = acc_align | default('center') %}
+  <p class="acc-title{% if _al == 'left' %} acc-title-left{% endif %}">{{ 'ACCA-qualified accountants. Reporting under IFRS and FTA rules' if _l == 'en' else 'Бухгалтеры с квалификацией ACCA. Отчётность по МСФО и правилам FTA' }}</p>
   <div class="acc-row">
     {% for a in accountants %}
     <div class="acc-item">
@@ -41,6 +44,7 @@
 <style>
 .acc-trust{margin:0 0 22px}
 .acc-title{font-weight:700;font-size:14px;color:#10463E;margin:0 0 14px;text-align:center;letter-spacing:.01em}
+.acc-title-left{text-align:left;font-size:15px;margin-bottom:18px}
 .acc-row{display:flex;flex-wrap:wrap;gap:16px;justify-content:center}
 .acc-item{width:118px;text-align:center}
 .acc-photo{width:76px;height:76px;border-radius:50%;object-fit:cover;border:2px solid #e2e8e5;background:#0e0e10}

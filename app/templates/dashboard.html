@@ -83,52 +83,14 @@
 {# Блок доверия «Кто работает с вашим клиентом» (решение Николь 2026-07-21).
    Стоит ДО простыни текстов: по исследованию ЦА №2 партнёру для уверенной
    рекомендации нужны сигналы доверия, а не маркетинг, и главный его страх —
-   качество хэндоффа, а не размер вознаграждения. Раньше менеджер стоял ПОСЛЕ
-   текстов, а бухгалтеры были спрятаны внутри вкладки «Рассылка» — до них
-   нельзя было добраться, не нажав именно её. #}
-<section class="svc-block" id="manager">
+   качество хэндоффа, а не размер вознаграждения. Раньше бухгалтеры были
+   спрятаны внутри вкладки «Рассылка» — до них нельзя было добраться, не
+   нажав именно её. Менеджер живёт отдельным блоком ниже, над «Сообществом». #}
+<section class="svc-block" id="team">
   <h2 class="svc-block-title">👥 {{ 'Who works with your client' if lang == 'en' else 'Кто работает с вашим клиентом' }}</h2>
-  {% set mgr = partner_manager(lang) %}
-  <div class="card manager-card">
-    <img class="manager-photo" src="{{ mgr.photo }}" alt="{{ mgr.name }}" width="72" height="72">
-    <div class="manager-body">
-      <div class="manager-role">{{ mgr.role }}</div>
-      <div class="manager-name-row">
-        <div class="manager-name">
-          {{ mgr.name }}
-          {% if mgr.name_pending %}<span class="manager-pending">{{ 'name pending Nicole’s approval' if lang == 'en' else 'имя на утверждении Николь' }}</span>{% endif %}
-        </div>
-        {# Значки мессенджера справа от имени: маленькие круглые, только иконка. #}
-        <div class="manager-msgrs">
-          {% for link in mgr.links %}
-            {% if link.channel == 'whatsapp' %}
-            <a class="mgr-msgr" href="{{ link.href }}" target="_blank" rel="noopener" title="WhatsApp" aria-label="WhatsApp">{{ icons.whatsapp() }}</a>
-            {% elif link.channel == 'telegram' %}
-            <a class="mgr-msgr" href="{{ link.href }}" target="_blank" rel="noopener" title="Telegram" aria-label="Telegram">{{ icons.telegram() }}</a>
-            {% endif %}
-          {% endfor %}
-        </div>
-      </div>
-      <p class="manager-sla">⏱ {{ mgr.sla }}</p>
-      <div class="manager-contacts">
-        {% for link in mgr.links %}
-          {% if link.channel not in ('whatsapp', 'telegram') %}
-          <a class="btn btn-primary manager-contact" href="{{ link.href }}" target="_blank" rel="noopener">{{ 'Email the manager' if lang == 'en' else 'Написать на email' }}</a>
-          {% endif %}
-        {% endfor %}
-        {% for ch in mgr.pending_channels %}
-        <span class="manager-pending manager-pending-contact">
-          {% if ch == 'whatsapp' %}{{ 'WhatsApp number pending Nicole’s approval' if lang == 'en' else 'номер WhatsApp на утверждении Николь' }}
-          {% elif ch == 'telegram' %}{{ 'Telegram pending Nicole’s approval' if lang == 'en' else 'Telegram на утверждении Николь' }}
-          {% else %}{{ 'email pending Nicole’s approval' if lang == 'en' else 'email на утверждении Николь' }}{% endif %}
-        </span>
-        {% endfor %}
-      </div>
-    </div>
-  </div>
   {% if accountants %}
   <div class="card">
-    {% set acc_lang = lang %}{% include "_accountants.html" %}
+    {% set acc_lang = lang %}{% set acc_align = 'left' %}{% include "_accountants.html" %}
     {# Самый сильный аргумент надёжности: партнёр рискует отношениями с
        человеком, которого привёл. Текст — из описания услуги (seed.py). #}
     <p class="trust-note">🛡 {% if lang == 'en' %}If the accountant makes a mistake, ONCOUNT covers the FTA fines and financial losses — not the client. It's our legal responsibility, fixed in the contract.{% else %}Ошибётся бухгалтер — штрафы FTA и финансовые потери покрывает ONCOUNT, а не клиент. Это наша юридическая ответственность, зафиксированная в договоре.{% endif %}</p>
@@ -149,6 +111,47 @@
   <p class="svc-block-sub">{% if lang == 'en' %}Every link carries your partner code — in our CRM we see that the client came from you.{% else %}В каждую ссылку вшит ваш партнёрский код — в CRM мы видим, что клиент пришёл от вас.{% endif %}</p>
   {% include "_tools_content.html" %}
 </section>
+
+{# Партнёрский менеджер — отдельным блоком над «Сообществом» (решение Николь
+   2026-07-21). Якорь #manager: на него ведёт подпись под таблицей заявок. #}
+{% set mgr = partner_manager(lang) %}
+<div class="card manager-card" id="manager">
+  <img class="manager-photo" src="{{ mgr.photo }}" alt="{{ mgr.name }}" width="72" height="72">
+  <div class="manager-body">
+    <div class="manager-role">{{ mgr.role }}</div>
+    <div class="manager-name-row">
+      <div class="manager-name">
+        {{ mgr.name }}
+        {% if mgr.name_pending %}<span class="manager-pending">{{ 'name pending Nicole’s approval' if lang == 'en' else 'имя на утверждении Николь' }}</span>{% endif %}
+      </div>
+      {# Значки мессенджера справа от имени: маленькие круглые, только иконка. #}
+      <div class="manager-msgrs">
+        {% for link in mgr.links %}
+          {% if link.channel == 'whatsapp' %}
+          <a class="mgr-msgr" href="{{ link.href }}" target="_blank" rel="noopener" title="WhatsApp" aria-label="WhatsApp">{{ icons.whatsapp() }}</a>
+          {% elif link.channel == 'telegram' %}
+          <a class="mgr-msgr" href="{{ link.href }}" target="_blank" rel="noopener" title="Telegram" aria-label="Telegram">{{ icons.telegram() }}</a>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    <p class="manager-sla">⏱ {{ mgr.sla }}</p>
+    <div class="manager-contacts">
+      {% for link in mgr.links %}
+        {% if link.channel not in ('whatsapp', 'telegram') %}
+        <a class="btn btn-primary manager-contact" href="{{ link.href }}" target="_blank" rel="noopener">{{ 'Email the manager' if lang == 'en' else 'Написать на email' }}</a>
+        {% endif %}
+      {% endfor %}
+      {% for ch in mgr.pending_channels %}
+      <span class="manager-pending manager-pending-contact">
+        {% if ch == 'whatsapp' %}{{ 'WhatsApp number pending Nicole’s approval' if lang == 'en' else 'номер WhatsApp на утверждении Николь' }}
+        {% elif ch == 'telegram' %}{{ 'Telegram pending Nicole’s approval' if lang == 'en' else 'Telegram на утверждении Николь' }}
+        {% else %}{{ 'email pending Nicole’s approval' if lang == 'en' else 'email на утверждении Николь' }}{% endif %}
+      </span>
+      {% endfor %}
+    </div>
+  </div>
+</div>
 
 {# Блок «Сообщество» — соц-доказательство масштаба партнёрской сети.
    Три цифры (всего агентов / передали контакты / контактов передано) и топ-5
