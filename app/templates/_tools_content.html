@@ -12,15 +12,16 @@
 <div class="tool-tabs">
   {% for key in methods_order %}
     {% set m = method_label(key, lang) %}
-    {# Ни одна вкладка не активна при заходе (решение Николь 2026-07-21): партнёр
-       видит только кнопки способов, тексты раскрываются по нажатию. #}
-    <button class="tool-tab" type="button" data-panel="{{ key }}" title="{{ m.hint }}" onclick="showTool('{{ key }}')">{% if key == 'intro' %}{{ icons.tab_intro() }}{% elif key == 'broadcast' %}{{ icons.tab_broadcast() }}{% elif key == 'social' %}{{ icons.tab_post() }}{% elif key == 'leadmagnet' %}{{ icons.tab_checklist() }}{% elif key == 'event' %}{{ icons.tab_event() }}{% endif %}<span>{{ m.label }}</span></button>
+    {# Первый способ раскрыт при заходе (решение Николь 2026-07-21): под кнопками
+       сразу видно полтора текста — партнёр понимает, что там лежит, не нажимая.
+       Остальные способы открываются нажатием, активный закрывается повторным. #}
+    <button class="tool-tab{% if loop.first %} active{% endif %}" type="button" data-panel="{{ key }}" title="{{ m.hint }}" onclick="showTool('{{ key }}')">{% if key == 'intro' %}{{ icons.tab_intro() }}{% elif key == 'broadcast' %}{{ icons.tab_broadcast() }}{% elif key == 'social' %}{{ icons.tab_post() }}{% elif key == 'leadmagnet' %}{{ icons.tab_checklist() }}{% elif key == 'event' %}{{ icons.tab_event() }}{% endif %}<span>{{ m.label }}</span></button>
   {% endfor %}
 </div>
 
 {% for key in methods_order %}
 {% set m = method_label(key, lang) %}
-<section class="tool-panel" id="panel-{{ key }}" hidden>
+<section class="tool-panel" id="panel-{{ key }}"{% if not loop.first %} hidden{% endif %}>
   {# ─── Готовые тексты способа ──────────────────────────────────────────── #}
   {% set items = method_groups.get(key, []) %}
   {% if items %}
