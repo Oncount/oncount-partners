@@ -9,16 +9,6 @@
 {# {link} → links[item.link_key], подстановка фильтром replace) — отдельного   #}
 {# блока ссылок нет. Глубокий вход по #<способ>; старые якоря #links/#messages/ #}
 {# #kits мапятся в JS (LEGACY).                                                #}
-<div class="card">
-  {% if lang == 'en' %}
-  <p>4 ways to recommend a first-class service and earn a reward from grateful clients. Pick the one that suits you — each tab has a ready text with your personal link. Copy and send, nothing to write from scratch.</p>
-  <p>Your reward is already included in the price of all our services and is paid out by the 10th of each month. Just recommend us.</p>
-  {% else %}
-  <p>4 способа порекомендовать первоклассный сервис и получить вознаграждение от благодарных клиентов. Выберите удобный вам способ — в каждой вкладке готовый текст с вашей персональной ссылкой. Скопируйте и отправьте, сочинять ничего не нужно.</p>
-  <p>Ваше вознаграждение уже включено в стоимость всех наших услуг и выплачивается до 10 числа каждого месяца. Просто рекомендуйте нас.</p>
-  {% endif %}
-</div>
-
 <div class="tool-tabs">
   {% for key in methods_order %}
     {% set m = method_label(key, lang) %}
@@ -104,6 +94,9 @@
     </div>
   {% endif %}
 
+  {# Список текстов длинный: внизу — та же стрелка, чтобы свернуть способ,
+     не мотая обратно к кнопкам (решение Николь 2026-07-21). #}
+  <button class="tool-collapse" type="button" onclick="showTool('{{ key }}')">▴ {{ 'Collapse' if lang == 'en' else 'Свернуть' }}</button>
 </section>
 {% endfor %}
 
@@ -113,6 +106,11 @@
 .tool-tab{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:1px solid var(--border);border-radius:999px;font-size:15px;font-weight:600;color:var(--sage);background:white;cursor:pointer;font-family:inherit}
 .tool-tab:hover{border-color:var(--sage)}
 .tool-tab.active{background:var(--deep-green);color:var(--cream);border-color:var(--deep-green)}
+/* Треугольник у раскрытого способа: видно, что кнопка — переключатель. */
+.tool-tab.active::after{content:'b4';margin-left:2px;font-size:12px;line-height:1}
+/* «Свернуть» под списком текстов — неброско, но всегда на месте. */
+.tool-collapse{display:inline-flex;align-items:center;gap:6px;margin:4px 0 8px;padding:8px 16px;border:1px solid var(--border);border-radius:999px;background:white;color:var(--sage);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.tool-collapse:hover{border-color:var(--sage);color:var(--deep-green)}
 .tool-tab .tab-icon{flex:0 0 auto;width:17px;height:17px}
 /* Подсказка «для кого способ» — в title кнопки, не мелким шрифтом на ней
    (решение Николь 2026-07-21: кнопки должны читаться одним словом). */
@@ -146,6 +144,11 @@ function showTool(name) {
   document.querySelectorAll('.tool-tab').forEach(function (t) {
     t.classList.toggle('active', t.dataset.panel === target);
   });
+  // Свернули из конца длинного списка — возвращаем к кнопкам способов.
+  if (!target) {
+    var box = document.getElementById('tools');
+    if (box) box.scrollIntoView({ block: 'start' });
+  }
 }
 // Глубокий вход по #<способ> и по #tools; старые якоря мапятся на новый способ.
 // По такой ссылке сразу раскрываем нужный способ и подскроливаем к разделу,

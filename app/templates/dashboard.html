@@ -88,9 +88,13 @@
    нажав именно её. Менеджер живёт отдельным блоком ниже, над «Сообществом». #}
 <section class="svc-block" id="team">
   <h2 class="svc-block-title">👥 {{ 'Who works with your client' if lang == 'en' else 'Кто работает с вашим клиентом' }}</h2>
+  {# Подпись стоит СРАЗУ под заголовком (решение Николь), а не внутри карточки:
+     иначе между ними вклинивается поле карточки и связка рвётся. Текст один и
+     тот же для кабинета и лендингов — берём из кода (ACCOUNTANTS_TITLE). #}
+  <p class="svc-block-sub">{{ accountants_title['en' if lang == 'en' else 'ru'] }}</p>
   {% if accountants %}
   <div class="card">
-    {% set acc_lang = lang %}{% set acc_align = 'left' %}{% include "_accountants.html" %}
+    {% set acc_lang = lang %}{% set acc_align = 'left' %}{% set acc_hide_title = true %}{% include "_accountants.html" %}
     {# Самый сильный аргумент надёжности: партнёр рискует отношениями с
        человеком, которого привёл. Текст — из описания услуги (seed.py). #}
     <p class="trust-note">🛡 {% if lang == 'en' %}If the accountant makes a mistake, ONCOUNT covers the FTA fines and financial losses — not the client. It's our legal responsibility, fixed in the contract.{% else %}Ошибётся бухгалтер — штрафы FTA и финансовые потери покрывает ONCOUNT, а не клиент. Это наша юридическая ответственность, зафиксированная в договоре.{% endif %}</p>
@@ -108,7 +112,7 @@
   <h2 class="svc-block-title">📝 {{ 'Texts and partner links' if lang == 'en' else 'Тексты и партнёрские ссылки' }}</h2>
   {# Главное, что партнёр должен понять про эти ссылки: они именные. Иначе
      непонятно, зачем брать готовый текст, а не писать своими словами. #}
-  <p class="svc-block-sub">{% if lang == 'en' %}Every link carries your partner code — in our CRM we see that the client came from you.{% else %}В каждую ссылку вшит ваш партнёрский код — в CRM мы видим, что клиент пришёл от вас.{% endif %}</p>
+  <p class="svc-block-sub">{% if lang == 'en' %}Every link carries your partner code — in our CRM we see that the client came from you. Your reward is already included in the price of all our services and is paid out by the 10th of each month. Just recommend us.{% else %}В каждую ссылку вшит ваш партнёрский код — в CRM мы видим, что клиент пришёл от вас. Ваше вознаграждение уже включено в стоимость всех наших услуг и выплачивается до 10 числа каждого месяца. Просто рекомендуйте нас.{% endif %}</p>
   {% include "_tools_content.html" %}
 </section>
 

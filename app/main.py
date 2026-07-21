@@ -204,6 +204,14 @@ LEGACY_TOOL_ANCHORS: dict[str, str] = {
 # честно показывает масштаб, не выдавая троих за весь отдел. Число здесь, а не
 # в шаблоне (правило репо №1). Меняется вместе с составом отдела.
 ACCOUNTANTS_TOTAL = 8
+# Подпись к блоку бухгалтеров. В коде, а не в шаблоне: одна и та же строка нужна
+# и в кабинете (под заголовком «Кто работает с вашим клиентом»), и на квиз-
+# лендингах (внутри блока). Формулировка выверена с Николь 2026-07-21 —
+# см. комментарий в _accountants.html о том, что было до неё.
+ACCOUNTANTS_TITLE = {
+    "ru": "Бухгалтеры с квалификацией ACCA. Отчётность по МСФО и правилам FTA",
+    "en": "ACCA-qualified accountants. Reporting under IFRS and FTA rules",
+}
 ACCOUNTANTS: list[dict] = [
     {"photo": "/static/img/accountants/maya.jpg", "name": "Майя Мандзюк",
      "name_en": "Maya Mandziuk", "role": "Главный бухгалтер",
@@ -490,6 +498,7 @@ templates.env.globals["admin_tg_id"] = settings.ADMIN_TG_ID
 # Размер бухгалтерского отдела — для кружка «+N» в блоке доверия. Глобал, потому
 # что блок _accountants.html подключается и в кабинете, и на квиз-лендингах.
 templates.env.globals["accountants_total"] = ACCOUNTANTS_TOTAL
+templates.env.globals["accountants_title"] = ACCOUNTANTS_TITLE
 # Версия статики в ссылке на CSS (?v=…). Без неё браузер партнёра держит старый
 # oncount.css после деплоя и показывает новую разметку со СТАРЫМИ стилями —
 # ровно это поймали 2026-07-21 на блоке «Тексты и ссылки». Меняется вместе с
