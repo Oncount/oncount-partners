@@ -1458,14 +1458,25 @@ def _tg_send_lead(text: str) -> None:
     ]
     for chat_id in targets:
         try:
-            httpx.post(
+            r = httpx.post(
                 f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendMessage",
                 json={"chat_id": chat_id, "text": text,
                       "disable_web_page_preview": True},
                 timeout=10,
             )
+            # Telegram отвечает HTTP 200 и при отказе («бот удалён из группы»,
+            # «chat not found»), сообщая об этом в теле {"ok": false}. Без этой
+            # проверки потеря заявки выглядит в логах как успех — а заявка сейчас
+            # доходит до менеджера ТОЛЬКО так. description — техтекст Telegram,
+            # ПД в нём нет, поэтому логируем целиком.
+            body = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
+            if not body.get("ok"):
+                log.error("lead notify REJECTED (chat=%s, http=%s): %s",
+                          chat_id, r.status_code, body.get("description"))
+            else:
+                log.info("lead notify ok (chat=%s)", chat_id)
         except Exception as exc:
-            log.warning("lead notify failed (chat=%s): %s", chat_id, type(exc).__name__)
+            log.error("lead notify failed (chat=%s): %s", chat_id, type(exc).__name__)
 
 
 def _crm_status_line(status: str | None, kommo_lead_id: int | None,
