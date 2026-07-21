@@ -2080,6 +2080,43 @@ def _leads_items(session: Session, partner: Partner) -> list[dict]:
     return items
 
 
+def _tools_ctx(session: Session, partner: Partner, request: Request) -> dict:
+    """Контекст раздела «Тексты и ссылки» (шаблон _tools_content.html).
+
+    Вкладки = СПОСОБЫ привлечения (METHODS). В каждом тексте уже вшита
+    персональная ссылка партнёра (плейсхолдер {link} → links[link_key]).
+    До 2026-07-21 собирался в маршруте /tools; теперь раздел живёт на дашборде.
+    """
+    links = _personal_links(partner.ref_slug, str(request.base_url).rstrip("/"))
+    # Все активные тексты с непустым method, сгруппированы по способу. Порядок
+    # внутри способа — order_index, id. Тексты без method (NULL) не показываем.
+    rows = (
+        session.query(MessageTemplate)
+        .filter(MessageTemplate.is_active.is_(True))
+        .filter(MessageTemplate.method.isnot(None))
+        .order_by(MessageTemplate.method, MessageTemplate.order_index, MessageTemplate.id)
+        .all()
+    )
+    method_groups: dict[str, list] = {}
+    for it in rows:
+        method_groups.setdefault(it.method, []).append(it)
+    # Контакт менеджера для CTA вкладки «События»: подтверждённый WhatsApp из
+    # PARTNER_MANAGER (единый источник), fallback — общий контакт.
+    manager_wa = next(
+        (c["value"] for c in PARTNER_MANAGER["contacts"]
+         if c["channel"] == "whatsapp" and c.get("confirmed")),
+        settings.CONTACT_WA_NUMBER,
+    )
+    return {
+        "ref_slug": partner.ref_slug,
+        "methods_order": METHODS_ORDER,
+        "method_groups": method_groups,
+        "links": links,
+        "manager_wa": manager_wa,
+        "accountants": ACCOUNTANTS,
+    }
+
+
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
     partner = current_partner(request, session)
@@ -2110,7 +2147,7 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
             "label": "Скопируй свою партнёрскую ссылку",
             "label_en": "Copy your partner link",
             "done": partner.links_viewed_at is not None,
-            "href": "/tools#intro",
+            "href": "/tools#intro",  # → редирект на /dashboard#intro, блок раскроется
         },
         {
             "label": "Передай первого клиента",
@@ -2203,6 +2240,9 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
             # Таблица заявок переехала на дашборд (решение Николь 2026-07-21),
             # отдельной страницы /leads больше нет — она редиректит сюда.
             items=_leads_items(session, partner),
+            # То же с «Текстами и ссылками» (свёрнутый блок под чек-листом):
+            # контекст вкладок собираем здесь, шаблон — _tools_content.html.
+            **_tools_ctx(session, partner, request),
         ),
     )
 
@@ -2285,65 +2325,24 @@ def short_partner_bot(slug: str) -> RedirectResponse:
     )
 
 
-@app.get("/tools", response_class=HTMLResponse)
-def tools(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
-    """Раздел «Инструменты → Тексты и ссылки» (переборка 2026-06-02): вкладки =
-    СПОСОБЫ привлечения (METHODS), а не «ссылки/тексты/кит». Каждый блок
-    самодостаточен: фильтр «для кого» + персональная ссылка + готовые тексты со
-    вшитой (плейсхолдер {link}) персональной ссылкой. Ось partner_type как
-    группировка убрана. directlinks — особый блок: карточки персональных ссылок.
-    Глубокий вход по #broadcast/#social/#event/#leadmagnet/#intro/#directlinks;
-    старые якоря #links/#messages/#kits мапятся на клиенте (LEGACY_TOOL_ANCHORS).
+@app.get("/tools")
+def tools(request: Request, session: Session = Depends(get_session)) -> RedirectResponse:
+    """LEGACY: раздел «Тексты и ссылки» переехал на дашборд свёрнутым блоком
+    (решение Николь 2026-07-21). Адрес живёт редиректом — на него ведут шаг 1
+    чек-листа, кнопки бота и закладки партнёров. Заход сюда по-прежнему
+    отмечает «скопируй ссылку» выполненным: смысл шага не изменился.
+    Глубокие якоря (#intro/#broadcast/#social/#leadmagnet/#event и старые
+    #links/#messages/#kits) разворачивают блок и открывают нужную вкладку —
+    это делает скрипт в _tools_content.html.
     """
     partner = current_partner(request, session)
     if not partner:
         return RedirectResponse("/login", status_code=302)
-    # Чек-лист дашборда: «скопируй ссылку» = факт открытия инструментов.
     if partner.links_viewed_at is None:
         partner.links_viewed_at = datetime.utcnow()
         session.commit()
-
-    ref = partner.ref_slug
-    base = str(request.base_url).rstrip("/")
-    links = _personal_links(ref, base)
-
-    # Все активные тексты с непустым method, сгруппированы по способу. Порядок
-    # внутри способа — order_index, id. Тексты без method (NULL) не показываем.
-    rows = (
-        session.query(MessageTemplate)
-        .filter(MessageTemplate.is_active.is_(True))
-        .filter(MessageTemplate.method.isnot(None))
-        .order_by(MessageTemplate.method, MessageTemplate.order_index, MessageTemplate.id)
-        .all()
-    )
-    method_groups: dict[str, list] = {}
-    for it in rows:
-        method_groups.setdefault(it.method, []).append(it)
-
-    # Контакт партнёрского менеджера для CTA вкладки «События» (написать о
-    # совместном мероприятии). Берём подтверждённый WhatsApp из PARTNER_MANAGER
-    # (единый источник), fallback — общий контакт. Цифры номера: ссылку
-    # wa.me + предзаполненный текст шаблон строит сам.
-    manager_wa = next(
-        (c["value"] for c in PARTNER_MANAGER["contacts"]
-         if c["channel"] == "whatsapp" and c.get("confirmed")),
-        settings.CONTACT_WA_NUMBER,
-    )
-
-    return templates.TemplateResponse(
-        "tools.html",
-        _ctx(
-            request,
-            partner,
-            ref_slug=ref,
-            methods_order=METHODS_ORDER,
-            method_groups=method_groups,
-            links=links,
-            manager_wa=manager_wa,
-            accountants=ACCOUNTANTS,
-            kpi=_balance_kpi(session, partner),
-        ),
-    )
+    anchor = request.url.fragment or "tools"
+    return RedirectResponse(f"/dashboard#{anchor}", status_code=302)
 
 
 # Старые URL → объединённая страница (бот /links, /messages и закладки живут).

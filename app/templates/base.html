@@ -41,7 +41,8 @@
     {# Пункт «Все заявки» убран 2026-07-21 (решение Николь): таблица переехала на
        дашборд, над блоком менеджера; /leads редиректит на /dashboard#leads. #}
 
-    <a class="menu-item {% if request.url.path == '/tools' %}active{% endif %}" href="/tools">{{ icons.nav_texts() }}{{ 'Texts and links' if lang == 'en' else 'Тексты и ссылки' }}</a>
+    {# Пункт «Тексты и ссылки» убран 2026-07-21 (решение Николь): раздел стал
+       свёрнутым блоком на дашборде; /tools редиректит на /dashboard#tools. #}
 
     <a class="menu-item {% if '/products' in request.url.path %}active{% endif %}" href="/products">{{ icons.nav_products() }}{{ 'Plans' if lang == 'en' else 'Тарифы' }}</a>
     <a class="menu-item {% if '/courses' in request.url.path %}active{% endif %}" href="/courses">{{ icons.nav_courses() }}{{ 'Courses' if lang == 'en' else 'Курсы' }}</a>

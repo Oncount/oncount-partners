@@ -1,10 +1,9 @@
-{% extends "base.html" %}
-{% block title %}{{ 'Texts and links' if lang == 'en' else 'Тексты и ссылки' }} — ONCOUNT Partners{% endblock %}
-{% block heading %}{{ 'Texts and links' if lang == 'en' else 'Тексты и ссылки' }}{% endblock %}
-
-{% block content %}
+{# Содержимое раздела «Тексты и ссылки». До 2026-07-21 было отдельной
+   страницей /tools; по решению Николь переехало на дашборд сворачиваемым
+   блоком под «Сделай эти 3 шага», страница удалена, /tools редиректит на
+   /dashboard#tools. Контекст: methods_order, method_groups, links,
+   manager_wa, accountants, method_label (глобал), lang. #}
 {% import "_icons.html" as icons %}
-{% include "_balance.html" %}
 {# Переборка 2026-06-02: вкладки = СПОСОБЫ привлечения (METHODS), не «ссылки/  #}
 {# тексты/кит». В каждом тексте уже вшита персональная ссылка (плейсхолдер     #}
 {# {link} → links[item.link_key], подстановка фильтром replace) — отдельного   #}
@@ -144,11 +143,19 @@ function showTool(name) {
     t.classList.toggle('active', t.dataset.panel === name);
   });
 }
-// Глубокий вход по #<способ>; старые якоря мапятся на новый способ.
+// Глубокий вход по #<способ> и по #tools; старые якоря мапятся на новый способ.
+// Раздел на дашборде свёрнут по умолчанию — по такой ссылке раскрываем его и
+// подскроливаем, иначе переход из чек-листа и из бота уводит «в никуда».
 (function () {
   var h = (location.hash || '').replace('#', '');
   if (LEGACY_ANCHORS[h]) h = LEGACY_ANCHORS[h];
-  if (TOOL_METHODS.indexOf(h) !== -1) showTool(h);
+  var isMethod = TOOL_METHODS.indexOf(h) !== -1;
+  if (!isMethod && h !== 'tools') return;
+  if (isMethod) showTool(h);
+  var box = document.getElementById('tools');
+  if (box) {
+    box.open = true;
+    box.scrollIntoView({ block: 'start' });
+  }
 })();
 </script>
-{% endblock %}

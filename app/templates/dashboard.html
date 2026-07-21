@@ -86,6 +86,41 @@
   {% include "_leads_table.html" %}
 </section>
 
+{# Постоянный пошаговый план «как зарабатывать с нами»: висит ВСЕГДА, без скрытия и
+   без крестика — напоминает агенту, что и за чем делать. show_checklist /
+   checklist_dismissed_at намеренно не используем. #}
+<div class="card" id="checklist">
+  <h3 style="margin: 0;">🚀 {{ 'Take these 3 steps to earn your first reward' if lang == 'en' else 'Сделай эти 3 шага, чтобы получить первое вознаграждение' }}</h3>
+  <div style="margin-top: 16px;">
+    {% for step in checklist_steps %}
+    <a href="{{ step.href }}" style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border); color: var(--charcoal);">
+      <span style="font-size: 22px; line-height: 1; min-width: 28px;">
+        {% if step.done %}✅{% else %}⚪{% endif %}
+      </span>
+      <span style="flex: 1; {% if step.done %}color: var(--sage);{% endif %}">{{ step.label_en if lang == 'en' else step.label }}</span>
+      <span style="color: var(--sage); font-size: 18px;">›</span>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+
+{# «Тексты и ссылки» переехали сюда со страницы /tools 2026-07-21 (решение
+   Николь): свёрнутый блок под чек-листом — готовые тексты под рукой, но не
+   растягивают дашборд. /tools остаётся редиректом на #tools. #}
+<details class="card dash-collapse" id="tools">
+  <summary class="dash-collapse-summary">
+    <span class="dash-collapse-titles">
+      <span class="dash-collapse-title">📝 {{ 'Texts and links' if lang == 'en' else 'Тексты и ссылки' }}</span>
+      <span class="dash-collapse-hint">{{ 'ready-made texts with your link' if lang == 'en' else 'готовые тексты с вашей ссылкой' }}</span>
+    </span>
+  </summary>
+  <div class="dash-collapse-body">
+    {% include "_tools_content.html" %}
+  </div>
+</details>
+
+{# Менеджер перенесён сюда 2026-07-21 (решение Николь): стоит между
+   чек-листом и «Сообществом» — сначала что делать, потом к кому идти. #}
 {% set mgr = partner_manager(lang) %}
 <div class="card manager-card" id="manager">
   <img class="manager-photo" src="{{ mgr.photo }}" alt="{{ mgr.name }}" width="72" height="72">
@@ -122,24 +157,6 @@
       </span>
       {% endfor %}
     </div>
-  </div>
-</div>
-
-{# Постоянный пошаговый план «как зарабатывать с нами»: висит ВСЕГДА, без скрытия и
-   без крестика — напоминает агенту, что и за чем делать. show_checklist /
-   checklist_dismissed_at намеренно не используем. #}
-<div class="card" id="checklist">
-  <h3 style="margin: 0;">🚀 {{ 'Take these 3 steps to earn your first reward' if lang == 'en' else 'Сделай эти 3 шага, чтобы получить первое вознаграждение' }}</h3>
-  <div style="margin-top: 16px;">
-    {% for step in checklist_steps %}
-    <a href="{{ step.href }}" style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border); color: var(--charcoal);">
-      <span style="font-size: 22px; line-height: 1; min-width: 28px;">
-        {% if step.done %}✅{% else %}⚪{% endif %}
-      </span>
-      <span style="flex: 1; {% if step.done %}color: var(--sage);{% endif %}">{{ step.label_en if lang == 'en' else step.label }}</span>
-      <span style="color: var(--sage); font-size: 18px;">›</span>
-    </a>
-    {% endfor %}
   </div>
 </div>
 
