@@ -4,7 +4,13 @@
    Самодостаточен по стилям (работает и на квизе, и в кабинете). #}
 {% set _l = acc_lang | default('ru') %}
 <div class="acc-trust">
-  <p class="acc-title">{{ 'Certified by IFTS and the FTA' if _l == 'en' else 'Сертифицированы ИФНС и ФТА' }}</p>
+  {# Формулировка выверена 2026-07-21 (решение Николь). Было «Сертифицированы
+     ИФНС и ФТА» / «Certified by IFTS and the FTA» — фактическая ошибка: ИФНС
+     это российская налоговая, а FTA бухгалтеров не сертифицирует (у неё есть
+     только реестр Tax Agent/Tax Agency, которого у нас нет). Пишем то, что
+     проверяемо: квалификация людей + стандарты, по которым ведём отчётность.
+     Блок публичный — он же на квиз-лендинге /consultation. #}
+  <p class="acc-title">{{ 'ACCA-qualified accountants. Reporting under IFRS and FTA rules' if _l == 'en' else 'Бухгалтеры с квалификацией ACCA. Отчётность по МСФО и правилам FTA' }}</p>
   <div class="acc-row">
     {% for a in accountants %}
     <div class="acc-item">
