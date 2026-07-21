@@ -304,6 +304,25 @@ table.list td {
   font-size: 13px;
   color: var(--sage);
 }
+/* «Показать ещё N» / «Свернуть» под таблицей заявок: неброская кнопка-таблетка
+   в стиле вкладок способов. Список длинный — управление им должно быть на
+   виду, но не спорить с кнопками действий. */
+.more-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 9px 18px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: white;
+  color: var(--sage);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.more-btn:hover { border-color: var(--sage); color: var(--deep-green); }
 /* Подпись под таблицей заявок. */
 .leads-footnote {
   margin-top: 16px;

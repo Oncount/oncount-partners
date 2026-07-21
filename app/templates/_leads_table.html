@@ -1,12 +1,64 @@
 {# Таблица заявок партнёра. До 2026-07-21 жила на отдельной странице /leads;
    по решению Николь перенесена на дашборд (над блоком менеджера), страница
    удалена, /leads редиректит на /dashboard#leads.
+   С 2026-07-21 видно только 5 последних, остальные — за кнопкой «Показать
+   ещё N»: у активного партнёра список на сотню строк выдавливал с дашборда
+   всё остальное. Строка рисуется макросом, чтобы верхняя и скрытая части не
+   разъезжались.
    Контекст: items (см. _leads_items в app/main.py), lead_stage, lang. #}
+{% macro lead_row(item) %}
+  {% if item.kind == 'lead' %}
+    {% set row = item.lead %}
+<tr>
+  <td data-label="{{ 'Client' if lang == 'en' else 'Клиент' }}">
+    <strong>{{ row.client_name }}</strong>
+    <div class="lead-contact">{{ row.client_phone or row.client_telegram or '—' }}</div>
+  </td>
+  <td data-label="{{ 'Created' if lang == 'en' else 'Создано' }}">{{ row.created_at.strftime('%d.%m.%Y') }}</td>
+  <td data-label="{{ 'Status' if lang == 'en' else 'Статус' }}">
+    {% set stage = lead_stage(row.status, lang) %}
+    <span class="status-pill status-{{ row.status }}">{{ stage.label }}</span>
+    {# Только дата оплаты (won_at) у оплаченных; чек клиента и «обн.» убраны
+       2026-07-21 по решению Николь. #}
+    {% if row.status == 'won' and row.won_at %}
+    <div style="font-size: 12px; color: var(--sage); margin-top: 4px;">{{ ('paid ' if lang == 'en' else 'оплачено ') }}{{ row.won_at.strftime('%d.%m.%Y') }}</div>
+    {% endif %}
+  </td>
+  <td data-label="{{ 'Your commission' if lang == 'en' else 'Ваша комиссия' }}" class="lead-commission">
+    {% if row.status == 'won' and row.commission_aed %}
+      <span class="commission-earned">{{ '%.0f'|format(row.commission_aed) }} AED</span>
+    {% else %}
+      <span class="commission-none">—</span>
+    {% endif %}
+  </td>
+</tr>
+  {% else %}
+    {% set it = item.l2 %}
+{# Строка дохода 2-го уровня (за суб-агента). Мелкий бейдж «2-й уровень». #}
+<tr>
+  <td data-label="{{ 'Client' if lang == 'en' else 'Клиент' }}">
+    <strong>{{ it.name }}</strong>
+    <span class="l2-badge">{{ '2nd level' if lang == 'en' else '2-й уровень' }}</span>
+    {% if it.phone %}<div class="lead-contact">{{ it.phone }}</div>{% endif %}
+  </td>
+  <td data-label="{{ 'Created' if lang == 'en' else 'Создано' }}">{{ it.date or '—' }}</td>
+  <td data-label="{{ 'Status' if lang == 'en' else 'Статус' }}">
+    <span class="status-pill status-won">{{ 'Paid' if lang == 'en' else 'Оплачено' }}</span>
+  </td>
+  <td data-label="{{ 'Your commission' if lang == 'en' else 'Ваша комиссия' }}" class="lead-commission">
+    <span class="commission-earned">{{ '%.0f'|format(it.aed) }} AED</span>
+  </td>
+</tr>
+  {% endif %}
+{% endmacro %}
 {% if not items %}
   <div class="card">
     <p>{% if lang == 'en' %}Nothing here yet. <a href="/transfer">Introduce your first client</a> and they'll show up in this table.{% else %}Пока пусто. <a href="/transfer">Передай первого клиента</a>, и он появится в этой таблице.{% endif %}</p>
   </div>
 {% else %}
+{# items уже отсортированы по дате убыванием (см. _leads_items). #}
+{% set preview = leads_preview | default(5) %}
+{% set rest = items[preview:] %}
 <table class="list">
   <thead>
     <tr>
@@ -17,55 +69,30 @@
     </tr>
   </thead>
   <tbody>
-    {# Единый список: обычные лиды и строки 2-го уровня идут вперемешку по дате
-       (сортировка в _leads_items). item.kind = "lead" | "l2". #}
-    {% for item in items %}
-      {% if item.kind == 'lead' %}
-        {% set row = item.lead %}
-    <tr>
-      <td data-label="{{ 'Client' if lang == 'en' else 'Клиент' }}">
-        <strong>{{ row.client_name }}</strong>
-        <div class="lead-contact">{{ row.client_phone or row.client_telegram or '—' }}</div>
-      </td>
-      <td data-label="{{ 'Created' if lang == 'en' else 'Создано' }}">{{ row.created_at.strftime('%d.%m.%Y') }}</td>
-      <td data-label="{{ 'Status' if lang == 'en' else 'Статус' }}">
-        {% set stage = lead_stage(row.status, lang) %}
-        <span class="status-pill status-{{ row.status }}">{{ stage.label }}</span>
-        {# Только дата оплаты (won_at) у оплаченных; чек клиента и «обн.» убраны
-           2026-07-21 по решению Николь. #}
-        {% if row.status == 'won' and row.won_at %}
-        <div style="font-size: 12px; color: var(--sage); margin-top: 4px;">{{ ('paid ' if lang == 'en' else 'оплачено ') }}{{ row.won_at.strftime('%d.%m.%Y') }}</div>
-        {% endif %}
-      </td>
-      <td data-label="{{ 'Your commission' if lang == 'en' else 'Ваша комиссия' }}" class="lead-commission">
-        {% if row.status == 'won' and row.commission_aed %}
-          <span class="commission-earned">{{ '%.0f'|format(row.commission_aed) }} AED</span>
-        {% else %}
-          <span class="commission-none">—</span>
-        {% endif %}
-      </td>
-    </tr>
-      {% else %}
-        {% set it = item.l2 %}
-    {# Строка дохода 2-го уровня (за суб-агента). Мелкий бейдж «2-й уровень». #}
-    <tr>
-      <td data-label="{{ 'Client' if lang == 'en' else 'Клиент' }}">
-        <strong>{{ it.name }}</strong>
-        <span class="l2-badge">{{ '2nd level' if lang == 'en' else '2-й уровень' }}</span>
-        {% if it.phone %}<div class="lead-contact">{{ it.phone }}</div>{% endif %}
-      </td>
-      <td data-label="{{ 'Created' if lang == 'en' else 'Создано' }}">{{ it.date or '—' }}</td>
-      <td data-label="{{ 'Status' if lang == 'en' else 'Статус' }}">
-        <span class="status-pill status-won">{{ 'Paid' if lang == 'en' else 'Оплачено' }}</span>
-      </td>
-      <td data-label="{{ 'Your commission' if lang == 'en' else 'Ваша комиссия' }}" class="lead-commission">
-        <span class="commission-earned">{{ '%.0f'|format(it.aed) }} AED</span>
-      </td>
-    </tr>
-      {% endif %}
-    {% endfor %}
+    {% for item in items[:preview] %}{{ lead_row(item) }}{% endfor %}
   </tbody>
+  {% if rest %}
+  <tbody id="leads-more" hidden>
+    {% for item in rest %}{{ lead_row(item) }}{% endfor %}
+  </tbody>
+  {% endif %}
 </table>
+{% if rest %}
+{# Свёрнутый «хвост» списка. Подписи кнопки — в data-*, чтобы скрипт не знал
+   про язык. Свернули — возвращаем к кнопке, иначе окажешься в пустоте. #}
+<button class="more-btn" type="button" onclick="toggleLeads(this)"
+        data-more="▾ {% if lang == 'en' %}Show {{ rest | length }} more{% else %}Показать ещё {{ rest | length }}{% endif %}"
+        data-less="▴ {{ 'Collapse' if lang == 'en' else 'Свернуть' }}">▾ {% if lang == 'en' %}Show {{ rest | length }} more{% else %}Показать ещё {{ rest | length }}{% endif %}</button>
+<script>
+function toggleLeads(btn) {
+  var box = document.getElementById('leads-more');
+  if (!box) return;
+  box.hidden = !box.hidden;
+  btn.textContent = box.hidden ? btn.dataset.more : btn.dataset.less;
+  if (box.hidden) btn.scrollIntoView({ block: 'center' });
+}
+</script>
+{% endif %}
 <p class="leads-footnote">
   {# Менеджер теперь прямо под таблицей — ведём якорем, а не на другую страницу. #}
   {% if lang == 'en' %}Don’t see your client here? <a href="#manager">Message your manager</a>.{% else %}Если здесь нет вашего клиента — <a href="#manager">напишите вашему менеджеру</a>.{% endif %}
