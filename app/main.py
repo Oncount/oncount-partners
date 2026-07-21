@@ -2178,19 +2178,19 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
                     + l2_total(partner))
     checklist_steps = [
         {
-            "label": "Скопируй свою партнёрскую ссылку",
+            "label": "Скопируйте свою партнёрскую ссылку",
             "label_en": "Copy your partner link",
             "done": partner.links_viewed_at is not None,
             "href": "/tools#intro",  # → редирект на /dashboard#intro, блок раскроется
         },
         {
-            "label": "Передай первого клиента",
+            "label": "Передайте первого клиента",
             "label_en": "Introduce your first client",
             "done": leads_count > 0,
             "href": "/transfer",
         },
         {
-            "label": "Изучи тарифы и вознаграждение",
+            "label": "Изучите тарифы и вознаграждение",
             "label_en": "Explore plans and rewards",
             "done": partner.products_viewed_at is not None,
             "href": "/products",

@@ -66,7 +66,7 @@
    без крестика — напоминает агенту, что и за чем делать. show_checklist /
    checklist_dismissed_at намеренно не используем. #}
 <div class="card" id="checklist">
-  <h3 style="margin: 0;">🚀 {{ 'Take these 3 steps to earn your first reward' if lang == 'en' else 'Сделай эти 3 шага, чтобы получить первое вознаграждение' }}</h3>
+  <h3 style="margin: 0;">🚀 {{ 'Take these 3 steps to earn your first reward' if lang == 'en' else 'Сделайте эти 3 шага, чтобы получить первое вознаграждение' }}</h3>
   <div style="margin-top: 16px;">
     {% for step in checklist_steps %}
     <a href="{{ step.href }}" style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border); color: var(--charcoal);">

@@ -1226,37 +1226,18 @@ FAQ = [
     {
         "category": "Партнёрская программа",
         "category_en": "Partner program",
-        "question": "Есть ли уровни партнёрства и как улучшить условия?",
-        "question_en": "Are there partnership levels, and how do I improve my terms?",
-        "answer_md": (
-            "Да. Чем больше клиентов вы приводите, тем выше ваш статус и тем лучше условия "
-            "партнёрства. Что именно меняется на вашем уровне и как перейти на следующий — "
-            "обсудите с вашим менеджером, его контакты в карточке на дашборде."
-        ),
-        "answer_md_en": (
-            "Yes. The more clients you introduce, the higher your status and the better your "
-            "partnership terms. What exactly changes at your level and how to move to the "
-            "next one — discuss it with your manager, whose contacts are on the dashboard card."
-        ),
-        "order_index": 2,
-    },
-    {
-        "category": "Партнёрская программа",
-        "category_en": "Partner program",
         "question": "Можно использовать ваши материалы и логотип в моих каналах?",
         "question_en": "Can I use your materials and logo in my own channels?",
         "answer_md": (
             "Да. В разделе «Тексты и партнёрские ссылки» в кабинете есть готовые тексты "
             "для рассылок и "
-            "партнёрский кит, которые можно отправлять клиентам, а в «Курсах» — обучающие "
-            "материалы. Логотип и фирменные материалы можно использовать при продвижении "
+            "партнёрский кит, которые можно отправлять клиентам. Логотип и фирменные материалы можно использовать при продвижении "
             "ONCOUNT. Нужен конкретный материал — попросите менеджера."
         ),
         "answer_md_en": (
             "Yes. The “Texts and partner links” section of your dashboard has ready-made "
             "outreach "
-            "texts and a partner kit you can send to clients, and “Courses” has training "
-            "materials. You may use the logo and brand materials when promoting ONCOUNT. "
+            "texts and a partner kit you can send to clients. You may use the logo and brand materials when promoting ONCOUNT. "
             "Need a specific asset? Just ask your manager."
         ),
         "order_index": 3,
@@ -1268,9 +1249,8 @@ FAQ = [
         "question": "Где взять партнёрскую ссылку?",
         "question_en": "Where do I get my partner link?",
         "answer_md": (
-            "Раздел «Тексты и партнёрские ссылки» в личном кабинете — там твоя личная "
-            "ссылка "
-            "на Telegram и WhatsApp ONCOUNT и кнопка «Скопировать»."
+            "Раздел «Тексты и партнёрские ссылки» в личном кабинете — там ваша личная "
+            "ссылка на Telegram и WhatsApp ONCOUNT и кнопка «Скопировать»."
         ),
         "answer_md_en": (
             "The “Texts and partner links” section in your dashboard — there you'll find "
@@ -1295,21 +1275,6 @@ FAQ = [
             "on WhatsApp: wa.me/971589217784 and we'll help you get in."
         ),
         "order_index": 1,
-    },
-    {
-        "category": "Вход и кабинет",
-        "category_en": "Login & dashboard",
-        "question": "Как сменить язык кабинета?",
-        "question_en": "How do I change the dashboard language?",
-        "answer_md": (
-            "Переключатель языка RU/EN — справа вверху, рядом с вашим именем. Кабинет, "
-            "тексты и FAQ доступны на русском и английском."
-        ),
-        "answer_md_en": (
-            "The RU/EN language toggle is at the top right, next to your name. The dashboard, "
-            "texts and FAQ are available in Russian and English."
-        ),
-        "order_index": 2,
     },
 ]
 
