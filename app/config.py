@@ -44,6 +44,13 @@ class Settings:
     WAZZUP_API_KEY: str = os.getenv("WAZZUP_API_KEY", "")
     WAZZUP_CHANNEL_ID: str = os.getenv("WAZZUP_CHANNEL_ID", "")
     WAZZUP_TEST_ONLY_NUMBER: str = os.getenv("WAZZUP_TEST_ONLY_NUMBER", "")
+    # Канал для КЛИЕНТСКИХ сообщений (подтверждения /mk и /consultation, PDF
+    # лид-магнитов) — по решению Николь 2026-07-21 они уходят с продажного
+    # номера 84 (971589217784), чтобы диалог клиента сразу жил в переписке
+    # менеджера. Пусто → фолбэк на WAZZUP_CHANNEL_ID (сервисный канал кодов).
+    # ⚠️ На 2026-07-21 WhatsApp-канал 84 в Wazzup blocked/qridle — перед
+    # заполнением переменной переподключить канал (QR) в кабинете Wazzup.
+    WAZZUP_CLIENT_CHANNEL_ID: str = os.getenv("WAZZUP_CLIENT_CHANNEL_ID", "")
     # Предохранитель Telegram-дайджеста (Фаза 4). По умолчанию OFF: планировщик 5/20
     # работает в dry (превью в лог), реально НЕ шлёт. Включить только осознанно:
     # DIGEST_ENABLED=1 в Railway, когда агенты уже в боте и формат подтверждён.

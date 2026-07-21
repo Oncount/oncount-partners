@@ -1189,6 +1189,7 @@ async def consultation_submit(request: Request,
         lead_prefix="Квиз-консультация",
         lead_tag="quiz",
         note_intro="Заявка с квиз-лендинга /consultation.",
+        deliver_wa_text=quiz_config.CONFIRM_WA_TEXT,
     )
 
 
@@ -1225,6 +1226,7 @@ async def mk_submit(request: Request,
         lead_prefix=mk_config.KOMMO_LEAD_PREFIX,
         lead_tag=mk_config.KOMMO_LEAD_TAG,
         note_intro=mk_config.KOMMO_NOTE_INTRO,
+        deliver_wa_text=mk_config.CONFIRM_WA_TEXT,
     )
 
 
@@ -1391,9 +1393,11 @@ async def _handle_quiz_submit(
     sub.kommo_lead_id = result.get("kommo_lead_id")
     session.commit()
 
-    # Доставка чек-листа клиенту в WhatsApp (лид-магнит). Best-effort: лид уже
-    # создан, провал доставки не валит приём. Предохранители — внутри send_wa_text
-    # (dev / WAZZUP_TEST_ONLY_NUMBER): на тесте PDF уходит только на тестовый номер.
+    # Клиентское WhatsApp-сообщение после заявки: PDF лид-магнита ИЛИ авто-
+    # подтверждение (/mk, /consultation — решение Николь 2026-07-21). Уходит с
+    # клиентского канала (номер 84, WAZZUP_CLIENT_CHANNEL_ID; фолбэк — сервисный).
+    # Best-effort: лид уже создан, провал доставки не валит приём. Предохранители —
+    # внутри send_wa_text (dev / WAZZUP_TEST_ONLY_NUMBER).
     # deliver_wa_text_builder(answers) → персональный текст (например, подсказка по
     # релевантной ошибке у /guide/5-mistakes); ошибка билдера → фоллбэк на статичный.
     wa_text = deliver_wa_text
@@ -1405,8 +1409,9 @@ async def _handle_quiz_submit(
     if wa_text:
         try:
             from app.wazzup import send_wa_text
-            ok = send_wa_text(phone_norm, wa_text)
-            log.info("leadmagnet PDF link → WA event=%s sent=%s", event_slug, ok)
+            ok = send_wa_text(phone_norm, wa_text,
+                              channel_id=settings.WAZZUP_CLIENT_CHANNEL_ID or None)
+            log.info("client WA message → event=%s sent=%s", event_slug, ok)
         except Exception as exc:  # сеть/конфиг — не валим приём заявки
             log.warning("leadmagnet WA delivery error: %s", type(exc).__name__)
 

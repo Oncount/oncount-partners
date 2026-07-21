@@ -87,7 +87,7 @@ def send_wa_code(phone: str, code: str, lang: str = "ru") -> bool:
         return False
 
 
-def send_wa_text(phone: str, text: str) -> bool:
+def send_wa_text(phone: str, text: str, channel_id: str | None = None) -> bool:
     """Отправить ПРОИЗВОЛЬНЫЙ текст в WhatsApp (Фаза K: digest / win-пуш).
 
     Тот же транспорт и те же предохранители, что и у send_wa_code, но текст
@@ -118,7 +118,9 @@ def send_wa_text(phone: str, text: str) -> bool:
             WAZZUP_ENDPOINT,
             headers={"Authorization": f"Bearer {settings.WAZZUP_API_KEY}"},
             json={
-                "channelId": settings.WAZZUP_CHANNEL_ID,
+                # channel_id → клиентские сообщения (подтверждения/PDF) с продажного
+                # номера; без него — сервисный канал кодов входа (WAZZUP_CHANNEL_ID).
+                "channelId": channel_id or settings.WAZZUP_CHANNEL_ID,
                 "chatType": "whatsapp",
                 "chatId": norm,
                 "text": text,
