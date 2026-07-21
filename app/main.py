@@ -2136,11 +2136,6 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
     # 2026-07-21). NULL-комиссии дают 0. Плюс доход 2-го уровня (за суб-агентов).
     earned_total = (sum((getattr(l, "commission_aed", None) or 0) for l in won_rows)
                     + l2_total(partner))
-    # Сводка по вознаграждению (Фаза B): из тех же won-лидов, без доп. запроса.
-    # Дефолт «в расчёте» = won без явного payout_state — как в payout_label.
-    payout_to_pay = sum(1 for l in won_rows if l.payout_state == "to_pay")
-    payout_paid = sum(1 for l in won_rows if l.payout_state == "paid")
-
     checklist_steps = [
         {
             "label": "Скопируй свою партнёрскую ссылку",
@@ -2221,9 +2216,6 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
                 # «Заработано» — комиссия партнёра, не оборот (решение Николь
                 # 2026-07-21). См. _balance_kpi.
                 "earned_aed": float(earned_total),
-                # Сводка вознаграждения (Фаза B): к выплате / выплачено.
-                "payout_to_pay": payout_to_pay,
-                "payout_paid": payout_paid,
                 # Ожидаемая комиссия: $300 (мин) … $1000 (средн) с каждого лида.
                 "expected_usd_low": leads_count * 300,
                 "expected_usd_high": leads_count * 1000,

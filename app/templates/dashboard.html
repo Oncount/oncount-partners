@@ -49,34 +49,10 @@
   </div>
 </div>
 
-{% if kpi.successful %}
-<div class="card">
-  <h3 style="margin: 0 0 4px;">{{ 'Your partner reward' if lang == 'en' else 'Ваше партнёрское вознаграждение' }}</h3>
-  <p style="color: var(--sage); font-size: 13px; margin: 0 0 16px;">
-    {% if lang == 'en' %}For clients who came on board through you — see each one under <a href="#leads">all requests</a>.{% else %}За клиентов, пришедших с нами через вас — детали по каждому в <a href="#leads">всех заявках</a>.{% endif %}
-  </p>
-  {# В расчёте = выигранные минус уже к выплате/выплаченные (дефолт как в payout_label). #}
-  {% set in_calc = kpi.successful - kpi.payout_to_pay - kpi.payout_paid %}
-  <div style="display: flex; flex-wrap: wrap; gap: 12px;">
-    <div style="flex: 1; min-width: 140px;">
-      <span class="status-pill payout-in_calc">{{ 'Being calculated' if lang == 'en' else 'В расчёте' }}</span>
-      <div style="font-size: 28px; font-weight: 700; color: var(--deep-green); margin-top: 8px;">{{ in_calc }}</div>
-    </div>
-    <div style="flex: 1; min-width: 140px;">
-      <span class="status-pill payout-to_pay">{{ 'To be paid' if lang == 'en' else 'К выплате' }}</span>
-      <div style="font-size: 28px; font-weight: 700; color: var(--deep-green); margin-top: 8px;">{{ kpi.payout_to_pay }}</div>
-    </div>
-    <div style="flex: 1; min-width: 140px;">
-      <span class="status-pill payout-paid">{{ 'Paid' if lang == 'en' else 'Выплачено' }}</span>
-      <div style="font-size: 28px; font-weight: 700; color: var(--deep-green); margin-top: 8px;">{{ kpi.payout_paid }}</div>
-    </div>
-  </div>
-  {# Правило выплат (Фаза K, решение Николь): прозрачное ожидание без конкретной суммы. #}
-  <p style="color: var(--sage); font-size: 13px; margin: 16px 0 0; padding-top: 12px; border-top: 1px dashed var(--border);">
-    {% if lang == 'en' %}💳 Your partner reward is paid by the 10th of the month following the client's payment.{% else %}💳 Партнёрское вознаграждение выплачивается до 10-го числа месяца, следующего за оплатой клиентом.{% endif %}
-  </p>
-</div>
-{% endif %}
+{# Блок «Ваше партнёрское вознаграждение» (счётчики В расчёте / К выплате /
+   Выплачено + правило «до 10-го числа») убран 2026-07-21 по решению Николь.
+   Суммы вознаграждения партнёр видит в столбце «Ваша комиссия» таблицы
+   заявок ниже. Вернуть — вместе с решением по срокам выплат. #}
 
 {# Все заявки: перенесены со страницы /leads на дашборд 2026-07-21 (решение
    Николь) — партнёр видит их сразу, не переходя в отдельный раздел. Стоят над
