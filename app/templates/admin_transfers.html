@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Передачи клиентов — ONCOUNT{% endblock %}
+{% block heading %}Клиенты от партнёров{% endblock %}
+
+{% block content %}
+<p style="margin-top:0;">
+  <a href="/admin/partner-stats">лидеры</a> <span style="color:#aaa;">·</span>
+  <a href="/admin/sources">источники</a> <span style="color:#aaa;">·</span>
+  <a href="/admin/payouts">выплаты</a> <span style="color:#aaa;">·</span>
+  <b>передачи</b>
+</p>
+
+<div class="card">
+  <p style="margin:0; line-height:1.7;">
+    Всего передач: <b>{{ rows|length }}</b> ·
+    В CRM: <b style="color:#2e7d32;">{{ in_crm }}</b> ·
+    Нет карточки в CRM: <b style="color:#c62828;">{{ not_in_crm }}</b>
+  </p>
+  <p style="margin:.5em 0 0; color:#888; font-size:13px;">
+    Сделку по переданному клиенту менеджер заводит в Kommo вручную (воронка 1.1, этап «новый лид»).
+    Здесь видно, что уже разобрано, а что нет.
+  </p>
+</div>
+
+{% for r in rows %}
+{% set l = r.lead %}
+<div class="card">
+  <div style="display:flex; flex-wrap:wrap; gap:8px 18px; align-items:baseline; margin-bottom:6px;">
+    <b style="font-size:16px;">{{ l.client_name }}</b>
+    <span style="color:#666;">от: {{ r.agent }}</span>
+    <span style="color:#666;">{{ l.created_at.strftime('%d.%m.%y') if l.created_at else '—' }}</span>
+    {% if l.kommo_lead_id %}
+      <a href="{{ kommo_url }}{{ l.kommo_lead_id }}" target="_blank" rel="noopener">Kommo ↗</a>
+    {% else %}
+      <span style="color:#c62828;">нет карточки в CRM</span>
+    {% endif %}
+  </div>
+  <p style="margin:.2em 0; color:#555;">
+    Телефон: {{ l.client_phone or '—' }}
+    {% if r.wa %}· <a href="https://wa.me/{{ r.wa }}" target="_blank" rel="noopener">написать</a>{% endif %}
+    {% if l.client_telegram %}· TG: {{ l.client_telegram }}{% endif %}
+    {% if l.company_name %}· {{ l.company_name }}{% endif %}
+  </p>
+  <p style="margin:.2em 0; color:#555;">Услуга: {{ l.task_description or '—' }}</p>
+  {% if l.do_not_offer %}<p style="margin:.2em 0; color:#888;">Не предлагать: {{ l.do_not_offer }}</p>{% endif %}
+</div>
+{% else %}
+<div class="card"><p style="margin:0;">Передач пока нет.</p></div>
+{% endfor %}
+{% endblock %}

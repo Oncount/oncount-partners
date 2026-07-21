@@ -56,6 +56,15 @@ class Settings:
     # Доп. слой для WhatsApp — WAZZUP_TEST_ONLY_NUMBER (шлёт только на тестовый).
     NOTIFICATIONS_LIVE: bool = os.getenv("NOTIFICATIONS_LIVE", "") in ("1", "true", "True")
     ADMIN_TG_ID: int = int(os.getenv("ADMIN_TG_ID", "6634813047"))
+    # Куда ЕЩЁ дублировать заявки, кроме личного Telegram владельца (2026-07-21).
+    # Фолбэк на время, пока api не создаёт сделки в Kommo (диагностика 21.07:
+    # заявка принята, ответ api — failed, сделки в CRM нет): менеджер получает
+    # заявку в закрытую группу и заносит её в CRM руками. CSV chat_id; у группы
+    # id отрицательный (напр. "-1001234567890"). Пусто = прежнее поведение.
+    # ⚠️ В этих сообщениях ПД клиентов — только закрытые чаты своей команды.
+    NOTIFY_TG_CHAT_IDS: list[str] = [
+        x.strip() for x in os.getenv("NOTIFY_TG_CHAT_IDS", "").split(",") if x.strip()
+    ]
     CONTACT_TG_USERNAME: str = os.getenv("CONTACT_TG_USERNAME", "nikol_hillton")
     CONTACT_WA_NUMBER: str = os.getenv("CONTACT_WA_NUMBER", "971589217784")
     # Баннер набора на Mastermind в разделе «Курсы». Меняется по месяцам — из конфига,

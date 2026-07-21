@@ -1032,6 +1032,41 @@ def admin_payouts(request: Request, session: Session = Depends(get_session)) -> 
     )
 
 
+@app.get("/admin/transfers", response_class=HTMLResponse)
+def admin_transfers(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
+    """Клиенты, переданные партнёрами: что уже в CRM, а что осталось только у нас.
+
+    Сделку в Kommo по таким заявкам заводит менеджер руками, поэтому нужен список,
+    по которому видно, что разобрано, а что нет — иначе единственный след заявки
+    это сообщение в Telegram, которое тонет в переписке. Признак передачи —
+    заполненный task_description (лиды из часового синка Kommo его не заполняют).
+    """
+    admin = require_admin(request, session)
+    leads = (
+        session.query(Lead)
+        .filter(Lead.task_description.isnot(None), Lead.partner_id.isnot(None))
+        .order_by(Lead.id.desc())
+        .all()
+    )
+    pids = {l.partner_id for l in leads if l.partner_id}
+    pmap = (
+        {p.id: p for p in session.query(Partner).filter(Partner.id.in_(pids)).all()}
+        if pids else {}
+    )
+    rows = [
+        {"lead": l,
+         "agent": partner_label(pmap[l.partner_id]) if l.partner_id in pmap else "—",
+         "wa": _wa_digits(l.client_phone)}
+        for l in leads
+    ]
+    in_crm = sum(1 for r in rows if r["lead"].kommo_lead_id)
+    return templates.TemplateResponse(
+        "admin_transfers.html",
+        _ctx(request, admin, rows=rows, kommo_url=KOMMO_LEAD_URL,
+             in_crm=in_crm, not_in_crm=len(rows) - in_crm),
+    )
+
+
 @app.post("/admin/payouts/{lead_id}")
 def admin_payout_save(
     lead_id: int,
@@ -1375,44 +1410,99 @@ async def _handle_quiz_submit(
         except Exception as exc:  # сеть/конфиг — не валим приём заявки
             log.warning("leadmagnet WA delivery error: %s", type(exc).__name__)
 
-    # TG-пуш админу (Николь) — внутреннее уведомление в наш бот, не сторонний сервис.
+    # Карточка заявки в наш бот: владельцу и менеджерам (NOTIFY_TG_CHAT_IDS).
+    # Внутренний канал, не сторонний сервис. error пробрасываем, чтобы в
+    # сообщении был виден код сбоя api — иначе причину не с чем нести команде.
     _notify_admin_new_quiz(sub, partner, answers,
-                           header=notify_header, question_titles=question_titles)
-    log.info("quiz submit event=%s phone=%s agent=%s kommo=%s",
+                           header=notify_header, question_titles=question_titles,
+                           error=result.get("error"))
+    log.info("quiz submit event=%s phone=%s agent=%s kommo=%s error=%s",
              event_slug or "consultation", _quiz_mask_phone(phone_norm),
-             partner.id if partner else "-", result["status"])
+             partner.id if partner else "-", result["status"], result.get("error"))
     return {"ok": True}
 
 
-def _notify_admin_new_quiz(sub: "QuizSubmission", partner: "Partner | None",
-                           answers: dict, *, header: str, question_titles: dict) -> None:
-    """Уведомить Николь о новой заявке через наш бот. Best-effort: провал не
-    влияет на приём (строка уже в БД). Шлём ПОЛНЫЙ телефон — это наш лид для звонка."""
+def partner_label(partner: Partner) -> str:
+    """Как назвать партнёра в уведомлении и в CRM: имя → имя из Kommo → контакт → #id."""
+    return (
+        (partner.first_name or "").strip()
+        or (partner.kommo_agent_name or "").strip()
+        or (partner.phone or "").strip()
+        or (partner.email or "").strip()
+        or f"#{partner.id}"
+    )
+
+
+def _wa_digits(phone: str | None) -> str:
+    """Цифры телефона для ссылки wa.me — чтобы менеджер писал клиенту в один тап."""
+    return "".join(ch for ch in str(phone or "") if ch.isdigit())
+
+
+def _tg_send_lead(text: str) -> None:
+    """Разослать карточку заявки владельцу и в рабочие чаты (2026-07-21).
+
+    Получатели: ADMIN_TG_ID (как было) + NOTIFY_TG_CHAT_IDS — закрытая группа
+    менеджеров. Пока api не создаёт сделки в Kommo, это единственный канал, по
+    которому заявка доходит до менеджера, поэтому шлём каждому адресату отдельно
+    и не даём сбою одного оборвать остальных. ПД в лог не пишем — только тип ошибки.
+    """
     if not settings.BOT_TOKEN:
         return
+    targets = [str(settings.ADMIN_TG_ID)] + [
+        c for c in settings.NOTIFY_TG_CHAT_IDS if c != str(settings.ADMIN_TG_ID)
+    ]
+    for chat_id in targets:
+        try:
+            httpx.post(
+                f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendMessage",
+                json={"chat_id": chat_id, "text": text,
+                      "disable_web_page_preview": True},
+                timeout=10,
+            )
+        except Exception as exc:
+            log.warning("lead notify failed (chat=%s): %s", chat_id, type(exc).__name__)
+
+
+def _crm_status_line(status: str | None, kommo_lead_id: int | None,
+                     error: str | None = None) -> str:
+    """Строка о судьбе заявки в CRM — понятная менеджеру, а не только разработчику.
+
+    Диагностика 21.07.2026: заявки принимаются, но api отвечает ошибкой и сделка
+    в Kommo НЕ создаётся. Значит менеджеру нужно прямое указание «занести руками»,
+    а не техническое слово «failed», которое легко пролистать.
+    """
+    if status == "sent" and kommo_lead_id:
+        return f"✅ В CRM: сделка #{kommo_lead_id}"
+    detail = f": {error}" if error else ""
+    reason = "CRM отключена" if status == "dry" else f"сбой CRM{detail}"
+    return f"⚠️ В CRM НЕ занесено — ВНЕСТИ ВРУЧНУЮ · {reason}"
+
+
+def _notify_admin_new_quiz(sub: "QuizSubmission", partner: "Partner | None",
+                           answers: dict, *, header: str, question_titles: dict,
+                           error: str | None = None) -> None:
+    """Карточка заявки владельцу и менеджерам. Best-effort: провал не влияет на
+    приём (строка уже в БД). Шлём ПОЛНЫЙ телефон — это наш лид для звонка."""
     lines = [header, ""]
     lines.append(f"Имя: {sub.name or '—'}")
     lines.append(f"Телефон: +{sub.phone}")
+    lines.append(f"Написать: https://wa.me/{sub.phone}")
     for qid, title in question_titles.items():
         if answers.get(qid):
             lines.append(f"• {title} — {answers[qid]}")
+    lines.append("")
     if partner:
-        lines.append("")
         lines.append(f"Агент: {partner.kommo_agent_name or partner.first_name or partner.ref_slug}")
     elif sub.ref_slug:
-        lines.append(f"\nРеф-метка (агент не найден): {sub.ref_slug}")
+        lines.append(f"Реф-метка (агент не найден): {sub.ref_slug}")
+    else:
+        lines.append("Агент: — (пришёл не по партнёрской ссылке)")
     utm_src = sub.utm_source or sub.utm_campaign
     if utm_src:
         lines.append(f"UTM: source={sub.utm_source or '-'}, campaign={sub.utm_campaign or '-'}")
-    lines.append(f"\nKommo: {sub.kommo_status}" + (f" (#{sub.kommo_lead_id})" if sub.kommo_lead_id else ""))
-    try:
-        httpx.post(
-            f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendMessage",
-            json={"chat_id": settings.ADMIN_TG_ID, "text": "\n".join(lines)},
-            timeout=10,
-        )
-    except Exception as exc:
-        log.warning("quiz admin notify failed: %s", type(exc).__name__)
+    lines.append("")
+    lines.append(_crm_status_line(sub.kommo_status, sub.kommo_lead_id, error))
+    _tg_send_lead("\n".join(lines))
 
 
 @app.get("/join")
@@ -2426,40 +2516,30 @@ def transfer_post(
     session.add(lead)
     session.commit()
 
-    # Уведомление в Telegram Николь (ADMIN_TG_ID). Менеджер заносит в Kommo
-    # вручную (решение 2026-06-01). Лид уже в БД — если TG упал, ничего не
-    # теряем: партнёр видит /leads, менеджер получит на следующей попытке.
-    # ПД клиента летят во внутренний канал (свой бот → личка владельца), как
-    # уже делает app/bot.py для ТГ-флоу.
-    if settings.BOT_TOKEN and settings.ADMIN_TG_ID:
-        partner_label = (
-            (partner.first_name or "").strip()
-            or (partner.kommo_agent_name or "").strip()
-            or (partner.phone or "").strip()
-            or (partner.email or "").strip()
-            or f"#{partner.id}"
-        )
-        lines = [
-            "🆕 Новый клиент от партнёра",
-            f"Партнёр: {partner_label}",
-            f"Телефон: {client_phone_v}",
-            f"Имя клиента: {client_name_v}",
-            f"Услуга: {task_v}",
-            f"Что НЕ предлагать: {do_not_offer_v}",
-        ]
-        if client_telegram_v:
-            lines.append(f"Telegram: {client_telegram_v}")
-        if company_name_v:
-            lines.append(f"Компания: {company_name_v}")
-        try:
-            httpx.post(
-                f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendMessage",
-                json={"chat_id": settings.ADMIN_TG_ID, "text": "\n".join(lines)},
-                timeout=10,
-            )
-        except Exception as e:
-            # НЕ логируем ПД клиента — только тип ошибки.
-            log.warning("/transfer telegram notify failed: %s", type(e).__name__)
+    # Карточка клиента владельцу и менеджерам (NOTIFY_TG_CHAT_IDS). Сделку в Kommo
+    # заводит менеджер руками — партнёр-сервис в CRM не пишет, а api сейчас на
+    # заявках отвечает ошибкой (диагностика 21.07.2026). Поэтому это сообщение —
+    # единственный путь заявки к менеджеру, и в нём должно быть всё для звонка.
+    # Лид уже в БД: если TG упал, ничего не теряем — есть /leads и /admin/transfers.
+    # ПД клиента летят во внутренний канал (свой бот → свои чаты), как уже делает
+    # app/bot.py для ТГ-флоу.
+    lines = [
+        "🆕 Новый клиент от партнёра",
+        "",
+        f"Партнёр: {partner_label(partner)}",
+        f"Имя клиента: {client_name_v}",
+        f"Телефон: {client_phone_v}",
+        f"Написать: https://wa.me/{_wa_digits(client_phone_v)}",
+        f"Услуга: {task_v}",
+        f"Что НЕ предлагать: {do_not_offer_v}",
+    ]
+    if client_telegram_v:
+        lines.append(f"Telegram клиента: {client_telegram_v}")
+    if company_name_v:
+        lines.append(f"Компания: {company_name_v}")
+    lines.append("")
+    lines.append("⚠️ В CRM НЕ занесено — ВНЕСТИ ВРУЧНУЮ (воронка 1.1, «новый лид»)")
+    _tg_send_lead("\n".join(lines))
 
     msg = (
         "Client referred. A manager will be in touch within an hour during business hours (9:00–18:00 Dubai time)."

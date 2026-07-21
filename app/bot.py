@@ -571,17 +571,34 @@ async def transfer_task(msg: Message, state: FSMContext) -> None:
         session.add(lead)
         session.commit()
     await msg.answer(t("TRANSFER_DONE", lang, name=data["client_name"]), reply_markup=menu_partner(lang))
-    # уведомить админа
-    try:
-        await bot.send_message(
-            settings.ADMIN_TG_ID,
-            f"🆕 Партнёр {msg.from_user.full_name} (@{msg.from_user.username or '—'}) "
-            f"передал клиента <b>{data['client_name']}</b>\n"
-            f"Телефон: {data.get('client_phone') or '—'}\n"
-            f"Задача: {msg.text.strip()}",
-        )
-    except (TelegramBadRequest, TelegramForbiddenError) as e:
-        log.warning("admin notify failed: %s", e)
+
+    # Карточка клиента владельцу и менеджерам (NOTIFY_TG_CHAT_IDS, 2026-07-21).
+    # Сделку в Kommo заводит менеджер руками, поэтому в сообщении сразу всё для
+    # звонка: кто передал, контакт, запрос и ссылка написать в один тап.
+    phone = data.get("client_phone") or ""
+    wa = "".join(ch for ch in phone if ch.isdigit())
+    lines = [
+        "🆕 Новый клиент от партнёра",
+        "",
+        f"Партнёр: {msg.from_user.full_name} (@{msg.from_user.username or '—'})",
+        f"Имя клиента: {data['client_name']}",
+        f"Телефон: {phone or '—'}",
+    ]
+    if wa:
+        lines.append(f"Написать: https://wa.me/{wa}")
+    lines.append(f"Услуга: {msg.text.strip()}")
+    lines.append("")
+    lines.append("⚠️ В CRM НЕ занесено — ВНЕСТИ ВРУЧНУЮ (воронка 1.1, «новый лид»)")
+    text = "\n".join(lines)
+
+    targets = [str(settings.ADMIN_TG_ID)] + [
+        c for c in settings.NOTIFY_TG_CHAT_IDS if c != str(settings.ADMIN_TG_ID)
+    ]
+    for chat_id in targets:
+        try:
+            await bot.send_message(chat_id, text, disable_web_page_preview=True)
+        except (TelegramBadRequest, TelegramForbiddenError) as e:
+            log.warning("lead notify failed (chat=%s): %s", chat_id, e)
     await state.clear()
 
 
