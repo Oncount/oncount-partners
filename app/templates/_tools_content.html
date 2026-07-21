@@ -24,6 +24,10 @@
   {# ─── Готовые тексты способа ──────────────────────────────────────────── #}
   {% set items = method_groups.get(key, []) %}
   {% if items %}
+    {# Свёрнутый список (решение Николь 2026-07-21): первый текст виден целиком,
+       второй обрезан «с растворением», остальные скрыты — чтобы под кнопкой не
+       разворачивалась сразу простыня. Кнопка ниже снимает класс is-clipped. #}
+    <div class="msg-list{% if items | length > 1 %} is-clipped{% endif %}" id="msgs-{{ key }}">
     {% for item in items %}
     {% set is_draft = item.slug.endswith('-draft') %}
     {% set url = links.get(item.link_key, '') %}
@@ -47,6 +51,10 @@
       {% endif %}
     </div>
     {% endfor %}
+    </div>
+    {% if items | length > 1 %}
+    <button class="more-btn" type="button" onclick="expandTexts(this, 'msgs-{{ key }}')">▾ {% if lang == 'en' %}Show all texts ({{ items | length }}){% else %}Показать все тексты ({{ items | length }}){% endif %}</button>
+    {% endif %}
   {% elif key not in ['intro', 'event'] %}
     <div class="card">
       <p>{% if lang == 'en' %}Texts are being prepared and will appear here shortly.{% else %}Тексты готовятся и скоро появятся здесь.{% endif %}</p>
@@ -106,8 +114,13 @@
 .tool-tab{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:1px solid var(--border);border-radius:999px;font-size:15px;font-weight:600;color:var(--sage);background:white;cursor:pointer;font-family:inherit}
 .tool-tab:hover{border-color:var(--sage)}
 .tool-tab.active{background:var(--deep-green);color:var(--cream);border-color:var(--deep-green)}
-/* Треугольник у раскрытого способа: видно, что кнопка — переключатель. */
-.tool-tab.active::after{content:'b4';margin-left:2px;font-size:12px;line-height:1}
+/* Значка на нажатой кнопке нет (решение Николь 2026-07-21): активный способ
+   и так выделен цветом, лишний символ только шумит. */
+/* Свёрнутый список текстов: первый целиком, второй наполовину с растворением,
+   остальные не показываем. Разворачивается кнопкой .more-btn под списком. */
+.msg-list.is-clipped .msg-card:nth-of-type(n+3){display:none}
+.msg-list.is-clipped .msg-card:nth-of-type(2){max-height:180px;overflow:hidden;position:relative}
+.msg-list.is-clipped .msg-card:nth-of-type(2)::after{content:'';position:absolute;left:0;right:0;bottom:0;height:90px;background:linear-gradient(rgba(255,255,255,0),#fff 85%);pointer-events:none}
 /* «Свернуть» под списком текстов — неброско, но всегда на месте. */
 .tool-collapse{display:inline-flex;align-items:center;gap:6px;margin:4px 0 8px;padding:8px 16px;border:1px solid var(--border);border-radius:999px;background:white;color:var(--sage);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}
 .tool-collapse:hover{border-color:var(--sage);color:var(--deep-green)}
@@ -134,6 +147,12 @@ function copyLink(btn, url) {
 // Нажатие на способ раскрывает его тексты; повторное нажатие — сворачивает
 // (решение Николь 2026-07-21). При заходе не раскрыт ни один: партнёр видит
 // вступление и четыре кнопки, а простыню текстов открывает сам.
+// Разворот списка текстов внутри способа: снимаем обрезку и прячем кнопку.
+function expandTexts(btn, boxId) {
+  var box = document.getElementById(boxId);
+  if (box) box.classList.remove('is-clipped');
+  btn.hidden = true;
+}
 function showTool(name) {
   const already = document.querySelector('.tool-tab.active[data-panel="' + name + '"]');
   const target = already ? null : name;
@@ -143,6 +162,14 @@ function showTool(name) {
   });
   document.querySelectorAll('.tool-tab').forEach(function (t) {
     t.classList.toggle('active', t.dataset.panel === target);
+  });
+  // Свернули способ — возвращаем его список в исходный вид (первый текст +
+  // обрезанный второй), иначе при следующем открытии он снова во всю длину.
+  TOOL_METHODS.forEach(function (n) {
+    var box = document.getElementById('msgs-' + n);
+    if (box && box.querySelectorAll('.msg-card').length > 1) box.classList.add('is-clipped');
+    var b = box && box.parentNode.querySelector('.more-btn');
+    if (b) b.hidden = false;
   });
   // Свернули из конца длинного списка — возвращаем к кнопкам способов.
   if (!target) {
