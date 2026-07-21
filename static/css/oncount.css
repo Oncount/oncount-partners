@@ -890,7 +890,12 @@ details.faq-item,
     font-weight: 600;
     flex-shrink: 0;
   }
+  /* Первая ячейка — «шапка» карточки: имя клиента + бейдж «2-й уровень» +
+     контакт. Не пара «подпись — значение», поэтому flex со space-between здесь
+     не нужен: он растаскивает три куска по ширине и рвёт имя посреди слова
+     («Марат (суб-» / «агент)»). Возвращаем обычный поток. */
   table.list td:first-child {
+    display: block;
     border-bottom: 1px solid var(--border);
     margin-bottom: 6px;
     padding-bottom: 10px;

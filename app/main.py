@@ -468,13 +468,13 @@ def partner_manager(lang: str = "ru") -> dict:
     }
 
 
-# Доступно во всех шаблонах кабинета (DRY): leads.html, dashboard.html.
+# Доступно во всех шаблонах кабинета (DRY): _leads_table.html, dashboard.html.
 templates.env.globals["lead_stage"] = lead_stage
 templates.env.globals["payout_label"] = payout_label
 templates.env.globals["partner_type_label"] = partner_type_label
 templates.env.globals["method_label"] = method_label
 templates.env.globals["partner_manager"] = partner_manager
-# Дата выплаты по won-лиду (Фаза K) — единый источник для leads.html.
+# Дата выплаты по won-лиду (Фаза K) — единый источник для _leads_table.html.
 from app.notifications import payout_due_date as _payout_due_date  # noqa: E402
 templates.env.globals["payout_due_date"] = _payout_due_date
 # Контакты для футера — из конфига (правило репо №1: не хардкодить ссылки).
@@ -1063,7 +1063,7 @@ def _balance_kpi(session: Session, partner: Partner) -> dict:
         "expected_usd_low": leads_count * 300,
         "expected_usd_high": leads_count * 1000,
         # Средняя комиссия — для серого ориентира в столбце «Ваша комиссия»
-        # (leads.html). Балансовую полосу НЕ трогает.
+        # (_leads_table.html). Балансовую полосу НЕ трогает.
         "avg_commission_aed": float(AVG_COMMISSION_AED),
     }
 
@@ -2051,6 +2051,35 @@ def checklist_dismiss(request: Request, session: Session = Depends(get_session))
     return RedirectResponse("/dashboard", status_code=302)
 
 
+def _leads_items(session: Session, partner: Partner) -> list[dict]:
+    """Единый список заявок партнёра для таблицы (шаблон _leads_table.html).
+
+    Обычные лиды + строки дохода 2-го уровня (за суб-агентов) идут вперемешку по
+    дате, а не блоком в конце (решение Николь 2026-07-21). Тип помечаем ключом
+    "kind". Дата 2-го уровня приходит строкой "дд.мм.гггг" — парсим для
+    сортировки, при кривом формате роняем в самый низ, а не падаем.
+    """
+    leads = (
+        session.query(Lead)
+        .filter_by(partner_id=partner.id)
+        .order_by(Lead.created_at.desc())
+        .limit(100)
+        .all()
+    )
+
+    def _l2_date(s: str):
+        try:
+            return datetime.strptime((s or "").strip(), "%d.%m.%Y")
+        except (ValueError, TypeError):
+            return datetime.min
+
+    items = [{"kind": "lead", "lead": l, "sort_dt": l.created_at} for l in leads]
+    for it in (partner.l2_income or []):
+        items.append({"kind": "l2", "l2": it, "sort_dt": _l2_date(it.get("date"))})
+    items.sort(key=lambda x: x["sort_dt"] or datetime.min, reverse=True)
+    return items
+
+
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
     partner = current_partner(request, session)
@@ -2163,7 +2192,7 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
                 "expected_usd_low": leads_count * 300,
                 "expected_usd_high": leads_count * 1000,
                 # Средняя комиссия — серый ориентир в столбце «Ваша комиссия»
-                # (leads.html). Балансовую полосу НЕ трогает.
+                # (_leads_table.html). Балансовую полосу НЕ трогает.
                 "avg_commission_aed": float(AVG_COMMISSION_AED),
             },
             checklist_steps=checklist_steps,
@@ -2171,40 +2200,19 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
             show_survey_banner=show_survey_banner,
             faq_categories=faq_categories,
             community=community,
+            # Таблица заявок переехала на дашборд (решение Николь 2026-07-21),
+            # отдельной страницы /leads больше нет — она редиректит сюда.
+            items=_leads_items(session, partner),
         ),
     )
 
 
 @app.get("/leads", response_class=HTMLResponse)
-def leads(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
-    partner = current_partner(request, session)
-    if not partner:
-        return RedirectResponse("/login", status_code=302)
-    leads = (
-        session.query(Lead)
-        .filter_by(partner_id=partner.id)
-        .order_by(Lead.created_at.desc())
-        .limit(100)
-        .all()
-    )
-    # Единый список для сортировки по дате (решение Николь 2026-07-21): обычные
-    # лиды + строки дохода 2-го уровня (за суб-агентов) должны идти вперемешку по
-    # дате, а не блоком в конце. Тип помечаем ключом "kind" для шаблона. Дата
-    # 2-го уровня приходит строкой "дд.мм.гггг" — парсим для сортировки, при
-    # кривом формате роняем в самый низ (min date), не падаем.
-    def _l2_date(s: str):
-        try:
-            return datetime.strptime((s or "").strip(), "%d.%m.%Y")
-        except (ValueError, TypeError):
-            return datetime.min
-    items = [{"kind": "lead", "lead": l, "sort_dt": l.created_at} for l in leads]
-    for it in (partner.l2_income or []):
-        items.append({"kind": "l2", "l2": it, "sort_dt": _l2_date(it.get("date"))})
-    items.sort(key=lambda x: x["sort_dt"] or datetime.min, reverse=True)
-    return templates.TemplateResponse(
-        "leads.html",
-        _ctx(request, partner, items=items, kpi=_balance_kpi(session, partner)),
-    )
+def leads(request: Request) -> RedirectResponse:
+    """LEGACY: страница «Все заявки» переехала на дашборд (решение Николь
+    2026-07-21). Адрес живёт редиректом — на него ведут закладки партнёров,
+    ссылки в текстах кабинета и старые уведомления."""
+    return RedirectResponse("/dashboard#leads", status_code=302)
 
 
 CONSULT_TEXT_TPL = (

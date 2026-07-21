@@ -38,7 +38,8 @@
     </div>
 
     <a class="menu-item {% if request.url.path == '/dashboard' %}active{% endif %}" href="/dashboard">{{ icons.nav_dashboard() }}{{ 'Dashboard' if lang == 'en' else 'Дашборд' }}</a>
-    <a class="menu-item {% if request.url.path == '/leads' %}active{% endif %}" href="/leads">{{ icons.nav_leads() }}{{ 'All requests' if lang == 'en' else 'Все заявки' }}</a>
+    {# Пункт «Все заявки» убран 2026-07-21 (решение Николь): таблица переехала на
+       дашборд, над блоком менеджера; /leads редиректит на /dashboard#leads. #}
 
     <a class="menu-item {% if request.url.path == '/tools' %}active{% endif %}" href="/tools">{{ icons.nav_texts() }}{{ 'Texts and links' if lang == 'en' else 'Тексты и ссылки' }}</a>
 

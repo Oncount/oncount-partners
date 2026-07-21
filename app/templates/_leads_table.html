@@ -1,9 +1,7 @@
-{% extends "base.html" %}
-{% block title %}{{ 'All requests' if lang == 'en' else 'Все заявки' }} — ONCOUNT Partners{% endblock %}
-{% block heading %}{{ 'All requests' if lang == 'en' else 'Все заявки' }}{% endblock %}
-
-{% block content %}
-{% include "_balance.html" %}
+{# Таблица заявок партнёра. До 2026-07-21 жила на отдельной странице /leads;
+   по решению Николь перенесена на дашборд (над блоком менеджера), страница
+   удалена, /leads редиректит на /dashboard#leads.
+   Контекст: items (см. _leads_items в app/main.py), lead_stage, lang. #}
 {% if not items %}
   <div class="card">
     <p>{% if lang == 'en' %}Nothing here yet. <a href="/transfer">Introduce your first client</a> and they'll show up in this table.{% else %}Пока пусто. <a href="/transfer">Передай первого клиента</a>, и он появится в этой таблице.{% endif %}</p>
@@ -20,7 +18,7 @@
   </thead>
   <tbody>
     {# Единый список: обычные лиды и строки 2-го уровня идут вперемешку по дате
-       (сортировка в роуте /leads). item.kind = "lead" | "l2". #}
+       (сортировка в _leads_items). item.kind = "lead" | "l2". #}
     {% for item in items %}
       {% if item.kind == 'lead' %}
         {% set row = item.lead %}
@@ -69,7 +67,7 @@
   </tbody>
 </table>
 <p class="leads-footnote">
-  {% if lang == 'en' %}Don’t see your client here? <a href="/dashboard">Message your manager</a>.{% else %}Если здесь нет вашего клиента — <a href="/dashboard">напишите вашему менеджеру</a>.{% endif %}
+  {# Менеджер теперь прямо под таблицей — ведём якорем, а не на другую страницу. #}
+  {% if lang == 'en' %}Don’t see your client here? <a href="#manager">Message your manager</a>.{% else %}Если здесь нет вашего клиента — <a href="#manager">напишите вашему менеджеру</a>.{% endif %}
 </p>
 {% endif %}
-{% endblock %}
