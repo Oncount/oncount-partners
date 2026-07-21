@@ -4,7 +4,7 @@
 <div class="balance">
   <div class="balance-item">
     <span class="balance-item-label">{{ 'Earned:' if lang == 'en' else 'Заработано:' }}</span>
-    <span class="balance-item-value">{{ '%.0f'|format(kpi.earned_aed) }} AED</span>
+    <span class="balance-item-value">{{ fmt_amount(kpi.earned_aed, lang) }} AED</span>
   </div>
   <div class="balance-item">
     <span class="balance-item-label">{{ 'Expected reward:' if lang == 'en' else 'Ожидаемое вознаграждение:' }}</span>

@@ -530,7 +530,7 @@ TEMPLATES = [
         "segment": "Лид-магнит · авто-выдача",
         "segment_en": "Lead magnet · auto-delivery",
         "title": "Чек-лист «0% Corporate Tax» (PDF придёт клиенту в WhatsApp)",
-        "title_en": "Checklist «0% Corporate Tax» (PDF auto-sent to client's WhatsApp)",
+        "title_en": "Checklist “0% Corporate Tax” (PDF auto-sent to client's WhatsApp)",
         "body_md": (
             "Бесплатный чек-лист: попадает ли ваша компания под 0% налог в ОАЭ — "
             "или вы рискуете 9%.\n\n"
@@ -552,7 +552,7 @@ TEMPLATES = [
         "segment": "Лид-магнит · авто-выдача",
         "segment_en": "Lead magnet · auto-delivery",
         "title": "Чек-лист «5 ошибок при открытии бизнеса» (PDF придёт клиенту в WhatsApp)",
-        "title_en": "Checklist «5 mistakes opening a business» (PDF auto-sent to client's WhatsApp)",
+        "title_en": "Checklist “5 mistakes opening a business” (PDF auto-sent to client's WhatsApp)",
         "body_md": (
             "Бесплатный чек-лист: 5 ошибок при открытии бизнеса в ОАЭ, которые "
             "стоят 50 000–200 000 AED в год.\n\n"
@@ -1093,7 +1093,7 @@ FAQ = [
         "category": "Выплаты",
         "category_en": "Payouts",
         "question": "Сколько и когда я получу за приведённого клиента?",
-        "question_en": "How much and when do I get for a client you've introduced?",
+        "question_en": "How much do I get for a client I've introduced, and when?",
         "answer_md": (
             "Размер партнёрского вознаграждения зависит от тарифа клиента — обычно от $300 до $1 000. "
             "Партнёрское вознаграждение всегда включено в тарифы ONCOUNT. "
@@ -1291,7 +1291,7 @@ FAQ = [
         ),
         "answer_md_en": (
             "You can sign in via Telegram — use the “Sign in via Telegram” button on the "
-            "login page and confirm in Telegram. If something doesn't work, message Nicole "
+            "login page and confirm in Telegram. If something doesn't work, message Nikole "
             "on WhatsApp: wa.me/971589217784 and we'll help you get in."
         ),
         "order_index": 1,

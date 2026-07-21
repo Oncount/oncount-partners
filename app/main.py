@@ -422,7 +422,8 @@ PARTNER_MANAGER: dict = {
     "photo": "/static/img/manager.jpg",  # реальное фото Николь (team-2026-05)
     # Подтверждено Николь 2026-05-28: менеджер партнёров = Николь Хилтон.
     "name_confirmed": True,
-    "name": {"ru": "Николь Хилтон", "en": "Nicole Hilton"},
+    # Латиницей — Nikole Hillton (НЕ Nicole/Hilton): так во всех её каналах.
+    "name": {"ru": "Николь Хилтон", "en": "Nikole Hillton"},
     "role": {"ru": "Ваш партнёрский менеджер", "en": "Your partner manager"},
     # Контакты менеджера. channel ∈ {"whatsapp","telegram","email"};
     # value — цифры номера / username / email. confirmed=True → строим
@@ -499,6 +500,20 @@ templates.env.globals["admin_tg_id"] = settings.ADMIN_TG_ID
 # что блок _accountants.html подключается и в кабинете, и на квиз-лендингах.
 templates.env.globals["accountants_total"] = ACCOUNTANTS_TOTAL
 templates.env.globals["accountants_title"] = ACCOUNTANTS_TITLE
+def fmt_amount(value, lang: str = "ru") -> str:
+    """Сумма с разделителем тысяч под язык интерфейса: 14 700 / 14,700.
+
+    Без него в кабинете соседствовали «14700 AED» и «$2,400» — англоязычный
+    партнёр читает число без разделителя как опечатку. Неразрывный пробел в RU,
+    чтобы разряд не переносился на новую строку.
+    """
+    try:
+        n = int(round(float(value or 0)))
+    except (TypeError, ValueError):
+        return "0"
+    s = f"{n:,}"
+    return s if lang == "en" else s.replace(",", " ")
+templates.env.globals["fmt_amount"] = fmt_amount
 # Версия статики в ссылке на CSS (?v=…). Без неё браузер партнёра держит старый
 # oncount.css после деплоя и показывает новую разметку со СТАРЫМИ стилями —
 # ровно это поймали 2026-07-21 на блоке «Тексты и ссылки». Меняется вместе с

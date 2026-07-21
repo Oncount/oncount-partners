@@ -26,7 +26,7 @@
   </td>
   <td data-label="{{ 'Your commission' if lang == 'en' else 'Ваша комиссия' }}" class="lead-commission">
     {% if row.status == 'won' and row.commission_aed %}
-      <span class="commission-earned">{{ '%.0f'|format(row.commission_aed) }} AED</span>
+      <span class="commission-earned">{{ fmt_amount(row.commission_aed, lang) }} AED</span>
     {% else %}
       <span class="commission-none">—</span>
     {% endif %}
@@ -46,7 +46,7 @@
     <span class="status-pill status-won">{{ 'Paid' if lang == 'en' else 'Оплачено' }}</span>
   </td>
   <td data-label="{{ 'Your commission' if lang == 'en' else 'Ваша комиссия' }}" class="lead-commission">
-    <span class="commission-earned">{{ '%.0f'|format(it.aed) }} AED</span>
+    <span class="commission-earned">{{ fmt_amount(it.aed, lang) }} AED</span>
   </td>
 </tr>
   {% endif %}
