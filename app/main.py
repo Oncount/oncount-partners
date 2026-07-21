@@ -1132,6 +1132,10 @@ def _balance_kpi(session: Session, partner: Partner) -> dict:
     вместе с полным kpi, поэтому полоса там работает на своём наборе данных."""
     leads_q = session.query(Lead).filter_by(partner_id=partner.id)
     leads_count = leads_q.count()
+    # «Ожидаемое вознаграждение» — только по АКТИВНЫМ заявкам (new/in_progress):
+    # отказы и уже оплаченные не обещают будущих денег (решение Николь 2026-07-21;
+    # раньше множилось на все заявки и завышало ожидания).
+    active_count = leads_q.filter(Lead.status.in_(["new", "in_progress"])).count()
     won_rows = leads_q.filter(Lead.status == "won").all()
     # «Заработано» — комиссия ПАРТНЁРА по оплаченным лидам (решение Николь
     # 2026-07-21), а не сумма чеков клиентов: партнёру показываем его доход,
@@ -1141,9 +1145,10 @@ def _balance_kpi(session: Session, partner: Partner) -> dict:
                   + l2_total(partner))
     return {
         "leads": leads_count,
+        "active_leads": active_count,
         "earned_aed": float(earned_aed),
-        "expected_usd_low": leads_count * 300,
-        "expected_usd_high": leads_count * 1000,
+        "expected_usd_low": active_count * 300,
+        "expected_usd_high": active_count * 1000,
         # Средняя комиссия — для серого ориентира в столбце «Ваша комиссия»
         # (_leads_table.html). Балансовую полосу НЕ трогает.
         "avg_commission_aed": float(AVG_COMMISSION_AED),
@@ -2380,9 +2385,12 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
                 # «Заработано» — комиссия партнёра, не оборот (решение Николь
                 # 2026-07-21). См. _balance_kpi.
                 "earned_aed": float(earned_total),
-                # Ожидаемая комиссия: $300 (мин) … $1000 (средн) с каждого лида.
-                "expected_usd_low": leads_count * 300,
-                "expected_usd_high": leads_count * 1000,
+                # Ожидаемая комиссия: $300 (мин) … $1000 (средн) — только по
+                # АКТИВНЫМ заявкам (new/in_progress), без отказов и оплаченных
+                # (решение Николь 2026-07-21). in_progress здесь уже new+in_progress.
+                "active_leads": in_progress,
+                "expected_usd_low": in_progress * 300,
+                "expected_usd_high": in_progress * 1000,
                 # Средняя комиссия — серый ориентир в столбце «Ваша комиссия»
                 # (_leads_table.html). Балансовую полосу НЕ трогает.
                 "avg_commission_aed": float(AVG_COMMISSION_AED),

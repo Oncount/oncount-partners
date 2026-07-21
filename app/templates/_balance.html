@@ -8,8 +8,9 @@
   </div>
   <div class="balance-item">
     <span class="balance-item-label">{{ 'Expected reward:' if lang == 'en' else 'Ожидаемое вознаграждение:' }}</span>
-    {# У новичка с 0 заявок показываем мотивирующий потенциал, а не «$0 – $0». #}
-    <span class="balance-item-value">{% if kpi.leads %}${{ '{:,}'.format(kpi.expected_usd_low) }} – ${{ '{:,}'.format(kpi.expected_usd_high) }}{% else %}{{ '$300–$1,000 per client' if lang == 'en' else '$300–$1 000 за каждого клиента' }}{% endif %}</span>
+    {# Диапазон — только по АКТИВНЫМ заявкам (без отказов/оплаченных, решение
+       Николь 2026-07-21). Нет активных — мотивирующий потенциал, а не «$0 – $0». #}
+    <span class="balance-item-value">{% if kpi.active_leads %}${{ '{:,}'.format(kpi.expected_usd_low) }} – ${{ '{:,}'.format(kpi.expected_usd_high) }}{% else %}{{ '$300–$1,000 per client' if lang == 'en' else '$300–$1 000 за каждого клиента' }}{% endif %}</span>
   </div>
   <div class="balance-item" style="flex-direction: row; align-items: baseline; gap: 8px; flex-wrap: wrap;">
     <span class="balance-item-label">{{ 'Your partner code:' if lang == 'en' else 'Ваш код партнёра:' }}</span>
