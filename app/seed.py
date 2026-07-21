@@ -1003,261 +1003,6 @@ KITS = [
 
 
 FAQ = [
-    # ── Передача клиента ────────────────────────────────────────────────
-    {
-        "category": "Передача клиента",
-        "category_en": "Introducing a client",
-        "question": "Что происходит после того, как я передал клиента?",
-        "question_en": "What happens after I introduce a client?",
-        "answer_md": (
-            "1. Карточка создаётся в нашей CRM Kommo с вашим именем как партнёра.\n"
-            "2. Менеджер связывается с клиентом в рабочее время в течение часа.\n"
-            "3. Вы получаете отчёт о всех клиентах и партнёрское вознаграждение до 10-го числа каждого месяца."
-        ),
-        "answer_md_en": (
-            "1. A card is created in our Kommo CRM with your name as the partner.\n"
-            "2. A manager contacts the client during business hours within an hour.\n"
-            "3. You get a report on all clients and your partner reward by the 10th of each month."
-        ),
-        "order_index": 1,
-    },
-    {
-        "category": "Передача клиента",
-        "category_en": "Introducing a client",
-        "question": "Клиент уже писал в ONCOUNT раньше — он всё равно засчитается мне?",
-        "question_en": "The client contacted ONCOUNT before — will they still count as mine?",
-        "answer_md": (
-            "Клиент закрепляется за тем партнёром, кто передал его первым. Если человек "
-            "уже был у нас в работе или его раньше передал другой партнёр — повторная "
-            "передача не перекрывает закрепление. Если сомневаетесь — лучше передать: "
-            "система сверяет по номеру телефона и менеджер всё проверит."
-        ),
-        "answer_md_en": (
-            "A client is assigned to the partner who introduced them first. If the person "
-            "was already in progress with us, or was introduced earlier by another partner, "
-            "a repeat introduction doesn't override that. If in doubt — introduce them "
-            "anyway: the system matches by phone number and the manager will verify it."
-        ),
-        "order_index": 2,
-    },
-    {
-        "category": "Передача клиента",
-        "category_en": "Introducing a client",
-        "question": "Можно передавать клиентов не из ОАЭ?",
-        "question_en": "Can I introduce clients who aren't based in the UAE?",
-        "answer_md": (
-            "Главное — чтобы у клиента был бизнес в ОАЭ или он планирует его открыть. "
-            "Сам клиент может находиться в любой стране: мы работаем с предпринимателями "
-            "по всему миру, которым нужны бухгалтерия, компания, счёт или виза в Эмиратах."
-        ),
-        "answer_md_en": (
-            "What matters is that the client has a business in the UAE or plans to open one. "
-            "The client themselves can be based anywhere: we work with entrepreneurs "
-            "worldwide who need accounting, a company, a bank account or a visa in the UAE."
-        ),
-        "order_index": 3,
-    },
-    {
-        "category": "Передача клиента",
-        "category_en": "Introducing a client",
-        "question": "Как узнать, на каком этапе мой клиент сейчас?",
-        "question_en": "How do I see what stage my client is at?",
-        "answer_md": (
-            "Откройте раздел «Все заявки» в кабинете — там по каждому переданному клиенту "
-            "виден статус: в работе, успешно, отказ. Сводка по числам — на дашборде."
-        ),
-        "answer_md_en": (
-            "Open the “All requests” section in your dashboard — there you'll see the status "
-            "of every client you introduced: in progress, won, or rejected. The numbers "
-            "summary is on the dashboard."
-        ),
-        "order_index": 4,
-    },
-    {
-        "category": "Передача клиента",
-        "category_en": "Introducing a client",
-        "question": "Есть ли лимит — сколько клиентов можно приводить?",
-        "question_en": "Is there a limit on how many clients I can introduce?",
-        "answer_md": (
-            "Лимита нет. Чем больше клиентов вы приводите, тем больше вознаграждения "
-            "получаете — и тем лучше условия партнёрства."
-        ),
-        "answer_md_en": (
-            "There's no limit. The more clients you introduce, the more reward you earn — "
-            "and the better your partnership terms become."
-        ),
-        "order_index": 5,
-    },
-    # ── Выплаты ─────────────────────────────────────────────────────────
-    {
-        "category": "Выплаты",
-        "category_en": "Payouts",
-        "question": "Сколько и когда я получу за приведённого клиента?",
-        "question_en": "How much do I get for a client I've introduced, and when?",
-        "answer_md": (
-            "Размер партнёрского вознаграждения зависит от тарифа клиента — обычно от $300 до $1 000. "
-            "Партнёрское вознаграждение всегда включено в тарифы ONCOUNT. "
-            "Выплаты и отчёты отправляем раз в месяц по итогам месяца, "
-            "до 10-го числа каждого месяца, на удобные реквизиты."
-        ),
-        "answer_md_en": (
-            "The partner reward depends on the client's plan — usually from $300 to $1,000. "
-            "The partner reward is always included in ONCOUNT's pricing. "
-            "We send payouts and reports once a month, by the 10th of each month, "
-            "to your preferred payment details."
-        ),
-        "order_index": 1,
-    },
-    {
-        "category": "Выплаты",
-        "category_en": "Payouts",
-        "question": "За какие услуги и сколько платится вознаграждение?",
-        "question_en": "Which services pay a reward, and how much?",
-        "answer_md": (
-            "Вознаграждение зависит от услуги, которую заказал клиент. Ориентиры:\n"
-            "• Бухгалтерское обслуживание — 100% оплаты за 1-й месяц.\n"
-            "• Открытие компании / бизнес-лицензия — $1 000.\n"
-            "• Открытие банковского счёта — $1 000.\n"
-            "• Резидентские визы, включая золотую — $300–1 000.\n"
-            "• Аудит и восстановление учёта — от $300.\n"
-            "• Отчётность (CIT/VAT) и эквайринг — по запросу.\n"
-            "Точные суммы по каждой услуге — в разделе «Тарифы и сервисы» в кабинете."
-        ),
-        "answer_md_en": (
-            "The reward depends on the service the client orders. Guideline amounts:\n"
-            "• Accounting service — 100% of the 1st month's payment.\n"
-            "• Company setup / business license — $1,000.\n"
-            "• Opening a bank account — $1,000.\n"
-            "• Residence visas, incl. the Golden Visa — $300–1,000.\n"
-            "• Audit and accounting restoration — from $300.\n"
-            "• Reporting (CIT/VAT) and acquiring — on request.\n"
-            "Exact amounts per service are in the “Plans and services” section of your dashboard."
-        ),
-        "order_index": 2,
-    },
-    {
-        "category": "Выплаты",
-        "category_en": "Payouts",
-        "question": "Вознаграждение разовое или платится каждый месяц?",
-        "question_en": "Is the reward one-time or paid every month?",
-        "answer_md": (
-            "Вознаграждение начисляется за факт оплаты клиентом. По бухгалтерскому "
-            "обслуживанию это 100% первого месяца; по разовым услугам (компания, счёт, "
-            "виза и т.д.) — фиксированная сумма с одной оплаты."
-        ),
-        "answer_md_en": (
-            "The reward is earned when the client pays. For the accounting service it's "
-            "100% of the first month; for one-off services (company, account, visa, etc.) "
-            "it's a fixed amount from a single payment."
-        ),
-        "order_index": 3,
-    },
-    {
-        "category": "Выплаты",
-        "category_en": "Payouts",
-        "question": "В какой валюте и каким способом приходит выплата?",
-        "question_en": "In what currency and how is the payout sent?",
-        "answer_md": (
-            "Выплату отправляем раз в месяц, до 10-го числа месяца, следующего за оплатой "
-            "клиента, на удобные вам реквизиты. Способ и валюту согласуете с менеджером — "
-            "его контакты в карточке на дашборде."
-        ),
-        "answer_md_en": (
-            "We send the payout once a month, by the 10th of the month following the "
-            "client's payment, to your preferred payment details. You agree the method and "
-            "currency with your manager — their contacts are on the dashboard card."
-        ),
-        "order_index": 4,
-    },
-    {
-        "category": "Выплаты",
-        "category_en": "Payouts",
-        "question": "Нужно ли мне платить налоги с вознаграждения?",
-        "question_en": "Do I need to pay taxes on the reward?",
-        "answer_md": (
-            "Вы получаете вознаграждение как партнёр и сами отвечаете за свои налоги в "
-            "своей юрисдикции — ONCOUNT налоги за вас не удерживает. Если нужен документ "
-            "по выплате, попросите менеджера."
-        ),
-        "answer_md_en": (
-            "You receive the reward as a partner and are responsible for your own taxes in "
-            "your jurisdiction — ONCOUNT does not withhold taxes for you. If you need a "
-            "document confirming the payout, just ask your manager."
-        ),
-        "order_index": 5,
-    },
-    {
-        "category": "Выплаты",
-        "category_en": "Payouts",
-        "question": "Что будет с вознаграждением, если клиент уйдёт через месяц?",
-        "question_en": "What happens to my reward if the client leaves after a month?",
-        "answer_md": (
-            "Вознаграждение начисляется за факт оплаты клиентом. Если клиент уже оплатил и "
-            "вознаграждение начислено — оно остаётся за вами, даже если позже клиент "
-            "перестанет обслуживаться."
-        ),
-        "answer_md_en": (
-            "The reward is earned when the client pays. Once the client has paid and the "
-            "reward is accrued, it stays yours — even if the client later stops using our "
-            "services."
-        ),
-        "order_index": 6,
-    },
-    # ── Партнёрская программа ───────────────────────────────────────────
-    {
-        "category": "Партнёрская программа",
-        "category_en": "Partner program",
-        "question": "Кого мне искать — кто идеальный клиент для ONCOUNT?",
-        "question_en": "Who should I look for — who's the ideal ONCOUNT client?",
-        "answer_md": (
-            "Предприниматели и компании, у которых есть бизнес в ОАЭ или которые только "
-            "его открывают, и которым нужна бухгалтерия, налоги, открытие компании, "
-            "банковский счёт или виза. Особенно легко заходят те, кто только открыл "
-            "компанию, у кого пошли обороты, или кто недоволен текущим бухгалтером."
-        ),
-        "answer_md_en": (
-            "Entrepreneurs and companies that have a business in the UAE or are just opening "
-            "one, and who need accounting, taxes, company setup, a bank account or a visa. "
-            "It lands especially well with those who just opened a company, whose revenue is "
-            "picking up, or who are unhappy with their current accountant."
-        ),
-        "order_index": 1,
-    },
-    {
-        "category": "Партнёрская программа",
-        "category_en": "Partner program",
-        "question": "Можно использовать ваши материалы и логотип в моих каналах?",
-        "question_en": "Can I use your materials and logo in my own channels?",
-        "answer_md": (
-            "Да. В разделе «Тексты и партнёрские ссылки» в кабинете есть готовые тексты "
-            "для рассылок и "
-            "партнёрский кит, которые можно отправлять клиентам. Логотип и фирменные материалы можно использовать при продвижении "
-            "ONCOUNT. Нужен конкретный материал — попросите менеджера."
-        ),
-        "answer_md_en": (
-            "Yes. The “Texts and partner links” section of your dashboard has ready-made "
-            "outreach "
-            "texts and a partner kit you can send to clients. You may use the logo and brand materials when promoting ONCOUNT. "
-            "Need a specific asset? Just ask your manager."
-        ),
-        "order_index": 3,
-    },
-    # ── Партнёрские ссылки ──────────────────────────────────────────────
-    {
-        "category": "Партнёрские ссылки",
-        "category_en": "Partner links",
-        "question": "Где взять партнёрскую ссылку?",
-        "question_en": "Where do I get my partner link?",
-        "answer_md": (
-            "Раздел «Тексты и партнёрские ссылки» в личном кабинете — там ваша личная "
-            "ссылка на Telegram и WhatsApp ONCOUNT и кнопка «Скопировать»."
-        ),
-        "answer_md_en": (
-            "The “Texts and partner links” section in your dashboard — there you'll find "
-            "your personal link to ONCOUNT's Telegram and WhatsApp and a “Copy” button."
-        ),
-        "order_index": 1,
-    },
     # ── Вход и кабинет ──────────────────────────────────────────────────
     {
         "category": "Вход и кабинет",
@@ -1273,6 +1018,158 @@ FAQ = [
             "You can sign in via Telegram — use the “Sign in via Telegram” button on the "
             "login page and confirm in Telegram. If something doesn't work, message Nikole "
             "on WhatsApp: wa.me/971589217784 and we'll help you get in."
+        ),
+        "order_index": 1,
+    },
+    # ── Выплаты ─────────────────────────────────────────────────────────
+    {
+        "category": "Выплаты",
+        "category_en": "Payouts",
+        "question": "Сколько я получу за клиента?",
+        "question_en": "How much do I get for a client?",
+        "answer_md": (
+            "Вознаграждение зависит от услуги, которую заказал клиент — обычно от $300 "
+            "до $1 000. Оно всегда включено в тарифы ONCOUNT и начисляется за факт "
+            "оплаты клиентом, разово.\n"
+            "\n"
+            "• Бухгалтерское обслуживание — 100% оплаты за 1-й месяц.\n"
+            "• Открытие компании / бизнес-лицензия — $1 000.\n"
+            "• Открытие банковского счёта — $1 000.\n"
+            "• Резидентские визы, включая золотую — $300–1 000.\n"
+            "• Аудит и восстановление учёта — от $300.\n"
+            "• Отчётность (CIT/VAT) и эквайринг — по запросу.\n"
+            "\n"
+            "Точные суммы по каждой услуге — в разделе «Тарифы и сервисы» в кабинете."
+        ),
+        "answer_md_en": (
+            "The reward depends on the service the client orders — usually from $300 to "
+            "$1,000. It is always included in ONCOUNT's pricing and is earned when the "
+            "client pays, as a one-off.\n"
+            "\n"
+            "• Accounting service — 100% of the 1st month's payment.\n"
+            "• Company setup / business license — $1,000.\n"
+            "• Opening a bank account — $1,000.\n"
+            "• Residence visas, incl. the Golden Visa — $300–1,000.\n"
+            "• Audit and accounting restoration — from $300.\n"
+            "• Reporting (CIT/VAT) and acquiring — on request.\n"
+            "\n"
+            "Exact amounts per service are in the “Plans and services” section of your "
+            "dashboard."
+        ),
+        "order_index": 1,
+    },
+    {
+        "category": "Выплаты",
+        "category_en": "Payouts",
+        "question": "Как и когда приходит выплата?",
+        "question_en": "How and when is the payout sent?",
+        "answer_md": (
+            "Выплату отправляем раз в месяц, до 10-го числа месяца, следующего за "
+            "оплатой клиента, на удобные вам реквизиты. Способ и валюту согласуете с "
+            "менеджером — его контакты в карточке на дашборде.\n"
+            "\n"
+            "Налоги вы платите сами в своей юрисдикции — ONCOUNT их за вас не "
+            "удерживает. Нужен документ по выплате — попросите менеджера.\n"
+            "\n"
+            "Если клиент уже оплатил и вознаграждение начислено, оно остаётся за вами, "
+            "даже если позже клиент перестанет обслуживаться."
+        ),
+        "answer_md_en": (
+            "We send the payout once a month, by the 10th of the month following the "
+            "client's payment, to your preferred payment details. You agree the method "
+            "and currency with your manager — their contacts are on the dashboard card.\n"
+            "\n"
+            "You are responsible for your own taxes in your jurisdiction — ONCOUNT does "
+            "not withhold them for you. If you need a document confirming the payout, "
+            "just ask your manager.\n"
+            "\n"
+            "Once the client has paid and the reward is accrued, it stays yours — even if "
+            "the client later stops using our services."
+        ),
+        "order_index": 2,
+    },
+    # ── Передача клиента ────────────────────────────────────────────────
+    {
+        "category": "Передача клиента",
+        "category_en": "Introducing a client",
+        "question": "Каких клиентов передавать?",
+        "question_en": "Which clients should I introduce?",
+        "answer_md": (
+            "Предприниматели и компании, у которых есть бизнес в ОАЭ или которые только "
+            "его открывают, и которым нужна бухгалтерия, налоги, открытие компании, "
+            "банковский счёт или виза. Особенно легко заходят те, кто только открыл "
+            "компанию, у кого пошли обороты, или кто недоволен текущим бухгалтером.\n"
+            "\n"
+            "Сам клиент может находиться в любой стране — важно, чтобы бизнес был в ОАЭ "
+            "или планировался. Лимита на количество нет: чем больше клиентов вы "
+            "приводите, тем больше вознаграждения и тем лучше условия партнёрства.\n"
+            "\n"
+            "Клиент закрепляется за тем, кто передал его первым. Если человек уже был у "
+            "нас в работе или его раньше передал другой партнёр, повторная передача "
+            "закрепление не перекрывает. Сомневаетесь — лучше передайте: система сверяет "
+            "по номеру телефона, менеджер проверит."
+        ),
+        "answer_md_en": (
+            "Entrepreneurs and companies that have a business in the UAE or are just "
+            "opening one, and who need accounting, taxes, company setup, a bank account "
+            "or a visa. It works especially well for those who just opened a company, "
+            "whose revenue is picking up, or who are unhappy with their current "
+            "accountant.\n"
+            "\n"
+            "The client can be based anywhere — what matters is that the business is in "
+            "the UAE or is planned there. There's no limit on how many you introduce: the "
+            "more clients, the more reward and the better your partnership terms.\n"
+            "\n"
+            "A client is assigned to the partner who introduced them first. If the person "
+            "was already in progress with us, or was introduced earlier by another "
+            "partner, a repeat introduction doesn't override that. If in doubt — "
+            "introduce them anyway: the system matches by phone number and the manager "
+            "will verify it."
+        ),
+        "order_index": 1,
+    },
+    {
+        "category": "Передача клиента",
+        "category_en": "Introducing a client",
+        "question": "Что происходит после того, как я передал клиента?",
+        "question_en": "What happens after I introduce a client?",
+        "answer_md": (
+            "1. Карточка создаётся в нашей CRM Kommo с вашим именем как партнёра.\n"
+            "2. Менеджер связывается с клиентом в рабочее время в течение часа.\n"
+            "3. Статус по каждому клиенту виден в разделе «Все заявки» на дашборде: "
+            "в работе, успешно, отказ.\n"
+            "4. Отчёт и партнёрское вознаграждение — до 10-го числа каждого месяца."
+        ),
+        "answer_md_en": (
+            "1. A card is created in our Kommo CRM with your name as the partner.\n"
+            "2. A manager contacts the client during business hours within an hour.\n"
+            "3. The status of every client is in the “All requests” section on your "
+            "dashboard: in progress, won, or rejected.\n"
+            "4. The report and your partner reward — by the 10th of each month."
+        ),
+        "order_index": 2,
+    },
+    # ── Материалы и ссылки ──────────────────────────────────────────────
+    {
+        "category": "Материалы и ссылки",
+        "category_en": "Materials & links",
+        "question": "Где взять тексты, ссылку и материалы?",
+        "question_en": "Where do I get the texts, my link and the materials?",
+        "answer_md": (
+            "В разделе «Тексты и партнёрские ссылки» на дашборде — готовые тексты для "
+            "рассылок и постов, партнёрский кит и ваша личная ссылка: она уже вшита в "
+            "каждый текст, рядом кнопка «Скопировать».\n"
+            "\n"
+            "Логотип и фирменные материалы можно использовать при продвижении ONCOUNT. "
+            "Нужен конкретный материал — попросите менеджера."
+        ),
+        "answer_md_en": (
+            "The “Texts and partner links” section on your dashboard has ready-made texts "
+            "for outreach and posts, a partner kit, and your personal link — it's already "
+            "built into every text, with a “Copy” button next to it.\n"
+            "\n"
+            "You may use the logo and brand materials when promoting ONCOUNT. Need a "
+            "specific asset? Just ask your manager."
         ),
         "order_index": 1,
     },
