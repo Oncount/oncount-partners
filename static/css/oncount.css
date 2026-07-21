@@ -441,6 +441,17 @@ details.faq-item[open] summary { margin-bottom: 12px; }
   font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 600;
   color: var(--deep-green); margin: 0 0 16px;
 }
+/* Строка ответственности под фотографиями бухгалтеров: «штрафы покрывает
+   ONCOUNT». Отделена линией — это не подпись к фото, а отдельное обещание. */
+.trust-note {
+  margin: 16px 0 0;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--sage);
+  text-align: center;
+}
 /* Пояснение под заголовком раздела (строкой ниже, не в самом заголовке):
    «в ссылку вшит ваш код» и подобное — важное, но не часть названия. */
 .svc-block-sub {

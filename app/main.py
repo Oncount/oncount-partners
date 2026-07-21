@@ -167,17 +167,17 @@ def partner_type_label(key: str, lang: str = "ru") -> dict[str, str]:
 # {link}, дублировать список не нужно. EN-ярлыки тут же (ось внутренняя).
 METHODS: dict[str, dict[str, str]] = {
     "intro":      {"icon": "💬", "ru": "Интро",     "en": "Intro",
-                   "hint_ru": "Тёплый клиент 1-на-1 — представьте нас в переписке готовым шаблоном со своей ссылкой.",
-                   "hint_en": "A warm 1-on-1 client — introduce us in chat with a ready template that has your link."},
+                   "hint_ru": "тёплому клиенту 1-на-1",
+                   "hint_en": "a warm 1-on-1 client"},
     "broadcast":  {"icon": "📨", "ru": "Рассылка",  "en": "Broadcast",
-                   "hint_ru": "У вас есть база контактов (WhatsApp / Telegram) — отправьте готовый текст со своей ссылкой.",
-                   "hint_en": "You have a contact base (WhatsApp / Telegram) — send a ready text with your link."},
+                   "hint_ru": "по своей базе контактов",
+                   "hint_en": "to your contact base"},
     "social":     {"icon": "📱", "ru": "Пост",      "en": "Post",
-                   "hint_ru": "У вас есть канал, блог или аккаунт — опубликуйте готовый пост со своей ссылкой или проведите совместное мероприятие для своей аудитории.",
-                   "hint_en": "You have a channel, blog or account — publish a ready post with your link, or run a joint event for your audience."},
+                   "hint_ru": "пост или мероприятие",
+                   "hint_en": "a post or an event"},
     "leadmagnet": {"icon": "📋", "ru": "Чек-лист",  "en": "Checklist",
-                   "hint_ru": "Подарите полезный чек-лист клиенту — мягкий повод привести клиента.",
-                   "hint_en": "Give your client a useful checklist — a soft way to bring a client."},
+                   "hint_ru": "подарить чек-лист",
+                   "hint_en": "gift a checklist"},
 }
 METHODS_ORDER: list[str] = list(METHODS.keys())
 
@@ -193,8 +193,10 @@ LEGACY_TOOL_ANCHORS: dict[str, str] = {
 # Сертифицированные бухгалтеры — блок доверия в кружочках (решение Николь
 # 2026-06-02): на квиз-лендинге /consultation и в кабинете у приглашения на
 # консультацию. Только визуал доверия (без клика). Майя — реальное имя/роль
-# (главбух, фото 391), Омер — ведущий бухгалтер (фото 394, с волосами и очками);
-# Радж — условное индийское имя (по просьбе Николь); Майя/Омер/Леся — реальные.
+# (главбух, фото 391), Омер — ведущий бухгалтер (фото 394, с волосами и очками).
+# 2026-07-21 (решение Николь) убран «Радж» — условное имя: под заявлением о
+# квалификации ACCA вымышленный человек работает против доверия. Вернуть
+# четвёртого — только реального, с фото.
 # Языки — текстовыми кодами RU/EN/AR (флаг-эмодзи не рендерятся на Windows).
 # Фото в static/img/accountants/.
 ACCOUNTANTS: list[dict] = [
@@ -206,9 +208,6 @@ ACCOUNTANTS: list[dict] = [
      "name_en": "Omer", "role": "Ведущий бухгалтер",
      "role_en": "Lead accountant", "langs": ["gb", "ae"],
      "exp": "5+ лет опыта", "exp_en": "5+ yrs"},
-    {"photo": "/static/img/accountants/raj.jpg", "name": "Радж",
-     "name_en": "Raj", "role": "Бухгалтер", "role_en": "Accountant",
-     "langs": ["gb"], "exp": "3+ лет опыта", "exp_en": "3+ yrs"},
     {"photo": "/static/img/accountants/lesia.jpg", "name": "Леся",
      "name_en": "Lesia", "role": "Ведущий бухгалтер", "role_en": "Lead accountant",
      "langs": ["ru", "gb"], "exp": "8+ лет опыта", "exp_en": "8+ yrs"},
