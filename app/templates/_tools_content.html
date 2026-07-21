@@ -11,10 +11,10 @@
 {# #kits мапятся в JS (LEGACY).                                                #}
 <div class="card">
   {% if lang == 'en' %}
-  <p>5 ways to recommend a first-class service and earn a reward from grateful clients. Pick the one that suits you — each tab has a ready text with your personal link. Copy and send, nothing to write from scratch.</p>
+  <p>4 ways to recommend a first-class service and earn a reward from grateful clients. Pick the one that suits you — each tab has a ready text with your personal link. Copy and send, nothing to write from scratch.</p>
   <p>Your reward is already included in the price of all our services and is paid out by the 10th of each month. Just recommend us.</p>
   {% else %}
-  <p>5 способов порекомендовать первоклассный сервис и получить вознаграждение от благодарных клиентов. Выберите удобный вам способ — в каждой вкладке готовый текст с вашей персональной ссылкой. Скопируйте и отправьте, сочинять ничего не нужно.</p>
+  <p>4 способа порекомендовать первоклассный сервис и получить вознаграждение от благодарных клиентов. Выберите удобный вам способ — в каждой вкладке готовый текст с вашей персональной ссылкой. Скопируйте и отправьте, сочинять ничего не нужно.</p>
   <p>Ваше вознаграждение уже включено в стоимость всех наших услуг и выплачивается до 10 числа каждого месяца. Просто рекомендуйте нас.</p>
   {% endif %}
 </div>
@@ -29,12 +29,9 @@
 {% for key in methods_order %}
 {% set m = method_label(key, lang) %}
 <section class="tool-panel" id="panel-{{ key }}" {% if not loop.first %}hidden{% endif %}>
-  {# У «События» подсказку-карточку не показываем — ниже идёт подробный текст. #}
-  {% if key != 'event' %}
   <div class="card">
     <p>{{ m.hint }}</p>
   </div>
-  {% endif %}
 
   {# Блок доверия: сертифицированные бухгалтеры — у приглашения на консультацию #}
   {% if key == 'broadcast' and accountants %}
@@ -71,8 +68,12 @@
     </div>
   {% endif %}
 
-  {# ─── Совместное событие: пояснение для партнёра + формат + пример + CTA ── #}
-  {% if key == 'event' %}
+  {# ─── Совместное событие: 2026-07-21 (решение Николь) перестало быть отдельной
+       вкладкой и живёт внутри «Поста», под готовыми текстами: там та же ситуация
+       «у меня есть аудитория». Заголовок нужен, чтобы блок не читался как
+       продолжение последнего текста. ─────────────────────────────────────── #}
+  {% if key == 'social' %}
+    <h3 style="margin: 28px 0 12px;">🤝 {{ 'Joint event' if lang == 'en' else 'Совместное мероприятие' }}</h3>
     <div class="card">
       {% if lang == 'en' %}
       <p>We run joint events with partners on an audience-exchange basis: you invite your clients and we invite ours. Two speakers present — you talk about your product, and we cover accounting and taxes in the UAE.</p>
@@ -123,7 +124,8 @@
 // Список способов из бэка — порядок и состав вкладок.
 var TOOL_METHODS = {{ methods_order | tojson }};
 // Старые якоря → новые способы (закладки/бот не ломаем). Ссылки переехали в intro.
-var LEGACY_ANCHORS = {"links": "intro", "directlinks": "intro", "messages": "broadcast", "kits": "intro"};
+var LEGACY_ANCHORS = {"links": "intro", "directlinks": "intro", "messages": "broadcast",
+                      "kits": "intro", "event": "social"};
 function _flash(btn) {
   const orig = btn.innerHTML;
   btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';

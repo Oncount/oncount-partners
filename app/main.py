@@ -158,9 +158,11 @@ def partner_type_label(key: str, lang: str = "ru") -> dict[str, str]:
 
 # ─── Способы привлечения — ось вкладок /tools (план 2026-06-02) ──────────────
 # Партнёр выбирает не «кто я» (тип), а «каким действием привожу» (способ).
-# Порядок METHODS = порядок вкладок (Интро / Рассылка / Пост / Чек-лист /
-# События — решение Николь 2026-06-02). hint = строка-фильтр «для кого» в шапке
-# блока. Названия КОРОТКИЕ — чтобы 5 вкладок влезли в одну строку. Отдельного
+# Порядок METHODS = порядок вкладок (Интро / Рассылка / Пост / Чек-лист).
+# 2026-07-21 по решению Николь «События» перестали быть отдельной вкладкой:
+# блок про совместные мероприятия живёт внутри «Поста» — там та же ситуация
+# «у меня есть аудитория». hint = строка-фильтр «для кого» в шапке блока.
+# Названия КОРОТКИЕ — чтобы 4 вкладки влезли в одну строку. Отдельного
 # блока «прямые ссылки» нет: персональная ссылка уже вшита в каждый текст через
 # {link}, дублировать список не нужно. EN-ярлыки тут же (ось внутренняя).
 METHODS: dict[str, dict[str, str]] = {
@@ -171,14 +173,11 @@ METHODS: dict[str, dict[str, str]] = {
                    "hint_ru": "У вас есть база контактов (WhatsApp / Telegram) — отправьте готовый текст со своей ссылкой.",
                    "hint_en": "You have a contact base (WhatsApp / Telegram) — send a ready text with your link."},
     "social":     {"icon": "📱", "ru": "Пост",      "en": "Post",
-                   "hint_ru": "У вас есть канал, блог или аккаунт — опубликуйте готовый пост со своей ссылкой.",
-                   "hint_en": "You have a channel, blog or account — publish a ready post with your link."},
+                   "hint_ru": "У вас есть канал, блог или аккаунт — опубликуйте готовый пост со своей ссылкой или проведите совместное мероприятие для своей аудитории.",
+                   "hint_en": "You have a channel, blog or account — publish a ready post with your link, or run a joint event for your audience."},
     "leadmagnet": {"icon": "📋", "ru": "Чек-лист",  "en": "Checklist",
                    "hint_ru": "Подарите чек-лист в обмен на интерес — мягкий повод привести клиента.",
                    "hint_en": "Offer a checklist in exchange for interest — a soft way to bring a client."},
-    "event":      {"icon": "🤝", "ru": "События",   "en": "Events",
-                   "hint_ru": "Проводите совместное мероприятие — пригласите аудиторию на разбор с бухгалтером.",
-                   "hint_en": "Running a joint event — invite the audience to a session with an accountant."},
 }
 METHODS_ORDER: list[str] = list(METHODS.keys())
 
@@ -2331,8 +2330,8 @@ def tools(request: Request, session: Session = Depends(get_session)) -> Redirect
     (решение Николь 2026-07-21). Адрес живёт редиректом — на него ведут шаг 1
     чек-листа, кнопки бота и закладки партнёров. Заход сюда по-прежнему
     отмечает «скопируй ссылку» выполненным: смысл шага не изменился.
-    Глубокие якоря (#intro/#broadcast/#social/#leadmagnet/#event и старые
-    #links/#messages/#kits) разворачивают блок и открывают нужную вкладку —
+    Глубокие якоря (#intro/#broadcast/#social/#leadmagnet и старые
+    #links/#messages/#kits/#event) разворачивают блок и открывают нужную вкладку —
     это делает скрипт в _tools_content.html.
     """
     partner = current_partner(request, session)

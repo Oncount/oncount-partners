@@ -105,9 +105,10 @@
 </div>
 
 {# «Тексты и ссылки» переехали сюда со страницы /tools 2026-07-21 (решение
-   Николь): свёрнутый блок под чек-листом — готовые тексты под рукой, но не
-   растягивают дашборд. /tools остаётся редиректом на #tools. #}
-<details class="card dash-collapse" id="tools">
+   Николь): блок под чек-листом, /tools остаётся редиректом на #tools.
+   Открыт по умолчанию (решение Николь) — партнёр сразу видит «4 способа
+   порекомендовать» и сами кнопки способов; свернуть можно вручную. #}
+<details class="card dash-collapse" id="tools" open>
   <summary class="dash-collapse-summary">
     <span class="dash-collapse-titles">
       <span class="dash-collapse-title">📝 {{ 'Texts and links' if lang == 'en' else 'Тексты и ссылки' }}</span>
