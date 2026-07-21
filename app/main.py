@@ -571,6 +571,11 @@ async def persist_lang_cookie(request: Request, call_next):
 
 log = logging.getLogger("oncount.startup")
 
+# httpx на уровне INFO печатает полный URL каждого запроса — для Telegram это
+# URL вида /bot<ТОКЕН>/sendMessage, т.е. токен бота утекает в логи Railway
+# (находка 2026-07-21). Глушим до WARNING: ошибки видны, URL успешных — нет.
+logging.getLogger("httpx").setLevel(logging.WARNING)
+
 
 @app.on_event("startup")
 async def on_startup() -> None:
@@ -1355,7 +1360,10 @@ async def _handle_quiz_submit(
         return v.strip()[:n] if isinstance(v, str) and v.strip() else None
 
     ref_slug = _s("ref", 16)
-    utm = {k: _s(k) for k in ("utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term")}
+    # Ровно под String(128) колонок quiz_submissions: обрезка длиннее колонки
+    # роняла commit → заявка терялась целиком, клиент видел «спасибо»
+    # (тот же класс бага, что 502 по link_key; находка аудита 2026-07-06).
+    utm = {k: _s(k, 128) for k in ("utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term")}
 
     # Дедуп в пределах ОДНОГО события: та же заявка (телефон+event_slug) за 2 минуты
     # → не плодим строку/лид. Разные события (МК vs консультация) не глушим.
