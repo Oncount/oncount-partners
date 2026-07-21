@@ -242,22 +242,25 @@ def method_label(key: str, lang: str = "ru") -> dict[str, str]:
     }
 
 
-def _personal_links(ref: str, base: str) -> dict[str, str]:
+def _personal_links(ref: str, base: str, lang: str = "ru") -> dict[str, str]:
     """Все персональные ссылки партнёра по ключам link_key. Один источник истины
     для вкладок /tools и для подстановки плейсхолдера {link} в тело текста.
     Квизы /consultation и /mk — наш домен, ?ref= метит лида нативно; TG/WA —
-    редиректы /ct,/cw,/mt,/mw; partner_bot — приглашение нового партнёра."""
+    редиректы /ct,/cw,/mt,/mw; partner_bot — приглашение нового партнёра.
+    lang='en' → квиз-ссылки получают &lang=en: EN-тексты агента ведут клиента
+    на английскую версию лендинга (план 2026-07-21, пункт 20 аудита)."""
+    q = "&lang=en" if lang == "en" else ""
     return {
-        "consult_quiz": f"{base}/consultation?ref={ref}",
+        "consult_quiz": f"{base}/consultation?ref={ref}{q}",
         "consult_tg":   f"{base}/ct/{ref}",
         "consult_wa":   f"{base}/cw/{ref}",
-        "mk_quiz":      f"{base}/mk?ref={ref}",
+        "mk_quiz":      f"{base}/mk?ref={ref}{q}",
         "mk_tg":        f"{base}/mt/{ref}",
         "mk_wa":        f"{base}/mw/{ref}",
         # Лид-магниты: квиз → PDF чек-листа ссылкой в WhatsApp (?ref метит лида).
         # Ключи ≤16 символов — ограничение колонки MessageTemplate.link_key VARCHAR(16).
-        "lm_corptax":   f"{base}/guide/corp-tax?ref={ref}",
-        "lm_5mistakes": f"{base}/guide/5-mistakes?ref={ref}",
+        "lm_corptax":   f"{base}/guide/corp-tax?ref={ref}{q}",
+        "lm_5mistakes": f"{base}/guide/5-mistakes?ref={ref}{q}",
         "partner_bot":  f"{base}/p/{ref}",
     }
 
@@ -1167,14 +1170,12 @@ def _quiz_mask_phone(norm: str) -> str:
 @app.get("/consultation", response_class=HTMLResponse)
 def consultation_page(request: Request) -> HTMLResponse:
     from app import quiz_config
+    lang = _lang(request)
     return templates.TemplateResponse("quiz.html", {
         "request": request,
-        "cover": quiz_config.COVER,
-        "intro": quiz_config.INTRO,
-        "questions": quiz_config.QUESTIONS,
-        "final": quiz_config.FINAL,
-        "thanks": quiz_config.THANKS,
-        "socials": quiz_config.SOCIALS,
+        "lang": lang,
+        "page_title": "ONCOUNT — free tax consultation" if lang == "en" else None,
+        **quiz_config.page(lang),
         "submit_url": "/consultation/submit",
         "accountants": ACCOUNTANTS,
     })
@@ -1195,6 +1196,7 @@ async def consultation_submit(request: Request,
         lead_tag="quiz",
         note_intro="Заявка с квиз-лендинга /consultation.",
         deliver_wa_text=quiz_config.CONFIRM_WA_TEXT,
+        deliver_wa_text_en=quiz_config.CONFIRM_WA_TEXT_EN,
     )
 
 
@@ -1203,15 +1205,13 @@ async def consultation_submit(request: Request,
 @app.get("/mk", response_class=HTMLResponse)
 def mk_page(request: Request) -> HTMLResponse:
     from app import mk_config
+    lang = _lang(request)
     return templates.TemplateResponse("quiz.html", {
         "request": request,
-        "page_title": "ONCOUNT — мастер-класс с главбухом",
-        "cover": mk_config.COVER,
-        "intro": mk_config.INTRO,
-        "questions": mk_config.QUESTIONS,
-        "final": mk_config.FINAL,
-        "thanks": mk_config.THANKS,
-        "socials": mk_config.SOCIALS,
+        "lang": lang,
+        "page_title": ("ONCOUNT — masterclass with the chief accountant"
+                       if lang == "en" else "ONCOUNT — мастер-класс с главбухом"),
+        **mk_config.page(lang),
         "submit_url": "/mk/submit",
     })
 
@@ -1232,6 +1232,7 @@ async def mk_submit(request: Request,
         lead_tag=mk_config.KOMMO_LEAD_TAG,
         note_intro=mk_config.KOMMO_NOTE_INTRO,
         deliver_wa_text=mk_config.CONFIRM_WA_TEXT,
+        deliver_wa_text_en=mk_config.CONFIRM_WA_TEXT_EN,
     )
 
 
@@ -1242,15 +1243,13 @@ async def mk_submit(request: Request,
 @app.get("/guide/corp-tax", response_class=HTMLResponse)
 def guide_corp_tax_page(request: Request) -> HTMLResponse:
     from app import leadmagnet_config as lm
+    lang = _lang(request)
     return templates.TemplateResponse("quiz.html", {
         "request": request,
-        "page_title": "ONCOUNT — чек-лист 0% Corporate Tax",
-        "cover": lm.COVER,
-        "intro": lm.INTRO,
-        "questions": lm.QUESTIONS,
-        "final": lm.FINAL,
-        "thanks": lm.THANKS,
-        "socials": lm.SOCIALS,
+        "lang": lang,
+        "page_title": ("ONCOUNT — 0% Corporate Tax checklist"
+                       if lang == "en" else "ONCOUNT — чек-лист 0% Corporate Tax"),
+        **lm.page(lang),
         "submit_url": "/guide/corp-tax/submit",
     })
 
@@ -1271,6 +1270,7 @@ async def guide_corp_tax_submit(request: Request,
         lead_tag=lm.KOMMO_LEAD_TAG,
         note_intro=lm.KOMMO_NOTE_INTRO,
         deliver_wa_text=lm.WA_TEXT.format(link=lm.GUIDE_PDF_URL),
+        deliver_wa_text_en=lm.WA_TEXT_EN.format(link=lm.GUIDE_PDF_URL),
     )
 
 
@@ -1283,15 +1283,13 @@ async def guide_corp_tax_submit(request: Request,
 @app.get("/guide/5-mistakes", response_class=HTMLResponse)
 def guide_5mistakes_page(request: Request) -> HTMLResponse:
     from app import leadmagnet5_config as lm5
+    lang = _lang(request)
     return templates.TemplateResponse("quiz.html", {
         "request": request,
-        "page_title": "ONCOUNT — чек-лист «5 ошибок при открытии бизнеса в ОАЭ»",
-        "cover": lm5.COVER,
-        "intro": lm5.INTRO,
-        "questions": lm5.QUESTIONS,
-        "final": lm5.FINAL,
-        "thanks": lm5.THANKS,
-        "socials": lm5.SOCIALS,
+        "lang": lang,
+        "page_title": ("ONCOUNT — 5 mistakes when starting a business in the UAE"
+                       if lang == "en" else "ONCOUNT — чек-лист «5 ошибок при открытии бизнеса в ОАЭ»"),
+        **lm5.page(lang),
         "submit_url": "/guide/5-mistakes/submit",
     })
 
@@ -1313,6 +1311,8 @@ async def guide_5mistakes_submit(request: Request,
         note_intro=lm5.KOMMO_NOTE_INTRO,
         deliver_wa_text=lm5.WA_TEXT.format(link=lm5.GUIDE_PDF_URL),  # фоллбэк
         deliver_wa_text_builder=lm5.wa_text,                        # персонализация
+        deliver_wa_text_en=lm5.WA_TEXT_EN.format(link=lm5.GUIDE_PDF_URL),
+        deliver_wa_text_builder_en=lm5.wa_text_en,
     )
 
 
@@ -1323,6 +1323,8 @@ async def _handle_quiz_submit(
     lead_prefix: str, lead_tag: str, note_intro: str,
     deliver_wa_text: str | None = None,
     deliver_wa_text_builder=None,
+    deliver_wa_text_en: str | None = None,
+    deliver_wa_text_builder_en=None,
 ) -> dict:
     """Общее ядро приёма заявок квиз-лендингов (/consultation и /mk). Клиенту
     ВСЕГДА отвечаем ok (идемпотентно, без утечки внутренней логики). Порядок:
@@ -1408,10 +1410,17 @@ async def _handle_quiz_submit(
     # внутри send_wa_text (dev / WAZZUP_TEST_ONLY_NUMBER).
     # deliver_wa_text_builder(answers) → персональный текст (например, подсказка по
     # релевантной ошибке у /guide/5-mistakes); ошибка билдера → фоллбэк на статичный.
-    wa_text = deliver_wa_text
-    if deliver_wa_text_builder is not None:
+    # Клиент с EN-лендинга (?lang=en, квиз кладёт lang в payload) получает
+    # EN-текст, если вызывающий его передал; иначе — русский.
+    client_lang = "en" if data.get("lang") == "en" else "ru"
+    wa_text = (deliver_wa_text_en
+               if client_lang == "en" and deliver_wa_text_en else deliver_wa_text)
+    wa_builder = (deliver_wa_text_builder_en
+                  if client_lang == "en" and deliver_wa_text_builder_en
+                  else deliver_wa_text_builder)
+    if wa_builder is not None:
         try:
-            wa_text = deliver_wa_text_builder(answers) or deliver_wa_text
+            wa_text = wa_builder(answers) or wa_text
         except Exception as exc:
             log.warning("leadmagnet WA text builder error: %s", type(exc).__name__)
     if wa_text:
@@ -2240,7 +2249,8 @@ def _tools_ctx(session: Session, partner: Partner, request: Request) -> dict:
     персональная ссылка партнёра (плейсхолдер {link} → links[link_key]).
     До 2026-07-21 собирался в маршруте /tools; теперь раздел живёт на дашборде.
     """
-    links = _personal_links(partner.ref_slug, str(request.base_url).rstrip("/"))
+    links = _personal_links(partner.ref_slug, str(request.base_url).rstrip("/"),
+                            lang=_lang(request))
     # Все активные тексты с непустым method, сгруппированы по способу. Порядок
     # внутри способа — order_index, id. Тексты без method (NULL) не показываем.
     rows = (

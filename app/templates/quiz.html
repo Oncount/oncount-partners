@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="{{ lang or 'ru' }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -124,7 +124,7 @@
         {% if cover.bullets %}<ul class="cover-bullets">
           {% for b in cover.bullets %}<li>{{ b }}</li>{% endfor %}
         </ul>{% endif %}
-        {% if accountants %}{% set acc_lang = 'ru' %}{% include "_accountants.html" %}{% endif %}
+        {% if accountants %}{% set acc_lang = lang or 'ru' %}{% include "_accountants.html" %}{% endif %}
         <button type="button" class="btn btn-primary cover-cta" id="coverStart">{{ cover.cta }}</button>
         {% if cover.note %}<p class="cover-note">{{ cover.note }}</p>{% endif %}
       </div>
@@ -160,21 +160,21 @@
         <h1 class="q">{{ final.title }}</h1>
         {% if final.subtitle %}<p class="hint">{{ final.subtitle }}</p>{% endif %}
         <div class="field">
-          <label for="name">Введите имя</label>
-          <input id="name" name="name" type="text" placeholder="Имя" maxlength="120">
+          <label for="name">{{ 'Your name' if lang == 'en' else 'Введите имя' }}</label>
+          <input id="name" name="name" type="text" placeholder="{{ 'Name' if lang == 'en' else 'Имя' }}" maxlength="120">
         </div>
-        <div class="err" id="errName">Пожалуйста, укажите имя.</div>
+        <div class="err" id="errName">{{ 'Please enter your name.' if lang == 'en' else 'Пожалуйста, укажите имя.' }}</div>
         <div class="field">
-          <label for="phone">Введите телефон</label>
+          <label for="phone">{{ 'Phone / WhatsApp' if lang == 'en' else 'Введите телефон' }}</label>
           <input id="phone" name="phone" type="tel" inputmode="tel" placeholder="+971 50 000 0000" value="+971 ">
         </div>
-        <div class="err" id="errPhone">Пожалуйста, укажите корректный номер.</div>
+        <div class="err" id="errPhone">{{ 'Please enter a valid phone number.' if lang == 'en' else 'Пожалуйста, укажите корректный номер.' }}</div>
         <p class="consent">{{ final.consent }}</p>
       </section>
 
       <div class="nav" id="nav">
         <button type="button" class="btn btn-back" id="back" style="display:none">←</button>
-        <button type="button" class="btn btn-primary" id="next" disabled>Далее →</button>
+        <button type="button" class="btn btn-primary" id="next" disabled>{{ 'Next →' if lang == 'en' else 'Далее →' }}</button>
       </div>
     </form>
     </div><!-- /#quizBody -->
@@ -215,6 +215,12 @@
     var btnBack = document.getElementById('back');
     var answers = {};   // {qid: value}
     var idx = 0;        // 0..TOTAL-1 = вопросы, TOTAL = финал
+    var LANG = {{ (lang or 'ru')|tojson }};
+    // Строки хрома квиза (кнопки/шаги) — по языку страницы; тексты вопросов
+    // приходят из конфига уже на нужном языке.
+    var L = LANG === 'en'
+      ? {last:'Last step', step:'Step', of:'of', next:'Next →', lastNext:'Last step →'}
+      : {last:'Последний шаг', step:'Шаг', of:'из', next:'Далее →', lastNext:'Последний шаг →'};
 
     // ── UTM / ref из URL (НЕ рендерим в HTML — только в JS-объект и в JSON) ──
     var qs = new URLSearchParams(window.location.search);
@@ -234,9 +240,9 @@
       finalEl.classList.toggle('active', atFinal);
       var shown = Math.min(idx, TOTAL) + 1;
       bar.style.width = ((Math.min(idx,TOTAL)) / TOTAL * 100) + '%';
-      stepLabel.textContent = atFinal ? 'Последний шаг' : ('Шаг ' + shown + ' из ' + TOTAL);
+      stepLabel.textContent = atFinal ? L.last : (L.step + ' ' + shown + ' ' + L.of + ' ' + TOTAL);
       btnBack.style.display = idx>0 ? '' : 'none';
-      btnNext.textContent = atFinal ? '{{ final.submit }}' : (idx===TOTAL-1 ? 'Последний шаг →' : 'Далее →');
+      btnNext.textContent = atFinal ? '{{ final.submit }}' : (idx===TOTAL-1 ? L.lastNext : L.next);
       refreshNext();
     }
 
@@ -292,7 +298,7 @@
 
       btnNext.disabled = true;
       var payload = {
-        name: name, phone: phone, answers: answers,
+        name: name, phone: phone, answers: answers, lang: LANG,
         website: document.querySelector('input[name=website]').value, // honeypot
         ref: tracking.ref, referrer: tracking.referrer, landing_url: tracking.landing_url,
         utm_source: tracking.utm_source, utm_medium: tracking.utm_medium,
