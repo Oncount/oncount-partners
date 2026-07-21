@@ -176,8 +176,8 @@ METHODS: dict[str, dict[str, str]] = {
                    "hint_ru": "У вас есть канал, блог или аккаунт — опубликуйте готовый пост со своей ссылкой или проведите совместное мероприятие для своей аудитории.",
                    "hint_en": "You have a channel, blog or account — publish a ready post with your link, or run a joint event for your audience."},
     "leadmagnet": {"icon": "📋", "ru": "Чек-лист",  "en": "Checklist",
-                   "hint_ru": "Подарите чек-лист в обмен на интерес — мягкий повод привести клиента.",
-                   "hint_en": "Offer a checklist in exchange for interest — a soft way to bring a client."},
+                   "hint_ru": "Подарите полезный чек-лист клиенту — мягкий повод привести клиента.",
+                   "hint_en": "Give your client a useful checklist — a soft way to bring a client."},
 }
 METHODS_ORDER: list[str] = list(METHODS.keys())
 
