@@ -86,7 +86,10 @@
    не он сам, а списки текстов: они раскрываются по нажатию на способ
    (решение Николь) — см. showTool() в _tools_content.html. #}
 <section class="svc-block" id="tools">
-  <h2 class="svc-block-title">📝 {{ 'Texts and links' if lang == 'en' else 'Тексты и ссылки' }}</h2>
+  <h2 class="svc-block-title">📝 {{ 'Texts and partner links' if lang == 'en' else 'Тексты и партнёрские ссылки' }}</h2>
+  {# Главное, что партнёр должен понять про эти ссылки: они именные. Иначе
+     непонятно, зачем брать готовый текст, а не писать своими словами. #}
+  <p class="svc-block-sub">{% if lang == 'en' %}Every link carries your partner code — in our CRM we see that the client came from you.{% else %}В каждую ссылку вшит ваш партнёрский код — в CRM мы видим, что клиент пришёл от вас.{% endif %}</p>
   {% include "_tools_content.html" %}
 </section>
 

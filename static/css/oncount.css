@@ -441,6 +441,15 @@ details.faq-item[open] summary { margin-bottom: 12px; }
   font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 600;
   color: var(--deep-green); margin: 0 0 16px;
 }
+/* Пояснение под заголовком раздела (строкой ниже, не в самом заголовке):
+   «в ссылку вшит ваш код» и подобное — важное, но не часть названия. */
+.svc-block-sub {
+  margin: -8px 0 16px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--sage);
+  max-width: 62ch;
+}
 /* Уточнение к заголовку блока («делают наши партнёры») — тем же заголовком, но
    приглушённо: это пояснение, а не вторая половина названия раздела. */
 .svc-block-note {

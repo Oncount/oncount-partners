@@ -1246,13 +1246,15 @@ FAQ = [
         "question": "Можно использовать ваши материалы и логотип в моих каналах?",
         "question_en": "Can I use your materials and logo in my own channels?",
         "answer_md": (
-            "Да. В разделе «Тексты и ссылки» в кабинете есть готовые тексты для рассылок и "
+            "Да. В разделе «Тексты и партнёрские ссылки» в кабинете есть готовые тексты "
+            "для рассылок и "
             "партнёрский кит, которые можно отправлять клиентам, а в «Курсах» — обучающие "
             "материалы. Логотип и фирменные материалы можно использовать при продвижении "
             "ONCOUNT. Нужен конкретный материал — попросите менеджера."
         ),
         "answer_md_en": (
-            "Yes. The “Texts and links” section of your dashboard has ready-made outreach "
+            "Yes. The “Texts and partner links” section of your dashboard has ready-made "
+            "outreach "
             "texts and a partner kit you can send to clients, and “Courses” has training "
             "materials. You may use the logo and brand materials when promoting ONCOUNT. "
             "Need a specific asset? Just ask your manager."
@@ -1266,11 +1268,12 @@ FAQ = [
         "question": "Где взять партнёрскую ссылку?",
         "question_en": "Where do I get my partner link?",
         "answer_md": (
-            "Раздел «Тексты и ссылки» в личном кабинете — там твоя личная ссылка "
+            "Раздел «Тексты и партнёрские ссылки» в личном кабинете — там твоя личная "
+            "ссылка "
             "на Telegram и WhatsApp ONCOUNT и кнопка «Скопировать»."
         ),
         "answer_md_en": (
-            "The “Texts and links” section in your dashboard — there you'll find "
+            "The “Texts and partner links” section in your dashboard — there you'll find "
             "your personal link to ONCOUNT's Telegram and WhatsApp and a “Copy” button."
         ),
         "order_index": 1,
