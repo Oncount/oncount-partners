@@ -483,7 +483,6 @@ details.faq-item[open] summary { margin-bottom: 12px; }
   font-size: 14px;
   line-height: 1.45;
   color: var(--sage);
-  max-width: 62ch;
 }
 /* Уточнение к заголовку блока («делают наши партнёры») — тем же заголовком, но
    приглушённо: это пояснение, а не вторая половина названия раздела. */
