@@ -455,10 +455,18 @@ details.faq-item[open] summary { margin-bottom: 12px; }
 .product-card details summary { cursor: pointer; color: var(--deep-green); font-weight: 600; }
 
 /* === Тарифы и сервисы: два блока === */
-.svc-block { margin: 28px 0 8px; }
+/* Разделы дашборда: единый крупный заголовок (и у секций, и у карточек
+   «Сообщество»/FAQ/«3 шага») + оранжевая метка слева, чтобы было видно, где
+   начинается новый раздел — без неё всё сливалось (решение Николь 2026-07-23). */
+.svc-block { margin: 36px 0 8px; }
 .svc-block-title {
-  font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 600;
+  font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 600;
   color: var(--deep-green); margin: 0 0 16px;
+}
+.svc-block-title, .card > h3 {
+  font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 600;
+  color: var(--deep-green);
+  padding-left: 12px; border-left: 4px solid var(--orange);
 }
 /* Иконки заголовков разделов (вместо эмодзи, решение Николь 2026-07-23):
    стиль бокового меню, цвет наследуют от текста заголовка. */
