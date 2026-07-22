@@ -51,7 +51,7 @@
     </details>
 
     {# ── Разовые услуги: те же карточки ── #}
-    <div class="calc-group-title">{{ 'One-off services' if lang == 'en' else 'Разовые услуги' }}</div>
+    <div class="calc-group-title">{{ 'One-off services' if lang == 'en' else 'Разовые услуги' }} <span class="calc-group-note">{{ '(delivered by our trusted partners)' if lang == 'en' else '(делают наши проверенные партнёры)' }}</span></div>
     <div class="calc-tiles">
       {% for s in calc.services %}
       <div class="calc-tile" id="calc-tile-s-{{ s.key }}">
@@ -84,6 +84,7 @@
 .calc { padding-top: 16px; }
 .calc-group-title { font-weight: 700; font-size: 15px; color: var(--deep-green); margin: 18px 0 10px; }
 .calc-group-title:first-child { margin-top: 0; }
+.calc-group-note { font-weight: 500; font-size: 13px; color: var(--sage); }
 /* Сетка карточек: на десктопе 3–4 в ряд, на телефоне 2 в ряд. */
 .calc-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
 .calc-tile { display: flex; flex-direction: column; align-items: center; gap: 6px;
