@@ -185,13 +185,6 @@ TARIFFS = [
     },
 ]
 
-# Шкала ползунка: до 250 с шагом 5 — все границы тарифов (10, 50, 120, 200)
-# попадают точно, а 250 показывает зону PROFI+.
-TX_MAX = 250
-TX_STEP = 5
-TX_DEFAULT = 50
-
-
 # ── Разовые услуги ───────────────────────────────────────────────────────────
 # is_from — вознаграждение «от» (точная сумма зависит от объёма работы).
 # Количество (−/+) есть у каждой услуги — см. строки .calc-qty в шаблоне.
@@ -272,8 +265,5 @@ def calc_data(lang: str = "ru") -> dict:
     return {
         "tariffs": [_localize(t, lang, tariff_fields) for t in TARIFFS],
         "services": [_localize(s, lang, service_fields) for s in SERVICES],
-        "tx_max": TX_MAX,
-        "tx_step": TX_STEP,
-        "tx_default": TX_DEFAULT,
         "qty_max": QTY_MAX,
     }
