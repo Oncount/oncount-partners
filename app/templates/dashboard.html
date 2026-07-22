@@ -187,7 +187,7 @@
     {% for item in community.top %}
     <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border);">
       <span style="min-width: 22px; color: var(--sage); font-weight: 600;">{{ loop.index }}.</span>
-      <span style="flex: 1; color: var(--charcoal);">{{ item.name }}</span>
+      <span style="flex: 1; color: var(--charcoal);">{{ (item.name_en or item.name) if lang == 'en' else item.name }}</span>
       <span style="color: var(--sage); font-size: 14px;">
         {{ item.count }} {{ 'contacts' if lang == 'en' else 'контактов' }}
       </span>

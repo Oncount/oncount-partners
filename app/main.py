@@ -2367,11 +2367,11 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
         "partners": 139,
         "total_contacts": 187,  # ⚠️ значение на подтверждении Николь
         "top": [
-            {"name": "Евгений", "count": 45},
-            {"name": "Ильяс", "count": 28},
-            {"name": "Даниил", "count": 21},
-            {"name": "Мари", "count": 16},
-            {"name": "Ольга", "count": 12},
+            {"name": "Евгений", "name_en": "Evgeny", "count": 45},
+            {"name": "Ильяс", "name_en": "Ilyas", "count": 28},
+            {"name": "Даниил", "name_en": "Daniil", "count": 21},
+            {"name": "Мари", "name_en": "Mari", "count": 16},
+            {"name": "Ольга", "name_en": "Olga", "count": 12},
         ],
     }
 
