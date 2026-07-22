@@ -295,5 +295,8 @@ def calc_data(lang: str = "ru") -> dict:
         "tariffs": [_localize(t, lang, tariff_fields) for t in TARIFFS],
         "services": [_localize(s, lang, service_fields) for s in SERVICES],
         "includes": _localize(INCLUDES, lang, ("monthly", "quarterly", "yearly", "note")),
+        # Курс для долларовой суммы справа от итога (решение Николь 2026-07-23):
+        # доллары округляем вниз — не обещаем больше, чем платим.
+        "usd_rate": USD_AED,
         "qty_max": QTY_MAX,
     }
