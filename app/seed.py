@@ -368,8 +368,8 @@ TEMPLATES = [
         "slug": "post-mk-nalogi-oae",
         "segment": "Пост о встрече",
         "segment_en": "Masterclass post",
-        "title": "Мастер-класс по налогам ОАЭ — картинка и текст поста",
-        "title_en": "UAE tax masterclass — image and post text",
+        "title": "Мастер-класс ОАЭ — картинка и текст поста",
+        "title_en": "UAE masterclass — image and post text",
         "body_md": (
             "Как легально платить меньше налогов в ОАЭ — и спать спокойно, "
             "даже если придёт проверка\n"

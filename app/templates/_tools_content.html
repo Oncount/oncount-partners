@@ -113,7 +113,9 @@
       <p>If you have a base of 100+ clients, discuss a two-speaker format with your partner manager.</p>
       <a class="btn btn-primary" href="https://wa.me/{{ manager_wa }}?text={{ 'Hello! I would like to discuss a joint event with two speakers — an audience exchange with ONCOUNT.' | urlencode }}" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;text-decoration:none">Message your manager about a joint event</a>
       <p class="ref-hint" style="margin-top:16px">Example post for the broadcast and social media:</p>
-      <img src="/static/img/event-post-example-en.jpg" alt="Example joint-event post" style="width:100%;max-width:440px;border-radius:12px;display:block" />
+      <a class="example-post" href="/static/img/event-post-example-en.jpg" target="_blank" rel="noopener" title="Open full size">
+        <img src="/static/img/event-post-example-en.jpg" alt="Example joint-event post" loading="lazy" />
+      </a>
       {% else %}
       <p>Мы проводим совместные мероприятия с партнёрами по принципу обмена аудиториями: вы приглашаете своих клиентов, а мы — своих. Выступают двое: вы рассказываете о своём продукте, а мы — о бухгалтерии и налогах в ОАЭ.</p>
       <p>Обычно собирается около 40 участников — примерно 20 с вашей стороны и 20 с нашей. Стороны обмениваются аудиториями, прогревают своих клиентов и дают людям двойную пользу. Именно поэтому такой формат так хорошо работает.</p>
@@ -128,7 +130,9 @@
       <p>Если у вас в базе от 100 клиентов — обсудите формат с двумя спикерами с вашим партнёрским менеджером.</p>
       <a class="btn btn-primary" href="https://wa.me/{{ manager_wa }}?text={{ 'Здравствуйте! Хочу обсудить совместное мероприятие с двумя спикерами — обмен аудиториями с ONCOUNT.' | urlencode }}" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;text-decoration:none">Написать менеджеру о совместном мероприятии</a>
       <p class="ref-hint" style="margin-top:16px">Пример поста для рассылки и соцсетей:</p>
-      <img src="/static/img/event-post-example-ru.jpg" alt="Пример поста о совместном мероприятии" style="width:100%;max-width:440px;border-radius:12px;display:block" />
+      <a class="example-post" href="/static/img/event-post-example-ru.jpg" target="_blank" rel="noopener" title="Открыть в полном размере">
+        <img src="/static/img/event-post-example-ru.jpg" alt="Пример поста о совместном мероприятии" loading="lazy" />
+      </a>
       {% endif %}
     </div>
   {% endif %}
@@ -162,6 +166,10 @@
 .msg-thumb{width:120px;border-radius:10px;border:1px solid var(--border);display:block}
 .msg-media-side{flex:1;min-width:0}
 .msg-media-note{margin:0;color:var(--ink,#15211e);font-size:14px;line-height:1.5}
+/* Пример поста в блоке «Совместное мероприятие» — маленькое превью слева
+   (решение Николь 2026-07-23), клик открывает полный размер. */
+.example-post{display:inline-block;margin-top:4px}
+.example-post img{width:150px;border-radius:10px;border:1px solid var(--border);display:block}
 /* Тело поста свёрнуто до ~5 строк с растворением — как в списке текстов. */
 .msg-card .body.is-clamped{max-height:120px;overflow:hidden;position:relative}
 .msg-card .body.is-clamped::after{content:'';position:absolute;left:0;right:0;bottom:0;height:56px;background:linear-gradient(rgba(247,243,236,0),var(--cream) 90%);pointer-events:none}
