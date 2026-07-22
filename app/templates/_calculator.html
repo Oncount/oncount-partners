@@ -38,6 +38,7 @@
 
       <div class="calc-tariff">
         <div class="calc-tariff-left">
+          <span class="calc-tariff-pre">{{ 'Accounting plan' if lang == 'en' else 'Тариф бухгалтерии' }}</span>
           <span class="calc-tariff-name" id="calc-tariff-name"></span>
           <span class="calc-tariff-range" id="calc-tariff-range"></span>
         </div>
@@ -71,8 +72,6 @@
         <div class="calc-total-label">{{ 'Your reward' if lang == 'en' else 'Ваше вознаграждение' }}</div>
         <div class="calc-total-sum" id="calc-total" aria-live="polite"></div>
       </div>
-      <ul class="calc-breakdown" id="calc-breakdown"></ul>
-      <p class="calc-payout">💳 {% if lang == 'en' %}Paid out by the 10th of the month following the client's payment.{% else %}Выплачивается до 10-го числа месяца, следующего за оплатой клиента.{% endif %}</p>
       <p class="calc-disclaimer">{% if lang == 'en' %}The figures are indicative: the final amount depends on the plan the client pays for. PROFI+ and non-standard deals are calculated individually by your manager.{% else %}Расчёт ориентировочный: итог зависит от тарифа, который оплатит клиент. PROFI+ и нестандартные сделки считает менеджер индивидуально.{% endif %}</p>
     </div>
   </div>
@@ -95,6 +94,7 @@
 .calc-tariff { display: flex; align-items: center; justify-content: space-between; gap: 12px;
   flex-wrap: wrap; margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: var(--cream); }
 .calc-tariff-left { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.calc-tariff-pre { font-size: 15px; color: var(--charcoal); }
 .calc-tariff-name { font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 700; color: var(--deep-green); }
 .calc-tariff-range { font-size: 13px; color: var(--sage); }
 .calc-tariff-fee { font-size: 20px; font-weight: 700; color: var(--deep-green); white-space: nowrap; }
@@ -119,12 +119,6 @@
 .calc-total-label { font-size: 13px; color: var(--sage); }
 .calc-total-sum { font-family: 'Outfit', sans-serif; font-size: 34px; font-weight: 700;
   color: var(--deep-green); line-height: 1.15; margin-top: 4px; }
-.calc-breakdown { list-style: none; margin: 14px 0 0; padding: 0; }
-.calc-breakdown li { display: flex; justify-content: space-between; gap: 12px; font-size: 14px;
-  padding: 7px 0; border-top: 1px solid var(--border); color: var(--charcoal); }
-.calc-breakdown li span:last-child { white-space: nowrap; color: var(--deep-green); font-weight: 600; }
-.calc-breakdown li.calc-breakdown-empty { justify-content: flex-start; color: var(--sage); }
-.calc-payout { font-size: 13px; color: var(--sage); margin: 14px 0 0; }
 .calc-disclaimer { font-size: 12px; color: var(--sage); margin: 12px 0 0; }
 @media (max-width: 420px) {
   .calc-pills { gap: 6px; }
@@ -144,10 +138,7 @@
     'monthly': 'Every month' if lang == 'en' else 'Каждый месяц',
     'quarterly': 'Every quarter' if lang == 'en' else 'Каждый квартал',
     'yearly': 'Every year' if lang == 'en' else 'Каждый год',
-    'accounting': 'Accounting' if lang == 'en' else 'Бухгалтерия',
     'individual': 'individually' if lang == 'en' else 'индивидуально',
-    'empty': 'Pick at least one service' if lang == 'en' else 'Отметьте хотя бы одну услугу',
-    'plus_custom': 'plus accounting at an individually calculated rate' if lang == 'en' else 'плюс бухгалтерия по индивидуальному расчёту',
   } | tojson }};
   var IS_EN = {{ (lang == 'en') | tojson }};
 
@@ -172,20 +163,6 @@
   function service(key) {
     for (var i = 0; i < C.services.length; i++) if (C.services[i].key === key) return C.services[i];
     return null;
-  }
-
-  function li(left, right, cls) {
-    var el = document.createElement('li');
-    if (cls) el.className = cls;
-    var a = document.createElement('span');
-    a.textContent = left;
-    el.appendChild(a);
-    if (right !== null && right !== undefined) {
-      var b = document.createElement('span');
-      b.textContent = right;
-      el.appendChild(b);
-    }
-    return el;
   }
 
   function renderIncludes(t) {
@@ -257,42 +234,31 @@
       document.getElementById('calc-qty-val-' + s.key).textContent = state.qty[s.key];
     });
 
-    // Итог и расшифровка
+    // Итог одной суммой: расшифровка и строка «до 10-го числа» убраны
+    // 2026-07-23 по решению Николь.
     var total = 0, isFrom = false, isMin = false, custom = false;
-    var list = document.getElementById('calc-breakdown');
-    list.textContent = '';
 
     if (state.accounting) {
-      if (t.commission_aed === null) {
-        custom = true;
-        list.appendChild(li(TXT.accounting + ' ' + t.name, TXT.individual));
-      } else {
+      if (t.commission_aed === null) custom = true;
+      else {
         total += t.commission_aed;
         if (t.is_min) isMin = true;
-        list.appendChild(li(TXT.accounting + ' ' + t.name + ' · ' + t.range,
-                            (t.is_min ? TXT.more : '') + money(t.commission_aed)));
       }
     }
     C.services.forEach(function (s) {
       if (!state.sel[s.key]) return;
-      var qty = s.has_qty ? state.qty[s.key] : 1;
-      var sum = s.commission_aed * qty;
-      total += sum;
+      total += s.commission_aed * (s.has_qty ? state.qty[s.key] : 1);
       if (s.is_from) isFrom = true;
-      var label = s.label + (qty > 1 ? ' × ' + qty : '');
-      list.appendChild(li(label, (s.is_from ? TXT.from : '') + money(sum)));
     });
 
     var sumBox = document.getElementById('calc-total');
     if (!state.accounting && !C.services.some(function (s) { return state.sel[s.key]; })) {
       sumBox.textContent = money(0);
-      list.appendChild(li(TXT.empty, null, 'calc-breakdown-empty'));
     } else if (custom && total === 0) {
       sumBox.textContent = TXT.individual;
     } else {
       var prefix = isMin ? TXT.more : (isFrom || custom ? TXT.from : '≈ ');
       sumBox.textContent = prefix + money(total);
-      if (custom) list.appendChild(li(TXT.plus_custom, null, 'calc-breakdown-empty'));
     }
   };
 
