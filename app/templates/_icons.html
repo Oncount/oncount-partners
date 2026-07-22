@@ -35,3 +35,20 @@
 {% macro tab_checklist() %}<svg class="tab-icon" width="17" height="17" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" aria-hidden="true"><path d="M8 4V3a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1h2a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3zm2-1h4v2h-4V3zm-.3 13.9l5.2-5.2-1.4-1.4-3.8 3.8-1.5-1.5L6.8 13l2.9 2.9z"/></svg>{% endmacro %}
 
 {% macro tab_event() %}<svg class="tab-icon" width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="8.5" cy="8" r="3.2"/><path d="M8.5 12.5c-3.4 0-6 1.9-6 4.2V19h12v-2.3c0-2.3-2.6-4.2-6-4.2z"/><circle cx="17" cy="8.7" r="2.6"/><path d="M17 13c-.85 0-1.62.14-2.3.4 1.27.96 2.05 2.3 2.05 3.8V19H22v-1.9c0-2.2-2.2-4.1-5-4.1z"/></svg>{% endmacro %}
+
+{# ── Иконки заголовков разделов дашборда (решение Николь 2026-07-23): вместо
+   эмодзи — сплошные SVG в стиле бокового меню, цвет наследуют от заголовка. ── #}
+
+{% macro sec_earn() %}<svg class="sec-icon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9.2 6.3 7.6 3.4A.9.9 0 0 1 8.4 2h7.2a.9.9 0 0 1 .8 1.4l-1.6 2.9z"/><path d="M14.6 7.8h-5.2C6 9.7 4 13 4 16.2 4 19.7 7.2 22 12 22s8-2.3 8-5.8c0-3.2-2-6.5-5.4-8.4zm-1.6 9.4v1.3h-2v-1.2c-1-.2-1.9-.6-2.4-1.1l1-1.5c.7.5 1.5.9 2.4.9.8 0 1.2-.3 1.2-.8 0-1.3-4.3-.9-4.3-3.7 0-1.2.8-2.1 2.1-2.5V7.5h2v1.1c.9.2 1.6.6 2.1 1l-1 1.4c-.6-.4-1.3-.7-2-.7-.7 0-1.1.3-1.1.8 0 1.2 4.3.8 4.3 3.6 0 1.2-.8 2.2-2.3 2.5z"/></svg>{% endmacro %}
+
+{% macro sec_team() %}<svg class="sec-icon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="15.9" cy="3.9" r="1.7"/><circle cx="12" cy="7" r="3.1"/><path d="M12 11.2c-4.6 0-6.9 2.6-6.9 6.3h13.8c0-3.7-2.3-6.3-6.9-6.3z" opacity="0.9"/><rect x="7.4" y="13.6" width="9.2" height="5.4" rx="1.1" opacity="0.45"/><rect x="5.6" y="19.4" width="12.8" height="1.9" rx="0.95"/></svg>{% endmacro %}
+
+{% macro sec_steps() %}<svg class="sec-icon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c2.8 1.9 4.6 5.2 4.6 8.7 0 1.9-.4 3.7-1.2 5.3H8.6a11.8 11.8 0 0 1-1.2-5.3C7.4 7.2 9.2 3.9 12 2z"/><circle cx="12" cy="9.4" r="1.7" opacity="0.45"/><path d="M7.7 13.6 5 16.7v2.6l3.6-1.6zM16.3 13.6l2.7 3.1v2.6l-3.6-1.6z"/><path d="M10.6 18.6h2.8L12 22.2z"/></svg>{% endmacro %}
+
+{% macro sec_tools() %}<svg class="sec-icon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 17.2V21h3.8L17.9 9.9l-3.8-3.8L3 17.2z"/><path d="M20.7 7.1a1 1 0 0 0 0-1.4l-2.4-2.4a1 1 0 0 0-1.4 0l-1.8 1.8 3.8 3.8 1.8-1.8z" opacity="0.45"/></svg>{% endmacro %}
+
+{% macro sec_community() %}<svg class="sec-icon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="8.5" cy="8" r="3.2"/><path d="M8.5 12.5c-3.4 0-6 1.9-6 4.2V19h12v-2.3c0-2.3-2.6-4.2-6-4.2z"/><circle cx="17" cy="8.7" r="2.6" opacity="0.7"/><path d="M17 13c-.85 0-1.62.14-2.3.4 1.27.96 2.05 2.3 2.05 3.8V19H22v-1.9c0-2.2-2.2-4.1-5-4.1z" opacity="0.7"/></svg>{% endmacro %}
+
+{% macro sec_faq() %}<svg class="sec-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M9.1 9.3a2.9 2.9 0 1 1 4.2 3c-.8.5-1.3 1-1.3 2v.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.4" r="1.2" fill="currentColor"/></svg>{% endmacro %}
+
+{% macro sec_survey() %}<svg class="sec-icon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" aria-hidden="true"><path d="M8 4V3a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1h2a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3zm2-1h4v2h-4V3zm-.3 13.9l5.2-5.2-1.4-1.4-3.8 3.8-1.5-1.5L6.8 13l2.9 2.9z"/></svg>{% endmacro %}

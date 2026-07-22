@@ -460,6 +460,9 @@ details.faq-item[open] summary { margin-bottom: 12px; }
   font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 600;
   color: var(--deep-green); margin: 0 0 16px;
 }
+/* Иконки заголовков разделов (вместо эмодзи, решение Николь 2026-07-23):
+   стиль бокового меню, цвет наследуют от текста заголовка. */
+.sec-icon { vertical-align: -4px; margin-right: 8px; }
 /* Строка ответственности под фотографиями бухгалтеров: «штрафы покрывает
    ONCOUNT». Отделена линией — это не подпись к фото, а отдельное обещание. */
 .trust-note {

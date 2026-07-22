@@ -15,7 +15,7 @@
 {% if show_survey_banner %}
 <div class="card survey-banner">
   <div class="survey-banner-body">
-    <h3 style="margin: 0 0 4px;">🤝 {{ 'Tell us about yourself' if lang == 'en' else 'Расскажите о себе' }}</h3>
+    <h3 style="margin: 0 0 4px;">{{ icons.sec_survey() }}{{ 'Tell us about yourself' if lang == 'en' else 'Расскажите о себе' }}</h3>
     <p style="margin: 0; color: var(--sage); font-size: 14px;">
       {% if lang == 'en' %}A short survey (about a minute) — we'll suggest the partnership format that fits you best.{% else %}Короткая анкета (около минуты) — подберём формат партнёрства, который подойдёт именно вам.{% endif %}
     </p>
@@ -70,7 +70,7 @@
    без крестика — напоминает агенту, что и за чем делать. show_checklist /
    checklist_dismissed_at намеренно не используем. #}
 <div class="card" id="checklist">
-  <h3 style="margin: 0;">🚀 {{ 'Take these 3 steps to earn your first reward' if lang == 'en' else 'Сделайте эти 3 шага, чтобы получить первое вознаграждение' }}</h3>
+  <h3 style="margin: 0;">{{ icons.sec_steps() }}{{ 'Take these 3 steps to earn your first reward' if lang == 'en' else 'Сделайте эти 3 шага, чтобы получить первое вознаграждение' }}</h3>
   <div style="margin-top: 16px;">
     {% for step in checklist_steps %}
     <a href="{{ step.href }}" style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border); color: var(--charcoal);">
@@ -91,7 +91,7 @@
    спрятаны внутри вкладки «Рассылка» — до них нельзя было добраться, не
    нажав именно её. Менеджер живёт отдельным блоком ниже, над «Сообществом». #}
 <section class="svc-block" id="team">
-  <h2 class="svc-block-title">👥 {{ 'Who works with your client' if lang == 'en' else 'Кто работает с вашим клиентом' }}</h2>
+  <h2 class="svc-block-title">{{ icons.sec_team() }}{{ 'Who works with your client' if lang == 'en' else 'Кто работает с вашим клиентом' }}</h2>
   {# Подпись стоит СРАЗУ под заголовком (решение Николь), а не внутри карточки:
      иначе между ними вклинивается поле карточки и связка рвётся. Текст один и
      тот же для кабинета и лендингов — берём из кода (ACCOUNTANTS_TITLE). #}
@@ -113,7 +113,7 @@
    не он сам, а списки текстов: они раскрываются по нажатию на способ
    (решение Николь) — см. showTool() в _tools_content.html. #}
 <section class="svc-block" id="tools">
-  <h2 class="svc-block-title">📝 {{ 'Texts and partner links' if lang == 'en' else 'Тексты и партнёрские ссылки' }}</h2>
+  <h2 class="svc-block-title">{{ icons.sec_tools() }}{{ 'Texts and partner links' if lang == 'en' else 'Тексты и партнёрские ссылки' }}</h2>
   {# Главное, что партнёр должен понять про эти ссылки: они именные. Иначе
      непонятно, зачем брать готовый текст, а не писать своими словами. #}
   <p class="svc-block-sub">{% if lang == 'en' %}Every link carries your partner code — in our CRM we see that the client came from you. Your reward is already included in the price of all our services and is paid out by the 10th of each month. Just recommend us.{% else %}В каждую ссылку вшит ваш партнёрский код — в CRM мы видим, что клиент пришёл от вас. Ваше вознаграждение уже включено в стоимость всех наших услуг и выплачивается до 10 числа каждого месяца. Просто рекомендуйте нас.{% endif %}</p>
@@ -165,7 +165,7 @@
    Три цифры (всего агентов / передали контакты / контактов передано) и топ-5
    по числу переданных контактов. В топе — ТОЛЬКО имя, без компании. #}
 <div class="card" id="community">
-  <h3 style="margin: 0 0 16px;">🤝 {{ 'Community' if lang == 'en' else 'Сообщество' }}</h3>
+  <h3 style="margin: 0 0 16px;">{{ icons.sec_community() }}{{ 'Community' if lang == 'en' else 'Сообщество' }}</h3>
   <div class="kpi-grid" style="margin-bottom: 4px;">
     <div class="kpi">
       <div class="kpi-label">{{ 'Partners' if lang == 'en' else 'Партнёры' }}</div>
@@ -201,7 +201,7 @@
    Якорь #faq: на него ведут пункт меню «❓ FAQ» и редирект со старого /faq. #}
 {% if faq_categories %}
 <div class="card" id="faq">
-  <h3 style="margin: 0 0 16px;">❓ {{ 'Frequently asked questions' if lang == 'en' else 'Часто задаваемые вопросы' }}</h3>
+  <h3 style="margin: 0 0 16px;">{{ icons.sec_faq() }}{{ 'Frequently asked questions' if lang == 'en' else 'Часто задаваемые вопросы' }}</h3>
   {% for category, items in faq_categories.items() %}
     {# Оранжевые подписи-рубрики (ВХОД И КАБИНЕТ и т.п.) убраны 2026-07-23 по
        решению Николь: вопросы идут сплошным списком. Порядок прежний — по

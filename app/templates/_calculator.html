@@ -6,7 +6,7 @@
    Считает целиком в браузере: ничего не отправляет и не сохраняет, ПД не
    появляется. Все цифры — из app/calc_config.py (контекст: calc, lang). #}
 <section class="svc-block" id="calc">
-  <h2 class="svc-block-title">👩‍💻 {{ 'How much you will earn' if lang == 'en' else 'Сколько вы заработаете' }}</h2>
+  {% import "_icons.html" as icons %}<h2 class="svc-block-title">{{ icons.sec_earn() }}{{ 'How much you will earn' if lang == 'en' else 'Сколько вы заработаете' }}</h2>
   <p class="svc-block-sub">{% if lang == 'en' %}Pick what your client needs — we'll show your reward. Everything is in dirhams, before you introduce anyone.{% else %}Отметьте, что нужно вашему клиенту, — покажем ваше вознаграждение. Всё в дирхамах и ещё до того, как вы кого-то передали.{% endif %}</p>
 
   <div class="card calc">
