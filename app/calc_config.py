@@ -245,7 +245,36 @@ SERVICES = [
     },
 ]
 
-QTY_MAX = 20  # потолок счётчика виз — дальше это уже разговор с менеджером
+QTY_MAX = 20  # потолок счётчика — дальше это уже разговор с менеджером
+
+
+# ── «Что входит в тарифы» — общий список тремя группами (решение Николь
+# 2026-07-23): месяц / квартал / год, без вложенных свёрток по тарифам.
+# Состав — START и выше; NEW описан отдельной строкой-примечанием.
+INCLUDES = {
+    "monthly": [
+        "Ведение бухгалтерского учёта — объём транзакций по тарифу",
+        "Безлимитные инвойсы",
+        "Загрузка документов в Google Drive",
+        "Безлимитные платежи в банке",
+        "Консультация с бухгалтером 60 минут — раз в месяц",
+        "Payroll и трудовые договоры: START до 3, GROW до 10, PROFI до 20, PROFI+ до 30 сотрудников",
+    ],
+    "monthly_en": [
+        "Bookkeeping — transaction volume per plan",
+        "Unlimited invoices",
+        "Document upload to Google Drive",
+        "Unlimited bank payments",
+        "A 60-minute consultation with an accountant once a month",
+        "Payroll and employment contracts: START up to 3, GROW up to 10, PROFI up to 20, PROFI+ up to 30 employees",
+    ],
+    "quarterly": _QUARTERLY,
+    "quarterly_en": _QUARTERLY_EN,
+    "yearly": _YEARLY,
+    "yearly_en": _YEARLY_EN,
+    "note": "Тариф NEW — минимальный: ведение до 10 транзакций, онлайн-чат с бухгалтером и хранение документов.",
+    "note_en": "The NEW plan is minimal: bookkeeping for up to 10 transactions, online chat with an accountant and document storage.",
+}
 
 
 def _localize(row: dict, lang: str, fields: tuple[str, ...]) -> dict:
@@ -265,5 +294,6 @@ def calc_data(lang: str = "ru") -> dict:
     return {
         "tariffs": [_localize(t, lang, tariff_fields) for t in TARIFFS],
         "services": [_localize(s, lang, service_fields) for s in SERVICES],
+        "includes": _localize(INCLUDES, lang, ("monthly", "quarterly", "yearly", "note")),
         "qty_max": QTY_MAX,
     }

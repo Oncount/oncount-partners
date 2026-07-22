@@ -31,22 +31,17 @@
 
     {# «Что входит» — сворачиваемый блок, внутри тарифы тоже свёрнуты:
        вся информация на месте, но не раскатывается простынёй. #}
+    {# Общий список тремя группами (решение Николь 2026-07-23): открыл — сразу
+       видно месяц / квартал / год, без свёрток по каждому тарифу. #}
     <details class="calc-includes">
       <summary>{{ 'What the plans include' if lang == 'en' else 'Что входит в тарифы' }}</summary>
-      {% for t in calc.tariffs %}
-      <details class="calc-inc-tariff">
-        <summary>{{ t.name }} — {{ t.range }}</summary>
-        {% for group, title, title_en in [('monthly', 'Каждый месяц', 'Every month'), ('quarterly', 'Каждый квартал', 'Every quarter'), ('yearly', 'Каждый год', 'Every year')] %}
-        {% if t[group] %}
-        <div class="calc-inc-group">
-          <div class="calc-inc-title">{{ title_en if lang == 'en' else title }}</div>
-          <ul>{% for item in t[group] %}<li>{{ item }}</li>{% endfor %}</ul>
-        </div>
-        {% endif %}
-        {% endfor %}
-        {% if t.note %}<p class="calc-note">{{ t.note }}</p>{% endif %}
-      </details>
+      {% for group, title, title_en in [('monthly', 'Каждый месяц', 'Every month'), ('quarterly', 'Каждый квартал', 'Every quarter'), ('yearly', 'Каждый год', 'Every year')] %}
+      <div class="calc-inc-group">
+        <div class="calc-inc-title">{{ title_en if lang == 'en' else title }}</div>
+        <ul>{% for item in calc.includes[group] %}<li>{{ item }}</li>{% endfor %}</ul>
+      </div>
       {% endfor %}
+      <p class="calc-note">{{ calc.includes.note }}</p>
     </details>
 
     {# ── Разовые услуги: те же карточки ── #}
@@ -107,8 +102,6 @@
 .calc-tile-sum { font-weight: 700; font-size: 14.5px; color: var(--deep-green); white-space: nowrap; }
 .calc-includes { margin: 12px 0 0; }
 .calc-includes > summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--deep-green); }
-.calc-inc-tariff { margin: 10px 0 0 12px; }
-.calc-inc-tariff > summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--charcoal); }
 .calc-inc-group { margin: 10px 0 0 14px; }
 .calc-inc-title { font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--sage); }
 .calc-inc-group ul { margin: 6px 0 0; padding-left: 18px; font-size: 14px; color: var(--charcoal); }
