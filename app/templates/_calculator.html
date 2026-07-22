@@ -138,7 +138,7 @@
   var C = {{ calc | tojson }};
   var TXT = {{ {
     'from': 'from ' if lang == 'en' else 'от ',
-    'more': '>',
+    'more': 'from ' if lang == 'en' else 'от ',
     'monthly': 'Every month' if lang == 'en' else 'Каждый месяц',
     'quarterly': 'Every quarter' if lang == 'en' else 'Каждый квартал',
     'yearly': 'Every year' if lang == 'en' else 'Каждый год',
