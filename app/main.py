@@ -215,8 +215,8 @@ ACCOUNTANTS_TOTAL = 8
 # лендингах (внутри блока). Формулировка выверена с Николь 2026-07-21 —
 # см. комментарий в _accountants.html о том, что было до неё.
 ACCOUNTANTS_TITLE = {
-    "ru": "Бухгалтеры с квалификацией ACCA. Отчётность по МСФО и правилам FTA",
-    "en": "ACCA-qualified accountants. Reporting under IFRS and FTA rules",
+    "ru": "Бухгалтеры с квалификацией ACCA. Отчётность по МСФО и правилам FTA ОАЭ",
+    "en": "ACCA-qualified accountants. Reporting under IFRS and UAE FTA rules",
 }
 ACCOUNTANTS: list[dict] = [
     {"photo": "/static/img/accountants/maya.jpg", "name": "Майя Мандзюк",
