@@ -203,7 +203,9 @@
 <div class="card" id="faq">
   <h3 style="margin: 0 0 16px;">❓ {{ 'Frequently asked questions' if lang == 'en' else 'Часто задаваемые вопросы' }}</h3>
   {% for category, items in faq_categories.items() %}
-    <div class="faq-category">{{ (items[0].category_en or category) if lang == 'en' else category }}</div>
+    {# Оранжевые подписи-рубрики (ВХОД И КАБИНЕТ и т.п.) убраны 2026-07-23 по
+       решению Николь: вопросы идут сплошным списком. Порядок прежний — по
+       категории, сортировка faq_categories не менялась. #}
     {% for item in items %}
     <details class="faq-item">
       <summary>{{ (item.question_en or item.question) if lang == 'en' else item.question }}</summary>
