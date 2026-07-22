@@ -97,6 +97,9 @@
        «у меня есть аудитория». Заголовок нужен, чтобы блок не читался как
        продолжение последнего текста. ─────────────────────────────────────── #}
   {% if key == 'social' %}
+    {# Блок сворачивается вместе с текстами (решение Николь 2026-07-23): скрыт,
+       пока список .is-clipped; кнопка «Показать все тексты» раскрывает и его. #}
+    <div class="event-block">
     <h3 style="margin: 28px 0 12px;">🤝 {{ 'Joint event' if lang == 'en' else 'Совместное мероприятие' }}</h3>
     <div class="card">
       {% if lang == 'en' %}
@@ -135,6 +138,7 @@
       <a class="btn btn-primary" href="https://wa.me/{{ manager_wa }}?text={{ 'Здравствуйте! Хочу обсудить совместное мероприятие с двумя спикерами — обмен аудиториями с ONCOUNT.' | urlencode }}" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;text-decoration:none">Написать менеджеру о совместном мероприятии</a>
       {% endif %}
     </div>
+    </div>
   {% endif %}
 
   {# Отдельной кнопки «свернуть способ» внизу нет (решение Николь 2026-07-21):
@@ -158,6 +162,9 @@
 .msg-list.is-clipped .msg-card:nth-of-type(n+3){display:none}
 .msg-list.is-clipped .msg-card:nth-of-type(2){max-height:300px;overflow:hidden;position:relative}
 .msg-list.is-clipped .msg-card:nth-of-type(2)::after{content:'';position:absolute;left:0;right:0;bottom:0;height:70px;background:linear-gradient(rgba(255,255,255,0),#fff 90%);pointer-events:none}
+/* «Совместное мероприятие» скрыто, пока список текстов свёрнут — раскрывается
+   той же кнопкой «Показать все тексты» (решение Николь 2026-07-23). */
+.msg-list.is-clipped ~ .event-block{display:none}
 .tool-tab .tab-icon{flex:0 0 auto;width:17px;height:17px}
 /* Пост с креативом (2026-07-23): маленькое превью слева, кнопка скачивания
    справа. Картинка намеренно небольшая — партнёру нужно понять, что за
