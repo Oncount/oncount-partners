@@ -57,7 +57,7 @@
   </div>
 {% else %}
 {# items уже отсортированы по дате убыванием (см. _leads_items). #}
-{% set preview = leads_preview | default(5) %}
+{% set preview = leads_preview | default(3) %}
 {% set rest = items[preview:] %}
 <table class="list">
   <thead>
