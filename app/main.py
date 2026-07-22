@@ -181,6 +181,11 @@ METHODS: dict[str, dict[str, str]] = {
                    "hint_en": "gift a checklist"},
 }
 METHODS_ORDER: list[str] = list(METHODS.keys())
+# Какой способ раскрыт при заходе на дашборд (решение Николь 2026-07-23): «Пост»,
+# а не первая вкладка — там лежит готовый креатив мастер-класса, с него партнёру
+# и надо начинать. Порядок кнопок при этом не меняется. Если ключа нет в METHODS
+# (переименовали способ) — фолбэк на первую вкладку, раздел не ломается.
+METHODS_DEFAULT: str = "social" if "social" in METHODS else METHODS_ORDER[0]
 
 # Старые якоря /tools → новые способы (bot.py и закладки не ломаем). directlinks
 # больше нет отдельной вкладкой — ссылки переехали в `intro`, туда же #links.
@@ -615,6 +620,12 @@ async def on_startup() -> None:
         for tbl, cols in en_cols.items():
             for col in cols:
                 conn.execute(text(f"ALTER TABLE {tbl} ADD COLUMN IF NOT EXISTS {col} TEXT"))
+        # Креатив к тексту (2026-07-23): картинка поста + её превью. create_all не
+        # делает ALTER, а message_templates уже есть в проде. Идемпотентно.
+        for col in ("image_path", "image_thumb"):
+            conn.execute(
+                text(f"ALTER TABLE message_templates ADD COLUMN IF NOT EXISTS {col} VARCHAR(255)")
+            )
         # Вход по email (план 2026-05-23). Идемпотентно:
         # 1) telegram_id больше не обязателен — email-партнёр может быть без TG.
         conn.execute(text("ALTER TABLE partners ALTER COLUMN telegram_id DROP NOT NULL"))
@@ -2279,6 +2290,7 @@ def _tools_ctx(session: Session, partner: Partner, request: Request) -> dict:
     return {
         "ref_slug": partner.ref_slug,
         "methods_order": METHODS_ORDER,
+        "method_default": METHODS_DEFAULT,
         "method_groups": method_groups,
         "links": links,
         "manager_wa": manager_wa,

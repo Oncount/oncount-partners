@@ -166,6 +166,12 @@ class MessageTemplate(Base):
     segment_en: Mapped[str | None] = mapped_column(String(64))
     title_en: Mapped[str | None] = mapped_column(String(255))
     body_md_en: Mapped[str | None] = mapped_column(Text)
+    # Креатив к тексту (2026-07-23): партнёр публикует пост картинкой + текстом.
+    # image_path — файл, который партнёр СКАЧИВАЕТ (полный размер, /static/img/…);
+    # image_thumb — лёгкое превью для карточки в кабинете. NULL → текст без картинки
+    # (старое поведение всех остальных шаблонов).
+    image_path: Mapped[str | None] = mapped_column(String(255))
+    image_thumb: Mapped[str | None] = mapped_column(String(255))
     # Тип ПАРТНЁРА, под который собран ассет (Фаза C, план 2026-05-27): ключ из
     # PARTNER_TYPES в main.py (employee/solo/events/agency/media/consultant/insider).
     # NULL → шаблон не привязан к типу (генерик-крючки /messages — старое поведение,

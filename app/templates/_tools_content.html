@@ -4,6 +4,9 @@
    /dashboard#tools. Контекст: methods_order, method_groups, links,
    manager_wa, accountants, method_label (глобал), lang. #}
 {% import "_icons.html" as icons %}
+{# Раскрытый по умолчанию способ. Если контекст его не дал — первая вкладка,
+   иначе при заходе не открылась бы ни одна. #}
+{% set method_default = method_default | default(methods_order[0], true) %}
 {# Переборка 2026-06-02: вкладки = СПОСОБЫ привлечения (METHODS), не «ссылки/  #}
 {# тексты/кит». В каждом тексте уже вшита персональная ссылка (плейсхолдер     #}
 {# {link} → links[item.link_key], подстановка фильтром replace) — отдельного   #}
@@ -12,16 +15,18 @@
 <div class="tool-tabs">
   {% for key in methods_order %}
     {% set m = method_label(key, lang) %}
-    {# Первый способ раскрыт при заходе (решение Николь 2026-07-21): под кнопками
+    {# Один способ раскрыт при заходе (решение Николь 2026-07-21): под кнопками
        сразу видно полтора текста — партнёр понимает, что там лежит, не нажимая.
-       Остальные способы открываются нажатием, активный закрывается повторным. #}
-    <button class="tool-tab{% if loop.first %} active{% endif %}" type="button" data-panel="{{ key }}" title="{{ m.hint }}" onclick="showTool('{{ key }}')">{% if key == 'intro' %}{{ icons.tab_intro() }}{% elif key == 'broadcast' %}{{ icons.tab_broadcast() }}{% elif key == 'social' %}{{ icons.tab_post() }}{% elif key == 'leadmagnet' %}{{ icons.tab_checklist() }}{% elif key == 'event' %}{{ icons.tab_event() }}{% endif %}<span>{{ m.label }}</span></button>
+       Раскрыт «Пост» (method_default, решение Николь 2026-07-23) — там креатив
+       мастер-класса. Остальные открываются нажатием, активный закрывается
+       повторным. #}
+    <button class="tool-tab{% if key == method_default %} active{% endif %}" type="button" data-panel="{{ key }}" title="{{ m.hint }}" onclick="showTool('{{ key }}')">{% if key == 'intro' %}{{ icons.tab_intro() }}{% elif key == 'broadcast' %}{{ icons.tab_broadcast() }}{% elif key == 'social' %}{{ icons.tab_post() }}{% elif key == 'leadmagnet' %}{{ icons.tab_checklist() }}{% elif key == 'event' %}{{ icons.tab_event() }}{% endif %}<span>{{ m.label }}</span></button>
   {% endfor %}
 </div>
 
 {% for key in methods_order %}
 {% set m = method_label(key, lang) %}
-<section class="tool-panel" id="panel-{{ key }}"{% if not loop.first %} hidden{% endif %}>
+<section class="tool-panel" id="panel-{{ key }}"{% if key != method_default %} hidden{% endif %}>
   {# ─── Готовые тексты способа ──────────────────────────────────────────── #}
   {% set items = method_groups.get(key, []) %}
   {% if items %}
@@ -41,12 +46,32 @@
         {{ (item.title_en or item.title) if lang == 'en' else item.title }}
         {% if is_draft %}<span class="kit-draft">{{ 'draft · not approved' if lang == 'en' else 'черновик · не утверждён' }}</span>{% endif %}
       </h3>
-      <div class="body" id="msg-{{ item.id }}">{{ (((item.body_md_en or item.body_md) if lang == 'en' else item.body_md) or '') | replace('{link}', url) }}</div>
+      {# Креатив к посту (2026-07-23): маленькое превью + скачивание оригинала.
+         Партнёру нужны обе части — картинка и текст под неё. #}
+      {% if item.image_path %}
+      <div class="msg-media">
+        <a href="{{ item.image_path }}" target="_blank" rel="noopener" title="{{ 'Open full size' if lang == 'en' else 'Открыть в полном размере' }}">
+          <img class="msg-thumb" src="{{ item.image_thumb or item.image_path }}" loading="lazy"
+               alt="{{ 'Post image' if lang == 'en' else 'Картинка поста' }}" />
+        </a>
+        <div class="msg-media-side">
+          <p class="msg-media-note">{% if lang == 'en' %}Download the image and publish it with the text below — the registration link in the text is already yours.{% else %}Скачайте картинку и опубликуйте её с текстом ниже — ссылка на регистрацию в тексте уже ваша.{% endif %}</p>
+        </div>
+      </div>
+      {% endif %}
+      {# У текста с картинкой тело свёрнуто: видно начало + кнопка «Развернуть»,
+         иначе простыня выдавливает картинку с экрана. #}
+      <div class="body{% if item.image_path %} is-clamped{% endif %}" id="msg-{{ item.id }}">{{ (((item.body_md_en or item.body_md) if lang == 'en' else item.body_md) or '') | replace('{link}', url) }}</div>
+      {% if item.image_path %}
+      <button class="more-btn" type="button" onclick="toggleMsgBody(this, 'msg-{{ item.id }}')"
+              data-more="▾ {{ 'Expand text' if lang == 'en' else 'Развернуть текст' }}"
+              data-less="▴ {{ 'Collapse text' if lang == 'en' else 'Свернуть текст' }}">▾ {{ 'Expand text' if lang == 'en' else 'Развернуть текст' }}</button>
+      {% endif %}
       {% if is_draft %}
         <p class="ref-hint">{% if lang == 'en' %}The final text for clients will appear after Nikole approves it.{% else %}Финальный текст для клиента появится после утверждения Николь.{% endif %}</p>
       {% else %}
         <button class="btn btn-primary copy-btn"
-                onclick="navigator.clipboard.writeText(document.getElementById('msg-{{ item.id }}').innerText); this.textContent='{{ 'Copied ✓' if lang == 'en' else 'Скопировано ✓' }}'">
+                onclick="navigator.clipboard.writeText(document.getElementById('msg-{{ item.id }}').textContent); this.textContent='{{ 'Copied ✓' if lang == 'en' else 'Скопировано ✓' }}'">
           {{ 'Copy' if lang == 'en' else 'Скопировать' }}
         </button>
       {% endif %}
@@ -130,6 +155,16 @@
 .msg-list.is-clipped .msg-card:nth-of-type(2){max-height:300px;overflow:hidden;position:relative}
 .msg-list.is-clipped .msg-card:nth-of-type(2)::after{content:'';position:absolute;left:0;right:0;bottom:0;height:70px;background:linear-gradient(rgba(255,255,255,0),#fff 90%);pointer-events:none}
 .tool-tab .tab-icon{flex:0 0 auto;width:17px;height:17px}
+/* Пост с креативом (2026-07-23): маленькое превью слева, кнопка скачивания
+   справа. Картинка намеренно небольшая — партнёру нужно понять, что за
+   креатив, а не рассматривать его в кабинете. */
+.msg-media{display:flex;gap:14px;align-items:flex-start;margin:12px 0 4px}
+.msg-thumb{width:120px;border-radius:10px;border:1px solid var(--border);display:block}
+.msg-media-side{flex:1;min-width:0}
+.msg-media-note{margin:0;color:var(--ink,#15211e);font-size:14px;line-height:1.5}
+/* Тело поста свёрнуто до ~5 строк с растворением — как в списке текстов. */
+.msg-card .body.is-clamped{max-height:120px;overflow:hidden;position:relative}
+.msg-card .body.is-clamped::after{content:'';position:absolute;left:0;right:0;bottom:0;height:56px;background:linear-gradient(rgba(247,243,236,0),var(--cream) 90%);pointer-events:none}
 /* Подсказка «для кого способ» — в title кнопки, не мелким шрифтом на ней
    (решение Николь 2026-07-21: кнопки должны читаться одним словом). */
 </style>
@@ -154,6 +189,16 @@ function copyLink(btn, url) {
 // вступление и четыре кнопки, а простыню текстов открывает сам.
 // Одна кнопка на два состояния: раскрыть все тексты / вернуть к полутора.
 // Свернули — возвращаем к самой кнопке, иначе окажешься в середине списка.
+// Пост с картинкой: тело свёрнуто, кнопка разворачивает его на месте
+// (2026-07-23). Копирование берёт textContent, поэтому свёрнутый текст
+// копируется целиком — обрезка чисто визуальная.
+function toggleMsgBody(btn, bodyId) {
+  var body = document.getElementById(bodyId);
+  if (!body) return;
+  var clamped = body.classList.toggle('is-clamped');
+  btn.textContent = clamped ? btn.dataset.more : btn.dataset.less;
+  if (clamped) btn.scrollIntoView({ block: 'center' });
+}
 function toggleTexts(btn, boxId) {
   var box = document.getElementById(boxId);
   if (!box) return;
