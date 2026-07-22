@@ -1,0 +1,299 @@
+{# Калькулятор партнёрского вознаграждения (решение Николь 2026-07-23).
+   Стоит на дашборде между «Все заявки» и «Тексты и партнёрские ссылки»: сначала
+   «сколько я заработаю», потом «как рассказать клиенту». До него партнёр видел
+   свои деньги только постфактум — в колонке «Ваша комиссия» уже оплаченной
+   заявки.
+   Считает целиком в браузере: ничего не отправляет и не сохраняет, ПД не
+   появляется. Все цифры — из app/calc_config.py (контекст: calc, lang). #}
+<section class="svc-block" id="calc">
+  <h2 class="svc-block-title">🧮 {{ 'How much you will earn' if lang == 'en' else 'Сколько вы заработаете' }}</h2>
+  <p class="svc-block-sub">{% if lang == 'en' %}Pick what your client needs — we'll show your reward. Everything is in dirhams, before you introduce anyone.{% else %}Отметьте, что нужно вашему клиенту, — покажем ваше вознаграждение. Всё в дирхамах и ещё до того, как вы кого-то передали.{% endif %}</p>
+
+  <div class="card calc">
+    {# Кнопки-способы — тот же элемент, что и в блоке текстов: кабинет не должен
+       расползаться по стилям. Бухгалтерия включена сразу: это основная услуга. #}
+    <div class="calc-pills">
+      <button class="calc-pill is-on" type="button" data-key="accounting" aria-pressed="true"
+              onclick="calcToggle('accounting')">
+        <span class="calc-pill-label">{{ 'Accounting' if lang == 'en' else 'Бухгалтерия' }}</span>
+        <span class="calc-pill-fee" id="calc-fee-accounting"></span>
+      </button>
+      {% for s in calc.services %}
+      <button class="calc-pill" type="button" data-key="{{ s.key }}" aria-pressed="false"
+              onclick="calcToggle('{{ s.key }}')">
+        <span class="calc-pill-label">{{ s.label }}</span>
+        <span class="calc-pill-fee">{% if s.is_from %}{{ 'from ' if lang == 'en' else 'от ' }}{% endif %}{{ fmt_amount(s.commission_aed, lang) }} AED</span>
+      </button>
+      {% endfor %}
+    </div>
+
+    {# ── Бухгалтерия: ползунок по транзакциям → тариф и вознаграждение ──────── #}
+    <div class="calc-acc" id="calc-acc">
+      <label class="calc-tx-label" for="calc-tx">
+        {{ 'Client transactions per month' if lang == 'en' else 'Транзакций в месяц у клиента' }}:
+        <strong id="calc-tx-val">{{ calc.tx_default }}</strong>
+      </label>
+      <input class="calc-range" type="range" id="calc-tx"
+             min="0" max="{{ calc.tx_max }}" step="{{ calc.tx_step }}" value="{{ calc.tx_default }}"
+             oninput="calcRender()" aria-describedby="calc-tariff-name">
+      <div class="calc-scale"><span>0</span><span>{{ calc.tx_max }}+</span></div>
+
+      <div class="calc-tariff">
+        <div class="calc-tariff-left">
+          <span class="calc-tariff-name" id="calc-tariff-name"></span>
+          <span class="calc-tariff-range" id="calc-tariff-range"></span>
+        </div>
+        <div class="calc-tariff-fee" id="calc-tariff-fee"></div>
+      </div>
+      <p class="calc-note" id="calc-tariff-note"></p>
+
+      <details class="calc-includes">
+        <summary>{{ 'What the plan includes' if lang == 'en' else 'Что входит в тариф' }}</summary>
+        <div id="calc-includes-body"></div>
+      </details>
+    </div>
+
+    {# Услуги, которых бывает несколько (визы) — счётчик под кнопками. #}
+    {% for s in calc.services if s.has_qty %}
+    <div class="calc-qty" id="calc-qty-{{ s.key }}" hidden>
+      <span class="calc-qty-label">{{ s.label }}</span>
+      <div class="calc-qty-ctrl">
+        <button type="button" onclick="calcQty('{{ s.key }}', -1)" aria-label="{{ 'Fewer' if lang == 'en' else 'Меньше' }}">−</button>
+        <output id="calc-qty-val-{{ s.key }}">1</output>
+        <button type="button" onclick="calcQty('{{ s.key }}', 1)" aria-label="{{ 'More' if lang == 'en' else 'Больше' }}">+</button>
+      </div>
+    </div>
+    {% endfor %}
+
+    {# ── Итог ─────────────────────────────────────────────────────────────── #}
+    <div class="calc-total">
+      <div class="calc-total-label">{{ 'Your reward for one client' if lang == 'en' else 'Ваше вознаграждение за одного клиента' }}</div>
+      <div class="calc-total-sum" id="calc-total" aria-live="polite"></div>
+      <ul class="calc-breakdown" id="calc-breakdown"></ul>
+      <p class="calc-payout">💳 {% if lang == 'en' %}Paid out by the 10th of the month following the client's payment.{% else %}Выплачивается до 10-го числа месяца, следующего за оплатой клиента.{% endif %}</p>
+      <a class="btn btn-primary calc-cta" href="/transfer">{{ 'Introduce a client' if lang == 'en' else 'Передать клиента' }}</a>
+      <p class="calc-disclaimer">{% if lang == 'en' %}The figures are indicative: the final amount depends on the plan the client signs and on the payment we actually receive. PROFI+ and non-standard deals are calculated by your manager.{% else %}Расчёт ориентировочный: итог зависит от тарифа, на который встанет клиент, и от фактически полученной оплаты. PROFI+ и нестандартные сделки считает менеджер.{% endif %}</p>
+    </div>
+  </div>
+</section>
+
+<style>
+.calc { padding-top: 18px; }
+.calc-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.calc-pill { display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  padding: 9px 16px; border: 1px solid var(--border); border-radius: 16px; background: #fff;
+  font-family: inherit; font-size: 15px; font-weight: 600; color: var(--sage); cursor: pointer;
+  text-align: left; }
+.calc-pill:hover { border-color: var(--sage); }
+.calc-pill.is-on { background: var(--deep-green); border-color: var(--deep-green); color: var(--cream); }
+.calc-pill-fee { font-size: 12px; font-weight: 500; opacity: .75; white-space: nowrap; }
+.calc-acc { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border); }
+.calc-acc[hidden] { display: none; }
+.calc-tx-label { display: block; font-size: 14px; color: var(--sage); margin-bottom: 10px; }
+.calc-tx-label strong { color: var(--deep-green); font-size: 18px; }
+.calc-range { width: 100%; margin: 0; accent-color: var(--deep-green); }
+.calc-scale { display: flex; justify-content: space-between; font-size: 12px; color: var(--sage); margin-top: 2px; }
+.calc-tariff { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap; margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: var(--cream); }
+.calc-tariff-left { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.calc-tariff-name { font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 700; color: var(--deep-green); }
+.calc-tariff-range { font-size: 13px; color: var(--sage); }
+.calc-tariff-fee { font-size: 20px; font-weight: 700; color: var(--deep-green); white-space: nowrap; }
+.calc-note { font-size: 13px; color: var(--sage); margin: 10px 0 0; }
+.calc-includes { margin-top: 12px; }
+.calc-includes > summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--deep-green); }
+.calc-inc-group { margin-top: 12px; }
+.calc-inc-title { font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--orange); }
+.calc-inc-group ul { margin: 6px 0 0; padding-left: 18px; font-size: 14px; color: var(--charcoal); }
+.calc-inc-group li { margin-bottom: 4px; }
+.calc-qty { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-top: 14px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 12px; }
+.calc-qty[hidden] { display: none; }
+.calc-qty-label { font-size: 14px; color: var(--charcoal); }
+.calc-qty-ctrl { display: flex; align-items: center; gap: 10px; }
+.calc-qty-ctrl button { width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 50%;
+  background: #fff; font-size: 18px; line-height: 1; color: var(--deep-green); cursor: pointer; font-family: inherit; }
+.calc-qty-ctrl button:hover { border-color: var(--sage); }
+.calc-qty-ctrl output { min-width: 24px; text-align: center; font-weight: 700; color: var(--deep-green); }
+.calc-total { margin-top: 20px; padding-top: 18px; border-top: 1px dashed var(--border); }
+.calc-total-label { font-size: 13px; color: var(--sage); }
+.calc-total-sum { font-family: 'Outfit', sans-serif; font-size: 34px; font-weight: 700;
+  color: var(--deep-green); line-height: 1.15; margin-top: 4px; }
+.calc-breakdown { list-style: none; margin: 14px 0 0; padding: 0; }
+.calc-breakdown li { display: flex; justify-content: space-between; gap: 12px; font-size: 14px;
+  padding: 7px 0; border-top: 1px solid var(--border); color: var(--charcoal); }
+.calc-breakdown li span:last-child { white-space: nowrap; color: var(--deep-green); font-weight: 600; }
+.calc-breakdown li.calc-breakdown-empty { justify-content: flex-start; color: var(--sage); }
+.calc-payout { font-size: 13px; color: var(--sage); margin: 14px 0 0; }
+.calc-cta { display: inline-block; margin-top: 14px; text-decoration: none; }
+.calc-disclaimer { font-size: 12px; color: var(--sage); margin: 12px 0 0; }
+@media (max-width: 420px) {
+  .calc-pills { gap: 6px; }
+  .calc-pill { padding: 8px 12px; font-size: 14px; }
+  .calc-total-sum { font-size: 28px; }
+}
+</style>
+
+<script>
+// Данные калькулятора приезжают с сервера (app/calc_config.py) — в JS ни одной
+// зашитой суммы. Считаем на месте: ни одного запроса и ничего не сохраняем.
+(function () {
+  var C = {{ calc | tojson }};
+  var TXT = {{ {
+    'from': 'from ' if lang == 'en' else 'от ',
+    'monthly': 'Every month' if lang == 'en' else 'Каждый месяц',
+    'quarterly': 'Every quarter' if lang == 'en' else 'Каждый квартал',
+    'yearly': 'Every year' if lang == 'en' else 'Каждый год',
+    'accounting': 'Accounting' if lang == 'en' else 'Бухгалтерия',
+    'individual': 'individually' if lang == 'en' else 'индивидуально',
+    'empty': 'Pick at least one service' if lang == 'en' else 'Отметьте хотя бы одну услугу',
+    'plus_custom': 'plus accounting at an individually calculated rate' if lang == 'en' else 'плюс бухгалтерия по индивидуальному расчёту',
+  } | tojson }};
+  var IS_EN = {{ (lang == 'en') | tojson }};
+
+  var state = { accounting: true, tx: C.tx_default, sel: {}, qty: {} };
+  C.services.forEach(function (s) { state.sel[s.key] = false; state.qty[s.key] = 1; });
+
+  // 1 450 в RU и 1,450 в EN — как fmt_amount на сервере.
+  function money(n) {
+    var sep = IS_EN ? ',' : '\u00a0';  // NBSP в RU — как fmt_amount на сервере
+    var s = String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, sep);
+    return s + '\u00a0AED';
+  }
+
+  function tariffFor(tx) {
+    for (var i = 0; i < C.tariffs.length; i++) {
+      var t = C.tariffs[i];
+      if (t.max_tx === null || tx <= t.max_tx) return t;
+    }
+    return C.tariffs[C.tariffs.length - 1];
+  }
+
+  function service(key) {
+    for (var i = 0; i < C.services.length; i++) if (C.services[i].key === key) return C.services[i];
+    return null;
+  }
+
+  function li(left, right, cls) {
+    var el = document.createElement('li');
+    if (cls) el.className = cls;
+    var a = document.createElement('span');
+    a.textContent = left;
+    el.appendChild(a);
+    if (right !== null && right !== undefined) {
+      var b = document.createElement('span');
+      b.textContent = right;
+      el.appendChild(b);
+    }
+    return el;
+  }
+
+  function renderIncludes(t) {
+    var box = document.getElementById('calc-includes-body');
+    box.textContent = '';
+    [['monthly', TXT.monthly], ['quarterly', TXT.quarterly], ['yearly', TXT.yearly]].forEach(function (pair) {
+      var items = t[pair[0]] || [];
+      if (!items.length) return;
+      var group = document.createElement('div');
+      group.className = 'calc-inc-group';
+      var title = document.createElement('div');
+      title.className = 'calc-inc-title';
+      title.textContent = pair[1];
+      var ul = document.createElement('ul');
+      items.forEach(function (text) {
+        var item = document.createElement('li');
+        item.textContent = text;
+        ul.appendChild(item);
+      });
+      group.appendChild(title);
+      group.appendChild(ul);
+      box.appendChild(group);
+    });
+  }
+
+  window.calcToggle = function (key) {
+    if (key === 'accounting') state.accounting = !state.accounting;
+    else state.sel[key] = !state.sel[key];
+    calcRender();
+  };
+
+  window.calcQty = function (key, delta) {
+    var next = (state.qty[key] || 1) + delta;
+    state.qty[key] = Math.min(C.qty_max, Math.max(1, next));
+    calcRender();
+  };
+
+  window.calcRender = function () {
+    var slider = document.getElementById('calc-tx');
+    state.tx = parseInt(slider.value, 10) || 0;
+    document.getElementById('calc-tx-val').textContent = state.tx >= C.tx_max ? C.tx_max + '+' : state.tx;
+
+    // Кнопки
+    document.querySelectorAll('.calc-pill').forEach(function (btn) {
+      var key = btn.dataset.key;
+      var on = key === 'accounting' ? state.accounting : !!state.sel[key];
+      btn.classList.toggle('is-on', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+
+    // Бухгалтерия
+    var t = tariffFor(state.tx);
+    var accBox = document.getElementById('calc-acc');
+    accBox.hidden = !state.accounting;
+    document.getElementById('calc-tariff-name').textContent = t.name;
+    document.getElementById('calc-tariff-range').textContent = t.range;
+    document.getElementById('calc-tariff-fee').textContent =
+      t.commission_aed === null ? TXT.individual : money(t.commission_aed);
+    document.getElementById('calc-tariff-note').textContent = t.note || '';
+    document.getElementById('calc-fee-accounting').textContent =
+      t.commission_aed === null ? TXT.individual : money(t.commission_aed);
+    renderIncludes(t);
+
+    // Счётчики количества — только у выбранных услуг
+    C.services.forEach(function (s) {
+      if (!s.has_qty) return;
+      var row = document.getElementById('calc-qty-' + s.key);
+      if (!row) return;
+      row.hidden = !state.sel[s.key];
+      document.getElementById('calc-qty-val-' + s.key).textContent = state.qty[s.key];
+    });
+
+    // Итог и расшифровка
+    var total = 0, isFrom = false, custom = false;
+    var list = document.getElementById('calc-breakdown');
+    list.textContent = '';
+
+    if (state.accounting) {
+      if (t.commission_aed === null) {
+        custom = true;
+        list.appendChild(li(TXT.accounting + ' ' + t.name, TXT.individual));
+      } else {
+        total += t.commission_aed;
+        list.appendChild(li(TXT.accounting + ' ' + t.name + ' · ' + t.range, money(t.commission_aed)));
+      }
+    }
+    C.services.forEach(function (s) {
+      if (!state.sel[s.key]) return;
+      var qty = s.has_qty ? state.qty[s.key] : 1;
+      var sum = s.commission_aed * qty;
+      total += sum;
+      if (s.is_from) isFrom = true;
+      var label = s.label + (qty > 1 ? ' × ' + qty : '');
+      list.appendChild(li(label, (s.is_from ? TXT.from : '') + money(sum)));
+    });
+
+    var sumBox = document.getElementById('calc-total');
+    if (!state.accounting && !C.services.some(function (s) { return state.sel[s.key]; })) {
+      sumBox.textContent = money(0);
+      list.appendChild(li(TXT.empty, null, 'calc-breakdown-empty'));
+    } else if (custom && total === 0) {
+      sumBox.textContent = TXT.individual;
+    } else {
+      sumBox.textContent = (isFrom || custom ? TXT.from : '≈ ') + money(total);
+      if (custom) list.appendChild(li(TXT.plus_custom, null, 'calc-breakdown-empty'));
+    }
+  };
+
+  calcRender();
+})();
+</script>

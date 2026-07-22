@@ -23,6 +23,7 @@ from app.auth import (
     normalize_phone,
     verify_login_code,
 )
+from app.calc_config import calc_data
 from app.config import settings
 from app.email import send_magic_link
 from app.wazzup import send_wa_code
@@ -2403,6 +2404,10 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
             # Таблица заявок переехала на дашборд (решение Николь 2026-07-21),
             # отдельной страницы /leads больше нет — она редиректит сюда.
             items=_leads_items(session, partner),
+            # Калькулятор вознаграждения (#calc, решение Николь 2026-07-23):
+            # тарифы и разовые услуги под язык интерфейса. Считает браузер,
+            # сервер только отдаёт цифры — см. app/calc_config.py.
+            calc=calc_data(_lang(request)),
             # То же с «Текстами и ссылками» (свёрнутый блок под чек-листом):
             # контекст вкладок собираем здесь, шаблон — _tools_content.html.
             **_tools_ctx(session, partner, request),
