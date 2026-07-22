@@ -824,7 +824,7 @@ KITS = [
         "title": "Lead-магнит для аудитории события",
         "title_en": "Lead magnet for an event audience",
         "body_md": (
-            "🔶 Только для участников [событие]\n"
+            "🔶 Только для подписчиков моего канала [название вашего канала]\n"
             "\n"
             "В ОАЭ сейчас непростое время для бизнеса — корпоративный налог, "
             "новые правила отчётности, требования банков. Один промах в "
@@ -839,7 +839,7 @@ KITS = [
             "Записаться можно по ссылке: {link}"
         ),
         "body_md_en": (
-            "🔶 For [event] attendees only\n"
+            "🔶 For subscribers of my channel [your channel name] only\n"
             "\n"
             "The UAE is a tricky place for business right now — corporate tax, "
             "new reporting rules, bank requirements. One slip in your accounting "
