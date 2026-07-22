@@ -194,7 +194,7 @@ TX_DEFAULT = 50
 
 # ── Разовые услуги ───────────────────────────────────────────────────────────
 # is_from — вознаграждение «от» (точная сумма зависит от объёма работы).
-# has_qty — услуга бывает в количестве (визы), к ней показываем счётчик.
+# Количество (−/+) есть у каждой услуги — см. строки .calc-qty в шаблоне.
 SERVICES = [
     {
         "key": "audit",
@@ -204,7 +204,6 @@ SERVICES = [
         "hint_en": "Statements audited by a licensed UAE auditor",
         "commission_aed": usd_to_aed(300),
         "is_from": True,
-        "has_qty": False,
     },
     {
         "key": "company",
@@ -214,7 +213,6 @@ SERVICES = [
         "hint_en": "Mainland or free zone",
         "commission_aed": usd_to_aed(1000),
         "is_from": False,
-        "has_qty": False,
     },
     {
         "key": "corp_account",
@@ -224,7 +222,6 @@ SERVICES = [
         "hint_en": "NBD, Wio, FAB, ADCB",
         "commission_aed": usd_to_aed(1000),
         "is_from": False,
-        "has_qty": False,
     },
     {
         "key": "work_visa",
@@ -234,7 +231,6 @@ SERVICES = [
         "hint_en": "Residence visa for an employee or owner",
         "commission_aed": usd_to_aed(300),
         "is_from": False,
-        "has_qty": True,
     },
     {
         "key": "property_visa",
@@ -244,7 +240,6 @@ SERVICES = [
         "hint_en": "Golden, silver, green",
         "commission_aed": usd_to_aed(600),
         "is_from": False,
-        "has_qty": False,
     },
     {
         "key": "personal_account",
@@ -254,7 +249,6 @@ SERVICES = [
         "hint_en": "NBD, no residency or Emirates ID required",
         "commission_aed": usd_to_aed(1000),
         "is_from": False,
-        "has_qty": False,
     },
 ]
 
