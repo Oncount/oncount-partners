@@ -462,10 +462,6 @@ details.faq-item[open] summary { margin-bottom: 12px; }
 .svc-block-title {
   font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 600;
   color: var(--deep-green); margin: 0 0 16px;
-}
-.svc-block-title, .card > h3 {
-  font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 600;
-  color: var(--deep-green);
   padding-left: 12px; border-left: 4px solid var(--orange);
 }
 /* Иконки заголовков разделов (вместо эмодзи, решение Николь 2026-07-23):
