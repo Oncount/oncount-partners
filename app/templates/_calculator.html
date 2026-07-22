@@ -27,6 +27,14 @@
 
     {# ── Бухгалтерия: ползунок по транзакциям → тариф и вознаграждение ──────── #}
     <div class="calc-acc" id="calc-acc">
+      <div class="calc-tariff">
+        <div class="calc-tariff-left">
+          <span class="calc-tariff-pre">{{ 'Accounting plan' if lang == 'en' else 'Тариф бухгалтерии' }}</span>
+          <span class="calc-tariff-name" id="calc-tariff-name"></span>
+          <span class="calc-tariff-range" id="calc-tariff-range"></span>
+        </div>
+        <div class="calc-tariff-fee" id="calc-tariff-fee"></div>
+      </div>
       <label class="calc-tx-label" for="calc-tx">
         {{ 'Client transactions per month' if lang == 'en' else 'Транзакций в месяц у клиента' }}:
         <strong id="calc-tx-val">{{ calc.tx_default }}</strong>
@@ -36,14 +44,6 @@
              oninput="calcRender()" aria-describedby="calc-tariff-name">
       <div class="calc-scale"><span>{{ calc.tx_max }}+</span></div>
 
-      <div class="calc-tariff">
-        <div class="calc-tariff-left">
-          <span class="calc-tariff-pre">{{ 'Accounting plan' if lang == 'en' else 'Тариф бухгалтерии' }}</span>
-          <span class="calc-tariff-name" id="calc-tariff-name"></span>
-          <span class="calc-tariff-range" id="calc-tariff-range"></span>
-        </div>
-        <div class="calc-tariff-fee" id="calc-tariff-fee"></div>
-      </div>
       <p class="calc-note" id="calc-tariff-note"></p>
 
       <details class="calc-includes">
@@ -92,7 +92,7 @@
 .calc-range { width: 100%; margin: 0; accent-color: var(--deep-green); }
 .calc-scale { display: flex; justify-content: flex-end; font-size: 12px; color: var(--sage); margin-top: 2px; }
 .calc-tariff { display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  flex-wrap: wrap; margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: var(--cream); }
+  flex-wrap: wrap; margin-bottom: 14px; padding: 12px 14px; border-radius: 12px; background: var(--cream); }
 .calc-tariff-left { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .calc-tariff-pre { font-size: 15px; color: var(--charcoal); }
 .calc-tariff-name { font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 700; color: var(--deep-green); }
