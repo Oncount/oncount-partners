@@ -99,6 +99,7 @@
 .calc-tariff-range { font-size: 13px; color: var(--sage); }
 .calc-tariff-fee { font-size: 20px; font-weight: 700; color: var(--deep-green); white-space: nowrap; }
 .calc-note { font-size: 13px; color: var(--sage); margin: 10px 0 0; }
+.calc-note[hidden] { display: none; }
 .calc-includes { margin-top: 12px; }
 .calc-includes > summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--deep-green); }
 .calc-inc-group { margin-top: 12px; }
@@ -222,7 +223,9 @@
     var feeText = t.commission_aed === null ? TXT.individual
       : (t.is_min ? TXT.more : '') + money(t.commission_aed);
     document.getElementById('calc-tariff-fee').textContent = feeText;
-    document.getElementById('calc-tariff-note').textContent = t.note || '';
+    var noteEl = document.getElementById('calc-tariff-note');
+    noteEl.textContent = t.note || '';
+    noteEl.hidden = !t.note;  // пустая заметка не должна оставлять отступ
     renderIncludes(t);
 
     // Счётчики количества — только у выбранных услуг

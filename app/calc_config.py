@@ -75,10 +75,8 @@ TARIFFS = [
         "quarterly_en": [],
         "yearly": [],
         "yearly_en": [],
-        # У NEW налоги идут отдельной строкой, а не «всё включено» — говорим прямо,
-        # иначе партнёр пообещает клиенту не то.
-        "note": "Корпоративный налог и НДС на этом тарифе оплачиваются отдельно.",
-        "note_en": "Corporate tax and VAT are paid separately on this plan.",
+        "note": "",
+        "note_en": "",
     },
     {
         "key": "start",
