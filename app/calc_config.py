@@ -238,7 +238,7 @@ SERVICES = [
     },
     {
         "key": "property_visa",
-        "label": "Виза на недвижимость",
+        "label": "Виза за недвижимость",
         "label_en": "Property visa",
         "hint": "Золотая, серебряная, зелёная",
         "hint_en": "Golden, silver, green",
