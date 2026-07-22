@@ -230,8 +230,8 @@ SERVICES = [
     },
     {
         "key": "work_visa",
-        "label": "Рабочая виза резидента",
-        "label_en": "UAE work visa",
+        "label": "Рабочая виза",
+        "label_en": "Work visa",
         "hint": "Резидентская виза сотрудника или владельца",
         "hint_en": "Residence visa for an employee or owner",
         "commission_aed": usd_to_aed(300),

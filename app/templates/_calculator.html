@@ -16,13 +16,11 @@
       <button class="calc-pill is-on" type="button" data-key="accounting" aria-pressed="true"
               onclick="calcToggle('accounting')">
         <span class="calc-pill-label">{{ 'Accounting' if lang == 'en' else 'Бухгалтерия' }}</span>
-        <span class="calc-pill-fee" id="calc-fee-accounting"></span>
       </button>
       {% for s in calc.services %}
       <button class="calc-pill" type="button" data-key="{{ s.key }}" aria-pressed="false"
               onclick="calcToggle('{{ s.key }}')">
         <span class="calc-pill-label">{{ s.label }}</span>
-        <span class="calc-pill-fee">{% if s.is_from %}{{ 'from ' if lang == 'en' else 'от ' }}{% endif %}{{ fmt_amount(s.commission_aed, lang) }} AED</span>
       </button>
       {% endfor %}
     </div>
@@ -83,13 +81,11 @@
 <style>
 .calc { padding-top: 18px; }
 .calc-pills { display: flex; flex-wrap: wrap; gap: 8px; }
-.calc-pill { display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
-  padding: 9px 16px; border: 1px solid var(--border); border-radius: 16px; background: #fff;
-  font-family: inherit; font-size: 15px; font-weight: 600; color: var(--sage); cursor: pointer;
-  text-align: left; }
+.calc-pill { display: inline-flex; align-items: center;
+  padding: 9px 18px; border: 1px solid var(--border); border-radius: 999px; background: #fff;
+  font-family: inherit; font-size: 15px; font-weight: 600; color: var(--sage); cursor: pointer; }
 .calc-pill:hover { border-color: var(--sage); }
 .calc-pill.is-on { background: var(--deep-green); border-color: var(--deep-green); color: var(--cream); }
-.calc-pill-fee { font-size: 12px; font-weight: 500; opacity: .75; white-space: nowrap; }
 .calc-acc { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border); }
 .calc-acc[hidden] { display: none; }
 .calc-tx-label { display: block; font-size: 14px; color: var(--sage); margin-bottom: 10px; }
@@ -250,7 +246,6 @@
       : (t.is_min ? TXT.more : '') + money(t.commission_aed);
     document.getElementById('calc-tariff-fee').textContent = feeText;
     document.getElementById('calc-tariff-note').textContent = t.note || '';
-    document.getElementById('calc-fee-accounting').textContent = feeText;
     renderIncludes(t);
 
     // Счётчики количества — только у выбранных услуг
