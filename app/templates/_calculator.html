@@ -9,7 +9,6 @@
 {% import "_icons.html" as icons %}
 <section class="svc-block" id="calc">
   <h2 class="svc-block-title">{{ icons.sec_earn() }}{{ 'How much you will earn' if lang == 'en' else 'Сколько вы заработаете' }}</h2>
-  <p class="svc-block-sub">{% if lang == 'en' %}Set the number of clients per plan and add one-off services — we'll show your reward.{% else %}Отметьте количество клиентов по тарифам и разовые услуги — покажем ваше вознаграждение.{% endif %}</p>
 
   <div class="card calc">
     {# ── Бухгалтерия: 5 тарифов карточками, у каждой −/+ и сумма ── #}
