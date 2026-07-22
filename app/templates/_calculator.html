@@ -67,12 +67,16 @@
 
     {# ── Итог ─────────────────────────────────────────────────────────────── #}
     <div class="calc-total">
-      <div class="calc-total-label">{{ 'Your reward for one client' if lang == 'en' else 'Ваше вознаграждение за одного клиента' }}</div>
-      <div class="calc-total-sum" id="calc-total" aria-live="polite"></div>
+      {# Подпись и сумма — справа (решение Николь 2026-07-23): короткое «Ваше
+         вознаграждение» ровно над цифрами, длинная строка слева убрана. #}
+      <div class="calc-total-head">
+        <div class="calc-total-label">{{ 'Your reward' if lang == 'en' else 'Ваше вознаграждение' }}</div>
+        <div class="calc-total-sum" id="calc-total" aria-live="polite"></div>
+      </div>
       <ul class="calc-breakdown" id="calc-breakdown"></ul>
       <p class="calc-payout">💳 {% if lang == 'en' %}Paid out by the 10th of the month following the client's payment.{% else %}Выплачивается до 10-го числа месяца, следующего за оплатой клиента.{% endif %}</p>
       <a class="btn btn-primary calc-cta" href="/transfer">{{ 'Introduce a client' if lang == 'en' else 'Передать клиента' }}</a>
-      <p class="calc-disclaimer">{% if lang == 'en' %}The figures are indicative: the final amount depends on the plan the client signs and on the payment we actually receive. PROFI+ and non-standard deals are calculated by your manager.{% else %}Расчёт ориентировочный: итог зависит от тарифа, на который встанет клиент, и от фактически полученной оплаты. PROFI+ и нестандартные сделки считает менеджер.{% endif %}</p>
+      <p class="calc-disclaimer">{% if lang == 'en' %}The figures are indicative: the final amount depends on the plan the client pays for. PROFI+ and non-standard deals are calculated individually by your manager.{% else %}Расчёт ориентировочный: итог зависит от тарифа, который оплатит клиент. PROFI+ и нестандартные сделки считает менеджер индивидуально.{% endif %}</p>
     </div>
   </div>
 </section>
@@ -116,6 +120,7 @@
 .calc-qty-ctrl button:hover { border-color: var(--sage); }
 .calc-qty-ctrl output { min-width: 24px; text-align: center; font-weight: 700; color: var(--deep-green); }
 .calc-total { margin-top: 20px; padding-top: 18px; border-top: 1px dashed var(--border); }
+.calc-total-head { text-align: right; }
 .calc-total-label { font-size: 13px; color: var(--sage); }
 .calc-total-sum { font-family: 'Outfit', sans-serif; font-size: 34px; font-weight: 700;
   color: var(--deep-green); line-height: 1.15; margin-top: 4px; }
@@ -141,6 +146,7 @@
   var C = {{ calc | tojson }};
   var TXT = {{ {
     'from': 'from ' if lang == 'en' else 'от ',
+    'more': 'over ' if lang == 'en' else 'более ',
     'monthly': 'Every month' if lang == 'en' else 'Каждый месяц',
     'quarterly': 'Every quarter' if lang == 'en' else 'Каждый квартал',
     'yearly': 'Every year' if lang == 'en' else 'Каждый год',
@@ -242,11 +248,11 @@
     accBox.hidden = !state.accounting;
     document.getElementById('calc-tariff-name').textContent = t.name;
     document.getElementById('calc-tariff-range').textContent = t.range;
-    document.getElementById('calc-tariff-fee').textContent =
-      t.commission_aed === null ? TXT.individual : money(t.commission_aed);
+    var feeText = t.commission_aed === null ? TXT.individual
+      : (t.is_min ? TXT.more : '') + money(t.commission_aed);
+    document.getElementById('calc-tariff-fee').textContent = feeText;
     document.getElementById('calc-tariff-note').textContent = t.note || '';
-    document.getElementById('calc-fee-accounting').textContent =
-      t.commission_aed === null ? TXT.individual : money(t.commission_aed);
+    document.getElementById('calc-fee-accounting').textContent = feeText;
     renderIncludes(t);
 
     // Счётчики количества — только у выбранных услуг
@@ -259,7 +265,7 @@
     });
 
     // Итог и расшифровка
-    var total = 0, isFrom = false, custom = false;
+    var total = 0, isFrom = false, isMin = false, custom = false;
     var list = document.getElementById('calc-breakdown');
     list.textContent = '';
 
@@ -269,7 +275,9 @@
         list.appendChild(li(TXT.accounting + ' ' + t.name, TXT.individual));
       } else {
         total += t.commission_aed;
-        list.appendChild(li(TXT.accounting + ' ' + t.name + ' · ' + t.range, money(t.commission_aed)));
+        if (t.is_min) isMin = true;
+        list.appendChild(li(TXT.accounting + ' ' + t.name + ' · ' + t.range,
+                            (t.is_min ? TXT.more : '') + money(t.commission_aed)));
       }
     }
     C.services.forEach(function (s) {
@@ -289,7 +297,8 @@
     } else if (custom && total === 0) {
       sumBox.textContent = TXT.individual;
     } else {
-      sumBox.textContent = (isFrom || custom ? TXT.from : '≈ ') + money(total);
+      var prefix = isMin ? TXT.more : (isFrom || custom ? TXT.from : '≈ ');
+      sumBox.textContent = prefix + money(total);
       if (custom) list.appendChild(li(TXT.plus_custom, null, 'calc-breakdown-empty'));
     }
   };
