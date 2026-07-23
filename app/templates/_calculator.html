@@ -77,7 +77,6 @@
       {# Подпись и сумма — справа (решение Николь 2026-07-23): короткое «Ваше
          вознаграждение» ровно над цифрами. #}
       <div class="calc-total-head">
-        <div class="calc-total-label">{{ 'Your reward' if lang == 'en' else 'Ваше вознаграждение' }}</div>
         {# Справа — та же сумма в долларах (решение Николь 2026-07-23). #}
         <div class="calc-total-row">
           <div class="calc-total-sum" id="calc-total" aria-live="polite"></div>
@@ -128,7 +127,6 @@
 .calc-note { font-size: 13px; color: var(--sage); margin: 10px 0 0 14px; }
 .calc-total { margin-top: 20px; padding-top: 16px; border-top: 1px dashed var(--border); }
 .calc-total-head { text-align: left; }
-.calc-total-label { font-size: 13px; color: var(--sage); }
 .calc-total-row { display: flex; align-items: baseline; justify-content: flex-start;
   gap: 8px 14px; flex-wrap: wrap; }
 .calc-total-sum { font-family: 'Outfit', sans-serif; font-size: 34px; font-weight: 700;
