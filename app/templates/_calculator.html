@@ -34,7 +34,7 @@
     {# Общий список тремя группами (решение Николь 2026-07-23): открыл — сразу
        видно месяц / квартал / год, без свёрток по каждому тарифу. #}
     <details class="calc-includes">
-      <summary>{{ 'What the plans include' if lang == 'en' else 'Что входит в тарифы' }}</summary>
+      <summary>{{ 'What the accounting plans include' if lang == 'en' else 'Что входит в тарифы на бухгалтерию' }}</summary>
       {% for group, title, title_en in [('monthly', 'Каждый месяц', 'Every month'), ('quarterly', 'Каждый квартал', 'Every quarter'), ('yearly', 'Каждый год', 'Every year')] %}
       <div class="calc-inc-group">
         <div class="calc-inc-title">{{ title_en if lang == 'en' else title }}</div>
