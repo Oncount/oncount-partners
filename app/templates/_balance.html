@@ -1,4 +1,4 @@
-{# Верхняя «балансовая» полоса: заработано / ожидаемое вознаграждение / код партнёра + CTA.
+{# Верхняя «балансовая» полоса: заработано / ожидаемое вознаграждение + CTA.
    Требует в контексте `kpi` (earned_aed, leads, expected_usd_low, expected_usd_high) и `partner`.
    Подключается на дашборде и на страницах /leads, /tools, /products. #}
 <div class="balance">
@@ -11,10 +11,6 @@
     {# Диапазон — только по АКТИВНЫМ заявкам (без отказов/оплаченных, решение
        Николь 2026-07-21). Нет активных — мотивирующий потенциал, а не «$0 – $0». #}
     <span class="balance-item-value">{% if kpi.active_leads %}${{ '{:,}'.format(kpi.expected_usd_low) }} – ${{ '{:,}'.format(kpi.expected_usd_high) }}{% else %}{{ '$300–$1,000 per client' if lang == 'en' else '$300–$1 000 за каждого клиента' }}{% endif %}</span>
-  </div>
-  <div class="balance-item" style="flex-direction: row; align-items: baseline; gap: 8px; flex-wrap: wrap;">
-    <span class="balance-item-label">{{ 'Your partner code:' if lang == 'en' else 'Ваш код партнёра:' }}</span>
-    <span class="balance-item-value">{{ partner.ref_slug }}</span>
   </div>
   <div style="margin-left: auto;">
     <a class="btn btn-primary" href="/transfer">+ {{ 'Introduce a client' if lang == 'en' else 'Передать клиента' }}</a>
