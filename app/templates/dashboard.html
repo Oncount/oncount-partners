@@ -100,7 +100,7 @@
   <p class="svc-block-sub">{{ accountants_title['en' if lang == 'en' else 'ru'] }}</p>
   {% if accountants %}
   <div class="card">
-    {% set acc_lang = lang %}{% set acc_align = 'left' %}{% set acc_hide_title = true %}{% set acc_extra = [{'initial': 'A', 'name': 'Анжела', 'name_en': 'Anzhela', 'role': 'Менеджер по работе с клиентами', 'role_en': 'Client relations manager'}] %}{% include "_accountants.html" %}
+    {% set acc_lang = lang %}{% set acc_align = 'left' %}{% set acc_hide_title = true %}{% set acc_extra = [{'initial': 'A', 'name': 'Анжела', 'name_en': 'Anzhela', 'role': 'Менеджер по работе с клиентами', 'role_en': 'Client relations manager', 'langs': ['ru', 'gb']}] %}{% include "_accountants.html" %}
     {# Самый сильный аргумент надёжности: партнёр рискует отношениями с
        человеком, которого привёл. Текст — из описания услуги (seed.py). #}
     {# Свёртка (решение Николь 2026-07-23): в свёрнутом виде видны только
