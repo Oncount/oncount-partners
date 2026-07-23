@@ -103,17 +103,37 @@
     {% set acc_lang = lang %}{% set acc_align = 'left' %}{% set acc_hide_title = true %}{% set acc_extra = [{'initial': 'A', 'name': 'Анжела', 'name_en': 'Anzhela', 'role': 'Менеджер по работе с клиентами', 'role_en': 'Client relations manager'}] %}{% include "_accountants.html" %}
     {# Самый сильный аргумент надёжности: партнёр рискует отношениями с
        человеком, которого привёл. Текст — из описания услуги (seed.py). #}
-    <p class="trust-note">🛡 {% if lang == 'en' %}If the accountant makes a mistake, ONCOUNT covers the FTA fines and financial losses — not the client.{% else %}Ошибётся бухгалтер — штрафы FTA и финансовые потери покрывает ONCOUNT, а не клиент.{% endif %}</p>
-    {# Инфраструктура (решение Николь 2026-07-23): скрин личного кабинета
-       клиента (демо-данные, прислала Николь) + IT-структура с регламентами
-       и KPI. #}
-    <div class="portal-row">
-      <img class="portal-shot" src="/static/img/client-portal-mobile.jpg" alt="{{ 'ONCOUNT client portal' if lang == 'en' else 'Личный кабинет клиента ONCOUNT' }}" loading="lazy">
-      <div class="portal-info">
-        <p>💻 {% if lang == 'en' %}Client portal — all documents, reports and statuses 24/7.{% else %}Личный кабинет клиента — все документы, отчёты и статусы 24/7.{% endif %}</p>
-        <p>⚙️ {% if lang == 'en' %}IT framework with SOPs and KPIs — for high quality and speed.{% else %}IT-структура с регламентами и KPI — для высокого качества и скорости.{% endif %}</p>
+    {# Свёртка (решение Николь 2026-07-23): в свёрнутом виде видны только
+       бухгалтеры; под кнопкой — гарантия, кабинет клиента + IT и
+       лицензии/сертификаты/страховка. Все факты проверяемые: лицензия — из
+       футера, ACCA-формулировка — accountants_title, страховка 1 000 000 AED —
+       из описания услуги (seed.py). #}
+    <div id="team-more" hidden>
+      <p class="trust-note">🛡 {% if lang == 'en' %}If the accountant makes a mistake, ONCOUNT covers the FTA fines and financial losses — not the client.{% else %}Ошибётся бухгалтер — штрафы FTA и финансовые потери покрывает ONCOUNT, а не клиент.{% endif %}</p>
+      <div class="portal-row">
+        <img class="portal-shot" src="/static/img/client-portal-mobile.jpg" alt="{{ 'ONCOUNT client portal' if lang == 'en' else 'Личный кабинет клиента ONCOUNT' }}" loading="lazy">
+        <div class="portal-info">
+          <p>💻 {% if lang == 'en' %}Client portal — all documents, reports and statuses 24/7.{% else %}Личный кабинет клиента — все документы, отчёты и статусы 24/7.{% endif %}</p>
+          <p>⚙️ {% if lang == 'en' %}IT framework with SOPs and KPIs — for high quality and speed.{% else %}IT-структура с регламентами и KPI — для высокого качества и скорости.{% endif %}</p>
+        </div>
+      </div>
+      <div class="team-creds">
+        <div class="team-creds-title">{{ 'Licences, certificates and insurance' if lang == 'en' else 'Лицензии, сертификаты и страховка' }}</div>
+        <p>🪪 {% if lang == 'en' %}Trade Licence №37408 — PADVICE ACCOUNTING AND MANAGEMENT — FZCO, Dubai.{% else %}Trade Licence №37408 — PADVICE ACCOUNTING AND MANAGEMENT — FZCO, Дубай.{% endif %}</p>
+        <p>🎓 {{ accountants_title['en' if lang == 'en' else 'ru'] }}</p>
+        <p>🛡 {% if lang == 'en' %}Professional indemnity insurance — 1,000,000 AED.{% else %}Страхование профессиональных рисков — 1 000 000 AED.{% endif %}</p>
       </div>
     </div>
+    <button class="more-btn" type="button" onclick="teamToggle(this)"
+            data-more="▾ {{ 'Show more' if lang == 'en' else 'Развернуть' }}"
+            data-less="▴ {{ 'Collapse' if lang == 'en' else 'Свернуть' }}">▾ {{ 'Show more' if lang == 'en' else 'Развернуть' }}</button>
+    <script>
+    function teamToggle(btn) {
+      var box = document.getElementById('team-more');
+      box.hidden = !box.hidden;
+      btn.textContent = box.hidden ? btn.dataset.more : btn.dataset.less;
+    }
+    </script>
   </div>
   {% endif %}
 </section>
