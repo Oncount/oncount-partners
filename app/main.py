@@ -36,7 +36,9 @@ from app.models import (
     EmailLoginToken,
     EventRegistration,
     FaqItem,
+    HealthAlert,
     Lead,
+    LinkClick,
     LoginSession,
     MessageTemplate,
     Partner,
@@ -48,6 +50,7 @@ from app.models import (
 )
 from app.refgen import generate_ref_slug
 from app.seed import seed_if_empty
+from app import linkstat
 
 LOGIN_SESSION_TTL = timedelta(minutes=10)
 # Магическая ссылка входа по email (план 2026-05-23).
@@ -765,31 +768,32 @@ async def on_startup() -> None:
     else:
         log.info("BOT_TOKEN empty -> bot polling skipped, web only")
 
-    # Периодический синк лидов агентов из Kommo в локальный Lead (кабинет читает его).
-    # Фаза 1/кабинет (план 2026-05-26). Запускается в отдельном потоке APScheduler.
+    # APScheduler (отдельный поток). ВАЖНО (план 2026-07-23): планировщик стартует
+    # БЕЗУСЛОВНО, чтобы мониторинг ссылок работал даже без ONCOUNT_API_URL; синк лидов
+    # и digest остаются под своим гейтом.
+    from datetime import datetime as _dt
+    from apscheduler.schedulers.background import BackgroundScheduler
+    sched = BackgroundScheduler(timezone="UTC")
+    # Мониторинг здоровья ссылок (план 2026-07-23) каждые 6ч. Считает всегда (лог +
+    # /admin/analytics), в TG шлёт только при LINK_HEALTH_ALERTS / LINK_HEALTH_STATS_ALERTS
+    # (оба default off — сперва dry, потом калибровка).
+    from app.health import health_check_job
+    sched.add_job(health_check_job, "cron", hour="*/6", id="link_health",
+                  max_instances=1, coalesce=True)
+    # Периодический синк лидов агентов (Фаза 1/кабинет, план 2026-05-26) + недельный
+    # digest (Фаза K, реально шлёт только при NOTIFICATIONS_LIVE) — под гейтом API.
     if settings.ONCOUNT_API_URL:
-        from datetime import datetime as _dt
-        from apscheduler.schedulers.background import BackgroundScheduler
         from app.kommo_sync import sync_agent_leads
-        sched = BackgroundScheduler(timezone="UTC")
         sched.add_job(sync_agent_leads, "interval", minutes=60, id="kommo_sync",
                       next_run_time=_dt.utcnow(), max_instances=1, coalesce=True)
-        # Старый месячный digest (Фаза 4, 5/20) погашен Фазой K: единый канал
-        # уведомлений наружу — недельный digest_job ниже, под предохранителем
-        # NOTIFICATIONS_LIVE. Модуль app/digest.py не удалён (build_digest как
-        # библиотека), но в планировщик больше не регистрируется — чтобы нельзя
-        # было случайно запустить две рассылки двумя разными флагами.
-        # Еженедельный digest партнёру (Фаза K): ежедневно 12:00 UTC = 16:00
-        # Asia/Dubai; внутри сам отбирает партнёров «чей сегодня день» (id % 7) и
-        # молчит, если за неделю изменений нет. Реально шлёт только при
-        # NOTIFICATIONS_LIVE, иначе dry (запись в notification_attempts).
         from app.notifications import digest_job
         sched.add_job(digest_job, "cron", hour=12, minute=0,
                       id="weekly_digest", max_instances=1, coalesce=True)
-        sched.start()
-        app.state.scheduler = sched
-        log.info("scheduler started: kommo_sync hourly + weekly_digest 16:00 Dubai (notifications_live=%s)",
-                 settings.NOTIFICATIONS_LIVE)
+    sched.start()
+    app.state.scheduler = sched
+    log.info("scheduler started: link_health 6h + kommo_sync/digest=%s"
+             " (notifications_live=%s, link_health_alerts=%s)",
+             bool(settings.ONCOUNT_API_URL), settings.NOTIFICATIONS_LIVE, settings.LINK_HEALTH_ALERTS)
 
 
 @app.get("/healthz")
@@ -958,6 +962,124 @@ def admin_partner_detail(pid: int, request: Request, session: Session = Depends(
             profile=_humanize_survey(agent.onboarding_answers or {}),
             digest_preview=digest_preview, win_preview=win_preview,
         ),
+    )
+
+
+# ─── Атрибуция ссылок (план 2026-07-23): переходы + заявки + конверсия ───────
+def build_attribution(session: Session, now: datetime | None = None) -> dict:
+    """Отчёт атрибуции по персональным ссылкам: клики / заявки / конверсия.
+
+    Окно якорим на первый клик (min link_clicks.created_at): клики стартуют с нуля при
+    деплое, а QuizSubmission копятся исторически — без общего нижнего края конверсия
+    вышла бы >100%. Клики И заявки считаем с одного `since`.
+
+    Конверсию% даём ТОЛЬКО для 4 лендингов с квиз-стоком и ТОЛЬКО от квиз-кликов
+    (не от чат-редиректов — те уводят в переписку, а не в форму). partner_bot и
+    чат-редиректы — переходы без конверсии; для partner_bot ещё приходы из Referral."""
+    now = now or datetime.utcnow()
+    from sqlalchemy import func
+
+    # Первый клик = нижний край окна. Берём ORM-объект (не func.min), чтобы значение
+    # гарантированно было datetime (func.min на некоторых бэкендах отдаёт строку).
+    first = session.query(LinkClick).order_by(LinkClick.created_at.asc()).first()
+    since = first.created_at if first else None
+    if since is None:
+        return {"since": None, "by_content": [], "by_agent_content": []}
+
+    ev_map = linkstat.content_event_slug_map()       # content_key → event_slug
+    slug_to_key = {v: k for k, v in ev_map.items()}  # event_slug → content_key (None→consultation)
+
+    # Клики по (content_key, surface) за окно.
+    clicks: dict[str, dict[str, int]] = {}
+    for ck, surf, n in (session.query(
+            LinkClick.content_key, LinkClick.surface, func.count(LinkClick.id))
+            .filter(LinkClick.created_at >= since)
+            .group_by(LinkClick.content_key, LinkClick.surface).all()):
+        clicks.setdefault(ck, {})[surf] = n
+
+    # Заявки квиза по event_slug за окно → в content_key.
+    leads_by_key: dict[str, int] = {}
+    for ev, n in (session.query(QuizSubmission.event_slug, func.count(QuizSubmission.id))
+                  .filter(QuizSubmission.created_at >= since)
+                  .group_by(QuizSubmission.event_slug).all()):
+        key = slug_to_key.get(ev)
+        if key:
+            leads_by_key[key] = leads_by_key.get(key, 0) + n
+
+    # Приходы в бот (Referral, source='tg') за окно — метрика для partner_bot.
+    arrivals = (session.query(func.count(Referral.id))
+                .filter(Referral.created_at >= since, Referral.source == "tg").scalar()) or 0
+
+    by_content = []
+    for ck, label in linkstat.CONTENT_KEYS.items():
+        surf = clicks.get(ck, {})
+        quiz_clicks = surf.get("quiz", 0)
+        chat_clicks = surf.get("tg", 0) + surf.get("wa", 0)
+        bot_clicks = surf.get("bot", 0)
+        is_landing = ck in linkstat.LANDING_KEYS
+        leads = leads_by_key.get(ck, 0) if is_landing else 0
+        conv = round(100.0 * leads / quiz_clicks, 1) if (is_landing and quiz_clicks) else None
+        by_content.append({
+            "key": ck, "label": label,
+            "quiz_clicks": quiz_clicks, "chat_clicks": chat_clicks, "bot_clicks": bot_clicks,
+            "total_clicks": quiz_clicks + chat_clicks + bot_clicks,
+            "leads": leads, "conv": conv,
+            "arrivals": arrivals if ck == "partner_bot" else None,
+            "is_landing": is_landing,
+        })
+    by_content.sort(key=lambda r: r["total_clicks"], reverse=True)
+
+    # По паре агент × контент: клики + заявки (только строки с partner_id).
+    ac: dict[tuple[int, str], dict] = {}
+    for pid, ck, n in (session.query(
+            LinkClick.partner_id, LinkClick.content_key, func.count(LinkClick.id))
+            .filter(LinkClick.created_at >= since, LinkClick.partner_id.isnot(None))
+            .group_by(LinkClick.partner_id, LinkClick.content_key).all()):
+        ac[(pid, ck)] = {"clicks": n, "leads": 0}
+    for pid, ev, n in (session.query(
+            QuizSubmission.partner_id, QuizSubmission.event_slug, func.count(QuizSubmission.id))
+            .filter(QuizSubmission.created_at >= since, QuizSubmission.partner_id.isnot(None))
+            .group_by(QuizSubmission.partner_id, QuizSubmission.event_slug).all()):
+        key = slug_to_key.get(ev)
+        if not key:
+            continue
+        ac.setdefault((pid, key), {"clicks": 0, "leads": 0})["leads"] += n
+
+    pids = {pid for (pid, _) in ac}
+    pmap = ({p.id: p for p in session.query(Partner).filter(Partner.id.in_(pids)).all()}
+            if pids else {})
+    by_agent_content = []
+    for (pid, ck), v in ac.items():
+        p = pmap.get(pid)
+        if p is None:
+            continue
+        by_agent_content.append({
+            "name": p.first_name or p.kommo_agent_name or f"#{pid}",
+            "ref_slug": p.ref_slug or "—",
+            "content": linkstat.CONTENT_KEYS.get(ck, ck),
+            "clicks": v["clicks"], "leads": v["leads"],
+        })
+    by_agent_content.sort(key=lambda r: (r["clicks"], r["leads"]), reverse=True)
+
+    return {"since": since, "by_content": by_content,
+            "by_agent_content": by_agent_content[:60]}
+
+
+@app.get("/admin/analytics", response_class=HTMLResponse)
+def admin_analytics(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
+    """Аналитика персональных ссылок агентов (план 2026-07-23): переходы (LinkClick) →
+    заявки → конверсия + сигналы здоровья. Только админ (Николь)."""
+    admin = require_admin(request, session)
+    attribution = build_attribution(session)
+    # Живые сигналы (по БД, без HTTP) + статусы лендингов/целей из последнего прогона
+    # джоба (self-проба ходит по HTTP, её на каждый показ админки не гоняем).
+    from app import health as health_mod
+    health_signals = health_mod.compute_signals(session)
+    health_last = health_mod.LAST_RUN
+    return templates.TemplateResponse(
+        "admin_analytics.html",
+        _ctx(request, admin, attribution=attribution,
+             health_signals=health_signals, health_last=health_last),
     )
 
 
@@ -1233,6 +1355,8 @@ def _quiz_mask_phone(norm: str) -> str:
 def consultation_page(request: Request) -> HTMLResponse:
     from app import quiz_config
     lang = _lang(request)
+    linkstat.record_click("consultation", "quiz",
+                          request.query_params.get("ref"), request.headers.get("user-agent"))
     return templates.TemplateResponse("quiz.html", {
         "request": request,
         "lang": lang,
@@ -1268,6 +1392,8 @@ async def consultation_submit(request: Request,
 def mk_page(request: Request) -> HTMLResponse:
     from app import mk_config
     lang = _lang(request)
+    linkstat.record_click("mk", "quiz",
+                          request.query_params.get("ref"), request.headers.get("user-agent"))
     return templates.TemplateResponse("quiz.html", {
         "request": request,
         "lang": lang,
@@ -1306,6 +1432,8 @@ async def mk_submit(request: Request,
 def guide_corp_tax_page(request: Request) -> HTMLResponse:
     from app import leadmagnet_config as lm
     lang = _lang(request)
+    linkstat.record_click("leadmagnet_corptax", "quiz",
+                          request.query_params.get("ref"), request.headers.get("user-agent"))
     return templates.TemplateResponse("quiz.html", {
         "request": request,
         "lang": lang,
@@ -1346,6 +1474,8 @@ async def guide_corp_tax_submit(request: Request,
 def guide_5mistakes_page(request: Request) -> HTMLResponse:
     from app import leadmagnet5_config as lm5
     lang = _lang(request)
+    linkstat.record_click("leadmagnet_5mistakes", "quiz",
+                          request.query_params.get("ref"), request.headers.get("user-agent"))
     return templates.TemplateResponse("quiz.html", {
         "request": request,
         "lang": lang,
@@ -2526,27 +2656,32 @@ def _redirect_to_chat(channel: str, text: str) -> RedirectResponse:
 
 
 @app.get("/ct/{slug}")
-def short_consult_tg(slug: str) -> RedirectResponse:
+def short_consult_tg(slug: str, request: Request) -> RedirectResponse:
+    linkstat.record_click("consultation", "tg", slug, request.headers.get("user-agent"))
     return _redirect_to_chat("tg", _build_text(CONSULT_TEXT_TPL, slug))
 
 
 @app.get("/cw/{slug}")
-def short_consult_wa(slug: str) -> RedirectResponse:
+def short_consult_wa(slug: str, request: Request) -> RedirectResponse:
+    linkstat.record_click("consultation", "wa", slug, request.headers.get("user-agent"))
     return _redirect_to_chat("wa", _build_text(CONSULT_TEXT_TPL, slug))
 
 
 @app.get("/mt/{slug}")
-def short_mclass_tg(slug: str) -> RedirectResponse:
+def short_mclass_tg(slug: str, request: Request) -> RedirectResponse:
+    linkstat.record_click("mk", "tg", slug, request.headers.get("user-agent"))
     return _redirect_to_chat("tg", _build_text(MCLASS_TEXT_TPL, slug))
 
 
 @app.get("/mw/{slug}")
-def short_mclass_wa(slug: str) -> RedirectResponse:
+def short_mclass_wa(slug: str, request: Request) -> RedirectResponse:
+    linkstat.record_click("mk", "wa", slug, request.headers.get("user-agent"))
     return _redirect_to_chat("wa", _build_text(MCLASS_TEXT_TPL, slug))
 
 
 @app.get("/p/{slug}")
-def short_partner_bot(slug: str) -> RedirectResponse:
+def short_partner_bot(slug: str, request: Request) -> RedirectResponse:
+    linkstat.record_click("partner_bot", "bot", slug, request.headers.get("user-agent"))
     return RedirectResponse(
         f"https://t.me/{settings.BOT_USERNAME}?start=ref_{slug}",
         status_code=302,

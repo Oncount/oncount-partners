@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Аналитика ссылок — ONCOUNT{% endblock %}
+{% block heading %}Аналитика ссылок{% endblock %}
+
+{% block content %}
+<p style="margin-top:0;">
+  <a href="/admin/partner-stats">лидеры</a>
+  <span style="color:#aaa;">·</span>
+  <a href="/admin/sources">источники</a>
+  <span style="color:#aaa;">·</span>
+  <b>аналитика</b>
+  <span style="color:#aaa;">·</span>
+  <a href="/admin/payouts">выплаты</a>
+  <span style="color:#aaa;">·</span>
+  <a href="/admin/transfers">передачи</a>
+</p>
+<p style="color:#888; margin:.2em 0 1em;">
+  Переходы по персональным ссылкам агентов + заявки + конверсия + здоровье ссылок.
+  {% if attribution and attribution.since %}<br>Окно: с {{ attribution.since.strftime('%d.%m.%Y') }} (с первого зафиксированного перехода).{% endif %}
+</p>
+
+<div class="card" style="overflow-x:auto;">
+  <h3 style="margin-top:0;">Переходы → заявки → конверсия (по контенту)</h3>
+  <p style="color:#888; margin:.2em 0 .8em; font-size:13px;">
+    «Лендинг» — открытия страницы-квиза; «В чат» — переходы по WhatsApp/Telegram-ссылкам (уводят в переписку);
+    «В бот» — переходы в бот. Конверсия = заявки ÷ переходы на лендинг (только для страниц с формой).
+    Для «Приглашение в бот» вместо заявок — приходы в бота.
+  </p>
+  <table style="width:100%; border-collapse:collapse; font-size:14px;">
+    <thead><tr style="text-align:left; border-bottom:2px solid #e5e0d5;">
+      <th style="padding:6px;">Контент</th>
+      <th style="text-align:right;">Лендинг</th>
+      <th style="text-align:right;">В чат</th>
+      <th style="text-align:right;">В бот</th>
+      <th style="text-align:right;">Заявки</th>
+      <th style="text-align:right;">Конверсия</th>
+    </tr></thead>
+    <tbody>
+      {% for r in attribution.by_content %}
+      <tr style="border-bottom:1px solid #eee;">
+        <td style="padding:6px;"><b>{{ r.label }}</b></td>
+        <td style="text-align:right;">{{ r.quiz_clicks or '—' }}</td>
+        <td style="text-align:right;">{{ r.chat_clicks or '—' }}</td>
+        <td style="text-align:right;">{{ r.bot_clicks or '—' }}</td>
+        <td style="text-align:right; font-weight:600;">
+          {% if r.is_landing %}{{ r.leads }}{% elif r.arrivals is not none %}{{ r.arrivals }} прих.{% else %}—{% endif %}
+        </td>
+        <td style="text-align:right; color:#10463E; font-weight:600;">
+          {% if r.conv is not none %}{{ r.conv }}%{% else %}—{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      {% if not attribution or not attribution.by_content %}
+      <tr><td colspan="6" style="padding:12px; color:#888;">Переходов пока нет (ссылки ещё не открывали или трекинг только запущен).</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card" style="overflow-x:auto;">
+  <h3 style="margin-top:0;">По агенту и ссылке</h3>
+  <p style="color:#888; margin:.2em 0 .8em; font-size:13px;">Топ по переходам. «Переходы» — клики по ссылке агента, «Заявки» — заявки квиза с его меткой.</p>
+  <table style="width:100%; border-collapse:collapse; font-size:14px;">
+    <thead><tr style="text-align:left; border-bottom:2px solid #e5e0d5;">
+      <th style="padding:6px;">Агент</th><th>Код</th><th>Контент</th>
+      <th style="text-align:right;">Переходы</th><th style="text-align:right;">Заявки</th>
+    </tr></thead>
+    <tbody>
+      {% for r in attribution.by_agent_content %}
+      <tr style="border-bottom:1px solid #eee;">
+        <td style="padding:6px;"><b>{{ r.name }}</b></td>
+        <td style="color:#999;">{{ r.ref_slug }}</td>
+        <td>{{ r.content }}</td>
+        <td style="text-align:right; font-weight:600;">{{ r.clicks }}</td>
+        <td style="text-align:right; color:#10463E;">{{ r.leads }}</td>
+      </tr>
+      {% endfor %}
+      {% if not attribution or not attribution.by_agent_content %}
+      <tr><td colspan="5" style="padding:12px; color:#888;">Переходов с меткой агента пока нет.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;">Сигналы здоровья ссылок</h3>
+  {% if health_last and health_last.ran_at %}
+  <p style="color:#888; font-size:13px; margin:.2em 0 .6em;">
+    Последняя проверка: {{ health_last.ran_at.strftime('%d.%m.%Y %H:%M') }} UTC.
+    Алерты в Telegram: поломки — {{ 'вкл' if health_last.alerts_enabled else 'выкл' }},
+    статистика — {{ 'вкл' if health_last.stats_alerts_enabled else 'выкл' }}.
+  </p>
+  <div style="font-size:14px;">
+    <b>Лендинги:</b>
+    {% for l in health_last.landings %}
+      <span style="color:{{ '#10463E' if l.ok else '#b00' }};">{{ l.path }} {{ '✓' if l.ok else ('✗(' ~ (l.status or 'нет ответа') ~ ')') }}</span>{% if not loop.last %} · {% endif %}
+    {% endfor %}
+    <br>
+    <b>Цели ссылок:</b>
+    {% for t in health_last.targets %}
+      <span style="color:{{ '#10463E' if t.ok else '#b00' }};">{{ t.name }} {{ '✓' if t.ok else '✗' }}</span>{% if not loop.last %} · {% endif %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <p style="color:#888; font-size:13px;">Мониторинг ещё не запускался (первый прогон — в течение 6 часов после старта сервиса).</p>
+  {% endif %}
+
+  {% if health_signals %}
+  <div style="font-size:14px; margin-top:.8em;">
+    {% if health_signals.stale %}
+      <p style="color:#b00; margin:.2em 0;">⚠️ Перестали собирать переходы:
+        {% for s in health_signals.stale %}{{ s.label }} (базлайн ~{{ s.baseline }}){% if not loop.last %}, {% endif %}{% endfor %}</p>
+    {% endif %}
+    {% if health_signals.conv_drop %}
+      <p style="color:#b00; margin:.2em 0;">⚠️ Переходы есть, заявок нет:
+        {% for s in health_signals.conv_drop %}{{ s.label }} ({{ s.recent_clicks }} переходов){% if not loop.last %}, {% endif %}{% endfor %}</p>
+    {% endif %}
+    {% if not health_signals.stale and not health_signals.conv_drop %}
+      <p style="color:#10463E; margin:.2em 0;">✓ Затуханий и провалов конверсии не видно.</p>
+    {% endif %}
+    <p style="color:#888; margin:.4em 0 0;">Заявки квиза за окно — статус в Kommo:
+      {% for st, n in health_signals.kommo.items() %}{{ st }}={{ n }}{% if not loop.last %}, {% endif %}{% else %}нет{% endfor %}.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

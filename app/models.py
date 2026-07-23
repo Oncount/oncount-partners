@@ -435,3 +435,49 @@ class QuizSubmission(Base):
     kommo_lead_id: Mapped[int | None] = mapped_column(BigInteger)
     kommo_status: Mapped[str] = mapped_column(String(16), default="pending", index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
+class LinkClick(Base):
+    """Переход по персональной ссылке агента (план 2026-07-23).
+
+    Клик = вход ЧЕЛОВЕКА по публичной ссылке: лендинг-квиз (/consultation, /mk,
+    /guide/*) или редирект в чат/бот (/ct, /cw, /mt, /mw, /p). Недостающая
+    координата аналитики: QuizSubmission ловит ЛИДА, LinkClick — ПЕРЕХОД; вместе
+    дают конверсию и сигнал «ссылка перестала собирать переходы». Концептуально это
+    «Событие kind='visit'» (architecture/03-данные), реализовано конкретной таблицей
+    в стиле кода. Append-only, не обновляется. Пишет app/linkstat.record_click
+    (синхронный best-effort INSERT — не блокирует и не роняет ответ).
+
+    ПД-минимизация («опасная тройка»): пишем ТОЛЬКО контент + канал + ref_slug +
+    время. НЕ пишем IP, query-строку (там бывают токены входа), User-Agent, сырой
+    ввод. User-Agent app/linkstat читает в памяти лишь чтобы отсеять превью-краулеры
+    мессенджеров и self-пробу монитора — в таблицу он не попадает.
+    """
+    __tablename__ = "link_clicks"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    # Что за ссылкой (ось «какой чек-лист/мастер-класс»): consultation | mk |
+    # leadmagnet_corptax | leadmagnet_5mistakes | partner_bot (linkstat.CONTENT_KEYS).
+    content_key: Mapped[str] = mapped_column(String(32), index=True)
+    # Как открыли: quiz (страница-лендинг) | tg | wa | bot. VARCHAR(16) с запасом.
+    surface: Mapped[str] = mapped_column(String(16))
+    # Реф-метка агента (обрезана до 16, как Partner.ref_slug — иначе value too long → 502).
+    ref_slug: Mapped[str | None] = mapped_column(String(16), index=True)
+    # Резолвится по ref_slug в момент записи (best-effort). NULL — метки нет или агент не найден.
+    partner_id: Mapped[int | None] = mapped_column(ForeignKey("partners.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
+class HealthAlert(Base):
+    """Дедуп отправленных алертов о поломке ссылок (план 2026-07-23).
+
+    Append-only. Одна строка = один факт отправки алерта Николь по issue_key. Дедуп
+    «не чаще раза в сутки на issue_key». Строку пишем ТОЛЬКО ПОСЛЕ подтверждённой
+    отправки в TG — иначе транзиентный сбой отправки заглушил бы инцидент на сутки.
+    issue_key гранулярный — 'детектор:таргет:причина' (напр. 'landings_down:/mk:404').
+    """
+    __tablename__ = "health_alerts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    issue_key: Mapped[str] = mapped_column(String(160), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)

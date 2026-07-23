@@ -74,6 +74,27 @@ class Settings:
     ]
     CONTACT_TG_USERNAME: str = os.getenv("CONTACT_TG_USERNAME", "nikol_hillton")
     CONTACT_WA_NUMBER: str = os.getenv("CONTACT_WA_NUMBER", "971589217784")
+    # ─── Мониторинг ссылок (план 2026-07-23) ─────────────────────────────────
+    # Алерты Николь о поломке ссылок идут в её TG (внутренний канал, как
+    # _notify_admin_new_quiz), поэтому NOTIFICATIONS_LIVE их НЕ гейтит. Собственные
+    # предохранители — default OFF: сперва dry-summary в лог, калибровка на реальном
+    # трафике, потом включение в Railway env.
+    # LINK_HEALTH_ALERTS — однозначные поломки (лендинг 5xx/404, битый конфиг целей).
+    LINK_HEALTH_ALERTS: bool = os.getenv("LINK_HEALTH_ALERTS", "") in ("1", "true", "True")
+    # LINK_HEALTH_STATS_ALERTS — статистические сигналы (перестало собирать переходы /
+    # конверсия просела). Малая выборка → шумят; по умолчанию только видны в /admin.
+    LINK_HEALTH_STATS_ALERTS: bool = os.getenv("LINK_HEALTH_STATS_ALERTS", "") in ("1", "true", "True")
+    # Окна детекторов. STALE — за сколько часов «тишины» ссылка считается затухшей;
+    # BASELINE_DAYS — окно базлайна; MIN_BASELINE_CLICKS — ниже этого базлайна выводов
+    # не делаем (мало данных). KOMMO_FAIL_WINDOW_HOURS — окно распределения kommo_status.
+    LINK_STALE_HOURS: int = int(os.getenv("LINK_STALE_HOURS", "72"))
+    LINK_BASELINE_DAYS: int = int(os.getenv("LINK_BASELINE_DAYS", "30"))
+    LINK_MIN_BASELINE_CLICKS: int = int(os.getenv("LINK_MIN_BASELINE_CLICKS", "20"))
+    KOMMO_FAIL_WINDOW_HOURS: int = int(os.getenv("KOMMO_FAIL_WINDOW_HOURS", "24"))
+    # Порт локальной self-пробы лендингов (http://127.0.0.1:$PORT, НЕ WEBAPP_URL:
+    # тот в дефолте localhost:8000 и дал бы вечный ложный «лендинг лежит»). Railway
+    # задаёт PORT в env.
+    HEALTH_PROBE_PORT: str = os.getenv("PORT", "8000")
     # Баннер набора на Mastermind в разделе «Курсы». Меняется по месяцам — из конфига,
     # не хардкодом в шаблоне (правило репо №1). Пустой MASTERMIND_TITLE — баннер скрыт.
     # Сейчас СКРЫТ (решение Николь 2026-06-02): набор закрыт. Чтобы вернуть — задать
