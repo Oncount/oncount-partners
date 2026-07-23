@@ -599,6 +599,7 @@ async def on_startup() -> None:
             "onboarded_at",
             "links_viewed_at",
             "products_viewed_at",
+            "courses_viewed_at",
             "checklist_dismissed_at",
         ):
             conn.execute(text(f"ALTER TABLE partners ADD COLUMN IF NOT EXISTS {col} TIMESTAMP"))
@@ -2320,6 +2321,12 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
                     + l2_total(partner))
     checklist_steps = [
         {
+            "label": "Посмотрите 2 видео: о партнёрке и кабинете партнёра",
+            "label_en": "Watch 2 videos: partner program & dashboard",
+            "done": partner.courses_viewed_at is not None,
+            "href": "/courses",
+        },
+        {
             "label": "Скопируйте свою партнёрскую ссылку",
             "label_en": "Copy your partner link",
             "done": partner.links_viewed_at is not None,
@@ -2658,6 +2665,9 @@ def courses(request: Request, session: Session = Depends(get_session)) -> HTMLRe
     partner = current_partner(request, session)
     if not partner:
         return RedirectResponse("/login", status_code=302)
+    if partner.courses_viewed_at is None:
+        partner.courses_viewed_at = datetime.utcnow()
+        session.commit()
     items = (
         session.query(Course)
         .filter_by(is_active=True)
@@ -2684,6 +2694,8 @@ def courses(request: Request, session: Session = Depends(get_session)) -> HTMLRe
             mastermind_footer_en=settings.MASTERMIND_FOOTER_EN,
             # Стрелка ведёт на будущую страницу программы Mastermind (пока заглушка).
             mastermind_url="#",
+            training_video_program_id=settings.TRAINING_VIDEO_PROGRAM_ID,
+            training_video_cabinet_id=settings.TRAINING_VIDEO_CABINET_ID,
         ),
     )
 

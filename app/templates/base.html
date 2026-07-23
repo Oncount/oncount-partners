@@ -47,7 +47,7 @@
        свёрнутым блоком на дашборде; /tools редиректит на /dashboard#tools. #}
 
     <a class="menu-item {% if '/products' in request.url.path %}active{% endif %}" href="/products">{{ icons.nav_products() }}{{ 'Plans' if lang == 'en' else 'Тарифы' }}</a>
-    <a class="menu-item {% if '/courses' in request.url.path %}active{% endif %}" href="/courses">{{ icons.nav_courses() }}{{ 'Courses' if lang == 'en' else 'Курсы' }}</a>
+    <a class="menu-item {% if '/courses' in request.url.path %}active{% endif %}" href="/courses">{{ icons.nav_courses() }}{{ 'Training' if lang == 'en' else 'Обучение' }}</a>
 
     {% if partner and admin_tg_id and partner.telegram_id == admin_tg_id %}
     <a class="menu-item {% if '/admin' in request.url.path %}active{% endif %}" href="/admin/partner-stats">{{ icons.nav_dashboard() }}{{ 'Analytics' if lang == 'en' else 'Аналитика' }}</a>

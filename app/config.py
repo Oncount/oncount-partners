@@ -114,6 +114,11 @@ class Settings:
         "MASTERMIND_FOOTER_EN",
         "Starts May 26. 3 of 10 seats left.",
     )
+    # Обучающие видео в разделе «Обучение» (решение Николь 2026-07-23): два ролика
+    # YouTube «доступ по ссылке» над курсами. ID — из конфига, не хардкодом (правило №1).
+    # Пустой ID — карточка видео скрыта.
+    TRAINING_VIDEO_PROGRAM_ID: str = os.getenv("TRAINING_VIDEO_PROGRAM_ID", "O1qprCkhXBM")
+    TRAINING_VIDEO_CABINET_ID: str = os.getenv("TRAINING_VIDEO_CABINET_ID", "__7kQAR0Yjo")
 
 
 settings = Settings()

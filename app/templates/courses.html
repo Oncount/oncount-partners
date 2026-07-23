@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block title %}{{ 'Courses' if lang == 'en' else 'Курсы' }} — ONCOUNT Partners{% endblock %}
-{% block heading %}{{ 'Courses' if lang == 'en' else 'Курсы' }}{% endblock %}
+{% block title %}{{ 'Training' if lang == 'en' else 'Обучение' }} — ONCOUNT Partners{% endblock %}
+{% block heading %}{{ 'Training' if lang == 'en' else 'Обучение' }}{% endblock %}
 
 {% block content %}
 {% set mm_title = mastermind_title_en if lang == 'en' else mastermind_title %}
@@ -20,6 +20,29 @@
   <a class="course-banner-arrow" href="{{ mastermind_url or '#' }}" title="{{ 'Learn more' if lang == 'en' else 'Подробнее' }}" aria-label="{{ 'Learn more about Mastermind' if lang == 'en' else 'Подробнее о Mastermind' }}">→</a>
 </div>
 {% endif %}
+
+{# Два обучающих видео (решение Николь 2026-07-23): смотреть до курсов. ID — из
+   конфига (TRAINING_VIDEO_*), пустой ID скрывает карточку. #}
+{% set training_videos = [
+  (training_video_program_id, 'О партнёрской программе ONCOUNT', 'About the ONCOUNT partner program'),
+  (training_video_cabinet_id, 'Как пользоваться кабинетом партнёра', 'How to use the partner dashboard'),
+] %}
+<div class="training-videos">
+  {% for vid, t_ru, t_en in training_videos %}
+  {% if vid %}
+  <div class="course-card training-video-card">
+    <h3>{{ t_en if lang == 'en' else t_ru }}</h3>
+    <div class="training-video-frame">
+      <iframe src="https://www.youtube.com/embed/{{ vid }}"
+              title="{{ t_en if lang == 'en' else t_ru }}"
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen></iframe>
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+</div>
 
 {% for item in items %}
 {% set steps = item.progress_steps or 0 %}
