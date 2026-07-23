@@ -42,6 +42,16 @@
       </div>
     </div>
     {% endif %}
+    {# Доп-карточки не-бухгалтеров (acc_extra, решение Николь 2026-07-23):
+       на дашборде — Анжела (менеджер по работе с клиентами). Пока без фото —
+       кружок-инициал; фото вставим, когда появится файл. #}
+    {% for x in acc_extra | default([]) %}
+    <div class="acc-item">
+      <div class="acc-photo acc-more">{{ x.initial }}</div>
+      <div class="acc-name">{{ x.name_en if _l == 'en' else x.name }}</div>
+      <div class="acc-role">{{ x.role_en if _l == 'en' else x.role }}</div>
+    </div>
+    {% endfor %}
   </div>
 </div>
 <style>

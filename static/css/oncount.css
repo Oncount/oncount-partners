@@ -469,6 +469,14 @@ details.faq-item[open] summary { margin-bottom: 12px; }
 .sec-icon { vertical-align: -4px; margin-right: 8px; }
 /* Строка ответственности под фотографиями бухгалтеров: «штрафы покрывает
    ONCOUNT». Отделена линией — это не подпись к фото, а отдельное обещание. */
+/* Личный кабинет клиента + IT-структура (решение Николь 2026-07-23):
+   скрин телефона слева, два тезиса справа; на узких экранах скрин сжимается. */
+.portal-row { display: flex; align-items: center; gap: 18px; margin-top: 16px;
+  padding-top: 14px; border-top: 1px dashed var(--border); }
+.portal-shot { width: 170px; max-width: 38%; height: auto; border-radius: 14px;
+  border: 1px solid var(--border); flex: 0 0 auto; }
+.portal-info p { margin: 0 0 10px; font-size: 13.5px; color: var(--sage); line-height: 1.5; }
+.portal-info p:last-child { margin-bottom: 0; }
 .trust-note {
   margin: 16px 0 0;
   padding-top: 14px;

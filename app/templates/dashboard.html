@@ -100,10 +100,20 @@
   <p class="svc-block-sub">{{ accountants_title['en' if lang == 'en' else 'ru'] }}</p>
   {% if accountants %}
   <div class="card">
-    {% set acc_lang = lang %}{% set acc_align = 'left' %}{% set acc_hide_title = true %}{% include "_accountants.html" %}
+    {% set acc_lang = lang %}{% set acc_align = 'left' %}{% set acc_hide_title = true %}{% set acc_extra = [{'initial': 'A', 'name': 'Анжела', 'name_en': 'Anzhela', 'role': 'Менеджер по работе с клиентами', 'role_en': 'Client relations manager'}] %}{% include "_accountants.html" %}
     {# Самый сильный аргумент надёжности: партнёр рискует отношениями с
        человеком, которого привёл. Текст — из описания услуги (seed.py). #}
     <p class="trust-note">🛡 {% if lang == 'en' %}If the accountant makes a mistake, ONCOUNT covers the FTA fines and financial losses — not the client.{% else %}Ошибётся бухгалтер — штрафы FTA и финансовые потери покрывает ONCOUNT, а не клиент.{% endif %}</p>
+    {# Инфраструктура (решение Николь 2026-07-23): скрин личного кабинета
+       клиента (демо-данные, прислала Николь) + IT-структура с регламентами
+       и KPI. #}
+    <div class="portal-row">
+      <img class="portal-shot" src="/static/img/client-portal-mobile.jpg" alt="{{ 'ONCOUNT client portal' if lang == 'en' else 'Личный кабинет клиента ONCOUNT' }}" loading="lazy">
+      <div class="portal-info">
+        <p>💻 {% if lang == 'en' %}Client portal — all documents, reports and statuses 24/7.{% else %}Личный кабинет клиента — все документы, отчёты и статусы 24/7.{% endif %}</p>
+        <p>⚙️ {% if lang == 'en' %}IT framework with SOPs and KPIs — for high quality and speed.{% else %}IT-структура с регламентами и KPI — для высокого качества и скорости.{% endif %}</p>
+      </div>
+    </div>
   </div>
   {% endif %}
 </section>
