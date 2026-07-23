@@ -277,6 +277,39 @@ INCLUDES = {
 }
 
 
+# «Что входит в разовые услуги» (формулировки Николь 2026-07-23) — единый
+# список под карточками услуг + строка надёжности: деньги берём только после
+# проверки, что услугу реально оказать.
+SERVICES_INCLUDES = {
+    "items": [
+        "Консультация и подбор лучшего решения под задачу клиента",
+        "Подготовка всех документов",
+        "Трансфер по Дубаю и сопровождение на всех этапах на машине бизнес-класса",
+        "Всё общение в госорганах и банках — в зависимости от услуги",
+        "Под ключ от и до: всё, что прописано в договоре и инвойсе",
+    ],
+    "items_en": [
+        "Consultation and selection of the best solution for the client's case",
+        "Preparation of all documents",
+        "Transfers around Dubai and support at every step in a business-class car",
+        "All communication with government bodies and banks — depending on the service",
+        "Turnkey from start to finish: everything stated in the contract and invoice",
+    ],
+    "note": (
+        "Прежде чем принять оплату от клиента, мы проверяем, что услугу реально "
+        "оказать — особенно при открытии счёта в банке. Если видим риск — честно "
+        "говорим об этом до оплаты. Клиент получает результат, а вы не рискуете "
+        "отношениями с ним."
+    ),
+    "note_en": (
+        "Before taking the client's payment we verify that the service can actually "
+        "be delivered — especially for bank account opening. If we see a risk, we "
+        "say so honestly before any payment. The client gets the result, and you "
+        "never risk your relationship with them."
+    ),
+}
+
+
 def _localize(row: dict, lang: str, fields: tuple[str, ...]) -> dict:
     """Русская запись → запись под нужный язык: поле_en при lang=en, иначе поле."""
     out = {k: v for k, v in row.items() if not k.endswith("_en")}
@@ -295,6 +328,7 @@ def calc_data(lang: str = "ru") -> dict:
         "tariffs": [_localize(t, lang, tariff_fields) for t in TARIFFS],
         "services": [_localize(s, lang, service_fields) for s in SERVICES],
         "includes": _localize(INCLUDES, lang, ("monthly", "quarterly", "yearly", "note")),
+        "services_includes": _localize(SERVICES_INCLUDES, lang, ("items", "note")),
         # Курс для долларовой суммы справа от итога (решение Николь 2026-07-23):
         # доллары округляем вниз — не обещаем больше, чем платим.
         "usd_rate": USD_AED,
