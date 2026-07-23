@@ -470,6 +470,12 @@ details.faq-item[open] summary { margin-bottom: 12px; }
 /* Строка ответственности под фотографиями бухгалтеров: «штрафы покрывает
    ONCOUNT». Отделена линией — это не подпись к фото, а отдельное обещание. */
 /* Лицензии/сертификаты/страховка в свёртке «Кто работает с вашим клиентом». */
+.docs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px; margin: 10px 0 14px; }
+.doc-card { margin: 0; }
+.doc-card img { width: 100%; height: auto; display: block;
+  border: 1px solid var(--border); border-radius: 10px; }
+.doc-card figcaption { font-size: 12.5px; color: var(--sage); margin-top: 6px; line-height: 1.45; }
 .team-creds { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--border); }
 .team-creds-title { font-weight: 700; font-size: 14px; color: var(--deep-green); margin-bottom: 8px; }
 .team-creds p { margin: 0 0 8px; font-size: 13.5px; color: var(--sage); line-height: 1.5; }

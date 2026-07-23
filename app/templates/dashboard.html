@@ -119,7 +119,16 @@
       </div>
       <div class="team-creds">
         <div class="team-creds-title">{{ 'Licences, certificates and insurance' if lang == 'en' else 'Лицензии, сертификаты и страховка' }}</div>
-        <p>🪪 {% if lang == 'en' %}Trade Licence №37408 — PADVICE ACCOUNTING AND MANAGEMENT — FZCO, Dubai.{% else %}Trade Licence №37408 — PADVICE ACCOUNTING AND MANAGEMENT — FZCO, Дубай.{% endif %}</p>
+        {# Скан лицензии — источник .business/company/documents/ (решение Николь
+           2026-07-23). Скан страховки добавим после подтверждения продлённого
+           полиса (текущий DB/PI/2025/197 истёк 01.06.2026 — премию и номера
+           наружу не показываем). #}
+        <div class="docs-grid">
+          <figure class="doc-card">
+            <a href="/static/img/doc-licence.jpg" target="_blank" rel="noopener"><img src="/static/img/doc-licence.jpg" alt="Trade Licence 37408 — PADVICE ACCOUNTING AND MANAGEMENT FZCO" loading="lazy"></a>
+            <figcaption>{% if lang == 'en' %}Trade Licence №37408 — PADVICE ACCOUNTING AND MANAGEMENT — FZCO (IFZA, Dubai), valid until 13.11.2026. Activities: Accounting &amp; Bookkeeping.{% else %}Trade Licence №37408 — PADVICE ACCOUNTING AND MANAGEMENT — FZCO (фризона IFZA, Дубай), действует до 13.11.2026. Вид деятельности: Accounting &amp; Bookkeeping.{% endif %}</figcaption>
+          </figure>
+        </div>
         <p>🎓 {{ accountants_title['en' if lang == 'en' else 'ru'] }}</p>
         <p>🛡 {% if lang == 'en' %}Professional indemnity insurance — 1,000,000 AED.{% else %}Страхование профессиональных рисков — 1 000 000 AED.{% endif %}</p>
       </div>
