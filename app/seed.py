@@ -1200,7 +1200,11 @@ FAQ = [
             "Клиент закрепляется за тем, кто передал его первым. Если человек уже был у "
             "нас в работе или его раньше передал другой партнёр, повторная передача "
             "закрепление не перекрывает. Сомневаетесь — лучше передайте: система сверяет "
-            "по номеру телефона, менеджер проверит."
+            "по номеру телефона, менеджер проверит.\n"
+            "\n"
+            "Передавать можно любым удобным способом: Excel-списком клиентов в WhatsApp "
+            "или Telegram вашему менеджеру, через личный кабинет или через бота — как "
+            "вам удобнее."
         ),
         "answer_md_en": (
             "Entrepreneurs and companies that have a business in the UAE or are just "
@@ -1217,7 +1221,11 @@ FAQ = [
             "was already in progress with us, or was introduced earlier by another "
             "partner, a repeat introduction doesn't override that. If in doubt — "
             "introduce them anyway: the system matches by phone number and the manager "
-            "will verify it."
+            "will verify it.\n"
+            "\n"
+            "You can introduce clients any way you like: an Excel list sent to your "
+            "manager on WhatsApp or Telegram, via the partner portal, or through the "
+            "bot — whatever works best for you."
         ),
         "order_index": 1,
     },
