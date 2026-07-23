@@ -2,6 +2,8 @@ import asyncio
 import logging
 import re
 import secrets
+import time
+from collections import deque
 from datetime import datetime, timedelta
 from pathlib import Path
 from urllib.parse import quote
@@ -537,33 +539,71 @@ app = FastAPI(title="ONCOUNT Partner Platform")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
 
-_RL_HITS: dict[str, "deque"] = {}
+# ─── Rate-limit чувствительных роутов (security-review 2026-05-26) ───────────
+# In-memory sliding window per IP. Ключей в словаре ограниченное число: старые
+# бакеты подчищаются свипом раз в окно + жёсткий потолок _RL_MAX_KEYS — иначе
+# _RL_HITS рос бы на каждый новый IP без предела (medium-DoS по памяти).
+_RL_HITS: dict[str, deque] = {}
 _RL_PATHS = ("/auth/", "/login", "/invite/", "/consultation/submit", "/mk/submit",
              "/guide/corp-tax/submit", "/guide/5-mistakes/submit")
-_RL_MAX = 30          # запросов с одного IP
-_RL_WINDOW = 60       # за столько секунд
+_RL_MAX = 30            # запросов с одного IP
+_RL_WINDOW = 60         # за столько секунд
+_RL_MAX_KEYS = 50_000   # потолок отслеживаемых IP (предохранитель памяти)
+_RL_SWEEP_AT = [0.0]    # время последнего свипа (list — мутируем из middleware)
+
+
+def _client_ip(request: Request) -> str:
+    """Клиентский IP за прокси Railway. Берём ПЕРВЫЙ (левый) IP из X-Forwarded-For:
+    по документации Railway их edge затирает клиентский XFF и ставит реальный IP
+    слева, так что на прямом railway-домене подделать его нельзя. Правый IP брать
+    НЕЛЬЗЯ — там внутренний адрес балансировщика, один на всех: все пользователи
+    схлопнулись бы в один бакет и легли бы вместе. Фоллбэк — прямой peer-адрес."""
+    xff = request.headers.get("x-forwarded-for")
+    if xff:
+        first = xff.split(",", 1)[0].strip()
+        if first:
+            return first
+    return request.client.host if request.client else "?"
+
+
+def _rl_sweep(now: float) -> None:
+    """Убрать протухшие/пустые бакеты, чтобы _RL_HITS не рос без предела."""
+    dead = [ip for ip, dq in _RL_HITS.items() if not dq or now - dq[-1] > _RL_WINDOW]
+    for ip in dead:
+        _RL_HITS.pop(ip, None)
+
+
+def _rl_register(ip: str, now: float) -> bool:
+    """Учесть запрос с ip в момент now. True — в пределах лимита (пропускаем),
+    False — лимит превышен (429). Подрезает протухшие метки; при достижении
+    потолка ключей новый IP не заводит (fail-open: лимит по IP — мягкий слой,
+    реальную защиту от перебора держат лимиты по номеру/токену в БД)."""
+    dq = _RL_HITS.get(ip)
+    if dq is None:
+        if len(_RL_HITS) >= _RL_MAX_KEYS:
+            return True
+        dq = _RL_HITS[ip] = deque()
+    while dq and now - dq[0] > _RL_WINDOW:
+        dq.popleft()
+    if len(dq) >= _RL_MAX:
+        return False
+    dq.append(now)
+    return True
 
 
 @app.middleware("http")
 async def rate_limit(request: Request, call_next):
-    """Простой per-IP rate-limit на чувствительные роуты (вход/инвайт) — против
-    брутфорса токенов/ключей и енумерации (security-review 2026-05-26). In-memory,
-    sliding window; за прокси Railway берём первый IP из X-Forwarded-For."""
+    """Per-IP sliding-window лимит на чувствительные роуты (вход/инвайт/заявки) —
+    против брутфорса и енумерации (security-review 2026-05-26)."""
     path = request.url.path
     if any(path.startswith(p) for p in _RL_PATHS):
-        from collections import deque
-        import time as _t
-        xff = request.headers.get("x-forwarded-for")
-        ip = (xff.split(",")[0].strip() if xff else
-              (request.client.host if request.client else "?"))
-        now = _t.time()
-        dq = _RL_HITS.setdefault(ip, deque())
-        while dq and now - dq[0] > _RL_WINDOW:
-            dq.popleft()
-        if len(dq) >= _RL_MAX:
+        now = time.time()
+        if now - _RL_SWEEP_AT[0] > _RL_WINDOW:
+            _RL_SWEEP_AT[0] = now
+            _rl_sweep(now)
+        if not _rl_register(_client_ip(request), now):
             from starlette.responses import PlainTextResponse
             return PlainTextResponse("Too many requests", status_code=429)
-        dq.append(now)
     return await call_next(request)
 
 
@@ -762,7 +802,11 @@ def healthz() -> dict:
 
 
 @app.get("/debug/event-stats")
-def debug_event_stats(session: Session = Depends(get_session)) -> dict:
+def debug_event_stats(request: Request, session: Session = Depends(get_session)) -> dict:
+    # Раньше эндпоинт был публичным (агрегаты регистраций наружу без причины).
+    # Закрываем под тот же админ-гейт, что и /admin/*: доступ из залогиненного
+    # браузера Николь (её Telegram-cookie), аноним/чужой → 404 (не раскрываем).
+    require_admin(request, session)
     from sqlalchemy import func
     rows = (
         session.query(EventRegistration.event_slug, func.count(EventRegistration.id))
