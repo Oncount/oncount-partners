@@ -111,6 +111,17 @@
     <div id="team-more" hidden>
       <p class="trust-note">🛡 {% if lang == 'en' %}If the accountant makes a mistake, ONCOUNT covers the FTA fines and financial losses — not the client.{% else %}Ошибётся бухгалтер — штрафы FTA и финансовые потери покрывает ONCOUNT, а не клиент.{% endif %}</p>
       <div class="portal-row">
+        {# Документы слева от кабинета (решение Николь 2026-07-23): лицензия и
+           страховка (премия и оценка оборота на скане замылены; полис
+           DB/PI/2025/197 — Николь в курсе срока действия). #}
+        <figure class="doc-mini">
+          <a href="/static/img/doc-licence.jpg" target="_blank" rel="noopener"><img src="/static/img/doc-licence.jpg" alt="Trade Licence 37408" loading="lazy"></a>
+          <figcaption>Trade Licence №37408</figcaption>
+        </figure>
+        <figure class="doc-mini">
+          <a href="/static/img/doc-insurance.jpg" target="_blank" rel="noopener"><img src="/static/img/doc-insurance.jpg" alt="{{ 'Professional indemnity insurance' if lang == 'en' else 'Страховка профессиональной ответственности' }}" loading="lazy"></a>
+          <figcaption>{{ 'Insurance' if lang == 'en' else 'Страховка' }}</figcaption>
+        </figure>
         <img class="portal-shot" src="/static/img/client-portal-mobile.jpg" alt="{{ 'ONCOUNT client portal' if lang == 'en' else 'Личный кабинет клиента ONCOUNT' }}" loading="lazy">
         <div class="portal-info">
           <p>💻 {% if lang == 'en' %}Client portal — all documents, reports and statuses 24/7.{% else %}Личный кабинет клиента — все документы, отчёты и статусы 24/7.{% endif %}</p>
@@ -119,17 +130,6 @@
       </div>
       <div class="team-creds">
         <div class="team-creds-title">{{ 'Licences, certificates and insurance' if lang == 'en' else 'Лицензии, сертификаты и страховка' }}</div>
-        {# Скан лицензии — источник .business/company/documents/ (решение Николь
-           2026-07-23). Скан страховки добавим после подтверждения продлённого
-           полиса (текущий DB/PI/2025/197 истёк 01.06.2026 — премию и номера
-           наружу не показываем). #}
-        <div class="docs-grid">
-          <figure class="doc-card">
-            <a href="/static/img/doc-licence.jpg" target="_blank" rel="noopener"><img src="/static/img/doc-licence.jpg" alt="Trade Licence 37408 — PADVICE ACCOUNTING AND MANAGEMENT FZCO" loading="lazy"></a>
-            <figcaption>{% if lang == 'en' %}Trade Licence №37408 — PADVICE ACCOUNTING AND MANAGEMENT — FZCO (IFZA, Dubai), valid until 13.11.2026. Activities: Accounting &amp; Bookkeeping.{% else %}Trade Licence №37408 — PADVICE ACCOUNTING AND MANAGEMENT — FZCO (фризона IFZA, Дубай), действует до 13.11.2026. Вид деятельности: Accounting &amp; Bookkeeping.{% endif %}</figcaption>
-          </figure>
-        </div>
-        <p>🎓 {{ accountants_title['en' if lang == 'en' else 'ru'] }}</p>
         <p>🛡 {% if lang == 'en' %}Professional indemnity insurance — 1,000,000 AED.{% else %}Страхование профессиональных рисков — 1 000 000 AED.{% endif %}</p>
       </div>
     </div>
