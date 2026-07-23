@@ -46,8 +46,8 @@ TEXTS: dict[str, dict[str, str]] = {
             "What's inside:\n"
             "• Step-by-step lessons: Day 1 — setup, Day 2 — practice\n"
             "• Ready-made prompts and timecodes\n"
-            "• Everything in your cabinet, go at your own pace\n\n"
-            "Tap the button — your cabinet opens straight on the practicum:"
+            "• Everything in your dashboard, go at your own pace\n\n"
+            "Tap the button — your dashboard opens straight on the practicum:"
         ),
     },
     "WELCOME_PARTNER": {
@@ -151,16 +151,16 @@ TEXTS: dict[str, dict[str, str]] = {
             "✅ Client <b>{name}</b> has been handed over.\n\n"
             "Thanks for your trust. An ONCOUNT manager will reach out during working hours "
             "within the hour and give a full consultation. The deal status and your partner reward "
-            "are in your personal cabinet."
+            "are in your personal dashboard."
         ),
     },
     "ONBOARDING_PARTNER_OK": {
         "ru": "\n\n✅ Жмите на кнопку для входа в кабинет.",
-        "en": "\n\n✅ Tap the button to enter your cabinet.",
+        "en": "\n\n✅ Tap the button to enter your dashboard.",
     },
     "LOGIN_READY": {
         "ru": "Готово! Жмите на кнопку — откроется кабинет партнёра в браузере.",
-        "en": "Done! Tap the button — your partner cabinet will open in the browser.",
+        "en": "Done! Tap the button — your partner dashboard will open in the browser.",
     },
     "LOGIN_EXPIRED": {
         "ru": (
@@ -174,7 +174,7 @@ TEXTS: dict[str, dict[str, str]] = {
     },
     "OPEN_CABINET_PROMPT": {
         "ru": "Жмите на кнопку — откроется ваш кабинет:",
-        "en": "Tap the button — your cabinet will open:",
+        "en": "Tap the button — your dashboard will open:",
     },
     "MENU_PARTNER_TITLE": {
         "ru": "Меню партнёра:",
@@ -208,7 +208,7 @@ TEXTS: dict[str, dict[str, str]] = {
     },
     "PRODUCTS_FOOTER": {
         "ru": "Подробности — в ЛК: {products_url}",
-        "en": "Details in your cabinet: {products_url}",
+        "en": "Details in your dashboard: {products_url}",
     },
     "FAQ_HEADER": {
         "ru": "❓ <b>Частые вопросы</b>\n\n",
@@ -225,7 +225,7 @@ TEXTS: dict[str, dict[str, str]] = {
         ),
         "en": (
             "📨 <b>Outreach copy</b> — 5 ready-made templates for different segments.\n\n"
-            "The full list with a «Copy» button is in your cabinet:\n{messages_url}"
+            "The full list with a «Copy» button is in your dashboard:\n{messages_url}"
         ),
     },
     "LANG_SWITCHED": {

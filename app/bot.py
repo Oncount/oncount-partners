@@ -128,19 +128,19 @@ BTN: dict[str, dict[str, str]] = {
     },
     "open_lk": {
         "ru": "🌐 Открыть кабинет",
-        "en": "🌐 Open cabinet",
+        "en": "🌐 Open dashboard",
     },
     "open_my_cabinet": {
         "ru": "🌐 Открыть мой кабинет",
-        "en": "🌐 Open my cabinet",
+        "en": "🌐 Open my dashboard",
     },
     "login_cabinet": {
         "ru": "🌐 Войти в личный кабинет",
-        "en": "🌐 Log in to my cabinet",
+        "en": "🌐 Log in to my dashboard",
     },
     "enter_cabinet": {
         "ru": "🌐 Войти в кабинет",
-        "en": "🌐 Enter cabinet",
+        "en": "🌐 Enter dashboard",
     },
     "lang_change": {
         "ru": "🔠 En/Ru",
@@ -627,7 +627,7 @@ PARTNER_COMMANDS_EN = [
     BotCommand(command="products", description="📦 Plans and services"),
     BotCommand(command="messages", description="📨 Outreach copy"),
     BotCommand(command="faq", description="❓ FAQ"),
-    BotCommand(command="lk", description="🌐 Open cabinet in browser"),
+    BotCommand(command="lk", description="🌐 Open dashboard in browser"),
 ]
 
 

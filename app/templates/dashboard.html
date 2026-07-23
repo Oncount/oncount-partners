@@ -7,7 +7,7 @@
 {% set greet_name = partner.first_name or partner.kommo_agent_name %}
 <p style="margin:.2em 0 1.2em; color:#6b7a76; font-size:14px;">
   <strong style="color:var(--deep-green);">{% if greet_name %}{{ greet_name }}, {{ 'good afternoon' if lang == 'en' else 'добрый день' }}!{% else %}{{ 'Good afternoon' if lang == 'en' else 'Добрый день' }}!{% endif %}</strong>
-  {{ 'This is your ONCOUNT partner cabinet.' if lang == 'en' else 'Ваш кабинет партнёра ONCOUNT.' }}
+  {{ 'This is your ONCOUNT partner dashboard.' if lang == 'en' else 'Ваш кабинет партнёра ONCOUNT.' }}
   {{ 'You can sign in via Telegram or WhatsApp.' if lang == 'en' else 'В него можно входить через Telegram и WhatsApp.' }}<br>
   👤 Telegram {% if partner.telegram_id %}✓{% else %}—{% endif %}{% if account_phones %} · {{ 'phones' if lang == 'en' else 'телефоны' }} {% for p in account_phones %}+{{ p.value }}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}
   · <a href="/account">{{ 'add a number' if lang == 'en' else 'добавить номер' }}</a>
@@ -168,7 +168,7 @@
     <div class="manager-name-row">
       <div class="manager-name">
         {{ mgr.name }}
-        {% if mgr.name_pending %}<span class="manager-pending">{{ 'name pending Nicole’s approval' if lang == 'en' else 'имя на утверждении Николь' }}</span>{% endif %}
+        {% if mgr.name_pending %}<span class="manager-pending">{{ 'name pending Nikole’s approval' if lang == 'en' else 'имя на утверждении Николь' }}</span>{% endif %}
       </div>
       {# Значки мессенджера справа от имени: маленькие круглые, только иконка. #}
       <div class="manager-msgrs">
@@ -190,9 +190,9 @@
       {% endfor %}
       {% for ch in mgr.pending_channels %}
       <span class="manager-pending manager-pending-contact">
-        {% if ch == 'whatsapp' %}{{ 'WhatsApp number pending Nicole’s approval' if lang == 'en' else 'номер WhatsApp на утверждении Николь' }}
-        {% elif ch == 'telegram' %}{{ 'Telegram pending Nicole’s approval' if lang == 'en' else 'Telegram на утверждении Николь' }}
-        {% else %}{{ 'email pending Nicole’s approval' if lang == 'en' else 'email на утверждении Николь' }}{% endif %}
+        {% if ch == 'whatsapp' %}{{ 'WhatsApp number pending Nikole’s approval' if lang == 'en' else 'номер WhatsApp на утверждении Николь' }}
+        {% elif ch == 'telegram' %}{{ 'Telegram pending Nikole’s approval' if lang == 'en' else 'Telegram на утверждении Николь' }}
+        {% else %}{{ 'email pending Nikole’s approval' if lang == 'en' else 'email на утверждении Николь' }}{% endif %}
       </span>
       {% endfor %}
     </div>
