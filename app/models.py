@@ -63,6 +63,9 @@ class Partner(Base):
     products_viewed_at: Mapped[datetime | None] = mapped_column(DateTime)
     # Шаг чеклиста «Посмотрите 2 видео»: заполняется при первом заходе в /courses.
     courses_viewed_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Шаг чеклиста «Напишите партнёрскому менеджеру»: заполняется при первом
+    # переходе к карточке менеджера через /manager.
+    manager_viewed_at: Mapped[datetime | None] = mapped_column(DateTime)
     checklist_dismissed_at: Mapped[datetime | None] = mapped_column(DateTime)
     # Анкета партнёра (Фаза L, план 2026-05-27): профиль для подбора
     # СТРАТЕГИЧЕСКОГО партнёрства (это анкета самого партнёра, НЕ онбординг
