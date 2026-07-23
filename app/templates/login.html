@@ -37,26 +37,37 @@
       </button>
     </form>
 
+    {# Резервный вход, если код в WhatsApp не приходит #}
+    <a class="login-tg" href="https://t.me/{{ bot_username }}?start=login_{{ state }}">
+      {{ 'Sign in via Telegram instead' if lang == 'en' else 'Войти через Telegram' }}
+    </a>
+
     {% else %}
-    {# Шаг 1: номер телефона — единственный главный способ входа #}
-    <p class="login-lead">{{ 'Sign in with your WhatsApp number — we’ll send a code.'
+    {# Шаг 1: два равноправных способа входа — WhatsApp и Telegram #}
+    <p class="login-lead">{{ 'Choose how you’d like to sign in.'
           if lang == 'en' else
-          'Войдите по номеру WhatsApp — пришлём код.' }}</p>
+          'Выберите, как вам удобнее войти.' }}</p>
 
     <form method="post" action="/auth/phone/request" class="login-email-form">
       <input type="tel" name="phone" required autocomplete="tel" autofocus
              placeholder="+971 50 123 4567"
              class="login-email-input">
-      <button type="submit" class="btn btn-primary" style="width:100%;padding:14px;">
-        {{ 'Get a code in WhatsApp' if lang == 'en' else 'Получить код в WhatsApp' }}
+      <button type="submit" class="login-btn login-btn-wa">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+        {{ 'Sign in via WhatsApp' if lang == 'en' else 'Войти через WhatsApp' }}
       </button>
+      <div class="login-method-hint">{{ 'We’ll send a code to this number on WhatsApp.'
+            if lang == 'en' else
+            'Пришлём код в WhatsApp на этот номер.' }}</div>
     </form>
-    {% endif %}
 
-    {# Резервный вход для тех, у кого аккаунт привязан только к Telegram #}
-    <a class="login-tg" href="https://t.me/{{ bot_username }}?start=login_{{ state }}">
-      {{ 'Sign in via Telegram instead' if lang == 'en' else 'Войти через Telegram' }}
+    <div class="login-divider">{{ 'or' if lang == 'en' else 'или' }}</div>
+
+    <a class="login-btn login-btn-tg" href="https://t.me/{{ bot_username }}?start=login_{{ state }}">
+      <svg viewBox="0 0 448 512" aria-hidden="true"><path d="M446.7 98.6l-67.6 318.8c-5.1 22.5-18.4 28.1-37.3 17.5l-103-75.9-49.7 47.8c-5.5 5.5-10.1 10.1-20.7 10.1l7.4-104.9 190.9-172.5c8.3-7.4-1.8-11.5-12.9-4.1L117.8 284 16.2 252.2c-22.1-6.9-22.5-22.1 4.6-32.7L418.2 66.4c18.4-6.9 34.5 4.1 28.5 32.2z"/></svg>
+      {{ 'Sign in via Telegram' if lang == 'en' else 'Войти через Telegram' }}
     </a>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

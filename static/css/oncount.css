@@ -408,6 +408,21 @@ table.list td {
 }
 .login-tg:hover { color: var(--deep-green); }
 
+/* Две равноправные кнопки входа: WhatsApp и Telegram */
+.login-btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; padding: 14px; box-sizing: border-box;
+  border: 0; border-radius: 8px; cursor: pointer;
+  font-family: inherit; font-size: 16px; font-weight: 600; color: #fff;
+  text-decoration: none; line-height: 1.2;
+}
+.login-btn svg { width: 21px; height: 21px; flex: none; fill: currentColor; }
+.login-btn-wa { background: #25d366; }
+.login-btn-wa:hover { background: #1ebe5b; }
+.login-btn-tg { background: #2aabee; }
+.login-btn-tg:hover { background: #1e9ade; }
+.login-method-hint { color: var(--sage); font-size: 13px; }
+
 /* Вход по email (магическая ссылка) */
 .login-divider {
   display: flex; align-items: center; gap: 12px;
