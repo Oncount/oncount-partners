@@ -22,27 +22,90 @@
 {% endif %}
 
 {# Два обучающих видео (решение Николь 2026-07-23): смотреть до курсов. ID — из
-   конфига (TRAINING_VIDEO_*), пустой ID скрывает карточку. #}
+   конфига (TRAINING_VIDEO_*), пустой ID скрывает карточку. Карточка свёрнута до
+   размера карточки курса; «Развернуть» открывает конспект + небольшое видео
+   (iframe грузится только при первом развороте — data-src, а не src). #}
 {% set training_videos = [
-  (training_video_program_id, 'О партнёрской программе ONCOUNT', 'About the ONCOUNT partner program'),
-  (training_video_cabinet_id, 'Как пользоваться кабинетом партнёра', 'How to use the partner dashboard'),
+  {
+    'vid': training_video_program_id,
+    't_ru': 'О партнёрской программе ONCOUNT', 't_en': 'About the ONCOUNT partner program',
+    'sub_ru': '⏱ видео 17 мин + краткий конспект', 'sub_en': '⏱ 17-min video + quick summary',
+    'points_ru': [
+      '100% первого месяца бухгалтерского обслуживания клиента — вам сразу',
+      '30% от заработка ONCOUNT на разовых услугах (аудит, открытие компании, банковские счета)',
+      '10% от комиссий партнёров, которых привели вы',
+      'Как передать клиента: контакт в WhatsApp или общий Zoom — куратор подключается в течение 5 минут в рабочее время',
+      'Для активных партнёров — white label и продвижение по нашей базе клиентов',
+    ],
+    'points_en': [
+      '100% of the client\'s first month of accounting — paid to you right away',
+      '30% of ONCOUNT\'s earnings on one-off services (audit, company setup, bank accounts)',
+      '10% of commissions earned by partners you refer',
+      'How to introduce a client: share the contact in WhatsApp or set up a joint Zoom — a curator joins within 5 minutes during business hours',
+      'For active partners — white label and promotion across our client base',
+    ],
+  },
+  {
+    'vid': training_video_cabinet_id,
+    't_ru': 'Как пользоваться кабинетом партнёра', 't_en': 'How to use the partner dashboard',
+    'sub_ru': '⏱ видео + краткий конспект', 'sub_en': '⏱ video + quick summary',
+    'points_ru': [
+      'Ваша партнёрская ссылка и готовые материалы для рассылок',
+      'Передача клиента в пару кликов — менеджер связывается в рабочее время',
+      'Статусы всех ваших заявок и комиссия по каждой',
+      'Калькулятор вознаграждения и тарифы услуг',
+      'Раздел «Обучение» с видео и курсами',
+    ],
+    'points_en': [
+      'Your partner link and ready-made outreach materials',
+      'Introduce a client in a couple of clicks — a manager follows up during business hours',
+      'Statuses of all your requests and your commission for each',
+      'Reward calculator and service plans',
+      'The Training section with videos and courses',
+    ],
+  },
 ] %}
 <div class="training-videos">
-  {% for vid, t_ru, t_en in training_videos %}
-  {% if vid %}
+  {% for v in training_videos %}
+  {% if v.vid %}
   <div class="course-card training-video-card">
-    <h3>{{ t_en if lang == 'en' else t_ru }}</h3>
-    <div class="training-video-frame">
-      <iframe src="https://www.youtube.com/embed/{{ vid }}"
-              title="{{ t_en if lang == 'en' else t_ru }}"
-              loading="lazy"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowfullscreen></iframe>
+    <h3>{{ v.t_en if lang == 'en' else v.t_ru }}</h3>
+    <div class="course-meta">{{ v.sub_en if lang == 'en' else v.sub_ru }}</div>
+    <div class="training-video-body" hidden>
+      <ul class="training-video-points">
+        {% for p in (v.points_en if lang == 'en' else v.points_ru) %}
+        <li>{{ p }}</li>
+        {% endfor %}
+      </ul>
+      <div class="training-video-frame">
+        <iframe data-src="https://www.youtube.com/embed/{{ v.vid }}"
+                title="{{ v.t_en if lang == 'en' else v.t_ru }}"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen></iframe>
+      </div>
+    </div>
+    <div class="course-cta">
+      <button type="button" class="btn btn-primary training-video-toggle"
+              data-expand="{{ 'Expand' if lang == 'en' else 'Развернуть' }}"
+              data-collapse="{{ 'Collapse' if lang == 'en' else 'Свернуть' }}"
+              onclick="trainingToggle(this)">{{ 'Expand' if lang == 'en' else 'Развернуть' }}</button>
     </div>
   </div>
   {% endif %}
   {% endfor %}
 </div>
+<script>
+function trainingToggle(btn) {
+  var body = btn.closest('.training-video-card').querySelector('.training-video-body');
+  var open = body.hidden;
+  body.hidden = !open;
+  if (open) {
+    var f = body.querySelector('iframe');
+    if (f && !f.src) f.src = f.dataset.src;
+  }
+  btn.textContent = open ? btn.dataset.collapse : btn.dataset.expand;
+}
+</script>
 
 {% for item in items %}
 {% set steps = item.progress_steps or 0 %}
