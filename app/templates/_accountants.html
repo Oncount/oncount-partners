@@ -47,7 +47,7 @@
        кружок-инициал; фото вставим, когда появится файл. #}
     {% for x in acc_extra | default([]) %}
     <div class="acc-item">
-      <div class="acc-photo acc-more">{{ x.initial }}</div>
+      {% if x.photo %}<img class="acc-photo" src="{{ x.photo }}" alt="{{ x.name_en if _l == 'en' else x.name }}" loading="lazy">{% else %}<div class="acc-photo acc-more">{{ x.initial }}</div>{% endif %}
       <div class="acc-name">{{ x.name_en if _l == 'en' else x.name }}</div>
       <div class="acc-role">{{ x.role_en if _l == 'en' else x.role }}</div>
       {% if x.langs %}<div class="acc-flags">{% for c in x.langs %}<img class="acc-flag" src="https://flagcdn.com/24x18/{{ c }}.png" srcset="https://flagcdn.com/48x36/{{ c }}.png 2x" width="24" height="18" alt="{{ c }}" loading="lazy">{% endfor %}</div>{% endif %}
