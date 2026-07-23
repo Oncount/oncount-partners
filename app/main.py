@@ -600,7 +600,6 @@ async def on_startup() -> None:
             "links_viewed_at",
             "products_viewed_at",
             "courses_viewed_at",
-            "manager_viewed_at",
             "checklist_dismissed_at",
         ):
             conn.execute(text(f"ALTER TABLE partners ADD COLUMN IF NOT EXISTS {col} TIMESTAMP"))
@@ -2321,7 +2320,8 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
     earned_total = (sum((getattr(l, "commission_aed", None) or 0) for l in won_rows)
                     + l2_total(partner))
     # 3 шага (решение Николь 2026-07-23, вместо прежних 4): ссылка+текст клиенту →
-    # 2 видео → написать менеджеру (он ведёт клиента и переводит вознаграждение).
+    # 2 видео → или передать контакт клиента (менеджер сам ведёт и переводит
+    # вознаграждение). Шаги 1 и 3 — два альтернативных пути привести клиента.
     checklist_steps = [
         {
             "label": "Скопируйте свою партнёрскую ссылку и готовый текст — отправьте их вашему клиенту",
@@ -2336,10 +2336,10 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
             "href": "/courses",
         },
         {
-            "label": "Напишите вашему партнёрскому менеджеру — он организует весь процесс для вашего клиента и переведёт вам вознаграждение",
-            "label_en": "Message your partner manager — they will run the whole process for your client and transfer your reward",
-            "done": partner.manager_viewed_at is not None,
-            "href": "/manager",  # → редирект на /dashboard#manager (карточка менеджера)
+            "label": "Или просто передайте контакт клиента — менеджер сам свяжется, всё оформит и переведёт вам вознаграждение",
+            "label_en": "Or simply pass your client's contact — the manager will reach out, handle everything and transfer your reward",
+            "done": leads_count > 0,
+            "href": "/transfer",
         },
     ]
     show_checklist = (
@@ -2527,19 +2527,6 @@ def tools(request: Request, session: Session = Depends(get_session)) -> Redirect
         session.commit()
     anchor = request.url.fragment or "tools"
     return RedirectResponse(f"/dashboard#{anchor}", status_code=302)
-
-
-# Шаг 3 чек-листа «Напишите партнёрскому менеджеру»: отмечаем переход и ведём
-# к карточке менеджера на дашборде (там кнопки WhatsApp/Telegram).
-@app.get("/manager")
-def manager_redirect(request: Request, session: Session = Depends(get_session)):
-    partner = current_partner(request, session)
-    if not partner:
-        return RedirectResponse("/login", status_code=302)
-    if partner.manager_viewed_at is None:
-        partner.manager_viewed_at = datetime.utcnow()
-        session.commit()
-    return RedirectResponse("/dashboard#manager", status_code=302)
 
 
 # Старые URL → объединённая страница (бот /links, /messages и закладки живут).
