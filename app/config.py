@@ -63,6 +63,13 @@ class Settings:
     # Доп. слой для WhatsApp — WAZZUP_TEST_ONLY_NUMBER (шлёт только на тестовый).
     NOTIFICATIONS_LIVE: bool = os.getenv("NOTIFICATIONS_LIVE", "") in ("1", "true", "True")
     ADMIN_TG_ID: int = int(os.getenv("ADMIN_TG_ID", "6634813047"))
+    # Трекинг использования портала (план 2026-06-03): partner_id, которые НЕ
+    # попадают в статистику заходов (шум от тестов). Сама Николь (ADMIN_TG_ID)
+    # исключается автоматически. CSV, напр. "141". Тест-партнёр 141 — временный
+    # (identity 119 на нём), при возврате на partner 1 эту настройку можно убрать.
+    USAGE_EXCLUDE_PARTNER_IDS: set[int] = {
+        int(x) for x in os.getenv("USAGE_EXCLUDE_PARTNER_IDS", "141").split(",") if x.strip()
+    }
     # Куда ЕЩЁ дублировать заявки, кроме личного Telegram владельца (2026-07-21).
     # Фолбэк на время, пока api не создаёт сделки в Kommo (диагностика 21.07:
     # заявка принята, ответ api — failed, сделки в CRM нет): менеджер получает

@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from app.auth import (
     COOKIE_NAME,
     current_partner,
+    decode_jwt,
     find_partner_by_phone,
     hash_login_code,
     issue_jwt,
@@ -41,6 +42,7 @@ from app.models import (
     LinkClick,
     LoginSession,
     MessageTemplate,
+    PageView,
     Partner,
     PartnerIdentity,
     PhoneLoginToken,
@@ -50,6 +52,7 @@ from app.models import (
 )
 from app.refgen import generate_ref_slug
 from app.seed import seed_if_empty
+from app.usage import classify_path, flush_page_views, record_view
 from app import linkstat
 
 LOGIN_SESSION_TTL = timedelta(minutes=10)
@@ -621,6 +624,29 @@ async def persist_lang_cookie(request: Request, call_next):
     return response
 
 
+@app.middleware("http")
+async def track_page_view(request: Request, call_next):
+    """Трекинг использования кабинета (план 2026-06-03). Пишем заход залогиненного
+    агента на известную страницу кабинета: partner_id + нормализованный путь +
+    время. Белый список путей (classify_path), БЕЗ query-строки (там бывают
+    токены), без анонимов/лендингов/админки. partner_id берём из JWT cookie
+    (decode_jwt, без запроса в БД). Только GET+200 → не-залогиненный получает
+    редирект на /login (307) и не трекается. Запись идёт в буфер (app.usage),
+    реальный commit делает фоновый джоб. Трекинг НИКОГДА не ломает ответ агенту."""
+    response = await call_next(request)
+    try:
+        if request.method == "GET" and response.status_code == 200:
+            hit = classify_path(request.url.path)
+            if hit:
+                token = request.cookies.get(COOKIE_NAME)
+                pid = decode_jwt(token) if token else None
+                if pid:
+                    record_view(pid, hit[0], hit[1])
+    except Exception:
+        pass
+    return response
+
+
 log = logging.getLogger("oncount.startup")
 
 # httpx на уровне INFO печатает полный URL каждого запроса — для Telegram это
@@ -780,6 +806,11 @@ async def on_startup() -> None:
     from app.health import health_check_job
     sched.add_job(health_check_job, "cron", hour="*/6", id="link_health",
                   max_instances=1, coalesce=True)
+    # Сброс буфера заходов кабинета (трекинг использования, план 2026-06-03) раз в 30с.
+    # Заходы копятся в app.usage, тут пишутся пачкой — кабинету не блокируем ответ.
+    # Вне гейта API: аналитика поведения не должна зависеть от наличия синка лидов.
+    sched.add_job(flush_page_views, "interval", seconds=30,
+                  id="flush_page_views", max_instances=1, coalesce=True)
     # Периодический синк лидов агентов (Фаза 1/кабинет, план 2026-05-26) + недельный
     # digest (Фаза K, реально шлёт только при NOTIFICATIONS_LIVE) — под гейтом API.
     if settings.ONCOUNT_API_URL:
@@ -794,6 +825,16 @@ async def on_startup() -> None:
     log.info("scheduler started: link_health 6h + kommo_sync/digest=%s"
              " (notifications_live=%s, link_health_alerts=%s)",
              bool(settings.ONCOUNT_API_URL), settings.NOTIFICATIONS_LIVE, settings.LINK_HEALTH_ALERTS)
+
+
+@app.on_event("shutdown")
+async def on_shutdown() -> None:
+    # Дослать остаток буфера заходов, чтобы не потерять последние секунды при
+    # штатной остановке (трекинг использования, план 2026-06-03).
+    try:
+        flush_page_views()
+    except Exception:
+        pass
 
 
 @app.get("/healthz")
@@ -859,6 +900,10 @@ def require_admin(request: Request, session: Session) -> Partner:
 
 KOMMO_LEAD_URL = "https://primeadvice.kommo.com/leads/detail/"
 
+# Ниже стольких заходивших агентов статистику использования показываем с плашкой
+# «мало данных» — чтобы не делать выводов по 1–2 людям (план 2026-06-03).
+USAGE_LOW_DATA_THRESHOLD = 5
+
 
 def _humanize_survey(answers: dict) -> list[tuple[str, str]]:
     """Ответы анкеты L → [(вопрос, человекочитаемый ответ)] по белым спискам."""
@@ -883,7 +928,7 @@ def _humanize_survey(answers: dict) -> list[tuple[str, str]]:
 def admin_partner_stats(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
     """Дашборд лидеров (Фаза 2, план 2026-06-02). Только админ (Telegram-гейт)."""
     admin = require_admin(request, session)
-    from sqlalchemy import case, func
+    from sqlalchemy import case, distinct, func
 
     agg = (
         session.query(
@@ -930,8 +975,82 @@ def admin_partner_stats(request: Request, session: Session = Depends(get_session
         "lost": sum(x["lost"] for x in rows),
         "paid_sum": sum(x["paid_sum"] for x in rows),
     }
+
+    # ── Использование портала (план 2026-06-03) ──────────────────────────────
+    # По PageView: какие разделы открывают и кто из агентов сколько ходит.
+    # Сортируем секции по числу УНИКАЛЬНЫХ агентов (важнее суммы заходов:
+    # 100 заходов одного ≠ востребованность). Онбординг помечаем отдельно —
+    # это вынужденный путь входа, не добровольный интерес.
+    from app.usage import SECTION_LABELS
+    sec_rows = (
+        session.query(
+            PageView.section,
+            func.count(PageView.id).label("hits"),
+            func.count(distinct(PageView.partner_id)).label("agents"),
+        )
+        .group_by(PageView.section)
+        .all()
+    )
+    usage_sections = sorted(
+        [
+            {
+                "label": SECTION_LABELS.get(s, s),
+                "hits": h,
+                "agents": a,
+                "onboarding": s == "onboarding",
+            }
+            for s, h, a in sec_rows
+        ],
+        key=lambda x: (x["agents"], x["hits"]),
+        reverse=True,
+    )
+    ua_rows = (
+        session.query(
+            PageView.partner_id,
+            func.count(PageView.id).label("hits"),
+            func.count(distinct(PageView.section)).label("sections"),
+            func.max(PageView.created_at).label("last"),
+        )
+        .group_by(PageView.partner_id)
+        .all()
+    )
+    upids = [r.partner_id for r in ua_rows]
+    uparts = (
+        {p.id: p for p in session.query(Partner).filter(Partner.id.in_(upids)).all()}
+        if upids else {}
+    )
+    usage_agents = sorted(
+        [
+            {
+                "id": r.partner_id,
+                "name": (
+                    (uparts[r.partner_id].first_name
+                     or uparts[r.partner_id].kommo_agent_name
+                     or f"#{r.partner_id}")
+                    if r.partner_id in uparts else f"#{r.partner_id}"
+                ),
+                "hits": r.hits,
+                "sections": r.sections,
+                "last": r.last,
+            }
+            for r in ua_rows
+        ],
+        key=lambda x: x["hits"],
+        reverse=True,
+    )
+    total_hits = session.query(func.count(PageView.id)).scalar() or 0
+    total_visitors = session.query(func.count(distinct(PageView.partner_id))).scalar() or 0
+    usage = {
+        "sections": usage_sections,
+        "agents": usage_agents,
+        "total_hits": total_hits,
+        "total_visitors": total_visitors,
+        "low_data": total_visitors < USAGE_LOW_DATA_THRESHOLD,
+    }
+
     return templates.TemplateResponse(
-        "admin_partner_stats.html", _ctx(request, admin, rows=rows, totals=totals)
+        "admin_partner_stats.html",
+        _ctx(request, admin, rows=rows, totals=totals, usage=usage),
     )
 
 
@@ -1505,6 +1624,48 @@ async def guide_5mistakes_submit(request: Request,
         deliver_wa_text_builder=lm5.wa_text,                        # персонализация
         deliver_wa_text_en=lm5.WA_TEXT_EN.format(link=lm5.GUIDE_PDF_URL),
         deliver_wa_text_builder_en=lm5.wa_text_en,
+    )
+
+
+# ─── Лид-магнит «5 ошибок при открытии бизнеса» (2026-06-03) ────────────────────
+# Тот же движок, что у /guide/corp-tax, но другая тема и улучшение: после заявки
+# клиенту уходит ПЕРСОНАЛИЗИРОВАННОЕ WhatsApp-сообщение (ссылка на PDF + подсказка,
+# какая из 5 ошибок ближе к его зоне риска — по ответу `worry`). Текст строит
+# leadmagnet5_config.wa_text(answers) через deliver_wa_text_builder.
+
+@app.get("/guide/5-mistakes", response_class=HTMLResponse)
+def guide_5mistakes_page(request: Request) -> HTMLResponse:
+    from app import leadmagnet5_config as lm5
+    return templates.TemplateResponse("quiz.html", {
+        "request": request,
+        "page_title": "ONCOUNT — чек-лист «5 ошибок при открытии бизнеса в ОАЭ»",
+        "cover": lm5.COVER,
+        "intro": lm5.INTRO,
+        "questions": lm5.QUESTIONS,
+        "final": lm5.FINAL,
+        "thanks": lm5.THANKS,
+        "socials": lm5.SOCIALS,
+        "submit_url": "/guide/5-mistakes/submit",
+    })
+
+
+@app.post("/guide/5-mistakes/submit")
+async def guide_5mistakes_submit(request: Request,
+                                 session: Session = Depends(get_session)) -> dict:
+    """Приём заявки лид-магнита «5 ошибок» → лид в воронку 1.1 + персональная
+    PDF-ссылка в WhatsApp. Тот же движок, плюс билдер персонального WA-текста."""
+    from app import leadmagnet5_config as lm5
+    return await _handle_quiz_submit(
+        request, session,
+        valid_options=lm5.VALID_OPTIONS,
+        question_titles=lm5.QUESTION_TITLES,
+        event_slug=lm5.EVENT_SLUG,
+        notify_header="📥 Новая заявка с лид-магнита «5 ошибок при открытии бизнеса»",
+        lead_prefix=lm5.KOMMO_LEAD_PREFIX,
+        lead_tag=lm5.KOMMO_LEAD_TAG,
+        note_intro=lm5.KOMMO_NOTE_INTRO,
+        deliver_wa_text=lm5.WA_TEXT.format(link=lm5.GUIDE_PDF_URL),  # фоллбэк
+        deliver_wa_text_builder=lm5.wa_text,                        # персонализация
     )
 
 

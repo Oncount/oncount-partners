@@ -481,3 +481,30 @@ class HealthAlert(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     issue_key: Mapped[str] = mapped_column(String(160), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
+class PageView(Base):
+    """Заход залогиненного агента на страницу кабинета (план 2026-06-03).
+
+    Зачем: показать Николь, какие разделы портала агенты реально открывают
+    (что живое, что мёртвое, удерживает ли кабинет после первого лида). До этой
+    таблицы поведение нигде не писалось — был только Partner.last_login_at.
+
+    ПД-минимизация («опасная тройка»): храним ТОЛЬКО кто (partner_id) + что
+    (нормализованный path + section) + когда. НЕ пишем query-строку (там бывают
+    токены входа), IP, содержимое. Доступ к агрегатам — только админ (require_admin).
+
+    Ограничение v1 (решение Николь 2026-06-03): это «открытие страницы», НЕ факт
+    действия — заход на /tools ≠ скопировал ссылку. Действия — кандидат в v2.
+    """
+    __tablename__ = "page_views"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    partner_id: Mapped[int] = mapped_column(ForeignKey("partners.id"), index=True)
+    # Нормализованный путь: динамические сегменты схлопнуты
+    # (/courses/abc/day/2 → /courses/:slug/day/:day) — иначе агрегаты рассыплются.
+    path: Mapped[str] = mapped_column(String(128), index=True)
+    # Человеко-понятная функция кабинета (см. usage.SECTION_LABELS):
+    # "dashboard"|"leads"|"tools"|"kb"|"courses"|"transfer"|"account"|"onboarding".
+    section: Mapped[str] = mapped_column(String(32), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
