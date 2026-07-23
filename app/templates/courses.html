@@ -71,15 +71,18 @@
   <div class="course-card training-video-card">
     <h3>{{ v.t_en if lang == 'en' else v.t_ru }}</h3>
     <div class="course-meta">{{ v.sub_en if lang == 'en' else v.sub_ru }}</div>
-    <div class="training-video-body" hidden>
+    {# Развёрнуто по умолчанию (решение Николь 2026-07-23): партнёр сразу видит
+       конспект и видео, «Свернуть» — по желанию. #}
+    <div class="training-video-body">
       <ul class="training-video-points">
         {% for p in (v.points_en if lang == 'en' else v.points_ru) %}
         <li>{{ p }}</li>
         {% endfor %}
       </ul>
       <div class="training-video-frame">
-        <iframe data-src="https://www.youtube.com/embed/{{ v.vid }}"
+        <iframe src="https://www.youtube.com/embed/{{ v.vid }}"
                 title="{{ v.t_en if lang == 'en' else v.t_ru }}"
+                loading="lazy"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowfullscreen></iframe>
       </div>
@@ -88,7 +91,7 @@
       <button type="button" class="btn btn-primary training-video-toggle"
               data-expand="{{ 'Expand' if lang == 'en' else 'Развернуть' }}"
               data-collapse="{{ 'Collapse' if lang == 'en' else 'Свернуть' }}"
-              onclick="trainingToggle(this)">{{ 'Expand' if lang == 'en' else 'Развернуть' }}</button>
+              onclick="trainingToggle(this)">{{ 'Collapse' if lang == 'en' else 'Свернуть' }}</button>
     </div>
   </div>
   {% endif %}
