@@ -469,29 +469,18 @@ details.faq-item[open] summary { margin-bottom: 12px; }
 .sec-icon { vertical-align: -4px; margin-right: 8px; }
 /* Строка ответственности под фотографиями бухгалтеров: «штрафы покрывает
    ONCOUNT». Отделена линией — это не подпись к фото, а отдельное обещание. */
-/* Лицензии/сертификаты/страховка в свёртке «Кто работает с вашим клиентом». */
-.docs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px; margin: 10px 0 14px; }
-.doc-card { margin: 0; }
-.doc-card img { width: 100%; height: auto; display: block;
-  border: 1px solid var(--border); border-radius: 10px; }
-.doc-card figcaption { font-size: 12.5px; color: var(--sage); margin-top: 6px; line-height: 1.45; }
-.team-creds { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--border); }
-.team-creds-title { font-weight: 700; font-size: 14px; color: var(--deep-green); margin-bottom: 8px; }
-.team-creds p { margin: 0 0 8px; font-size: 13.5px; color: var(--sage); line-height: 1.5; }
-.team-creds p:last-child { margin-bottom: 0; }
-/* Личный кабинет клиента + IT-структура (решение Николь 2026-07-23):
-   скрин телефона слева, два тезиса справа; на узких экранах скрин сжимается. */
-.portal-row { display: flex; align-items: center; gap: 16px; margin-top: 16px;
+/* Документы в свёртке «Кто работает с вашим клиентом» (решение Николь
+   2026-07-23): три карточки одного размера — лицензия, страховка, личный
+   кабинет клиента; подпись под каждой. Телефонный скрин приводится к
+   A4-пропорции обрезкой снизу. */
+.portal-row { display: flex; align-items: flex-start; gap: 16px; margin-top: 16px;
   padding-top: 14px; border-top: 1px dashed var(--border); flex-wrap: wrap; }
-.doc-mini { margin: 0; flex: 0 0 auto; width: 150px; }
-.doc-mini img { width: 100%; height: auto; display: block;
+.doc-mini { margin: 0; flex: 0 0 auto; width: 160px; }
+.doc-mini img { width: 100%; aspect-ratio: 210 / 297; object-fit: cover;
+  object-position: top center; display: block;
   border: 1px solid var(--border); border-radius: 10px; }
-.doc-mini figcaption { font-size: 12.5px; color: var(--sage); margin-top: 5px; text-align: center; }
-.portal-shot { width: 170px; max-width: 38%; height: auto; border-radius: 14px;
-  border: 1px solid var(--border); flex: 0 0 auto; }
-.portal-info p { margin: 0 0 10px; font-size: 13.5px; color: var(--sage); line-height: 1.5; }
-.portal-info p:last-child { margin-bottom: 0; }
+.doc-mini figcaption { font-size: 12.5px; color: var(--sage); margin-top: 5px;
+  line-height: 1.45; }
 .trust-note {
   margin: 16px 0 0;
   padding-top: 14px;

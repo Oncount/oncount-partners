@@ -97,7 +97,9 @@
   {# Подпись стоит СРАЗУ под заголовком (решение Николь), а не внутри карточки:
      иначе между ними вклинивается поле карточки и связка рвётся. Текст один и
      тот же для кабинета и лендингов — берём из кода (ACCOUNTANTS_TITLE). #}
-  <p class="svc-block-sub">{{ accountants_title['en' if lang == 'en' else 'ru'] }}</p>
+  {# Формулировка Николь 2026-07-23 (только кабинет; лендинги живут на
+     accountants_title). #}
+  <p class="svc-block-sub">{% if lang == 'en' %}ACCA-qualified accountants. Reporting under IFRS and UAE FTA rules + a system of SOPs and KPIs + IT software — for high quality and speed.{% else %}Бухгалтеры с квалификацией ACCA. Отчётность по МСФО и правилам FTA ОАЭ + система регламентов и KPI + IT-софт — для высокого качества и скорости.{% endif %}</p>
   {% if accountants %}
   <div class="card">
     {% set acc_lang = lang %}{% set acc_align = 'left' %}{% set acc_hide_title = true %}{% set acc_extra = [{'initial': 'A', 'name': 'Анжела', 'name_en': 'Anzhela', 'role': 'Менеджер по работе с клиентами', 'role_en': 'Client relations manager', 'langs': ['ru', 'gb']}] %}{% include "_accountants.html" %}
@@ -120,17 +122,12 @@
         </figure>
         <figure class="doc-mini">
           <a href="/static/img/doc-insurance.jpg" target="_blank" rel="noopener"><img src="/static/img/doc-insurance.jpg" alt="{{ 'Professional indemnity insurance' if lang == 'en' else 'Страховка профессиональной ответственности' }}" loading="lazy"></a>
-          <figcaption>{{ 'Insurance' if lang == 'en' else 'Страховка' }}</figcaption>
+          <figcaption>{% if lang == 'en' %}Professional indemnity insurance — 1,000,000 AED.{% else %}Страхование профессиональных рисков — 1 000 000 AED.{% endif %}</figcaption>
         </figure>
-        <img class="portal-shot" src="/static/img/client-portal-mobile.jpg" alt="{{ 'ONCOUNT client portal' if lang == 'en' else 'Личный кабинет клиента ONCOUNT' }}" loading="lazy">
-        <div class="portal-info">
-          <p>💻 {% if lang == 'en' %}Client portal — all documents, reports and statuses 24/7.{% else %}Личный кабинет клиента — все документы, отчёты и статусы 24/7.{% endif %}</p>
-          <p>⚙️ {% if lang == 'en' %}IT framework with SOPs and KPIs — for high quality and speed.{% else %}IT-структура с регламентами и KPI — для высокого качества и скорости.{% endif %}</p>
-        </div>
-      </div>
-      <div class="team-creds">
-        <div class="team-creds-title">{{ 'Licences, certificates and insurance' if lang == 'en' else 'Лицензии, сертификаты и страховка' }}</div>
-        <p>🛡 {% if lang == 'en' %}Professional indemnity insurance — 1,000,000 AED.{% else %}Страхование профессиональных рисков — 1 000 000 AED.{% endif %}</p>
+        <figure class="doc-mini">
+          <a href="/static/img/client-portal-mobile.jpg" target="_blank" rel="noopener"><img src="/static/img/client-portal-mobile.jpg" alt="{{ 'ONCOUNT client portal' if lang == 'en' else 'Личный кабинет клиента ONCOUNT' }}" loading="lazy"></a>
+          <figcaption>💻 {% if lang == 'en' %}Client portal — all documents, reports and statuses 24/7.{% else %}Личный кабинет клиента — все документы, отчёты и статусы 24/7.{% endif %}</figcaption>
+        </figure>
       </div>
     </div>
     <button class="more-btn" type="button" onclick="teamToggle(this)"
