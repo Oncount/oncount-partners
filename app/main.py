@@ -2703,8 +2703,8 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
     # утверждённые Николь (это НЕ живые данные из БД). Цель — соц-доказательство
     # масштаба партнёрской сети. В топе — только имя, по убыванию числа контактов.
     community = {
-        "partners": 139,
-        "total_contacts": 187,  # ⚠️ значение на подтверждении Николь
+        "partners": 167,
+        "total_contacts": 567,
         "top": [
             {"name": "Евгений", "name_en": "Evgeny", "count": 45},
             {"name": "Ильяс", "name_en": "Ilyas", "count": 28},
