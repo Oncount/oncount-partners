@@ -3,8 +3,18 @@
 {% block heading %}{{ 'Welcome to ONCOUNT' if lang == 'en' else 'Добро пожаловать в ONCOUNT' }}{% endblock %}
 
 {% block content %}
+{# Индексы: метка вопроса (ru,en) → 0/1; вариант (value,ru,en) → ru=1/en=2 —
+   те же соглашения и тот же белый список, что и в onboarding_survey.html.
+   Онбординг сокращён до 3 вопросов (решение Николь 2026-07-24): роль + сфера +
+   размер базы, БЕЗ email. Сразу после — вкладка «Пост» с готовым текстом МК
+   и личной ссылкой (redirect /dashboard#social). Остальную анкету не форсируем:
+   sphere/base_size уже в onboarding_answers, поэтому /onboarding-survey их
+   предзаполнит, а недостающие поля партнёр допишет из мягкого баннера. #}
+{% set qi = 1 if lang == 'en' else 0 %}
+{% set oi = 2 if lang == 'en' else 1 %}
+
 <div class="card">
-  <p style="font-size: 16px;">{% if lang == 'en' %}Hi, {{ partner.first_name or 'partner' }}! It takes 30 seconds to set up your dashboard — tell us a bit about yourself:{% else %}Привет, {{ partner.first_name or 'партнёр' }}! Нужно 30 секунд, чтобы настроить ваш кабинет — расскажите кратко о себе:{% endif %}</p>
+  <p style="font-size: 16px;">{% if lang == 'en' %}Hi, {{ partner.first_name or 'partner' }}! 30 seconds and three quick questions — then your ready-to-send text with a personal link opens right away.{% else %}Привет, {{ partner.first_name or 'партнёр' }}! 30 секунд и три коротких вопроса — и сразу откроется готовый текст с вашей персональной ссылкой.{% endif %}</p>
 </div>
 
 {% if message %}
@@ -19,14 +29,30 @@
     <select name="segment" required>
       <option value="">{{ '— choose —' if lang == 'en' else '— выберите —' }}</option>
       {% for slug, label_ru, label_en in segments %}
-        <option value="{{ slug }}">{{ label_en if lang == 'en' else label_ru }}</option>
+        <option value="{{ slug }}" {% if answers.get('segment') == slug %}selected{% endif %}>{{ label_en if lang == 'en' else label_ru }}</option>
       {% endfor %}
     </select>
 
-    <label>{{ 'Email for invoices and payouts' if lang == 'en' else 'Email для актов и выплат' }} *</label>
-    <input type="email" name="email" required placeholder="you@example.com">
+    <label>{{ labels['sphere'][qi] }} *</label>
+    <select name="sphere" required>
+      <option value="">{{ '— choose —' if lang == 'en' else '— выберите —' }}</option>
+      {% for opt in options['sphere'] %}
+        <option value="{{ opt[0] }}" {% if answers.get('sphere') == opt[0] %}selected{% endif %}>{{ opt[oi] }}</option>
+      {% endfor %}
+    </select>
+    <input type="text" name="sphere_other" maxlength="120"
+           value="{{ answers.get('sphere_other', '') }}"
+           placeholder="{{ 'If “Other” — please specify' if lang == 'en' else 'Если «Другое» — уточните' }}">
 
-    <button type="submit" class="btn btn-primary" style="margin-top: 8px;">{{ 'Done — open my dashboard' if lang == 'en' else 'Готово — открыть кабинет' }}</button>
+    <label>{{ labels['base_size'][qi] }} *</label>
+    <select name="base_size" required>
+      <option value="">{{ '— choose —' if lang == 'en' else '— выберите —' }}</option>
+      {% for opt in options['base_size'] %}
+        <option value="{{ opt[0] }}" {% if answers.get('base_size') == opt[0] %}selected{% endif %}>{{ opt[oi] }}</option>
+      {% endfor %}
+    </select>
+
+    <button type="submit" class="btn btn-primary" style="margin-top: 8px;">{{ 'Done — show my text and link' if lang == 'en' else 'Готово — показать текст и ссылку' }}</button>
   </form>
 </div>
 
@@ -34,14 +60,14 @@
   {% if lang == 'en' %}
   <h3 style="margin-bottom: 8px;">Why we ask for this</h3>
   <ul style="margin: 0; padding-left: 18px; color: var(--charcoal);">
-    <li><b>Role</b> — we send message templates tailored to your audience.</li>
-    <li><b>Email</b> — that's where the service agreement, invoices and partner payout confirmations go.</li>
+    <li><b>Role &amp; field</b> — so we suggest the message templates that fit your audience.</li>
+    <li><b>Contact base</b> — helps us pick the right format (a base of 100+ unlocks a two-speaker joint event).</li>
   </ul>
   {% else %}
   <h3 style="margin-bottom: 8px;">Зачем эти данные</h3>
   <ul style="margin: 0; padding-left: 18px; color: var(--charcoal);">
-    <li><b>Роль</b> — присылаем шаблоны рассылок именно под твою аудиторию.</li>
-    <li><b>Email</b> — туда уйдут договор-оферта, акты и подтверждение партнёрских выплат.</li>
+    <li><b>Роль и сфера</b> — чтобы подобрать шаблоны рассылок именно под вашу аудиторию.</li>
+    <li><b>База контактов</b> — помогает выбрать формат (от 100 контактов открываем совместное мероприятие с двумя спикерами).</li>
   </ul>
   {% endif %}
 </div>

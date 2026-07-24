@@ -2373,7 +2373,11 @@ def onboarding_page(request: Request, session: Session = Depends(get_session)) -
         return RedirectResponse("/dashboard", status_code=302)
     return templates.TemplateResponse(
         "onboarding.html",
-        _ctx(request, partner, segments=SEGMENTS, message=None),
+        _ctx(
+            request, partner, segments=SEGMENTS,
+            options=SURVEY_OPTIONS, labels=SURVEY_LABELS,
+            answers=(partner.onboarding_answers or {}), message=None,
+        ),
     )
 
 
@@ -2381,58 +2385,62 @@ def onboarding_page(request: Request, session: Session = Depends(get_session)) -
 def onboarding_submit(
     request: Request,
     segment: str = Form(...),
-    email: str = Form(...),
+    sphere: str = Form(...),
+    base_size: str = Form(...),
+    sphere_other: str = Form(""),
     session: Session = Depends(get_session),
 ) -> HTMLResponse:
+    # Онбординг = 3 вопроса (решение Николь 2026-07-24): роль + сфера + размер
+    # базы, БЕЗ email (email берём позже — перед первой выплатой). Телефон уже
+    # известен из входа по номеру. Сфера/база пишутся в тот же JSON-анкеты, что
+    # и /onboarding-survey (общий белый список) — анкета их предзаполнит.
     partner = current_partner(request, session)
     if not partner:
         return RedirectResponse("/login", status_code=302)
 
     segment = (segment or "").strip().lower()
-    email = (email or "").strip().lower()
+    sphere = (sphere or "").strip()
+    base_size = (base_size or "").strip()
     en = _lang(request) == "en"
 
-    if segment not in {s[0] for s in SEGMENTS}:
-        msg = "Choose a segment from the list." if en else "Выбери сегмент из списка."
+    def _reject(msg: str, code: int = 400) -> HTMLResponse:
+        # Сохраняем введённое, чтобы форма не обнулилась при ошибке.
+        draft = dict(partner.onboarding_answers or {})
+        draft.update(segment=segment, sphere=sphere, base_size=base_size,
+                     sphere_other=(sphere_other or "").strip())
         return templates.TemplateResponse(
             "onboarding.html",
-            _ctx(request, partner, segments=SEGMENTS, message=msg),
-            status_code=400,
-        )
-    if "@" not in email or "." not in email:
-        msg = "The email is invalid." if en else "Email указан некорректно."
-        return templates.TemplateResponse(
-            "onboarding.html",
-            _ctx(request, partner, segments=SEGMENTS, message=msg),
-            status_code=400,
+            _ctx(
+                request, partner, segments=SEGMENTS,
+                options=SURVEY_OPTIONS, labels=SURVEY_LABELS,
+                answers=draft, message=msg,
+            ),
+            status_code=code,
         )
 
-    # Телефон в форме больше не спрашиваем — он известен из входа по номеру
-    # (auth_phone_verify проставляет Partner.phone). Здесь только роль + email.
+    if segment not in {s[0] for s in SEGMENTS}:
+        return _reject("Choose a role from the list." if en else "Выберите роль из списка.")
+    if sphere not in _survey_values("sphere"):
+        return _reject("Choose your field from the list." if en else "Выберите сферу из списка.")
+    if base_size not in _survey_values("base_size"):
+        return _reject("Choose your contact base size." if en else "Выберите размер базы контактов.")
+
     partner.segment = segment
-    partner.email = email
+    answers = dict(partner.onboarding_answers or {})
+    answers["sphere"] = sphere
+    answers["base_size"] = base_size
+    # Свободный текст «Другое» — только к варианту other; иначе подчищаем.
+    if sphere == "other" and (sphere_other or "").strip():
+        answers["sphere_other"] = (sphere_other or "").strip()[:SURVEY_OTHER_MAXLEN]
+    else:
+        answers.pop("sphere_other", None)
+    partner.onboarding_answers = answers
     partner.onboarded_at = datetime.utcnow()
-    try:
-        session.commit()
-    except IntegrityError:
-        # Уникальный индекс по lower(email) (вход по email, план 2026-05-23):
-        # этот адрес уже привязан к другому партнёру.
-        session.rollback()
-        msg = (
-            "This email is already linked to another account."
-            if en else
-            "Этот email уже привязан к другому аккаунту."
-        )
-        return templates.TemplateResponse(
-            "onboarding.html",
-            _ctx(request, partner, segments=SEGMENTS, message=msg),
-            status_code=409,
-        )
-    # После базового онбординга — сразу на анкету партнёра (Фаза L),
-    # если она ещё не пройдена. Анкета мягкая: партнёр может «Пропустить».
-    if partner.survey_completed_at is None:
-        return RedirectResponse("/onboarding-survey", status_code=302)
-    return RedirectResponse("/dashboard", status_code=302)
+    session.commit()
+    # Сразу к деньгам: вкладка «Пост» на дашборде — креатив мастер-класса с
+    # личной ссылкой (решение Николь 2026-07-24). Полную анкету не форсируем:
+    # остаётся мягким баннером, sphere/base_size в ней уже предзаполнены.
+    return RedirectResponse("/dashboard#social", status_code=302)
 
 
 # ─── Анкета партнёра (Фаза L) ───────────────────────────────────────────────
