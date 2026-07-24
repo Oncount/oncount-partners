@@ -257,7 +257,15 @@ function showTool(name) {
   if (LEGACY_ANCHORS[h]) h = LEGACY_ANCHORS[h];
   var isMethod = TOOL_METHODS.indexOf(h) !== -1;
   if (!isMethod && h !== 'tools') return;
-  if (isMethod) showTool(h);
+  if (isMethod) {
+    // showTool — ПЕРЕКЛЮЧАТЕЛЬ: клик по активной вкладке её ЗАКРЫВАЕТ. При заходе
+    // по #<способ> вкладка-дефолт (method_default, обычно «Пост») уже активна,
+    // поэтому прямой showTool(h) схлопывал бы её — и после онбординга
+    // (/dashboard#social) партнёр видел пустоту вместо поста. Открываем только
+    // если целевая вкладка ещё НЕ активна; уже открытую не трогаем.
+    var activeTab = document.querySelector('.tool-tab.active[data-panel="' + h + '"]');
+    if (!activeTab) showTool(h);
+  }
   var box = document.getElementById('tools');
   if (box) box.scrollIntoView({ block: 'start' });
 })();
