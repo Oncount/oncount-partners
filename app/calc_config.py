@@ -9,7 +9,11 @@
   NEW 550, START 1 450, GROW 3 100, PROFI 4 563 AED; PROFI+ — индивидуально.
 - Всё в дирхамах. Долларовые суммы разовых услуг пересчитаны по фиксированному
   курсу USD→AED 3,6725 с округлением ВНИЗ до десятков: партнёру не обещаем
-  больше, чем платим ($300 → 1 100, $600 → 2 200, $1 000 → 3 670).
+  больше, чем платим ($300 → 1 100, $500 → 1 830, $600 → 2 200, $1 000 → 3 670).
+
+Пересмотр ставок Николь 2026-07-27: открытие компании $1 000 → $300,
+корпоративный счёт $1 000 → $500, личный счёт нерезидента $1 000 → $500,
+виза за недвижимость (золотая) $600 → $300. Аудит и рабочая виза не менялись.
 """
 
 USD_AED = 3.6725
@@ -204,7 +208,7 @@ SERVICES = [
         "label_en": "Company setup",
         "hint": "Мейнленд или фризона",
         "hint_en": "Mainland or free zone",
-        "commission_aed": usd_to_aed(1000),
+        "commission_aed": usd_to_aed(300),
         "is_from": False,
     },
     {
@@ -213,7 +217,7 @@ SERVICES = [
         "label_en": "Corporate bank account",
         "hint": "NBD, Wio, FAB, ADCB",
         "hint_en": "NBD, Wio, FAB, ADCB",
-        "commission_aed": usd_to_aed(1000),
+        "commission_aed": usd_to_aed(500),
         "is_from": False,
     },
     {
@@ -231,7 +235,7 @@ SERVICES = [
         "label_en": "Property visa",
         "hint": "Золотая, серебряная, зелёная",
         "hint_en": "Golden, silver, green",
-        "commission_aed": usd_to_aed(600),
+        "commission_aed": usd_to_aed(300),
         "is_from": False,
     },
     {
@@ -240,7 +244,7 @@ SERVICES = [
         "label_en": "Personal account for non-residents",
         "hint": "NBD, без резидентства и Emirates ID",
         "hint_en": "NBD, no residency or Emirates ID required",
-        "commission_aed": usd_to_aed(1000),
+        "commission_aed": usd_to_aed(500),
         "is_from": False,
     },
 ]
