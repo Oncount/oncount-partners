@@ -1,0 +1,195 @@
+{# Публичная страница о партнёрской программе — замена главной старого сайта на
+   Тильде (план 2026-07-27, Фаза 1). Standalone, как quiz.html: свои стили, без
+   сайдбара кабинета. Весь текст приходит из app/partners_config.py. #}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#10463E">
+  <title>Партнёрская программа ONCOUNT — бухгалтерия в ОАЭ</title>
+  <meta name="description" content="{{ hero.lead }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Raleway:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
+  <style>
+    :root{--green:#10463E;--green-2:#1c6a5c;--ink:#15211e;--muted:#5d6b67;
+      --line:#e2e8e5;--bg:#f5f7f6;--card:#fff}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Raleway,system-ui,sans-serif;color:var(--ink);
+      background:var(--bg);-webkit-font-smoothing:antialiased;line-height:1.55}
+    .wrap{max-width:960px;margin:0 auto;padding:0 18px}
+    h1,h2,h3{font-family:Outfit,sans-serif;margin:0}
+    a{color:inherit}
+    /* шапка */
+    .top{display:flex;align-items:center;justify-content:space-between;gap:16px;
+      padding:18px 0}
+    .top img{height:34px}
+    .top-link{font-size:15px;font-weight:600;color:var(--green);text-decoration:none;
+      border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:9px 18px}
+    /* герой */
+    .hero{background:var(--green);color:#fff;border-radius:22px;padding:44px 32px;
+      margin:6px 0 34px}
+    .kicker{font-size:13px;letter-spacing:.08em;text-transform:uppercase;
+      opacity:.75;font-weight:600;margin-bottom:14px}
+    .hero h1{font-size:38px;line-height:1.15;margin-bottom:16px}
+    .hero p{font-size:17px;opacity:.9;margin:0 0 26px;max-width:640px}
+    .btns{display:flex;flex-wrap:wrap;gap:12px}
+    .btn{display:inline-block;text-decoration:none;font-weight:600;font-size:16px;
+      padding:14px 26px;border-radius:999px;transition:transform .15s ease}
+    .btn:active{transform:scale(.98)}
+    .btn-main{background:#fff;color:var(--green)}
+    .btn-ghost{border:1.5px solid rgba(255,255,255,.55);color:#fff}
+    /* встреча */
+    .meeting{background:#fff;border:1.5px solid var(--line);border-left:5px solid var(--green);
+      border-radius:16px;padding:22px 24px;margin:0 0 34px}
+    .meeting h2{font-size:20px;margin-bottom:8px}
+    .meeting dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:15px}
+    .meeting dt{color:var(--muted)}
+    .meeting dd{margin:0;font-weight:600}
+    /* секции */
+    section{margin:0 0 40px}
+    section > h2{font-size:27px;margin-bottom:10px}
+    .lead{color:var(--muted);font-size:16px;margin:0 0 22px;max-width:680px}
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+    .card{background:var(--card);border:1.5px solid var(--line);border-radius:16px;
+      padding:20px 22px;font-size:15px}
+    .card h3{font-size:17px;margin-bottom:6px}
+    .card p{margin:0;color:var(--muted)}
+    ul.plain{list-style:none;margin:0;padding:0;display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+    ul.plain li{background:var(--card);border:1.5px solid var(--line);border-radius:14px;
+      padding:16px 18px;font-size:15px}
+    /* шаги */
+    .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+    .step{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:20px 22px}
+    .step b{display:block;font-family:Outfit,sans-serif;font-size:26px;color:var(--green-2);
+      margin-bottom:8px}
+    .step span{font-size:15px;color:var(--muted)}
+    /* отзывы */
+    .review{background:var(--card);border:1.5px solid var(--line);border-radius:16px;
+      padding:22px 24px}
+    .review p{margin:0 0 14px;font-size:15px}
+    .review .who{font-weight:600;font-size:15px}
+    .review .role{color:var(--muted);font-size:14px}
+    /* финальный CTA */
+    .final{background:var(--green);color:#fff;border-radius:22px;padding:36px 32px;
+      text-align:center;margin-bottom:40px}
+    .final h2{font-size:28px;margin-bottom:10px}
+    .final p{opacity:.9;margin:0 0 22px}
+    .final .btns{justify-content:center}
+    /* футер */
+    footer{border-top:1px solid var(--line);padding:26px 0 50px;font-size:14px;
+      color:var(--muted)}
+    footer a{color:var(--muted)}
+    .foot-row{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:12px}
+    @media (max-width:640px){
+      .hero{padding:32px 22px;border-radius:18px}
+      .hero h1{font-size:29px}
+      section > h2{font-size:23px}
+      .btn{width:100%;text-align:center}
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <img src="/static/img/logo.png" alt="ONCOUNT">
+    <a class="top-link" href="/login">Войти в кабинет</a>
+  </div>
+
+  <div class="hero">
+    <div class="kicker">{{ hero.kicker }}</div>
+    <h1>{{ hero.title }}</h1>
+    <p>{{ hero.lead }}</p>
+    <div class="btns">
+      <a class="btn btn-main" href="{{ join_href }}">{{ hero.cta }}</a>
+      <a class="btn btn-ghost" href="/login">{{ hero.cta_secondary }}</a>
+    </div>
+  </div>
+
+  {% if meeting %}
+  <div class="meeting">
+    <h2>Ближайшая встреча для партнёров</h2>
+    <dl>
+      <dt>Когда</dt><dd>{{ meeting.date }}</dd>
+      <dt>Формат</dt><dd>{{ meeting.format }}</dd>
+      <dt>Ведёт</dt><dd>{{ meeting.host }}</dd>
+    </dl>
+    {% if meeting.note %}<p class="lead" style="margin:14px 0 0">{{ meeting.note }}</p>{% endif %}
+  </div>
+  {% endif %}
+
+  <section>
+    <h2>{{ why.title }}</h2>
+    <p class="lead">{{ why.lead }}</p>
+    <ul class="plain">
+      {% for item in why['items'] %}<li>{{ item }}</li>{% endfor %}
+    </ul>
+  </section>
+
+  <section>
+    <h2>{{ steps.title }}</h2>
+    <div class="steps">
+      {% for num, text in steps['items'] %}
+      <div class="step"><b>{{ num }}</b><span>{{ text }}</span></div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section>
+    <h2>{{ audience.title }}</h2>
+    <p class="lead">{{ audience.lead }}</p>
+    <ul class="plain">
+      {% for item in audience['items'] %}<li>{{ item }}</li>{% endfor %}
+    </ul>
+  </section>
+
+  <section>
+    <h2>{{ reviews.title }}</h2>
+    <div class="cards">
+      {% for r in reviews['items'] %}
+      <div class="review">
+        <p>{{ r.text }}</p>
+        <div class="who">{{ r.name }}</div>
+        <div class="role">{{ r.role }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section>
+    <h2>{{ client_value.title }}</h2>
+    <div class="cards">
+      {% for title, text in client_value['items'] %}
+      <div class="card"><h3>{{ title }}</h3><p>{{ text }}</p></div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="final">
+    <h2>Готовы начать?</h2>
+    <p>Регистрация в боте занимает минуту — сразу получите личный кабинет и свои ссылки.</p>
+    <div class="btns">
+      <a class="btn btn-main" href="{{ join_href }}">{{ hero.cta }}</a>
+    </div>
+  </div>
+
+  <footer>
+    <div>{{ contacts.address }}</div>
+    <div class="foot-row">
+      <a href="mailto:{{ contacts.email }}">{{ contacts.email }}</a>
+      <a href="{{ contacts.site }}" target="_blank" rel="noopener">oncount.com</a>
+      <a href="{{ contacts.telegram }}" target="_blank" rel="noopener">Telegram</a>
+      <a href="{{ contacts.instagram }}" target="_blank" rel="noopener">Instagram</a>
+    </div>
+    <div class="foot-row">
+      {% for label, href in legal_links %}<a href="{{ href }}">{{ label }}</a>{% endfor %}
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

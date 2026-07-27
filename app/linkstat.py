@@ -29,6 +29,7 @@ CONTENT_KEYS: dict[str, str] = {
     "leadmagnet_corptax":   "Чек-лист 0% Corporate Tax",
     "leadmagnet_5mistakes": "Чек-лист «5 ошибок»",
     "partner_bot":          "Приглашение в бот",
+    "partners_page":        "Страница о партнёрке",
 }
 
 # Как открыли ссылку (ось «через что»): страница-квиз / редирект в TG/WA / бот.

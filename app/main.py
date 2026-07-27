@@ -1474,6 +1474,30 @@ def _quiz_mask_phone(norm: str) -> str:
     return f"{norm[:4]}***{norm[-2:]}" if len(norm) > 6 else "***"
 
 
+@app.get("/partners", response_class=HTMLResponse)
+def partners_page(request: Request) -> HTMLResponse:
+    """Публичная страница о партнёрской программе (план 2026-07-27, Фаза 1).
+    Заменяет главную старого сайта на Тильде (oncount.co). Весь текст — в
+    app/partners_config.py. С ?ref= кнопка «Стать партнёром» ведёт на /p/<ref>:
+    приглашение закрепляется за пригласившим агентом (2-й уровень), а не теряется."""
+    from app import partners_config as pc
+    ref = linkstat.sanitize_ref(request.query_params.get("ref"))
+    linkstat.record_click("partners_page", "quiz", ref, request.headers.get("user-agent"))
+    return templates.TemplateResponse("partners.html", {
+        "request": request,
+        "hero": pc.HERO,
+        "meeting": pc.MEETING,
+        "why": pc.WHY,
+        "audience": pc.AUDIENCE,
+        "steps": pc.STEPS,
+        "reviews": pc.REVIEWS,
+        "client_value": pc.CLIENT_VALUE,
+        "contacts": pc.CONTACTS,
+        "legal_links": pc.LEGAL_LINKS,
+        "join_href": f"/p/{ref}" if ref else "/join",
+    })
+
+
 @app.get("/consultation", response_class=HTMLResponse)
 def consultation_page(request: Request) -> HTMLResponse:
     from app import quiz_config
