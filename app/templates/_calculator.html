@@ -95,6 +95,9 @@
 .calc-group-note { font-weight: 500; font-size: 13px; color: var(--sage); }
 /* Сетка карточек: на десктопе 3–4 в ряд, на телефоне 2 в ряд. */
 .calc-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+/* Разовые услуги — строго 3 в ряд (решение Николь 2026-07-27): их шесть, при
+   auto-fill выходило 5+1 с пустой ячейкой. Тарифов пять — их сетку не трогаем. */
+@media (min-width: 761px) { .calc-tiles-svc { grid-template-columns: repeat(3, 1fr); } }
 .calc-tile { display: flex; flex-direction: column; align-items: center; gap: 6px;
   padding: 12px 10px; border: 1px solid var(--border); border-radius: 14px; background: #fff;
   text-align: center; }
