@@ -21,7 +21,10 @@
     body{margin:0;font-family:Raleway,system-ui,sans-serif;color:var(--ink);
       background:var(--bg);-webkit-font-smoothing:antialiased;line-height:1.55}
     .wrap{max-width:960px;margin:0 auto;padding:0 18px}
-    h1,h2,h3{font-family:Outfit,sans-serif;margin:0}
+    /* color обязателен: oncount.css красит h1/h2 в тёмно-зелёный, и на тёмном
+       фоне героя и финального блока заголовки становились невидимыми. */
+    h1,h2,h3{font-family:Outfit,sans-serif;margin:0;color:var(--ink)}
+    .hero h1,.final h2{color:#fff}
     a{color:inherit}
     /* шапка */
     .top{display:flex;align-items:center;justify-content:space-between;gap:16px;
