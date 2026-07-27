@@ -30,6 +30,8 @@ HERO = {
              "en": "Become an ONCOUNT partner and earn without stepping away from your main job."},
     "cta": {"ru": "Записаться на Zoom с Николь", "en": "Book a Zoom with Nikole"},
     "cta_secondary": {"ru": "Стать партнёром", "en": "Become a partner"},
+    # Отдельная подпись для шапки: там ссылка ведёт на вход, а не в бота.
+    "login": {"ru": "Войти в кабинет", "en": "Log in"},
     # Кнопка ведёт в личный Telegram Николь с готовым первым сообщением —
     # партнёру не надо думать, с чего начать, а Николь сразу видит контекст.
     "zoom_url": "https://t.me/nikol_hillton?text="
