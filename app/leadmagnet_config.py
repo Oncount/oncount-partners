@@ -19,6 +19,10 @@ EVENT_SLUG = "guide-corp-tax"
 # ссылке» (reader/anyone, проверено). Меняется одной строкой при замене PDF.
 GUIDE_PDF_URL = "https://drive.google.com/file/d/1zVUZRk0QIurSkPVMlK1Mgyu-CB02ZvCo/view"
 
+# EN-версия чек-листа (Drive «0percent-Corporate-Tax-in-the-UAE.pdf», доступ
+# «по ссылке» включён 2026-07-27) — EN-клиент получает PDF на английском.
+GUIDE_PDF_URL_EN = "https://drive.google.com/file/d/1krRTfY8WdBpIW_kEIH80rk1M74o0-D_X/view"
+
 # Текст WhatsApp-сообщения с чек-листом. {link} подставляется в роуте, {consult} —
 # в _handle_quiz_submit (ссылка на бесплатную консультацию С ref агента, иначе
 # партнёр потерял бы атрибуцию на втором шаге). Сообщение уходит С нашего номера
@@ -33,12 +37,12 @@ WA_TEXT = (
     "Или просто ответьте на это сообщение 🙂"
 )
 
-# EN-версия WA-сообщения. {link} и {consult} те же; PDF пока только на русском —
-# честно помечаем это в скобках.
+# EN-версия WA-сообщения. {link} и {consult} те же; с 2026-07-27 в {link}
+# подставляется GUIDE_PDF_URL_EN — PDF на английском.
 WA_TEXT_EN = (
     "Hello! This is ONCOUNT 👋\n\n"
-    "You requested our checklist \"0% Corporate Tax in the UAE\" — here it is "
-    "(the guide is in Russian):\n{link}\n\n"
+    "You requested our checklist \"0% Corporate Tax in the UAE\" — here it "
+    "is:\n{link}\n\n"
     "It helps you see whether your business qualifies for 0%, what conditions "
     "you have to meet and what to check before filing.\n\n"
     "And you can always book a free consultation with our accountant — we'll go "
@@ -199,13 +203,12 @@ THANKS = {
     ),
 }
 
-# EN-версия «спасибо» — с пометкой, что PDF пока на русском.
+# EN-версия «спасибо» (с 2026-07-27 PDF уходит на английском — пометка убрана).
 THANKS_EN = {
     "title": "Done! Your checklist is on its way",
     "subtitle": (
-        "We have sent the PDF to your WhatsApp number. The checklist PDF is in "
-        "Russian. If it does not arrive within a couple of minutes, check the "
-        "number or message us."
+        "We have sent the PDF to your WhatsApp number. If it does not arrive "
+        "within a couple of minutes, check the number or message us."
     ),
 }
 

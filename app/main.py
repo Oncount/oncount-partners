@@ -550,8 +550,11 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 # бакеты подчищаются свипом раз в окно + жёсткий потолок _RL_MAX_KEYS — иначе
 # _RL_HITS рос бы на каждый новый IP без предела (medium-DoS по памяти).
 _RL_HITS: dict[str, deque] = {}
+from app.leadmagnet_topics import submit_rl_paths as _lm_submit_rl_paths  # noqa: E402
+
 _RL_PATHS = ("/auth/", "/login", "/invite/", "/consultation/submit", "/mk/submit",
-             "/guide/corp-tax/submit", "/guide/5-mistakes/submit")
+             "/guide/corp-tax/submit",
+             "/guide/5-mistakes/submit") + _lm_submit_rl_paths()
 _RL_MAX = 30            # запросов с одного IP
 _RL_WINDOW = 60         # за столько секунд
 _RL_MAX_KEYS = 50_000   # потолок отслеживаемых IP (предохранитель памяти)
@@ -1607,7 +1610,7 @@ async def guide_corp_tax_submit(request: Request,
         lead_tag=lm.KOMMO_LEAD_TAG,
         note_intro=lm.KOMMO_NOTE_INTRO,
         deliver_wa_text=lm.WA_TEXT.replace("{link}", lm.GUIDE_PDF_URL),
-        deliver_wa_text_en=lm.WA_TEXT_EN.replace("{link}", lm.GUIDE_PDF_URL),
+        deliver_wa_text_en=lm.WA_TEXT_EN.replace("{link}", lm.GUIDE_PDF_URL_EN),
     )
 
 
@@ -1650,7 +1653,7 @@ async def guide_5mistakes_submit(request: Request,
         note_intro=lm5.KOMMO_NOTE_INTRO,
         deliver_wa_text=lm5.WA_TEXT.replace("{link}", lm5.GUIDE_PDF_URL),  # фоллбэк
         deliver_wa_text_builder=lm5.wa_text,                        # персонализация
-        deliver_wa_text_en=lm5.WA_TEXT_EN.replace("{link}", lm5.GUIDE_PDF_URL),
+        deliver_wa_text_en=lm5.WA_TEXT_EN.replace("{link}", lm5.GUIDE_PDF_URL_EN),
         deliver_wa_text_builder_en=lm5.wa_text_en,
     )
 
@@ -1694,6 +1697,53 @@ async def guide_5mistakes_submit(request: Request,
         note_intro=lm5.KOMMO_NOTE_INTRO,
         deliver_wa_text=lm5.WA_TEXT.replace("{link}", lm5.GUIDE_PDF_URL),  # фоллбэк
         deliver_wa_text_builder=lm5.wa_text,                        # персонализация
+    )
+
+
+# ─── Лид-магниты по всем чек-листам (2026-07-27): единый реестр ────────────────
+# Темы описаны данными в leadmagnet_topics.TOPICS, роуты — универсальные.
+# Регистрируются ПОСЛЕ выделенных /guide/corp-tax и /guide/5-mistakes, поэтому
+# фиксированные пути продолжают обслуживаться своими обработчиками.
+# ⚠️ В кабинет (/links) ссылки на эти квизы НЕ добавлены — решение Николь
+# 2026-07-27 «в партнёрский кабинет пока не выкладывать».
+
+@app.get("/guide/{lm_slug}", response_class=HTMLResponse)
+def guide_topic_page(lm_slug: str, request: Request) -> HTMLResponse:
+    from app import leadmagnet_topics as lmt
+    if lm_slug not in lmt.TOPICS:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    lang = _lang(request)
+    linkstat.record_click(f"leadmagnet_{lm_slug.replace('-', '_')}", "quiz",
+                          request.query_params.get("ref"), request.headers.get("user-agent"))
+    return templates.TemplateResponse("quiz.html", {
+        "request": request,
+        "lang": lang,
+        "page_title": lmt.page_title(lm_slug, lang),
+        **lmt.page(lm_slug, lang),
+        "submit_url": f"/guide/{lm_slug}/submit",
+    })
+
+
+@app.post("/guide/{lm_slug}/submit")
+async def guide_topic_submit(lm_slug: str, request: Request,
+                             session: Session = Depends(get_session)) -> dict:
+    """Приём заявки лид-магнита из реестра тем → лид в воронку 1.1 +
+    PDF-ссылка в WhatsApp. Машинерия та же, что у выделенных лид-магнитов."""
+    from app import leadmagnet_topics as lmt
+    if lm_slug not in lmt.TOPICS:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    marks = lmt.kommo(lm_slug)
+    return await _handle_quiz_submit(
+        request, session,
+        valid_options=lmt.VALID_OPTIONS,
+        question_titles=lmt.QUESTION_TITLES,
+        event_slug=marks["event_slug"],
+        notify_header=marks["header"],
+        lead_prefix=marks["prefix"],
+        lead_tag=marks["tag"],
+        note_intro=marks["note"],
+        deliver_wa_text=lmt.wa_text(lm_slug, "ru"),
+        deliver_wa_text_en=lmt.wa_text(lm_slug, "en"),
     )
 
 

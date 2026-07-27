@@ -23,6 +23,10 @@ EVENT_SLUG = "guide-5-mistakes"
 # Меняется одной строкой при замене PDF.
 GUIDE_PDF_URL = "https://drive.google.com/file/d/1FcfR_M2fjt8pWDy0-dcgWElaAblObRzo/view"
 
+# EN-версия чек-листа (Drive «5-CRITICAL-MISTAKES-WHEN-LAUNCHING-A-BUSINESS-IN-
+# THE-UAE.pdf», доступ «по ссылке» включён 2026-07-27) — EN-клиенту шлём её.
+GUIDE_PDF_URL_EN = "https://drive.google.com/file/d/1Db6z7r02F8bbV593ar-jsw7Fc8fG0qvG/view"
+
 # Базовый текст WhatsApp (фоллбэк, если персонализация не сработала). {link}
 # подставляется в роуте. Сообщение уходит С нашего номера → клиент может ответить.
 WA_TEXT = (
@@ -36,12 +40,12 @@ WA_TEXT = (
     "Или просто ответьте на это сообщение 🙂"
 )
 
-# EN-версия базового WA-сообщения. {link} тот же; PDF пока только на русском —
-# честно помечаем это в скобках.
+# EN-версия базового WA-сообщения. {link} тот же; с 2026-07-27 в {link}
+# подставляется GUIDE_PDF_URL_EN — PDF на английском.
 WA_TEXT_EN = (
     "Hello! This is ONCOUNT 👋\n\n"
     "You requested our checklist \"5 mistakes when opening a business in the "
-    "UAE\" — here it is (the guide is in Russian):\n{link}\n\n"
+    "UAE\" — here it is:\n{link}\n\n"
     "It helps you avoid losing money on the wrong jurisdiction, the bank "
     "account and taxes — the five places people trip up most often.\n\n"
     "And you can always book a free consultation with our accountant — we'll go "
@@ -123,12 +127,12 @@ def wa_text_en(answers: dict | None) -> str:
     пустые/неизвестные answers → базовый WA_TEXT_EN. Ссылка и фоллбэк те же."""
     hint = _RISK_HINT_EN.get((answers or {}).get("worry"))
     if not hint:
-        return WA_TEXT_EN.replace("{link}", GUIDE_PDF_URL)
+        return WA_TEXT_EN.replace("{link}", GUIDE_PDF_URL_EN)
     return (
         "Hello! This is ONCOUNT 👋\n\n"
         "You requested our checklist \"5 mistakes when opening a business in "
-        "the UAE\" — here it is (the guide is in Russian):\n"
-        + GUIDE_PDF_URL + "\n\n"
+        "the UAE\" — here it is:\n"
+        + GUIDE_PDF_URL_EN + "\n\n"
         + hint + "\n\n"
         "And you can always book a free consultation with our accountant — "
         "we'll go through your situation:\n{consult}\n\n"
@@ -294,13 +298,12 @@ THANKS = {
     ),
 }
 
-# EN-версия «спасибо» — с пометкой, что PDF пока на русском.
+# EN-версия «спасибо» (с 2026-07-27 PDF уходит на английском — пометка убрана).
 THANKS_EN = {
     "title": "Done! Your checklist is on its way",
     "subtitle": (
-        "We have sent the PDF to your WhatsApp number. The checklist PDF is in "
-        "Russian. If it does not arrive within a couple of minutes, check the "
-        "number or message us."
+        "We have sent the PDF to your WhatsApp number. If it does not arrive "
+        "within a couple of minutes, check the number or message us."
     ),
 }
 
