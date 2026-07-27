@@ -38,7 +38,25 @@
     .kicker{font-size:13px;letter-spacing:.08em;text-transform:uppercase;
       opacity:.75;font-weight:600;margin-bottom:14px}
     .hero h1{font-size:38px;line-height:1.15;margin-bottom:16px}
-    .hero p{font-size:17px;opacity:.9;margin:0 0 26px;max-width:640px}
+    .hero p{font-size:17px;opacity:.9;margin:0 0 18px;max-width:640px}
+    .hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:30px;align-items:center}
+    .hero-call{font-weight:600;font-size:17px;margin:0 0 22px}
+    .hero-photo{position:relative}
+    .hero-photo img{width:100%;border-radius:16px;display:block}
+    .hero-cap{background:#fff;color:var(--ink);border-radius:12px;padding:13px 16px;
+      font-size:14px;line-height:1.45;margin-top:-28px;position:relative;
+      margin-left:14px;margin-right:14px;box-shadow:0 6px 20px rgba(0,0,0,.12)}
+    /* «Сотрудничество выгодно» — тёмный блок с фото офиса */
+    .benefit{background:var(--green);color:#fff;border-radius:22px;padding:34px 32px;
+      display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center;
+      margin:0 0 40px}
+    .benefit h2{color:#fff;font-size:26px;margin-bottom:14px}
+    .benefit p{margin:0 0 22px;opacity:.9;font-size:16px}
+    .benefit img{width:100%;border-radius:14px;display:block}
+    @media (max-width:800px){
+      .hero-grid,.benefit{grid-template-columns:1fr}
+      .benefit{padding:28px 22px;border-radius:18px}
+    }
     .p-btns{display:flex;flex-wrap:wrap;gap:12px}
     .p-btn{display:inline-block;text-decoration:none;font-weight:600;font-size:16px;
       padding:14px 26px;border-radius:999px;transition:transform .15s ease}
@@ -95,6 +113,14 @@
     .review p{margin:0 0 14px;font-size:15px}
     .review .who{font-weight:600;font-size:15px}
     .review .role{color:var(--muted);font-size:14px}
+    /* «Наши партнёры» — тёмный блок, как на старом сайте */
+    section.dark{background:var(--green);color:#fff;border-radius:22px;
+      padding:36px 32px}
+    section.dark > h2{color:#fff}
+    section.dark .lead{color:rgba(255,255,255,.8)}
+    section.dark ul.plain li{background:rgba(255,255,255,.07);
+      border-color:rgba(255,255,255,.16);color:#fff}
+    @media (max-width:640px){ section.dark{padding:28px 22px;border-radius:18px} }
     .review-who{display:flex;align-items:center;gap:12px}
     .review-who img{width:52px;height:52px;border-radius:50%;object-fit:cover;flex:none}
     .top-right{display:flex;align-items:center;gap:10px}
@@ -139,12 +165,23 @@
   </div>
 
   <div class="hero">
-    <div class="kicker">{{ tr(hero.kicker) }}</div>
-    <h1>{{ tr(hero.title) }}</h1>
-    <p>{{ tr(hero.lead) }}</p>
-    <div class="p-btns">
-      <a class="p-btn p-btn-main" href="{{ join_href }}">{{ tr(hero.cta) }}</a>
-      <a class="p-btn p-btn-ghost" href="/login">{{ tr(hero.cta_secondary) }}</a>
+    <div class="hero-grid">
+      <div>
+        <div class="kicker">{{ tr(hero.kicker) }}</div>
+        <h1>{{ tr(hero.title) }}</h1>
+        <p>{{ tr(hero.lead) }}</p>
+        <p class="hero-call">{{ tr(hero.call) }}</p>
+        <div class="p-btns">
+          <a class="p-btn p-btn-main" href="{{ hero.zoom_url }}" target="_blank" rel="noopener">{{ tr(hero.cta) }}</a>
+          <a class="p-btn p-btn-ghost" href="{{ join_href }}">{{ tr(hero.cta_secondary) }}</a>
+        </div>
+      </div>
+      {# Фото Николь с подписью — со старого сайта. Живое лицо на странице про
+         доверие работает сильнее любого текста. #}
+      <div class="hero-photo">
+        <img src="{{ hero.photo }}" alt="Николь Хилтон" loading="lazy">
+        <div class="hero-cap">{{ tr(hero.photo_caption) | safe }}</div>
+      </div>
     </div>
   </div>
 
@@ -177,6 +214,17 @@
     {% include "_calculator.html" %}
   </section>
 
+  <div class="benefit">
+    <div>
+      <h2>{{ tr(benefit.title) }}</h2>
+      <p>{{ tr(benefit.text) }}</p>
+      <div class="p-btns">
+        <a class="p-btn p-btn-main" href="{{ join_href }}">{{ tr(benefit.cta) }}</a>
+      </div>
+    </div>
+    <img src="{{ benefit.photo }}" alt="" loading="lazy">
+  </div>
+
   <section>
     <h2>{{ tr(steps.title) }}</h2>
     <div class="steps">
@@ -186,7 +234,7 @@
     </div>
   </section>
 
-  <section>
+  <section class="dark">
     <h2>{{ tr(audience.title) }}</h2>
     <p class="lead">{{ tr(audience.lead) }}</p>
     <ul class="plain">

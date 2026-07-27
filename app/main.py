@@ -1500,6 +1500,7 @@ def partners_page(request: Request) -> HTMLResponse:
         "hero": pc.HERO,
         "meeting": pc.MEETING,
         "why": pc.WHY,
+        "benefit": pc.BENEFIT,
         "audience": pc.AUDIENCE,
         "steps": pc.STEPS,
         "reviews": pc.REVIEWS,

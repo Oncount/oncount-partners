@@ -46,7 +46,7 @@
 
     {# ── Разовые услуги: те же карточки ── #}
     <div class="calc-group-title">{{ 'One-off services' if lang == 'en' else 'Разовые услуги' }} <span class="calc-group-note">{{ '(delivered by our trusted partners)' if lang == 'en' else '(делают наши проверенные партнёры)' }}</span></div>
-    <div class="calc-tiles">
+    <div class="calc-tiles calc-tiles-svc">
       {% for s in calc.services %}
       <div class="calc-tile" id="calc-tile-s-{{ s.key }}">
         <button type="button" class="calc-tile-pill calc-tile-pill-svc" onclick="calcToggle('s','{{ s.key }}')">{{ s.label }}</button>

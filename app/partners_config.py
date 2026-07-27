@@ -26,8 +26,19 @@ HERO = {
                    "Вознаграждение приходит, когда клиент оплатил обслуживание.",
              "en": "You introduce the client — we take over the accounting. "
                    "Your reward arrives once the client pays for the service."},
-    "cta": {"ru": "Стать партнёром", "en": "Become a partner"},
-    "cta_secondary": {"ru": "Войти в кабинет", "en": "Log in"},
+    "call": {"ru": "Станьте партнёром ONCOUNT и зарабатывайте, не отвлекаясь от основной работы.",
+             "en": "Become an ONCOUNT partner and earn without stepping away from your main job."},
+    "cta": {"ru": "Записаться на Zoom с Николь", "en": "Book a Zoom with Nikole"},
+    "cta_secondary": {"ru": "Стать партнёром", "en": "Become a partner"},
+    # Кнопка ведёт в личный Telegram Николь с готовым первым сообщением —
+    # партнёру не надо думать, с чего начать, а Николь сразу видит контекст.
+    "zoom_url": "https://t.me/nikol_hillton?text="
+                "%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21%20"
+                "%D0%A5%D0%BE%D1%87%D1%83%20%D0%BE%D0%B1%D1%81%D1%83%D0%B4%D0%B8%D1%82%D1%8C%20"
+                "%D0%BF%D0%B0%D1%80%D1%82%D0%BD%D1%91%D1%80%D1%81%D1%82%D0%B2%D0%BE%20%D1%81%20ONCOUNT",
+    "photo": "/static/img/partners/nikole.jpg",
+    "photo_caption": {"ru": "<b>Николь Хилтон</b> — директор по развитию ONCOUNT, кофаундер и серийный предприниматель.",
+                      "en": "<b>Nikole Hillton</b> — Head of Growth at ONCOUNT, co-founder and serial entrepreneur."},
 }
 
 # Блок «ближайшая встреча». None → блок не рендерится. Так сделано намеренно: на
@@ -60,28 +71,45 @@ WHY = {
     },
 }
 
+# Тёмный блок «Наши партнёры» — как на старом сайте (там он назывался «Кого мы
+# ждём на встрече»). Категории перенесены дословно; риелторы добавлены к
+# консультантам, чтобы список лёг ровно в две строки без пустой ячейки.
 AUDIENCE = {
-    "title": {"ru": "Кому подходит", "en": "Who it fits"},
+    "title": {"ru": "Наши партнёры", "en": "Our partners"},
     "lead": {"ru": "Ваши клиенты — предприниматели в ОАЭ? Значит, это про вас.",
              "en": "Are your clients business owners in the UAE? Then this is for you."},
     "items": {
         "ru": [
-            "Консультанты, юристы, представители консьерж-сервисов",
-            "Сотрудники банков, финтех-проектов и платёжных сервисов",
-            "Риелторы и специалисты по релокации",
-            "Бизнес-блогеры, спикеры, владельцы бизнес-порталов",
-            "Инвестиционные консультанты и wealth-менеджеры",
             "CFO, CEO, COO — те, к кому идут за советом",
+            "Инвестиционные консультанты и wealth-менеджеры",
+            "Сотрудники банков",
+            "Представители финтех-проектов и платёжных сервисов",
+            "Консультанты, юристы, риелторы, консьерж-сервисы",
+            "Бизнес-блогеры, спикеры, владельцы бизнес-порталов",
         ],
         "en": [
-            "Consultants, lawyers, concierge services",
-            "Bank, fintech and payment-service professionals",
-            "Real estate agents and relocation specialists",
-            "Business bloggers, speakers, owners of business media",
-            "Investment advisors and wealth managers",
             "CFOs, CEOs, COOs — the people others come to for advice",
+            "Investment advisors and wealth managers",
+            "Bank professionals",
+            "Fintech and payment-service companies",
+            "Consultants, lawyers, real estate agents, concierge services",
+            "Business bloggers, speakers, owners of business media",
         ],
     },
+}
+
+# Блок со старого сайта: почему сотрудничество выгодно + фото офиса ONCOUNT.
+BENEFIT = {
+    "title": {"ru": "Сотрудничество с ONCOUNT выгодно",
+              "en": "Working with ONCOUNT pays off"},
+    "text": {"ru": "Мы берём на себя всю работу, вы получаете доход и укрепляете свой "
+                   "статус. Никаких дополнительных затрат — чистая прибыль. Ваша "
+                   "репутация растёт, клиенты рекомендуют вас.",
+             "en": "We take on all the work, you earn and strengthen your standing. No "
+                   "extra costs — pure profit. Your reputation grows and clients "
+                   "recommend you."},
+    "cta": {"ru": "Стать партнёром", "en": "Become a partner"},
+    "photo": "/static/img/partners/office.jpg",
 }
 
 STEPS = {
@@ -106,7 +134,8 @@ STEPS = {
 # Фото лежат у нас в static/img/partners/ — со стороннего CDN не тянем, иначе
 # картинки умрут вместе с подпиской Тильды.
 REVIEWS = {
-    "title": {"ru": "Что говорят партнёры", "en": "What partners say"},
+    "title": {"ru": "С нами сотрудничают около 200 партнёров — вот что они говорят",
+              "en": "Around 200 partners work with us — here is what they say"},
     "items": [
         {
             "photo": "review-starovoytov.jpg",
