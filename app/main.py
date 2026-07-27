@@ -2610,7 +2610,11 @@ def _tools_ctx(session: Session, partner: Partner, request: Request) -> dict:
     персональная ссылка партнёра (плейсхолдер {link} → links[link_key]).
     До 2026-07-21 собирался в маршруте /tools; теперь раздел живёт на дашборде.
     """
-    links = _personal_links(partner.ref_slug, str(request.base_url).rstrip("/"),
+    # База — канонический домен из WEBAPP_URL, а НЕ request.base_url. Иначе агент,
+    # зашедший по старой закладке (railway-адрес), копировал бы клиентам ссылки на
+    # старый домен, а схема бралась бы как http:// (за прокси Railway приложение не
+    # видит X-Forwarded-Proto). С 2026-07-27 канон — https://www.oncount.co.
+    links = _personal_links(partner.ref_slug, settings.WEBAPP_URL.rstrip("/"),
                             lang=_lang(request))
     # Все активные тексты с непустым method, сгруппированы по способу. Порядок
     # внутри способа — order_index, id. Тексты без method (NULL) не показываем.
