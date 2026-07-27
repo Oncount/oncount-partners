@@ -27,19 +27,26 @@ GUIDE_PDF_URL = "https://drive.google.com/file/d/1FcfR_M2fjt8pWDy0-dcgWElaAblObR
 # подставляется в роуте. Сообщение уходит С нашего номера → клиент может ответить.
 WA_TEXT = (
     "Здравствуйте! Это ONCOUNT 👋\n\n"
-    "Ваш чек-лист «5 ошибок при открытии бизнеса в ОАЭ» — по ссылке:\n{link}\n\n"
-    "Если захотите разобрать именно вашу ситуацию — просто ответьте на это "
-    "сообщение, и наш бухгалтер поможет."
+    "Вы запрашивали чек-лист «5 ошибок при открытии бизнеса в ОАЭ» — "
+    "высылаю:\n{link}\n\n"
+    "Он поможет не потерять деньги на выборе юрисдикции, открытии счёта и "
+    "налогах — именно на этих пяти местах спотыкаются чаще всего.\n\n"
+    "И вы всегда можете записаться на бесплатную консультацию с нашим "
+    "бухгалтером — разберём вашу ситуацию:\n{consult}\n\n"
+    "Или просто ответьте на это сообщение 🙂"
 )
 
 # EN-версия базового WA-сообщения. {link} тот же; PDF пока только на русском —
 # честно помечаем это в скобках.
 WA_TEXT_EN = (
     "Hello! This is ONCOUNT 👋\n\n"
-    "Here is your checklist \"5 mistakes when opening a business in the UAE\" "
-    "(the guide is in Russian):\n{link}\n\n"
-    "If you would like us to look at your specific situation, just reply to "
-    "this message and our accountant will help."
+    "You requested our checklist \"5 mistakes when opening a business in the "
+    "UAE\" — here it is (the guide is in Russian):\n{link}\n\n"
+    "It helps you avoid losing money on the wrong jurisdiction, the bank "
+    "account and taxes — the five places people trip up most often.\n\n"
+    "And you can always book a free consultation with our accountant — we'll go "
+    "through your situation:\n{consult}\n\n"
+    "Or just reply to this message 🙂"
 )
 
 # Персональная подсказка по ответу на вопрос `worry` — какая из 5 ошибок ближе
@@ -98,14 +105,16 @@ def wa_text(answers: dict | None) -> str:
     в _handle_quiz_submit (best-effort; ошибка → фоллбэк на статичный WA_TEXT)."""
     hint = _RISK_HINT.get((answers or {}).get("worry"))
     if not hint:
-        return WA_TEXT.format(link=GUIDE_PDF_URL)
-    return (
+        return WA_TEXT.replace("{link}", GUIDE_PDF_URL)   # replace, а не format:
+    return (                                              # {consult} подставит роут
         "Здравствуйте! Это ONCOUNT 👋\n\n"
-        "Ваш чек-лист «5 ошибок при открытии бизнеса в ОАЭ» — по ссылке:\n"
+        "Вы запрашивали чек-лист «5 ошибок при открытии бизнеса в ОАЭ» — "
+        "высылаю:\n"
         + GUIDE_PDF_URL + "\n\n"
         + hint + "\n\n"
-        "Хотите — разберём вашу ситуацию с бухгалтером бесплатно. "
-        "Просто ответьте на это сообщение."
+        "И вы всегда можете записаться на бесплатную консультацию с нашим "
+        "бухгалтером — разберём вашу ситуацию:\n{consult}\n\n"
+        "Или просто ответьте на это сообщение 🙂"
     )
 
 
@@ -114,15 +123,16 @@ def wa_text_en(answers: dict | None) -> str:
     пустые/неизвестные answers → базовый WA_TEXT_EN. Ссылка и фоллбэк те же."""
     hint = _RISK_HINT_EN.get((answers or {}).get("worry"))
     if not hint:
-        return WA_TEXT_EN.format(link=GUIDE_PDF_URL)
+        return WA_TEXT_EN.replace("{link}", GUIDE_PDF_URL)
     return (
         "Hello! This is ONCOUNT 👋\n\n"
-        "Here is your checklist \"5 mistakes when opening a business in the UAE\" "
-        "(the guide is in Russian):\n"
+        "You requested our checklist \"5 mistakes when opening a business in "
+        "the UAE\" — here it is (the guide is in Russian):\n"
         + GUIDE_PDF_URL + "\n\n"
         + hint + "\n\n"
-        "If you want, we can go through your situation with an accountant for "
-        "free. Just reply to this message."
+        "And you can always book a free consultation with our accountant — "
+        "we'll go through your situation:\n{consult}\n\n"
+        "Or just reply to this message 🙂"
     )
 
 

@@ -1582,8 +1582,8 @@ async def guide_corp_tax_submit(request: Request,
         lead_prefix=lm.KOMMO_LEAD_PREFIX,
         lead_tag=lm.KOMMO_LEAD_TAG,
         note_intro=lm.KOMMO_NOTE_INTRO,
-        deliver_wa_text=lm.WA_TEXT.format(link=lm.GUIDE_PDF_URL),
-        deliver_wa_text_en=lm.WA_TEXT_EN.format(link=lm.GUIDE_PDF_URL),
+        deliver_wa_text=lm.WA_TEXT.replace("{link}", lm.GUIDE_PDF_URL),
+        deliver_wa_text_en=lm.WA_TEXT_EN.replace("{link}", lm.GUIDE_PDF_URL),
     )
 
 
@@ -1624,9 +1624,9 @@ async def guide_5mistakes_submit(request: Request,
         lead_prefix=lm5.KOMMO_LEAD_PREFIX,
         lead_tag=lm5.KOMMO_LEAD_TAG,
         note_intro=lm5.KOMMO_NOTE_INTRO,
-        deliver_wa_text=lm5.WA_TEXT.format(link=lm5.GUIDE_PDF_URL),  # фоллбэк
+        deliver_wa_text=lm5.WA_TEXT.replace("{link}", lm5.GUIDE_PDF_URL),  # фоллбэк
         deliver_wa_text_builder=lm5.wa_text,                        # персонализация
-        deliver_wa_text_en=lm5.WA_TEXT_EN.format(link=lm5.GUIDE_PDF_URL),
+        deliver_wa_text_en=lm5.WA_TEXT_EN.replace("{link}", lm5.GUIDE_PDF_URL),
         deliver_wa_text_builder_en=lm5.wa_text_en,
     )
 
@@ -1668,7 +1668,7 @@ async def guide_5mistakes_submit(request: Request,
         lead_prefix=lm5.KOMMO_LEAD_PREFIX,
         lead_tag=lm5.KOMMO_LEAD_TAG,
         note_intro=lm5.KOMMO_NOTE_INTRO,
-        deliver_wa_text=lm5.WA_TEXT.format(link=lm5.GUIDE_PDF_URL),  # фоллбэк
+        deliver_wa_text=lm5.WA_TEXT.replace("{link}", lm5.GUIDE_PDF_URL),  # фоллбэк
         deliver_wa_text_builder=lm5.wa_text,                        # персонализация
     )
 
@@ -1780,6 +1780,14 @@ async def _handle_quiz_submit(
             wa_text = wa_builder(answers) or wa_text
         except Exception as exc:
             log.warning("leadmagnet WA text builder error: %s", type(exc).__name__)
+    # {consult} → бесплатная консультация. Ref агента тащим дальше: клиент пришёл
+    # по его ссылке за чек-листом, и заявка со второго шага должна закрепиться за
+    # ним же, а не потеряться в общем потоке.
+    if wa_text and "{consult}" in wa_text:
+        base = settings.WEBAPP_URL.rstrip("/")
+        wa_text = wa_text.replace(
+            "{consult}", f"{base}/consultation?ref={ref_slug}" if ref_slug
+            else f"{base}/consultation")
     if wa_text:
         try:
             from app.wazzup import send_wa_text

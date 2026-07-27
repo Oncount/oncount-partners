@@ -19,23 +19,31 @@ EVENT_SLUG = "guide-corp-tax"
 # ссылке» (reader/anyone, проверено). Меняется одной строкой при замене PDF.
 GUIDE_PDF_URL = "https://drive.google.com/file/d/1zVUZRk0QIurSkPVMlK1Mgyu-CB02ZvCo/view"
 
-# Текст WhatsApp-сообщения с чек-листом. {link} подставляется в роуте. Сообщение
-# уходит С нашего номера → клиент может просто ответить = живой диалог с менеджером.
+# Текст WhatsApp-сообщения с чек-листом. {link} подставляется в роуте, {consult} —
+# в _handle_quiz_submit (ссылка на бесплатную консультацию С ref агента, иначе
+# партнёр потерял бы атрибуцию на втором шаге). Сообщение уходит С нашего номера
+# → клиент может просто ответить = живой диалог с менеджером.
 WA_TEXT = (
     "Здравствуйте! Это ONCOUNT 👋\n\n"
-    "Ваш чек-лист «0% Corporate Tax в ОАЭ» — по ссылке:\n{link}\n\n"
-    "Если захотите разобрать именно вашу ситуацию — просто ответьте на это "
-    "сообщение, и наш бухгалтер поможет."
+    "Вы запрашивали чек-лист «0% Corporate Tax в ОАЭ» — высылаю:\n{link}\n\n"
+    "Он поможет понять, попадает ли ваш бизнес под 0%, какие условия для этого "
+    "нужно соблюсти и что стоит проверить до подачи отчёта.\n\n"
+    "И вы всегда можете записаться на бесплатную консультацию с нашим "
+    "бухгалтером — разберём вашу ситуацию:\n{consult}\n\n"
+    "Или просто ответьте на это сообщение 🙂"
 )
 
-# EN-версия WA-сообщения. {link} тот же; PDF пока только на русском — честно
-# помечаем это в скобках.
+# EN-версия WA-сообщения. {link} и {consult} те же; PDF пока только на русском —
+# честно помечаем это в скобках.
 WA_TEXT_EN = (
     "Hello! This is ONCOUNT 👋\n\n"
-    "Here is your checklist \"0% Corporate Tax in the UAE\" "
+    "You requested our checklist \"0% Corporate Tax in the UAE\" — here it is "
     "(the guide is in Russian):\n{link}\n\n"
-    "If you would like us to look at your specific situation, just reply to "
-    "this message and our accountant will help."
+    "It helps you see whether your business qualifies for 0%, what conditions "
+    "you have to meet and what to check before filing.\n\n"
+    "And you can always book a free consultation with our accountant — we'll go "
+    "through your situation:\n{consult}\n\n"
+    "Or just reply to this message 🙂"
 )
 
 # Экран-обложка (шаг 0) — оффер чек-листа.
