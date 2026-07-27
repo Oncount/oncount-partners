@@ -1486,8 +1486,15 @@ def partners_page(request: Request) -> HTMLResponse:
     from app import partners_config as pc
     ref = linkstat.sanitize_ref(request.query_params.get("ref"))
     linkstat.record_click("partners_page", "quiz", ref, request.headers.get("user-agent"))
+    lang = _lang(request)
     return templates.TemplateResponse("partners.html", {
         "request": request,
+        # Калькулятор и блок «кто работает с клиентом» — те же, что в кабинете:
+        # цифры из calc_config, бухгалтеры из ACCOUNTANTS. Два источника правды
+        # здесь развели бы прайс на лендинге и в кабинете.
+        "lang": lang,
+        "calc": calc_data(lang),
+        "accountants": ACCOUNTANTS,
         "hero": pc.HERO,
         "meeting": pc.MEETING,
         "why": pc.WHY,

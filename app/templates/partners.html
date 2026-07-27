@@ -13,6 +13,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Raleway:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
+  <link rel="stylesheet" href="/static/css/oncount.css?v={{ static_v | default('0') }}">
   <style>
     :root{--green:#10463E;--green-2:#1c6a5c;--ink:#15211e;--muted:#5d6b67;
       --line:#e2e8e5;--bg:#f5f7f6;--card:#fff}
@@ -35,12 +36,12 @@
       opacity:.75;font-weight:600;margin-bottom:14px}
     .hero h1{font-size:38px;line-height:1.15;margin-bottom:16px}
     .hero p{font-size:17px;opacity:.9;margin:0 0 26px;max-width:640px}
-    .btns{display:flex;flex-wrap:wrap;gap:12px}
-    .btn{display:inline-block;text-decoration:none;font-weight:600;font-size:16px;
+    .p-btns{display:flex;flex-wrap:wrap;gap:12px}
+    .p-btn{display:inline-block;text-decoration:none;font-weight:600;font-size:16px;
       padding:14px 26px;border-radius:999px;transition:transform .15s ease}
-    .btn:active{transform:scale(.98)}
-    .btn-main{background:#fff;color:var(--green)}
-    .btn-ghost{border:1.5px solid rgba(255,255,255,.55);color:#fff}
+    .p-btn:active{transform:scale(.98)}
+    .p-btn-main{background:#fff;color:var(--green)}
+    .p-btn-ghost{border:1.5px solid rgba(255,255,255,.55);color:#fff}
     /* встреча */
     .meeting{background:#fff;border:1.5px solid var(--line);border-left:5px solid var(--green);
       border-radius:16px;padding:22px 24px;margin:0 0 34px}
@@ -53,10 +54,10 @@
     section > h2{font-size:27px;margin-bottom:10px}
     .lead{color:var(--muted);font-size:16px;margin:0 0 22px;max-width:680px}
     .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
-    .card{background:var(--card);border:1.5px solid var(--line);border-radius:16px;
+    .p-card{background:var(--card);border:1.5px solid var(--line);border-radius:16px;
       padding:20px 22px;font-size:15px}
-    .card h3{font-size:17px;margin-bottom:6px}
-    .card p{margin:0;color:var(--muted)}
+    .p-card h3{font-size:17px;margin-bottom:6px}
+    .p-card p{margin:0;color:var(--muted)}
     ul.plain{list-style:none;margin:0;padding:0;display:grid;
       grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
     ul.plain li{background:var(--card);border:1.5px solid var(--line);border-radius:14px;
@@ -64,6 +65,19 @@
     ul.plain li img{width:15px;height:15px;flex:none;margin-top:4px}
     .card-icon{width:38px;height:38px;display:block;margin-bottom:12px}
     .meet-icon{width:17px;height:17px;vertical-align:-3px;margin-right:7px}
+    /* блок доверия: гарантия слева, лицензия справа */
+    .trust-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+      gap:14px;margin-top:14px}
+    .trust-row h3{font-size:17px;margin-bottom:8px}
+    .trust-row p{margin:0;color:var(--muted);font-size:15px}
+    .doc-figure{margin:0;display:flex;gap:16px;align-items:flex-start}
+    .doc-figure img{width:96px;border:1px solid var(--line);border-radius:8px;display:block}
+    .doc-figure figcaption{font-size:13px;color:var(--muted);line-height:1.5}
+    /* калькулятор приезжает из кабинета — гасим отступы его секции на лендинге */
+    .calc-public .svc-block{margin:0}
+    .calc-public .svc-block-title{font-family:Outfit,sans-serif;font-size:27px;
+      margin-bottom:14px}
+    @media (max-width:640px){ .doc-figure{flex-direction:column} }
     /* шаги */
     .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
     .step{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:20px 22px}
@@ -81,7 +95,7 @@
       text-align:center;margin-bottom:40px}
     .final h2{font-size:28px;margin-bottom:10px}
     .final p{opacity:.9;margin:0 0 22px}
-    .final .btns{justify-content:center}
+    .final .p-btns{justify-content:center}
     /* футер */
     footer{border-top:1px solid var(--line);padding:26px 0 50px;font-size:14px;
       color:var(--muted)}
@@ -91,7 +105,7 @@
       .hero{padding:32px 22px;border-radius:18px}
       .hero h1{font-size:29px}
       section > h2{font-size:23px}
-      .btn{width:100%;text-align:center}
+      .p-btn{width:100%;text-align:center}
     }
   </style>
 </head>
@@ -109,9 +123,9 @@
     <div class="kicker">{{ hero.kicker }}</div>
     <h1>{{ hero.title }}</h1>
     <p>{{ hero.lead }}</p>
-    <div class="btns">
-      <a class="btn btn-main" href="{{ join_href }}">{{ hero.cta }}</a>
-      <a class="btn btn-ghost" href="/login">{{ hero.cta_secondary }}</a>
+    <div class="p-btns">
+      <a class="p-btn p-btn-main" href="{{ join_href }}">{{ hero.cta }}</a>
+      <a class="p-btn p-btn-ghost" href="/login">{{ hero.cta_secondary }}</a>
     </div>
   </div>
 
@@ -137,6 +151,13 @@
     </ul>
   </section>
 
+  {# Калькулятор вознаграждения — ТОТ ЖЕ, что в кабинете агента (_calculator.html):
+     цифры из app/calc_config.py, считает целиком в браузере, ничего не отправляет.
+     Партнёру важно увидеть сумму до регистрации, а не после. #}
+  <section class="calc-public">
+    {% include "_calculator.html" %}
+  </section>
+
   <section>
     <h2>{{ steps.title }}</h2>
     <div class="steps">
@@ -156,6 +177,40 @@
     </ul>
   </section>
 
+  {# Блок доверия: кто именно возьмёт клиента и чем компания это подтверждает.
+     По исследованию ЦА партнёру для рекомендации нужны сигналы доверия и
+     гарантия хэндоффа, а не размер вознаграждения. Бухгалтеры — тот же
+     _accountants.html, что в кабинете и на квизах (один источник правды).
+     Страховку профответственности сюда НЕ выносим: полис DB/PI/2025/197
+     закончился 01.06.2026, публично показывать просроченный документ нельзя —
+     вернём, когда будет продлённый. #}
+  <section>
+    <h2>Кто работает с вашим клиентом</h2>
+    <p class="lead">{{ accountants_title[lang] }} + система регламентов и KPI + IT-софт — для качества и скорости.</p>
+    {% set acc_lang = lang %}{% set acc_align = 'left' %}{% set acc_hide_title = true %}
+    <div class="p-card">{% include "_accountants.html" %}</div>
+
+    <div class="trust-row">
+      <div class="p-card">
+        <h3>🛡 Ошибку бухгалтера закрываем мы</h3>
+        <p>Если бухгалтер ошибётся — штрафы FTA и финансовые потери покрывает
+           ONCOUNT, а не клиент. Вы рискуете отношениями с человеком, которого
+           привели, — поэтому берём этот риск на себя.</p>
+      </div>
+      <figure class="p-card doc-figure">
+        <a href="/static/img/doc-licence.jpg" target="_blank" rel="noopener">
+          <img src="/static/img/doc-licence.jpg" alt="Trade Licence 37408" loading="lazy">
+        </a>
+        <figcaption>
+          <b>Trade Licence №37408</b><br>
+          PADVICE ACCOUNTING AND MANAGEMENT — FZCO, фризона IFZA (Dubai Silicon
+          Oasis). Действует до 13.11.2026. Виды деятельности: Accounting &amp;
+          Bookkeeping, Project Management Services, Banking Consultant.
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
   <section>
     <h2>{{ reviews.title }}</h2>
     <div class="cards">
@@ -173,7 +228,7 @@
     <h2>{{ client_value.title }}</h2>
     <div class="cards">
       {% for c in client_value['items'] %}
-      <div class="card">
+      <div class="p-card">
         <img class="card-icon" src="/static/img/partners/{{ c.icon }}" alt="">
         <h3>{{ c.title }}</h3><p>{{ c.text }}</p>
       </div>
@@ -184,8 +239,8 @@
   <div class="final">
     <h2>Готовы начать?</h2>
     <p>Регистрация в боте занимает минуту — сразу получите личный кабинет и свои ссылки.</p>
-    <div class="btns">
-      <a class="btn btn-main" href="{{ join_href }}">{{ hero.cta }}</a>
+    <div class="p-btns">
+      <a class="p-btn p-btn-main" href="{{ join_href }}">{{ hero.cta }}</a>
     </div>
   </div>
 
