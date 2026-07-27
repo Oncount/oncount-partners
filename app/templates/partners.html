@@ -2,13 +2,13 @@
    Тильде (план 2026-07-27, Фаза 1). Standalone, как quiz.html: свои стили, без
    сайдбара кабинета. Весь текст приходит из app/partners_config.py. #}
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="{{ lang }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#10463E">
-  <title>Партнёрская программа ONCOUNT — бухгалтерия в ОАЭ</title>
-  <meta name="description" content="{{ hero.lead }}">
+  <title>{{ 'ONCOUNT partner program — accounting in the UAE' if lang == 'en' else 'Партнёрская программа ONCOUNT — бухгалтерия в ОАЭ' }}</title>
+  <meta name="description" content="{{ tr(hero.lead) }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Raleway:wght@400;500;600&display=swap" rel="stylesheet">
@@ -93,6 +93,13 @@
     .review p{margin:0 0 14px;font-size:15px}
     .review .who{font-weight:600;font-size:15px}
     .review .role{color:var(--muted);font-size:14px}
+    .review-who{display:flex;align-items:center;gap:12px}
+    .review-who img{width:52px;height:52px;border-radius:50%;object-fit:cover;flex:none}
+    .top-right{display:flex;align-items:center;gap:10px}
+    .lang-sw{display:inline-flex;border:1.5px solid var(--line);background:#fff;
+      border-radius:999px;overflow:hidden;font-size:14px;font-weight:600}
+    .lang-sw a{padding:8px 13px;text-decoration:none;color:var(--muted)}
+    .lang-sw a.on{background:var(--green);color:#fff}
     /* финальный CTA */
     .final{background:var(--green);color:#fff;border-radius:22px;padding:36px 32px;
       text-align:center;margin-bottom:40px}
@@ -119,16 +126,23 @@
     {# logo.png — вариант для тёмного фона: «count» там почти белый и на светлой
        шапке пропадает. Здесь фон светлый → logo-light.png (тёмно-зелёный «count»). #}
     <img src="/static/img/logo-light.png" alt="ONCOUNT">
-    <a class="top-link" href="/login">Войти в кабинет</a>
+    <div class="top-right">
+      {# Переключатель языка: ?lang= понимает и лендинг, и калькулятор, и блок бухгалтеров. #}
+      <span class="lang-sw">
+        <a href="?lang=ru{% if ref %}&ref={{ ref }}{% endif %}" class="{{ 'on' if lang != 'en' }}">RU</a>
+        <a href="?lang=en{% if ref %}&ref={{ ref }}{% endif %}" class="{{ 'on' if lang == 'en' }}">EN</a>
+      </span>
+      <a class="top-link" href="/login">{{ tr(hero.cta_secondary) }}</a>
+    </div>
   </div>
 
   <div class="hero">
-    <div class="kicker">{{ hero.kicker }}</div>
-    <h1>{{ hero.title }}</h1>
-    <p>{{ hero.lead }}</p>
+    <div class="kicker">{{ tr(hero.kicker) }}</div>
+    <h1>{{ tr(hero.title) }}</h1>
+    <p>{{ tr(hero.lead) }}</p>
     <div class="p-btns">
-      <a class="p-btn p-btn-main" href="{{ join_href }}">{{ hero.cta }}</a>
-      <a class="p-btn p-btn-ghost" href="/login">{{ hero.cta_secondary }}</a>
+      <a class="p-btn p-btn-main" href="{{ join_href }}">{{ tr(hero.cta) }}</a>
+      <a class="p-btn p-btn-ghost" href="/login">{{ tr(hero.cta_secondary) }}</a>
     </div>
   </div>
 
@@ -145,10 +159,10 @@
   {% endif %}
 
   <section>
-    <h2>{{ why.title }}</h2>
-    <p class="lead">{{ why.lead }}</p>
+    <h2>{{ tr(why.title) }}</h2>
+    <p class="lead">{{ tr(why.lead) }}</p>
     <ul class="plain">
-      {% for item in why['items'] %}
+      {% for item in tr(why['items']) %}
       <li><img src="/static/img/partners/{{ bullet_icon }}" alt="">{{ item }}</li>
       {% endfor %}
     </ul>
@@ -162,19 +176,19 @@
   </section>
 
   <section>
-    <h2>{{ steps.title }}</h2>
+    <h2>{{ tr(steps.title) }}</h2>
     <div class="steps">
-      {% for num, text in steps['items'] %}
+      {% for num, text in tr(steps['items']) %}
       <div class="step"><b>{{ num }}</b><span>{{ text }}</span></div>
       {% endfor %}
     </div>
   </section>
 
   <section>
-    <h2>{{ audience.title }}</h2>
-    <p class="lead">{{ audience.lead }}</p>
+    <h2>{{ tr(audience.title) }}</h2>
+    <p class="lead">{{ tr(audience.lead) }}</p>
     <ul class="plain">
-      {% for item in audience['items'] %}
+      {% for item in tr(audience['items']) %}
       <li><img src="/static/img/partners/{{ bullet_icon }}" alt="">{{ item }}</li>
       {% endfor %}
     </ul>
@@ -188,62 +202,63 @@
      закончился 01.06.2026, публично показывать просроченный документ нельзя —
      вернём, когда будет продлённый. #}
   <section>
-    <h2>Кто работает с вашим клиентом</h2>
-    <p class="lead">{{ accountants_title[lang] }} + система регламентов и KPI + IT-софт — для качества и скорости.</p>
+    <h2>{{ tr(team_title) }}</h2>
+    <p class="lead">{{ accountants_title[lang] }}{% if lang == 'en' %} + procedures and KPIs + IT tooling — for quality and speed.{% else %} + система регламентов и KPI + IT-софт — для качества и скорости.{% endif %}</p>
+    {# Анжела — менеджер по работе с клиентами: тот же acc_extra, что в кабинете,
+       чтобы партнёр видел не только бухгалтеров, но и того, кто ведёт общение. #}
     {% set acc_lang = lang %}{% set acc_align = 'left' %}{% set acc_hide_title = true %}
+    {% set acc_extra = [{'photo': '/static/img/accountants/anzhela.jpg', 'initial': 'A', 'name': 'Анжела', 'name_en': 'Anzhela', 'role': 'Менеджер по работе с клиентами', 'role_en': 'Client relations manager', 'langs': ['ru', 'gb']}] %}
     <div class="p-card">{% include "_accountants.html" %}</div>
 
     <div class="trust-row">
       <div class="p-card">
-        <h3>🛡 Ошибку бухгалтера закрываем мы</h3>
-        <p>Если бухгалтер ошибётся — штрафы FTA и финансовые потери покрывает
-           ONCOUNT, а не клиент. Вы рискуете отношениями с человеком, которого
-           привели, — поэтому берём этот риск на себя.</p>
+        <h3>🛡 {{ tr(guarantee.title) }}</h3>
+        <p>{{ tr(guarantee.text) }}</p>
       </div>
       <figure class="p-card doc-figure">
-        <a href="/static/img/doc-licence.jpg" target="_blank" rel="noopener">
-          <img src="/static/img/doc-licence.jpg" alt="Trade Licence 37408" loading="lazy">
+        <a href="{{ licence.image }}" target="_blank" rel="noopener">
+          <img src="{{ licence.image }}" alt="Trade Licence 37408" loading="lazy">
         </a>
-        <figcaption>
-          <b>Trade Licence №37408</b><br>
-          PADVICE ACCOUNTING AND MANAGEMENT — FZCO, фризона IFZA (Dubai Silicon
-          Oasis). Действует до 13.11.2026. Виды деятельности: Accounting &amp;
-          Bookkeeping, Project Management Services, Banking Consultant.
-        </figcaption>
+        <figcaption><b>{{ licence.title }}</b><br>{{ tr(licence.text) }}</figcaption>
       </figure>
     </div>
   </section>
 
   <section>
-    <h2>{{ reviews.title }}</h2>
+    <h2>{{ tr(reviews.title) }}</h2>
     <div class="cards">
       {% for r in reviews['items'] %}
       <div class="review">
-        <p>{{ r.text }}</p>
-        <div class="who">{{ r.name }}</div>
-        <div class="role">{{ r.role }}</div>
+        <p>{{ tr(r.text) }}</p>
+        <div class="review-who">
+          <img src="/static/img/partners/{{ r.photo }}" alt="{{ r.name }}" loading="lazy">
+          <div>
+            <div class="who">{{ r.name }}</div>
+            <div class="role">{{ tr(r.role) }}</div>
+          </div>
+        </div>
       </div>
       {% endfor %}
     </div>
   </section>
 
   <section>
-    <h2>{{ client_value.title }}</h2>
+    <h2>{{ tr(client_value.title) }}</h2>
     <div class="cards">
       {% for c in client_value['items'] %}
       <div class="p-card">
         <img class="card-icon" src="/static/img/partners/{{ c.icon }}" alt="">
-        <h3>{{ c.title }}</h3><p>{{ c.text }}</p>
+        <h3>{{ tr(c.title) }}</h3><p>{{ tr(c.text) }}</p>
       </div>
       {% endfor %}
     </div>
   </section>
 
   <div class="final">
-    <h2>Готовы начать?</h2>
-    <p>Регистрация в боте занимает минуту — сразу получите личный кабинет и свои ссылки.</p>
+    <h2>{{ tr(final.title) }}</h2>
+    <p>{{ tr(final.text) }}</p>
     <div class="p-btns">
-      <a class="p-btn p-btn-main" href="{{ join_href }}">{{ hero.cta }}</a>
+      <a class="p-btn p-btn-main" href="{{ join_href }}">{{ tr(hero.cta) }}</a>
     </div>
   </div>
 
@@ -256,7 +271,7 @@
       <a href="{{ contacts.instagram }}" target="_blank" rel="noopener">Instagram</a>
     </div>
     <div class="foot-row">
-      {% for label, href in legal_links %}<a href="{{ href }}">{{ label }}</a>{% endfor %}
+      {% for label, href in legal_links %}<a href="{{ href }}">{{ tr(label) }}</a>{% endfor %}
     </div>
   </footer>
 

@@ -61,17 +61,17 @@ TARIFFS = [
     {
         "key": "new",
         "name": "NEW",
-        "max_tx": 10,
+        "max_tx": 3,
         "commission_aed": 550,
-        "range": "до 10 транзакций в месяц",
-        "range_en": "up to 10 transactions a month",
+        "range": "до 3 транзакций в месяц",
+        "range_en": "up to 3 transactions a month",
         "monthly": [
-            "Ведение учёта до 10 транзакций",
+            "Ведение учёта до 3 транзакций",
             "Онлайн-чат с бухгалтером, ответ в течение 24 часов",
             "Хранение документов",
         ],
         "monthly_en": [
-            "Bookkeeping for up to 10 transactions",
+            "Bookkeeping for up to 3 transactions",
             "Online chat with an accountant, reply within 24 hours",
             "Document storage",
         ],
@@ -86,7 +86,7 @@ TARIFFS = [
         "key": "start",
         "name": "START",
         "max_tx": 50,
-        "commission_aed": 1450,
+        "commission_aed": 1740,
         "range": "до 50 транзакций в месяц",
         "range_en": "up to 50 transactions a month",
         "monthly": [
@@ -278,8 +278,8 @@ INCLUDES = {
     "quarterly_en": _QUARTERLY_EN,
     "yearly": _YEARLY,
     "yearly_en": _YEARLY_EN,
-    "note": "Тариф NEW — минимальный: ведение до 10 транзакций, онлайн-чат с бухгалтером и хранение документов.",
-    "note_en": "The NEW plan is minimal: bookkeeping for up to 10 transactions, online chat with an accountant and document storage.",
+    "note": "Тариф NEW — минимальный: ведение до 3 транзакций, онлайн-чат с бухгалтером и хранение документов.",
+    "note_en": "The NEW plan is minimal: bookkeeping for up to 3 transactions, online chat with an accountant and document storage.",
 }
 
 

@@ -1495,6 +1495,8 @@ def partners_page(request: Request) -> HTMLResponse:
         "lang": lang,
         "calc": calc_data(lang),
         "accountants": ACCOUNTANTS,
+        # tr(значение) — выбор языка для двуязычных полей конфига (ru/en).
+        "tr": lambda value: pc.t(value, lang),
         "hero": pc.HERO,
         "meeting": pc.MEETING,
         "why": pc.WHY,
@@ -1502,10 +1504,31 @@ def partners_page(request: Request) -> HTMLResponse:
         "steps": pc.STEPS,
         "reviews": pc.REVIEWS,
         "client_value": pc.CLIENT_VALUE,
+        "guarantee": pc.GUARANTEE,
+        "licence": pc.LICENCE,
+        "team_title": pc.TEAM_TITLE,
+        "final": pc.FINAL,
         "contacts": pc.CONTACTS,
         "legal_links": pc.LEGAL_LINKS,
         "bullet_icon": pc.BULLET_ICON,
+        "ref": ref,
         "join_href": f"/p/{ref}" if ref else "/join",
+    })
+
+
+@app.get("/policy", response_class=HTMLResponse)
+def policy_page(request: Request) -> HTMLResponse:
+    """Политика конфиденциальности ONCOUNT (план 2026-07-27, Фаза 2). Со старого
+    сайта НЕ переносили: там лежала политика ggacadem.com — чужой проект."""
+    from app import legal_config as lc
+    from app import partners_config as pc
+    lang = _lang(request)
+    return templates.TemplateResponse("legal.html", {
+        "request": request,
+        "lang": lang,
+        "tr": lambda value: pc.t(value, lang),
+        "doc": lc.POLICY,
+        "contacts": pc.CONTACTS,
     })
 
 
