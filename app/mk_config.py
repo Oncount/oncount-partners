@@ -10,9 +10,9 @@
 from app import quiz_config
 
 # Меняется одной строкой при переносе даты МК (правило репо №1 — не хардкод в вёрстке).
-EVENT_SLUG = "mk-buh-2026-07-30"
-EVENT_DATE_HUMAN = "30 июля, 18:00 (по Дубаю)"
-EVENT_DATE_HUMAN_EN = "July 30, 6:00 PM (Dubai time)"
+EVENT_SLUG = "mk-buh-2026-08-06"
+EVENT_DATE_HUMAN = "6 августа, 18:00 (по Дубаю)"
+EVENT_DATE_HUMAN_EN = "August 6, 6:00 PM (Dubai time)"
 
 # Экран-обложка (шаг 0) — оффер мастер-класса (с Marquiz-референса).
 COVER = {
@@ -102,7 +102,7 @@ FINAL_EN = {
 THANKS = {
     "title": "Вы зарегистрированы!",
     "subtitle": (
-        "Ссылку на Zoom пришлём в WhatsApp перед встречей 30 июля. До встречи!"
+        "Ссылку на Zoom пришлём в WhatsApp перед встречей 6 августа. До встречи!"
     ),
 }
 
@@ -131,10 +131,10 @@ SOCIALS_EN = [
 ]
 
 # Параметры лида в Kommo воронку 1.1 (под предохранителем QUIZ_KOMMO_LIVE).
-KOMMO_LEAD_PREFIX = "Мастер-класс 30 июля"
+KOMMO_LEAD_PREFIX = "Мастер-класс 6 августа"
 KOMMO_LEAD_TAG = "masterclass"
 KOMMO_NOTE_INTRO = (
-    "Регистрация на мастер-класс с главбухом ONCOUNT (30 июля, 18:00 Дубай)."
+    "Регистрация на мастер-класс с главбухом ONCOUNT (6 августа, 18:00 Дубай)."
 )
 
 # Авто-подтверждение участнику в WhatsApp сразу после регистрации (решение Николь
