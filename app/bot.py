@@ -1,8 +1,11 @@
 """Telegram-бот ONCOUNT Partners + Community.
 
 Один токен @community_oncount_bot обслуживает:
-1. Курс «Ваш первый AI-сотрудник» (готовый курс в личном кабинете).
-2. Партнёрскую программу (онбординг, реф-ссылки, передача клиента, статистика, продукты, FAQ).
+1. Партнёрскую программу (онбординг, реф-ссылки, передача клиента, статистика, продукты, FAQ).
+
+Курс «Ваш первый AI-сотрудник» убран из меню (2026-07-27, решение Николь). Хендлер
+`course:practicum` оставлен: у людей в чатах висят старые сообщения с этой кнопкой,
+и нажатие на неё не должно проваливаться в тишину.
 """
 from __future__ import annotations
 
@@ -206,7 +209,6 @@ def lang_picker_kb() -> InlineKeyboardMarkup:
 
 def main_menu_new(lang: str = DEFAULT_LANG) -> InlineKeyboardMarkup:
     return _menu([
-        (b("course_practicum", lang), "course:practicum"),
         (b("partner_intro", lang), "partner:intro"),
         (b("lang_change", lang), "lang:pick"),
     ])
@@ -215,7 +217,6 @@ def main_menu_new(lang: str = DEFAULT_LANG) -> InlineKeyboardMarkup:
 def menu_partner(lang: str = DEFAULT_LANG) -> InlineKeyboardMarkup:
     """Меню партнёра. Остальные функции — через команды и через ЛК."""
     return _menu([
-        (b("course_practicum", lang), "course:practicum"),
         (b("partner_intro_oncount", lang), "partner:intro"),
         (b("transfer", lang), "partner:transfer"),
         (b("open_lk", lang), "partner:open-lk"),

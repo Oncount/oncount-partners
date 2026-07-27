@@ -12,18 +12,12 @@ TEXTS: dict[str, dict[str, str]] = {
         "ru": (
             "Привет, {first_name}! 👋\n\n"
             "Я — бот ONCOUNT: лицензированной бухгалтерии полного цикла в ОАЭ.\n\n"
-            "С чего хотите начать?\n\n"
-            "🎓 <b>«Ваш первый AI-сотрудник»</b> — за ~2 часа настроишь "
-            "2 AI-сотрудников, которые делают сайты и презентации. Бесплатно.\n"
             "🤝 <b>Партнёрская программа</b> — приводите клиентов, получайте вознаграждение.\n\n"
             "Выберите внизу 👇"
         ),
         "en": (
             "Hi, {first_name}! 👋\n\n"
             "I'm the ONCOUNT bot — a licensed full-cycle accounting firm in the UAE.\n\n"
-            "Where would you like to start?\n\n"
-            "🎓 <b>“Your first AI employee”</b> — in ~2 hours set up "
-            "2 AI employees that build websites and presentations. Free.\n"
             "🤝 <b>Partner program</b> — introduce clients, earn rewards.\n\n"
             "Pick an option below 👇"
         ),
