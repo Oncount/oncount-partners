@@ -1439,8 +1439,12 @@ def _balance_kpi(session: Session, partner: Partner) -> dict:
     # 2026-07-21), а не сумма чеков клиентов: партнёру показываем его доход,
     # чужой оборот его не касается. NULL-комиссии дают 0. Плюс доход 2-го уровня
     # (l2_total) — комиссия за суб-агентов, не привязана к лидам.
-    earned_aed = (sum((getattr(l, "commission_aed", None) or 0) for l in won_rows)
-                  + l2_total(partner))
+    # float() на каждом слагаемом обязателен: commission_aed приходит из Postgres
+    # как Decimal, l2_total() возвращает float, а Decimal + float — TypeError
+    # (даже когда float равен 0.0). Без этого /dashboard падал 500 у любого
+    # партнёра с хотя бы одной заполненной комиссией.
+    earned_aed = (sum(float(getattr(l, "commission_aed", None) or 0) for l in won_rows)
+                  + float(l2_total(partner)))
     return {
         "leads": leads_count,
         "active_leads": active_count,
@@ -2664,8 +2668,10 @@ def dashboard(request: Request, session: Session = Depends(get_session)) -> HTML
     won_rows = leads_q.filter(Lead.status == "won").all()
     # «Заработано» — комиссия партнёра, не сумма чеков клиентов (решение Николь
     # 2026-07-21). NULL-комиссии дают 0. Плюс доход 2-го уровня (за суб-агентов).
-    earned_total = (sum((getattr(l, "commission_aed", None) or 0) for l in won_rows)
-                    + l2_total(partner))
+    # float() на каждом слагаемом — см. комментарий в _balance_kpi: Decimal из
+    # Postgres + float из l2_total давали TypeError и 500 на /dashboard.
+    earned_total = (sum(float(getattr(l, "commission_aed", None) or 0) for l in won_rows)
+                    + float(l2_total(partner)))
     # 3 шага (решение Николь 2026-07-23, вместо прежних 4): ссылка+текст клиенту →
     # 2 видео → или передать контакт клиента (менеджер сам ведёт и переводит
     # вознаграждение). Шаги 1 и 3 — два альтернативных пути привести клиента.
