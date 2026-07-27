@@ -1497,6 +1497,7 @@ def partners_page(request: Request) -> HTMLResponse:
         "client_value": pc.CLIENT_VALUE,
         "contacts": pc.CONTACTS,
         "legal_links": pc.LEGAL_LINKS,
+        "bullet_icon": pc.BULLET_ICON,
         "join_href": f"/p/{ref}" if ref else "/join",
     })
 
