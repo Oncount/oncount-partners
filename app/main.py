@@ -1507,6 +1507,7 @@ def partners_page(request: Request) -> HTMLResponse:
         "client_value": pc.CLIENT_VALUE,
         "guarantee": pc.GUARANTEE,
         "licence": pc.LICENCE,
+        "insurance": pc.INSURANCE,
         "team_title": pc.TEAM_TITLE,
         "final": pc.FINAL,
         "contacts": pc.CONTACTS,

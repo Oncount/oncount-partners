@@ -162,7 +162,7 @@ REVIEWS = {
         },
         {
             "photo": "review-razumov.jpg",
-            "name": {"ru": "Николай Разумов", "en": "Oliver"},
+            "name": "Oliver",
             "role": {"ru": "Менеджер в юридической компании",
                      "en": "Manager at a law firm"},
             "text": {
@@ -259,13 +259,24 @@ LICENCE = {
     "image": "/static/img/doc-licence.jpg",
     "title": "Trade Licence №37408",
     "text": {
-        "ru": "PADVICE ACCOUNTING AND MANAGEMENT — FZCO, фризона IFZA (Dubai Silicon "
-              "Oasis). Действует до 13.11.2026. Виды деятельности: Accounting & "
-              "Bookkeeping, Project Management Services, Banking Consultant.",
-        "en": "PADVICE ACCOUNTING AND MANAGEMENT — FZCO, IFZA free zone (Dubai Silicon "
-              "Oasis). Valid until 13.11.2026. Activities: Accounting & Bookkeeping, "
-              "Project Management Services, Banking Consultant.",
+        "ru": "Виды деятельности: Accounting & Bookkeeping, Project Management "
+              "Services, Banking Consultant.",
+        "en": "Activities: Accounting & Bookkeeping, Project Management Services, "
+              "Banking Consultant.",
     },
+}
+
+# Полис профессиональной ответственности. ⚠️ Период DB/PI/2025/197 закончился
+# 01.06.2026 — публикуем по решению Николь 2026-07-28; как придёт продлённый,
+# заменить скан static/img/doc-insurance.jpg (премия и оборот на нём замылены).
+INSURANCE = {
+    "image": "/static/img/doc-insurance.jpg",
+    "title": {"ru": "Страхование профессиональных рисков",
+              "en": "Professional indemnity insurance"},
+    "text": {"ru": "Лимит ответственности 1 000 000 AED. Ошибка в учёте — это наш "
+                   "риск, а не расходы клиента.",
+             "en": "Cover limit of AED 1,000,000. A bookkeeping mistake is our risk, "
+                   "not the client's expense."},
 }
 
 TEAM_TITLE = {"ru": "Кто работает с вашим клиентом", "en": "Who works with your client"}
