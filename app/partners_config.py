@@ -23,9 +23,11 @@ HERO = {
     "title": {"ru": "Приводите клиентов в ONCOUNT и получайте вознаграждение",
               "en": "Refer clients to ONCOUNT and earn a reward"},
     "lead": {"ru": "Вы передаёте клиента — мы ведём его бухгалтерию. "
-                   "Вознаграждение приходит, когда клиент оплатил обслуживание.",
+                   "Вознаграждение приходит к вам, когда клиент оплатил и "
+                   "прошёл онбординг.",
              "en": "You introduce the client — we take over the accounting. "
-                   "Your reward arrives once the client pays for the service."},
+                   "Your reward arrives once the client has paid and completed "
+                   "onboarding."},
     "call": {"ru": "Станьте партнёром ONCOUNT и зарабатывайте, не отвлекаясь от основной работы.",
              "en": "Become an ONCOUNT partner and earn without stepping away from your main job."},
     "cta": {"ru": "Записаться на Zoom с Николь", "en": "Book a Zoom with Nikole"},
