@@ -280,9 +280,9 @@
       <div class="review">
         <p>{{ tr(r.text) }}</p>
         <div class="review-who">
-          <img src="/static/img/partners/{{ r.photo }}" alt="{{ r.name }}" loading="lazy">
+          <img src="/static/img/partners/{{ r.photo }}" alt="{{ tr(r.name) }}" loading="lazy">
           <div>
-            <div class="who">{{ r.name }}</div>
+            <div class="who">{{ tr(r.name) }}</div>
             <div class="role">{{ tr(r.role) }}</div>
           </div>
         </div>

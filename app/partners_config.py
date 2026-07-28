@@ -141,7 +141,7 @@ REVIEWS = {
     "items": [
         {
             "photo": "review-starovoytov.jpg",
-            "name": "Олег Старовойтов",
+            "name": {"ru": "Олег Старовойтов", "en": "Oleg Starovoytov"},
             "role": {"ru": "Владелец консалтинговой фирмы в Дубае",
                      "en": "Owner of a consulting firm in Dubai"},
             "text": {
@@ -160,7 +160,7 @@ REVIEWS = {
         },
         {
             "photo": "review-razumov.jpg",
-            "name": "Николай Разумов",
+            "name": {"ru": "Николай Разумов", "en": "Oliver"},
             "role": {"ru": "Менеджер в юридической компании",
                      "en": "Manager at a law firm"},
             "text": {
@@ -179,7 +179,7 @@ REVIEWS = {
         },
         {
             "photo": "review-malyshev.jpg",
-            "name": "Никита Малышев",
+            "name": {"ru": "Никита Малышев", "en": "Nikita Malyshev"},
             "role": {"ru": "Риелтор", "en": "Real estate agent"},
             "text": {
                 "ru": "С ONCOUNT сотрудничаю недавно. 3 месяца назад передал клиента и "
