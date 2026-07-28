@@ -244,14 +244,10 @@ GUARANTEE = {
     "text": {
         "ru": "У наших бухгалтеров есть регламенты и KPI, а у компании — страховка "
               "профессиональных рисков. Вместе это сводит вероятность штрафа почти к "
-              "нулю. А если ошибка всё-таки случится, разбираться с ней и платить будем "
-              "мы, а не клиент. Вы приводите к нам человека, который вам доверяет, — мы "
-              "дорожим и вашей репутацией, и своей.",
+              "нулю.",
         "en": "Our accountants work to written procedures and KPIs, and the company "
               "carries professional indemnity insurance. Together that brings the risk "
-              "of a penalty close to zero. And if a mistake does happen, we deal with it "
-              "and we pay — not the client. You are introducing someone who trusts you, "
-              "and we value your reputation as much as our own.",
+              "of a penalty close to zero.",
     },
 }
 
