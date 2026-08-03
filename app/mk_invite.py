@@ -20,8 +20,8 @@ DATE_HUMAN = "6 августа, 18:00 по Дубаю"
 TOPIC = "отчёт по Corporate Tax и как законно платить меньше налогов"
 
 
-def agent_text(name: str | None) -> str:
-    """Сопроводительное агенту: что за событие и что с этим делать."""
+def agent_text(name: str | None, base_url: str) -> str:
+    """Сопроводительное агенту: событие, что делать и где кабинет."""
     greeting = f"{name}, привет! 👋" if name else "Привет! 👋"
     return (
         f"{greeting}\n\n"
@@ -29,7 +29,9 @@ def agent_text(name: str | None) -> str:
         f"Разберём {TOPIC}.\n\n"
         "Позовите знакомых бизнесменов — поможем им.\n\n"
         "Ниже готовый текст с вашей персональной ссылкой: перешлите его клиенту "
-        "как есть. Все, кто зарегистрируется по ней, закрепятся за вами."
+        "как есть. Все, кто зарегистрируется по ней, закрепятся за вами.\n\n"
+        f"🌐 {base_url.rstrip('/')} — это ваш личный кабинет партнёра, тут "
+        "отмечаются все заявки и комиссии к выплате. Вход через телеграм или ватсап."
     )
 
 
@@ -48,4 +50,4 @@ def client_text(link: str) -> str:
 def build(partner, base_url: str) -> tuple[str, str]:
     """Пара сообщений (агенту, для клиента) под конкретного партнёра."""
     link = f"{base_url.rstrip('/')}/mk?ref={partner.ref_slug}"
-    return agent_text(partner.first_name), client_text(link)
+    return agent_text(partner.first_name, base_url), client_text(link)
