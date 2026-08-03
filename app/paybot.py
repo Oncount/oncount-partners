@@ -261,12 +261,32 @@ async def on_added_to_chat(ev: ChatMemberUpdated) -> None:
         return
 
     can_invite = bool(getattr(ev.new_chat_member, "can_invite_users", False))
+
+    # Чат перезаписываем ОСМОТРИТЕЛЬНО. 03.08.2026 бота добавили в два чата
+    # подряд: сначала в служебный (без прав), следом в настоящий (админом).
+    # Слепая перезапись «последним победившим» означала бы, что случайное
+    # добавление в посторонний чат молча уводит выдачу доступа не туда.
+    # Правило: рабочим считается чат, где у бота ЕСТЬ право на приглашения;
+    # чат без прав не вытесняет уже настроенный.
     with SessionLocal() as s:
-        _set_setting(s, CHAT_KEY, str(chat.id))
+        current = _get_setting(s, CHAT_KEY)
+        if can_invite or not current:
+            _set_setting(s, CHAT_KEY, str(chat.id))
+            replaced = bool(current and current != str(chat.id))
+        else:
+            replaced = False
+            log.info("paybot: чат %s без прав, оставляем настроенный %s", chat.id, current)
+            await _notify_admin(
+                f"ℹ️ Бота добавили в чат «{chat.title or chat.id}», но прав на "
+                f"приглашения там нет. Рабочим остаётся чат {current}.")
+            return
+
     log.info("paybot добавлен в чат %s (%s), can_invite=%s", chat.id, status, can_invite)
+    note = T.CHAT_RIGHTS_OK if can_invite else T.CHAT_RIGHTS_MISSING
+    if replaced:
+        note += f"\n\n(Прежний чат {current} заменён на этот.)"
     await _notify_admin(T.CHAT_LINKED_ADMIN.format(
-        title=chat.title or "без названия", chat_id=chat.id,
-        rights=T.CHAT_RIGHTS_OK if can_invite else T.CHAT_RIGHTS_MISSING))
+        title=chat.title or "без названия", chat_id=chat.id, rights=note))
 
 
 # ─── выдача доступа ──────────────────────────────────────────────────────────
