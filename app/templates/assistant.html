@@ -216,6 +216,82 @@
     .doc-name{font-size:14px;font-weight:600;word-break:break-word}
     .doc-note{font-size:12px;color:var(--muted)}
 
+    /* Телефон в руке. Разметка одна на оба режима: на узком экране .screen —
+       display:contents, то есть переписка рисуется обычной карточкой (фото
+       телефона там не нужно: экран внутри экрана нечитаем). От 1000px .screen
+       становится настоящим экраном — абсолютной рамкой поверх фотографии, а
+       размеры внутри считаются в em от font-size экрана: меняется одна цифра —
+       и весь интерфейс масштабируется вместе с телефоном. */
+    .phone-img,.island,.ph-status,.ph-input,.ph-home{display:none}
+    .screen{display:contents}
+
+    @media (min-width:1000px){
+      .demo-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,500px);
+        gap:46px;align-items:center}
+      .phone{position:relative;width:100%;max-width:500px;margin:0 auto}
+      .phone-img{display:block;width:100%;height:auto}
+      /* Проценты — из самой фотографии: экран занимает 13.256%/3.699% от левого
+         верхнего угла кадра и 48.221%×79.326% его размера. Меняется картинка —
+         пересчитываются эти четыре числа, больше ничего. */
+      .screen{display:flex;flex-direction:column;position:absolute;
+        left:13.256%;top:3.699%;width:48.221%;height:79.326%;
+        background:#f4f7f6;border-radius:8%/3.7%;overflow:hidden;font-size:10.5px}
+      .island{display:block;position:absolute;top:1.4%;left:50%;z-index:4;
+        transform:translateX(-50%);width:31%;height:2.8%;background:#0c0e0d;
+        border-radius:999px}
+      .ph-status{display:flex;align-items:center;justify-content:space-between;
+        padding:.5em .9em .25em;font-size:.82em;font-weight:600;
+        background:#fafcfb;color:var(--ink)}
+      .ph-ico{display:flex;align-items:center;gap:.4em}
+      .bars{display:flex;align-items:flex-end;gap:1px;height:.75em}
+      .bars i{width:.16em;background:var(--ink);border-radius:1px}
+      .bars i:nth-child(1){height:35%}.bars i:nth-child(2){height:55%}
+      .bars i:nth-child(3){height:78%}.bars i:nth-child(4){height:100%}
+      .batt{width:1.5em;height:.75em;border:1px solid var(--ink);border-radius:.2em;
+        padding:1px;display:flex}
+      .batt b{flex:1;background:var(--ink);border-radius:1px}
+      .phone .chat{max-width:none;margin:0;border:0;border-radius:0;box-shadow:none;
+        background:#f4f7f6;flex:1;min-height:0;display:flex;flex-direction:column}
+      .phone .chat-top{gap:.7em;padding:.6em .8em}
+      .phone .ava{width:2.4em;height:2.4em;font-size:.85em}
+      .phone .chat-name{font-size:1.02em}
+      .phone .chat-status{font-size:.84em}
+      /* flex:none обязателен: без него сообщения сжимаются по высоте и текст
+         вылезает из «пузыря» — голосовое обрезалось сверху. */
+      .phone .chat-body{flex:1;justify-content:flex-end;overflow:hidden;
+        padding:.8em .65em;gap:.6em}
+      .phone .chat-body>*{flex:none}
+      .phone .msg{font-size:1em;max-width:93%;padding:.7em .8em;border-radius:1.1em}
+      .phone .msg.out{border-bottom-right-radius:.3em}
+      .phone .msg.in{border-bottom-left-radius:.3em}
+      .phone .voice{gap:.6em}
+      .phone .play{width:2.1em;height:2.1em}
+      .phone .play:after{border-left-width:.55em;border-top-width:.38em;
+        border-bottom-width:.38em}
+      .phone .wave{height:1.6em}
+      .phone .dur{font-size:.78em}
+      .phone .transcript{margin-top:.55em;padding-top:.55em;font-size:.96em}
+      .phone .msg ol{margin:.5em 0 .5em 1.2em;font-size:.96em;gap:.3em}
+      .phone .msg .time{font-size:.74em;margin-top:.4em}
+      /* Карточке документа даём всю ширину и шрифт помельче: иначе длинное имя
+         файла рвётся посередине слова («…doc / x»). */
+      .phone .msg.doc{max-width:100%}
+      .phone .doc{gap:.6em}
+      .phone .doc-ico{width:2.2em;height:2.2em;border-radius:.5em;font-size:1em}
+      .phone .doc-name{font-size:.85em}
+      .phone .doc-note{font-size:.78em}
+      .ph-input{display:flex;align-items:center;gap:.55em;padding:.5em .7em .6em;
+        background:#fafcfb;border-top:1px solid var(--line)}
+      .ph-field{flex:1;border:1px solid var(--line);border-radius:999px;
+        padding:.5em .9em;font-size:.92em;color:var(--muted);background:#fff}
+      .ph-mic{width:1.5em;height:1.5em;flex:none;color:var(--green-2)}
+      .ph-mic svg{width:100%;height:100%;display:block}
+      .ph-home{display:block;height:1.3em;background:#fafcfb;position:relative}
+      .ph-home:after{content:"";position:absolute;left:50%;top:.35em;
+        transform:translateX(-50%);width:36%;height:.28em;border-radius:999px;
+        background:rgba(21,33,30,.32)}
+    }
+
     /* ─── ещё 13 задач ───────────────────────────────────────────────────── */
     details.more{background:var(--card);border:1.5px solid var(--line);
       border-radius:16px;padding:18px 24px;margin-top:14px}
@@ -496,48 +572,82 @@
   </section>
 
   <section class="rise">
-    <div class="kicker">{{ demo.kicker }}</div>
-    <h2>{{ demo.title }}</h2>
-    <p class="lead" style="margin-top:14px">{{ demo.lead }}</p>
+   <div class="demo-split">
+    <div class="demo-copy">
+      <div class="kicker">{{ demo.kicker }}</div>
+      <h2>{{ demo.title }}</h2>
+      <p class="lead" style="margin-top:14px">{{ demo.lead }}</p>
+    </div>
 
-    <div class="chat">
-      <div class="chat-top">
-        <div class="ava">БА</div>
-        <div>
-          <div class="chat-name">{{ demo.chat_name }}</div>
-          <div class="chat-status">{{ demo.chat_status }}</div>
+    <div class="phone">
+      <img class="phone-img" src="/static/img/assistant/hand-phone.webp"
+           alt="Телефон в руке: переписка с бизнес-ассистентом в телеграме"
+           width="562" height="757" loading="lazy" decoding="async">
+      <div class="screen">
+        <div class="island" aria-hidden="true"></div>
+        <div class="ph-status" aria-hidden="true">
+          <span>{{ demo.voice_time }}</span>
+          <span class="ph-ico">
+            <span class="bars"><i></i><i></i><i></i><i></i></span>
+            <span class="batt"><b></b></span>
+          </span>
         </div>
-      </div>
-      <div class="chat-body">
-        <div class="msg out">
-          <div class="voice">
-            <div class="play" aria-hidden="true"></div>
-            <div class="wave" aria-hidden="true">
-              {% for h in [6,12,20,14,24,9,17,22,11,26,15,8,19,23,10,16,25,13,7,18,21,12,9,15,6] %}<span style="height:{{ h }}px"></span>{% endfor %}
+        <div class="chat">
+          <div class="chat-top">
+            <div class="ava">БА</div>
+            <div>
+              <div class="chat-name">{{ demo.chat_name }}</div>
+              <div class="chat-status">{{ demo.chat_status }}</div>
             </div>
-            <span class="dur">{{ demo.voice_duration }}</span>
           </div>
-          <div class="transcript">{{ demo.voice_text }}</div>
-          <div class="time">{{ demo.voice_time }} ✓✓</div>
+          <div class="chat-body">
+            <div class="msg out">
+              <div class="voice">
+                <div class="play" aria-hidden="true"></div>
+                {# высоты в процентах, а не в пикселях: внутри телефона дорожка
+                   в полтора раза ниже, и пиксельные столбики вылезали бы #}
+                <div class="wave" aria-hidden="true">
+                  {% for h in [23,46,77,54,92,35,65,85,42,100,58,31,73,88,38,62,96,50,27,69,81,46,35,58,23] %}<span style="height:{{ h }}%"></span>{% endfor %}
+                </div>
+                <span class="dur">{{ demo.voice_duration }}</span>
+              </div>
+              <div class="transcript">{{ demo.voice_text }}</div>
+              <div class="time">{{ demo.voice_time }} ✓✓</div>
+            </div>
+
+            <div class="msg in">
+              {{ demo.reply_intro }}
+              <ol>{% for step in demo.reply_steps %}<li>{{ step }}</li>{% endfor %}</ol>
+              {{ demo.reply_outro }}
+              <div class="time">{{ demo.reply_time }}</div>
+            </div>
+
+            <div class="msg in doc">
+              <div class="doc-ico" aria-hidden="true">▤</div>
+              <div>
+                <div class="doc-name">{{ demo.doc_name }}</div>
+                <div class="doc-note">{{ demo.doc_note }}</div>
+              </div>
+              <div class="time" style="margin:0 0 0 auto">{{ demo.doc_time }}</div>
+            </div>
+          </div>
         </div>
 
-        <div class="msg in">
-          {{ demo.reply_intro }}
-          <ol>{% for step in demo.reply_steps %}<li>{{ step }}</li>{% endfor %}</ol>
-          {{ demo.reply_outro }}
-          <div class="time">{{ demo.reply_time }}</div>
+        <div class="ph-input" aria-hidden="true">
+          <span class="ph-field">{{ demo.chat_input }}</span>
+          <span class="ph-mic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.8" stroke-linecap="round">
+              <rect x="9" y="2.5" width="6" height="11" rx="3"></rect>
+              <path d="M5.5 11a6.5 6.5 0 0 0 13 0"></path>
+              <path d="M12 17.5V21"></path>
+            </svg>
+          </span>
         </div>
-
-        <div class="msg in doc">
-          <div class="doc-ico" aria-hidden="true">▤</div>
-          <div>
-            <div class="doc-name">{{ demo.doc_name }}</div>
-            <div class="doc-note">{{ demo.doc_note }}</div>
-          </div>
-          <div class="time" style="margin:0 0 0 auto">{{ demo.doc_time }}</div>
-        </div>
+        <div class="ph-home" aria-hidden="true"></div>
       </div>
     </div>
+   </div>
   </section>
 
   <section class="rise">
