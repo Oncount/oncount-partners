@@ -86,6 +86,10 @@
       padding:22px 18px;text-align:center;color:var(--muted);font-size:15px;line-height:1.55;
       margin:0 0 22px}
     .link-btn{display:block;text-align:center;text-decoration:none}
+    /* Разделитель «кнопка оплаты / ручные реквизиты» — виден, только когда есть оба пути */
+    .or-line{display:flex;align-items:center;gap:12px;margin:0 0 14px;
+      font-size:13.5px;color:var(--muted);font-weight:500}
+    .or-line::before,.or-line::after{content:"";flex:1;height:1px;background:var(--line)}
 
     /* ── Кнопки ── */
     .btn{appearance:none;border:none;border-radius:12px;font-family:Outfit,sans-serif;
@@ -172,7 +176,14 @@
           {% if m.link %}
           <a class="btn btn-primary link-btn" href="{{ m.link }}" target="_blank" rel="noopener"
              style="margin-bottom:18px">{{ m.link_label or 'Оплатить' }}</a>
-          {% else %}
+          {% endif %}
+
+          {# Кнопка оплаты и ручные реквизиты могут жить вместе: у платёжной
+             ссылки бывает сбой (карта не прошла, страница не открылась), и тогда
+             запасной путь должен быть тут же, а не в переписке с менеджером.
+             Разделитель показываем только когда есть и то, и другое. #}
+          {% if m.fields_ready %}
+          {% if m.link %}<p class="or-line">{{ m.fields_intro or 'Или переведите вручную' }}</p>{% endif %}
           <div class="req">
             {% for f in m.fields %}
             <div class="req-row">
