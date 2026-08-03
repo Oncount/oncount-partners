@@ -49,6 +49,10 @@ class Settings:
     # группу (событие my_chat_member → таблица bot_settings). Переменная — только
     # для случая «хотим задать вручную»; пусто = берём из bot_settings.
     INTENSIVE_CHAT_ID: str = os.getenv("INTENSIVE_CHAT_ID", "")
+    # Закрытый канал Николь (план 2026-08-03). Тот же приём, что и с чатом выше:
+    # бот узнаёт канал сам из my_chat_member, когда его сделают админом.
+    # Переменная — ручное переопределение; пусто = берём из bot_settings.
+    NIKOL_CHANNEL_ID: str = os.getenv("NIKOL_CHANNEL_ID", "")
     # Wazzup24 — доставка кода входа / уведомлений в WhatsApp. ПОКА напрямую (план:
     # следующий PR переведёт отправку на api /api/partner/notify). Пустой ключ/канал
     # → dev-режим: в сеть ничего не уходит (см. app/wazzup.py).

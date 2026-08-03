@@ -603,6 +603,42 @@ class IntensiveLead(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
 
+class ChannelSubscriber(Base):
+    """Человек у привратника закрытого канала Николь (план 2026-08-03).
+
+    Канал про деньги и риски → вход только после самодекларации «мне есть 18».
+    Строка живёт от первого вопроса до выданного доступа и хранит ГЛАВНОЕ —
+    дату подтверждения возраста. Без неё «мы спрашивали» ничем не подтвердить.
+
+    Почему отдельная таблица, а не поле в `IntensiveLead`: там путь клиента
+    интенсива (счёт, оплата, чат участников). Смешать два потока в одной строке —
+    значит однажды выдать доступ в канал за оплату интенсива или наоборот.
+
+    Безопасность: `telegram_id`, username и имя — ПД, в лог уходит только id.
+    Инвайт одноразовый и на 24 часа — общую ссылку в закрытый канал не раздаём.
+    """
+    __tablename__ = "channel_subscribers"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
+    username: Mapped[str | None] = mapped_column(String(64))
+    first_name: Mapped[str | None] = mapped_column(String(128))
+    # asked → confirmed (сказал «есть 18») → invited (ссылка выдана) →
+    # in_channel (вошёл, подтверждено событием chat_member) → left (вышел).
+    # declined — сказал «нет»; отказ не пожизненный, повторный заход снова спросит.
+    status: Mapped[str] = mapped_column(String(16), default="asked", index=True)
+    # Дата самодекларации 18+. Главное поле таблицы.
+    age_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Откуда пришёл: deeplink (ссылка на бота) | join_request (заявка в канал).
+    source: Mapped[str | None] = mapped_column(String(16))
+    # Висит ли необработанная заявка на вступление: если да — доступ выдаётся
+    # одобрением заявки, а не новой ссылкой.
+    pending_request: Mapped[bool] = mapped_column(Boolean, default=False)
+    invite_link: Mapped[str | None] = mapped_column(Text)
+    invited_at: Mapped[datetime | None] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
 class BotSetting(Base):
     """Пара ключ→значение для настроек, которые бот узнаёт САМ в рантайме.
 

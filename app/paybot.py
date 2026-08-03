@@ -37,7 +37,7 @@ from aiogram.types import (
     Message,
 )
 
-from app import lava, paybot_config as T
+from app import channel_gate, lava, paybot_config as T
 from app.config import settings
 from app.db import SessionLocal
 from app.models import BotSetting, IntensiveLead, Partner
@@ -130,8 +130,14 @@ async def _notify_admin(text: str) -> None:
 
 @dp.message(CommandStart(deep_link=True))
 async def start_deep(msg: Message, command: CommandObject) -> None:
-    """/start ref_<slug> — приход по ссылке агента, атрибуция как на /pay."""
+    """/start ref_<slug> — приход по ссылке агента, атрибуция как на /pay.
+    /start channel — вход в закрытый канал Николь (план 2026-08-03)."""
     payload = (command.args or "").strip()
+    if payload == "channel":
+        # Другая аудитория и другой поток: человек пришёл за каналом, оффер
+        # интенсива ему сейчас не нужен. Вопрос про 18+ задаёт привратник.
+        await channel_gate.ask_age(msg.bot, msg.chat.id, msg.from_user, "deeplink")
+        return
     ref = payload[4:][:16] if payload.startswith("ref_") else None
     with SessionLocal() as s:
         lead = _lead(s, msg.from_user)
@@ -247,7 +253,7 @@ async def on_text(msg: Message) -> None:
 
 # ─── бота добавили в группу: узнаём chat_id сам ──────────────────────────────
 
-@dp.my_chat_member()
+@dp.my_chat_member(F.chat.type.in_({"group", "supergroup"}))
 async def on_added_to_chat(ev: ChatMemberUpdated) -> None:
     """Ключевой обработчик: бота нельзя завести в чат из кода, но когда человек
     его добавит, Telegram присылает это событие. Ловим chat_id, проверяем права
@@ -386,13 +392,25 @@ async def cmd_id(msg: Message) -> None:
     await msg.answer(f"chat_id: <code>{msg.chat.id}</code>")
 
 
+@dp.message(Command("channel"))
+async def cmd_channel(msg: Message) -> None:
+    """Вход в закрытый канал: тот же вопрос про 18+, что и по ссылке.
+    Нужен, чтобы человеку было куда вернуться, когда персональная ссылка истечёт."""
+    await channel_gate.ask_age(msg.bot, msg.chat.id, msg.from_user, "deeplink")
+
+
 async def main() -> None:
     if bot is None:
         log.info("PAY_BOT_TOKEN пуст → бот оплат не поднимается")
         return
+    # Привратник канала — отдельным роутером: свои события (заявки, канал в
+    # my_chat_member), свои тексты. Хендлеры самого dp разбираются раньше, так
+    # что поток интенсива остаётся нетронутым.
+    dp.include_router(channel_gate.router)
     me = await bot.get_me()
-    log.info("Paybot polling start, bot=@%s, lava=%s, chat=%s",
-             me.username, lava.is_configured(), chat_id() or "не подключён")
+    log.info("Paybot polling start, bot=@%s, lava=%s, chat=%s, channel=%s",
+             me.username, lava.is_configured(), chat_id() or "не подключён",
+             channel_gate.channel_id() or "не подключён")
     asyncio.create_task(_payment_loop())
     try:
         await dp.start_polling(bot)
