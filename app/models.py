@@ -559,3 +559,60 @@ class PaymentClaim(Base):
     # 'new' — сказал, что оплатил | 'confirmed' — нашли в выписке | 'rejected' — не нашли.
     status: Mapped[str] = mapped_column(String(16), default="new", index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
+class IntensiveLead(Base):
+    """Человек в боте оплат интенсива @Nikol_hilton_bot (план 2026-08-03).
+
+    Отличие от PaymentClaim: тот хранит ЗАЯВЛЕНИЕ об оплате со страницы /pay
+    («я оплатил», проверяет человек). Здесь — путь человека в боте, где оплату
+    подтверждает Lava по API, а доступ в чат выдаётся автоматически. Одна строка
+    живёт от первого /start до входа в чат, статус двигается по этому пути.
+
+    Безопасность («опасная тройка»): `telegram_id`, имя и username — ПД. В лог
+    пишем только id, в промт модели ПД не уходят (мост обезличивания). Инвайт в
+    чат одноразовый и привязан к конкретному человеку — общую ссылку не раздаём.
+    """
+    __tablename__ = "intensive_leads"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
+    username: Mapped[str | None] = mapped_column(String(64))
+    first_name: Mapped[str | None] = mapped_column(String(128))
+    # Путь: new → invoiced (счёт выставлен) → paid (Lava подтвердила) →
+    # in_chat (инвайт выдан). refused — сказал «не буду».
+    status: Mapped[str] = mapped_column(String(16), default="new", index=True)
+    # Счёт в Lava: id и ссылка. По contractId сверяем оплату через /api/v1/sales.
+    lava_invoice_id: Mapped[str | None] = mapped_column(String(64), index=True)
+    lava_invoice_url: Mapped[str | None] = mapped_column(Text)
+    lava_currency: Mapped[str | None] = mapped_column(String(8))   # RUB | EUR | USD
+    # Email для счёта Lava (обязателен в их API). Спрашиваем у человека.
+    email: Mapped[str | None] = mapped_column(String(255))
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Одноразовая инвайт-ссылка в чат участников — выдана этому человеку.
+    invite_link: Mapped[str | None] = mapped_column(Text)
+    invited_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Атрибуция агента (?start=ref_<slug>) — та же схема, что на /pay.
+    ref_slug: Mapped[str | None] = mapped_column(String(16), index=True)
+    partner_id: Mapped[int | None] = mapped_column(ForeignKey("partners.id"), index=True)
+    # Прогрев: докуда дошла цепочка и когда касались последний раз.
+    warmup_step: Mapped[int] = mapped_column(Integer, default=0)
+    last_touch_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Человек попросил не писать — прогрев останавливается (уважаем отказ).
+    unsubscribed: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
+class BotSetting(Base):
+    """Пара ключ→значение для настроек, которые бот узнаёт САМ в рантайме.
+
+    Первый житель — `intensive_chat_id`: бота нельзя добавить в группу из кода
+    (Telegram разрешает это только человеку), но когда его добавят, боту приходит
+    событие `my_chat_member`. Бот ловит его и записывает chat_id сюда — Николь не
+    нужно искать идентификатор чата и передавать его мне руками.
+    """
+    __tablename__ = "bot_settings"
+
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    value: Mapped[str | None] = mapped_column(Text)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

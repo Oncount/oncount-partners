@@ -798,6 +798,16 @@ async def on_startup() -> None:
     else:
         log.info("BOT_TOKEN empty -> bot polling skipped, web only")
 
+    # Бот оплат интенсива (@Nikol_hilton_bot, план 2026-08-03). Свой токен →
+    # свой getUpdates, с партнёрским ботом не конфликтует. Пустой токен →
+    # не поднимается, остальная платформа работает как раньше.
+    if settings.PAY_BOT_TOKEN:
+        from app.paybot import main as paybot_main
+        log.info("Launching paybot polling as background task")
+        asyncio.create_task(paybot_main())
+    else:
+        log.info("PAY_BOT_TOKEN empty -> paybot skipped")
+
     # APScheduler (отдельный поток). ВАЖНО (план 2026-07-23): планировщик стартует
     # БЕЗУСЛОВНО, чтобы мониторинг ссылок работал даже без ONCOUNT_API_URL; синк лидов
     # и digest остаются под своим гейтом.

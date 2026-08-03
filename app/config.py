@@ -37,6 +37,18 @@ class Settings:
     # Ключ к /api/partner/* (выдан api). Пусто в dev. Сетевой рубеж — Security Group
     # на EC2 (см. Documentation/PARTNER_API_SECURITY_DESIGN.md §4).
     PARTNER_API_KEY: str = os.getenv("PARTNER_API_KEY", "")
+    # ─── Бот оплат интенсива @Nikol_hilton_bot (план 2026-08-03) ───────────────
+    # Отдельный токен: у @community_oncount_bot свой getUpdates, два бота в одном
+    # процессе не конфликтуют, пока у каждого свой токен и диспетчер.
+    # Пусто → бот не поднимается, остальная платформа работает как раньше.
+    PAY_BOT_TOKEN: str = os.getenv("PAY_BOT_TOKEN", "")
+    # Ключ кассы Lava: выставление счетов и проверка оплаты (app/lava.py).
+    # Пусто → бот принимает людей, но оплату подтверждает человек.
+    LAVA_API_KEY: str = os.getenv("LAVA_API_KEY", "")
+    # Чат участников интенсива. Бот узнаёт его САМ, когда Николь добавит его в
+    # группу (событие my_chat_member → таблица bot_settings). Переменная — только
+    # для случая «хотим задать вручную»; пусто = берём из bot_settings.
+    INTENSIVE_CHAT_ID: str = os.getenv("INTENSIVE_CHAT_ID", "")
     # Wazzup24 — доставка кода входа / уведомлений в WhatsApp. ПОКА напрямую (план:
     # следующий PR переведёт отправку на api /api/partner/notify). Пустой ключ/канал
     # → dev-режим: в сеть ничего не уходит (см. app/wazzup.py).
