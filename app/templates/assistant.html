@@ -1,0 +1,746 @@
+{# Лендинг интенсива «Бизнес-ассистент за 5 дней» (/assistant).
+   Standalone, как partners.html и quiz.html: свои стили, без сайдбара кабинета и
+   без oncount.css — тот красит h1/h2 под кабинет и здесь только мешал бы.
+   Весь текст, цены и даты приходят из app/assistant_config.py (правило репо №1).
+   Единственное действие на странице — переход в Telegram Николь; формы нет. #}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <script>document.documentElement.classList.add('js')</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#10463E">
+  <title>{{ page_title }}</title>
+  <meta name="description" content="{{ page_description }}">
+  <meta property="og:title" content="{{ page_title }}">
+  <meta property="og:description" content="{{ page_description }}">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Raleway:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
+  <style>
+    :root{
+      --green:#10463E;      /* фирменный тёмно-зелёный ONCOUNT */
+      --green-2:#1c6a5c;
+      --green-3:#2f8b78;
+      --gold:#E9C46A;       /* акцент только на тёмном: цифры, маркер, кнопка тарифа */
+      --ink:#15211e;
+      --muted:#5d6b67;
+      --line:#e2e8e5;
+      --bg:#f5f7f6;
+      --tint:#eef4f2;       /* мягкая зелёная подложка «нашей» колонки и полос */
+      --card:#fff;
+      --radius:20px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;font-family:Raleway,system-ui,sans-serif;color:var(--ink);
+      background:var(--bg);-webkit-font-smoothing:antialiased;line-height:1.55;
+      font-size:16.5px}
+    .wrap{max-width:1060px;margin:0 auto;padding:0 18px}
+    h1,h2,h3{font-family:Outfit,sans-serif;margin:0;color:var(--ink);
+      letter-spacing:-.02em;line-height:1.12}
+    h1{font-size:clamp(30px,4.6vw,50px);font-weight:700}
+    h2{font-size:clamp(24px,3vw,34px);font-weight:700}
+    h3{font-size:19px;font-weight:600;letter-spacing:-.01em;line-height:1.25}
+    p{margin:0}
+    a{color:inherit}
+    mark{background:linear-gradient(transparent 60%,rgba(233,196,106,.55) 60%);
+      color:inherit;padding:0 1px}
+    .kicker{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;
+      font-weight:600;color:var(--green-2);margin-bottom:12px}
+    .lead{color:var(--muted);font-size:16.5px;max-width:70ch}
+    section{margin:0 0 46px}
+
+    /* ─── кнопки ─────────────────────────────────────────────────────────── */
+    .btn{display:inline-block;text-decoration:none;font-weight:600;font-size:16px;
+      padding:15px 28px;border-radius:999px;transition:transform .15s ease,
+      box-shadow .15s ease,background .15s ease;border:0;cursor:pointer;
+      font-family:Raleway,sans-serif;text-align:center}
+    .btn-main{background:var(--green);color:#fff;box-shadow:0 6px 18px rgba(16,70,62,.22)}
+    .btn-main:hover{background:var(--green-2);transform:translateY(-2px)}
+    .btn-light{background:#fff;color:var(--green)}
+    .btn-light:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.18)}
+    .btn-gold{background:var(--gold);color:#2a2110}
+    .btn-gold:hover{background:#f3d489;transform:translateY(-2px)}
+    .btn:focus-visible{outline:3px solid var(--green-3);outline-offset:3px}
+    .btn-note{font-size:13.5px;color:var(--muted);margin-top:12px}
+
+    /* ─── шапка ──────────────────────────────────────────────────────────── */
+    .top{position:sticky;top:0;z-index:30;background:rgba(245,247,246,.9);
+      backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+    .top-in{max-width:1060px;margin:0 auto;padding:12px 18px;display:flex;
+      align-items:center;justify-content:space-between;gap:16px}
+    .top img{height:30px;display:block}
+    .top .btn{padding:11px 20px;font-size:14.5px}
+
+    /* ─── герой ──────────────────────────────────────────────────────────── */
+    .hero{background:var(--green);color:#fff;border-radius:var(--radius);
+      padding:46px 38px;margin:18px 0 46px;
+      background-image:radial-gradient(circle at 88% 8%,rgba(47,139,120,.45),transparent 55%)}
+    .hero h1{color:#fff;margin-bottom:18px}
+    .hero .kicker{color:rgba(255,255,255,.72)}
+    .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:44px;align-items:start}
+    .hero p.hero-lead{font-size:17.5px;color:rgba(255,255,255,.88);margin-bottom:26px;
+      max-width:56ch}
+    /* На тёмном фоне жёлтая заливка мажет текст — подсвечиваем цветом и линией. */
+    .hero mark{background:none;color:var(--gold);font-weight:600;
+      box-shadow:inset 0 -2px 0 rgba(233,196,106,.5)}
+
+    /* сетка недели */
+    .week{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);
+      border-radius:16px;padding:20px}
+    .week-head{display:flex;justify-content:space-between;align-items:baseline;
+      gap:12px;margin-bottom:16px}
+    .hours{font-family:Outfit,sans-serif;font-weight:700;font-size:42px;line-height:1;
+      color:var(--gold);letter-spacing:-.03em}
+    .hours-lbl{font-size:12px;color:rgba(255,255,255,.65);max-width:16ch;text-align:right;
+      line-height:1.35}
+    .days{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+    .daycol{display:grid;gap:5px}
+    .dayname{font-size:10.5px;color:rgba(255,255,255,.55);text-align:center;
+      letter-spacing:.1em;font-weight:600}
+    .cell{height:46px;padding:6px 7px;display:flex;align-items:flex-end;font-size:9.5px;
+      line-height:1.2;border-radius:7px;overflow:hidden;
+      background:rgba(255,255,255,.16);color:rgba(255,255,255,.8);
+      border:1px solid transparent;transition:background .4s ease,color .4s ease}
+    .cell.own{background:transparent;border:1px dashed rgba(255,255,255,.25);
+      color:rgba(255,255,255,.45)}
+    .cell.moved{background:var(--gold);color:#2a2110;font-weight:600}
+    .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px;font-size:11.5px;
+      color:rgba(255,255,255,.65)}
+    .legend i{width:11px;height:11px;display:inline-block;margin-right:6px;
+      vertical-align:-1px;border-radius:3px}
+    .legend i.busy{background:rgba(255,255,255,.22)}
+    .legend i.moved{background:var(--gold)}
+    .legend i.own{border:1px dashed rgba(255,255,255,.45)}
+    .replay{background:none;border:1px solid rgba(255,255,255,.28);
+      color:rgba(255,255,255,.7);font-family:Raleway,sans-serif;font-size:12px;
+      padding:7px 14px;border-radius:999px;cursor:pointer;margin-top:14px}
+    .replay:hover{color:#fff;border-color:#fff}
+    .week-note{margin-top:10px;font-size:11.5px;color:rgba(255,255,255,.5)}
+
+    /* ─── карточки ───────────────────────────────────────────────────────── */
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+    /* 4 карточки: auto-fit кладёт 3+1 и оставляет дыру в ряду — здесь ровно 2×2. */
+    @media (min-width:900px){ .cards.two{grid-template-columns:repeat(2,1fr)} }
+    .card{background:var(--card);border:1.5px solid var(--line);border-radius:16px;
+      padding:22px 24px}
+    .card p{color:var(--muted);font-size:15.5px}
+    .num{font-family:Outfit,sans-serif;font-weight:700;font-size:15px;
+      color:var(--green-3);letter-spacing:.06em;display:block;margin-bottom:10px}
+
+    /* ─── цена вопроса ───────────────────────────────────────────────────── */
+    .chart{display:grid;gap:26px;margin-top:24px}
+    .bar-lbl{font-size:13px;letter-spacing:.04em;text-transform:uppercase;
+      color:var(--muted);margin-bottom:10px;font-weight:600}
+    .bar-track{display:flex;align-items:center;gap:14px}
+    .bar{height:48px;flex:none;min-width:6px;border-radius:8px;
+      transition:width .9s cubic-bezier(.22,.9,.3,1)}
+    .bar-them{background:linear-gradient(90deg,#31423e,#4a5f59)}
+    .bar-us{background:linear-gradient(90deg,var(--green),var(--green-3))}
+    .bar-val{font-family:Outfit,sans-serif;font-weight:700;
+      font-size:clamp(21px,2.6vw,29px);letter-spacing:-.02em;white-space:nowrap}
+    .bar-val span{font-size:13px;font-weight:500;color:var(--muted);font-family:Raleway,sans-serif}
+    .bar-sub{font-size:13.5px;color:var(--muted);margin-top:8px}
+    .chart-note{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);
+      font-size:16.5px;max-width:66ch}
+    .table-card{background:var(--card);border:1.5px solid var(--line);
+      border-radius:16px;margin-top:22px;overflow:hidden}
+    .table-scroll{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:15px;min-width:560px}
+    th,td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--line);
+      vertical-align:top}
+    thead th{font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;
+      color:var(--muted);font-weight:600;background:#fafcfb}
+    thead th.ours{color:var(--green)}
+    tbody th{font-weight:500;color:var(--muted);width:24%;font-size:14.5px}
+    td.ours{background:var(--tint);font-weight:500;box-shadow:inset 3px 0 0 var(--green-3)}
+    tbody tr:last-child th,tbody tr:last-child td{border-bottom:0}
+
+    /* ─── цитата-разворот ────────────────────────────────────────────────── */
+    .pull{text-align:center;padding:26px 0 10px}
+    .pull blockquote{font-family:Outfit,sans-serif;font-weight:700;
+      font-size:clamp(25px,4vw,42px);line-height:1.12;letter-spacing:-.025em;
+      color:var(--green);max-width:17ch;margin:0 auto}
+    .pull-sub{margin:24px auto 0;max-width:54ch;color:var(--muted);font-size:16px}
+
+    /* ─── тёмные блоки ───────────────────────────────────────────────────── */
+    .dark{background:var(--green);color:#fff;border-radius:var(--radius);
+      padding:38px 36px}
+    .dark h2,.dark h3{color:#fff}
+    .dark .kicker{color:rgba(255,255,255,.6)}
+    .dark p{color:rgba(255,255,255,.85)}
+    .split{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
+    .quote-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);
+      border-radius:16px;padding:26px 28px}
+    .quote{font-family:Outfit,sans-serif;font-weight:500;
+      font-size:clamp(18px,2vw,22px);line-height:1.35;color:#fff}
+    .quote-src{font-size:13px;color:rgba(255,255,255,.6);margin-top:16px;
+      letter-spacing:.04em}
+
+    /* ─── демо-переписка ─────────────────────────────────────────────────── */
+    .chat{max-width:450px;margin:28px auto 0;border:1.5px solid var(--line);
+      background:#fff;border-radius:18px;overflow:hidden;
+      box-shadow:0 20px 44px rgba(16,70,62,.13)}
+    .chat-top{display:flex;align-items:center;gap:12px;padding:13px 16px;
+      border-bottom:1px solid var(--line);background:#fafcfb}
+    .ava{width:38px;height:38px;flex:none;border-radius:50%;background:var(--green);
+      color:#fff;display:flex;align-items:center;justify-content:center;
+      font-family:Outfit,sans-serif;font-weight:600;font-size:13px}
+    .chat-name{font-weight:600;font-size:15px}
+    .chat-status{font-size:12.5px;color:var(--green-3)}
+    .chat-body{padding:18px 14px;display:flex;flex-direction:column;gap:12px;
+      background:#f4f7f6}
+    .msg{max-width:90%;padding:11px 13px;border-radius:14px;font-size:14.5px;
+      line-height:1.45}
+    .msg.out{align-self:flex-end;background:#dcefe8;border-bottom-right-radius:4px}
+    .msg.in{align-self:flex-start;background:#fff;border:1px solid var(--line);
+      border-bottom-left-radius:4px}
+    .voice{display:flex;align-items:center;gap:10px}
+    .play{width:32px;height:32px;flex:none;border-radius:50%;background:var(--green);
+      display:flex;align-items:center;justify-content:center}
+    .play:after{content:"";border-left:9px solid #fff;border-top:6px solid transparent;
+      border-bottom:6px solid transparent;margin-left:3px}
+    .wave{display:flex;align-items:center;gap:2px;height:26px;flex:1}
+    .wave span{width:2px;background:var(--green-3);border-radius:1px;opacity:.7}
+    .dur{font-size:11.5px;color:var(--green-2);flex:none}
+    .transcript{margin-top:9px;padding-top:9px;border-top:1px solid rgba(16,70,62,.12);
+      font-size:14px;color:#1e3b34}
+    .msg ol{margin:8px 0 8px 18px;font-size:14px;display:grid;gap:5px;padding:0}
+    .msg .time{font-size:10.5px;color:var(--muted);text-align:right;margin-top:6px}
+    .doc{display:flex;align-items:center;gap:11px}
+    .doc-ico{width:34px;height:34px;flex:none;border-radius:8px;background:var(--green);
+      color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px}
+    .doc-name{font-size:14px;font-weight:600;word-break:break-word}
+    .doc-note{font-size:12px;color:var(--muted)}
+
+    /* ─── ещё 13 задач ───────────────────────────────────────────────────── */
+    details.more{background:var(--card);border:1.5px solid var(--line);
+      border-radius:16px;padding:18px 24px;margin-top:14px}
+    details.more>summary,.faq details>summary{font-family:Outfit,sans-serif;
+      font-weight:600;font-size:17px;cursor:pointer;list-style:none;display:flex;
+      justify-content:space-between;gap:20px;align-items:center}
+    summary::-webkit-details-marker{display:none}
+    details>summary:after{content:"+";color:var(--green-3);font-weight:400;
+      font-size:22px;flex:none;line-height:1}
+    details[open]>summary:after{content:"–"}
+    details.more ul{list-style:none;margin:16px 0 4px;padding:0;columns:2;
+      column-gap:36px}
+    details.more li{padding:8px 0 8px 18px;position:relative;font-size:15px;
+      break-inside:avoid;color:var(--muted)}
+    details.more li:before{content:"";position:absolute;left:0;top:17px;width:8px;
+      height:2px;border-radius:2px;background:var(--green-3)}
+
+    /* ─── программа ──────────────────────────────────────────────────────── */
+    .days-list{background:var(--card);border:1.5px solid var(--line);
+      border-radius:16px;overflow:hidden;margin-top:20px}
+    .day{display:grid;grid-template-columns:60px 1fr 1.2fr;gap:22px;
+      padding:22px 24px;border-bottom:1px solid var(--line);align-items:baseline}
+    .day:last-child{border-bottom:0}
+    .day .d{font-family:Outfit,sans-serif;font-weight:700;font-size:26px;
+      color:var(--green-3);letter-spacing:-.02em}
+    .day .res{color:var(--muted);font-size:15.5px}
+
+    /* ─── автор ──────────────────────────────────────────────────────────── */
+    .author{display:grid;grid-template-columns:290px 1fr;gap:44px;align-items:center;
+      background:var(--card);border:1.5px solid var(--line);border-radius:var(--radius);
+      padding:30px 32px}
+    .author figure{margin:0}
+    .author img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:14px;
+      display:block}
+    .author figcaption{margin-top:12px;font-family:Outfit,sans-serif;font-weight:600;
+      font-size:16px}
+    .author figcaption span{display:block;font-family:Raleway,sans-serif;font-size:12px;
+      font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+      margin-top:3px}
+    .author p{color:var(--muted);font-size:16px;margin-top:14px}
+
+    /* ─── тарифы ─────────────────────────────────────────────────────────── */
+    .tiers{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:24px}
+    .tier{background:var(--card);border:1.5px solid var(--line);border-radius:18px;
+      padding:28px 26px;display:flex;flex-direction:column}
+    .tier.main{background:var(--green);border-color:var(--green);color:#fff;
+      background-image:radial-gradient(circle at 90% 0,rgba(47,139,120,.5),transparent 60%)}
+    .tier .tag{font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+      color:var(--green-3);font-weight:600;margin-bottom:12px;display:block}
+    .tier.main .tag{color:var(--gold)}
+    .tier.main h3{color:#fff}
+    .price{font-family:Outfit,sans-serif;font-weight:700;font-size:38px;
+      letter-spacing:-.03em;margin:14px 0 4px}
+    .tier.main .price{color:#fff}
+    .was{font-size:13px;color:var(--muted);margin-bottom:18px}
+    .tier.main .was{color:rgba(255,255,255,.6)}
+    .tier ul{list-style:none;font-size:15px;margin:0 0 24px;padding:0}
+    .tier li{padding:8px 0 8px 20px;position:relative;color:var(--muted)}
+    .tier.main li{color:rgba(255,255,255,.82)}
+    .tier li:before{content:"";position:absolute;left:0;top:16px;width:9px;height:2px;
+      border-radius:2px;background:var(--green-3)}
+    .tier.main li:before{background:var(--gold)}
+    .tier .btn{margin-top:auto}
+
+    /* ─── что дальше ─────────────────────────────────────────────────────── */
+    .next-tag{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;
+      color:var(--green-3);font-weight:600;display:block;margin-bottom:10px}
+    .next-note{margin-top:18px;padding:24px 26px;background:var(--green);color:#fff;
+      border-radius:16px}
+    .next-note strong{display:block;font-family:Outfit,sans-serif;font-weight:600;
+      font-size:18px;margin-bottom:8px}
+    .next-note p{color:rgba(255,255,255,.8);font-size:15.5px}
+
+    /* ─── гарантия ───────────────────────────────────────────────────────── */
+    .guar{display:grid;grid-template-columns:auto 1fr;gap:38px;align-items:center}
+    .guar .mark{font-family:Outfit,sans-serif;font-weight:800;
+      font-size:clamp(60px,10vw,120px);line-height:.85;color:var(--gold);
+      letter-spacing:-.05em}
+    .guar p+p{margin-top:12px}
+
+    /* ─── вопросы ────────────────────────────────────────────────────────── */
+    .faq{background:var(--card);border:1.5px solid var(--line);border-radius:16px;
+      padding:6px 26px;margin-top:20px}
+    .faq details{border-bottom:1px solid var(--line);padding:18px 0}
+    .faq details:last-child{border-bottom:0}
+    .faq details p{margin-top:12px;color:var(--muted);font-size:15.5px;max-width:76ch}
+
+    /* ─── финал и футер ──────────────────────────────────────────────────── */
+    .final{text-align:center}
+    .final h2{max-width:20ch;margin:0 auto 14px}
+    .final p{max-width:60ch;margin:0 auto 24px}
+    .final .btn-note{color:rgba(255,255,255,.6)}
+    footer{border-top:1px solid var(--line);padding:26px 0 90px;font-size:14px;
+      color:var(--muted)}
+    footer a{color:var(--muted)}
+    .foot-row{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:12px}
+
+    /* липкая кнопка на телефоне: экран длинный, кнопка не должна теряться */
+    .sticky-cta{position:fixed;left:0;right:0;bottom:0;z-index:40;display:none;
+      padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+      background:rgba(245,247,246,.94);backdrop-filter:blur(10px);
+      border-top:1px solid var(--line)}
+    .sticky-cta .btn{width:100%}
+
+    /* Появление секций — мягко. Прячем ТОЛЬКО при живом JS (класс js на <html>):
+       иначе сбой скрипта оставил бы страницу пустой. */
+    .js .rise{opacity:0;transform:translateY(14px);
+      transition:opacity .55s ease,transform .55s ease}
+    .js .rise.in{opacity:1;transform:none}
+
+    @media (max-width:900px){
+      .hero-grid,.split,.author{grid-template-columns:1fr;gap:30px}
+      .tiers{grid-template-columns:1fr}
+      .author{padding:24px 22px}
+      .author figure{max-width:230px}
+      details.more ul{columns:1}
+      .day{grid-template-columns:46px 1fr;gap:14px}
+      .day .res{grid-column:2}
+      .guar{grid-template-columns:1fr;gap:10px}
+    }
+    @media (max-width:640px){
+      .hero{padding:32px 22px;margin-top:12px}
+      .dark{padding:28px 22px}
+      /* 5 колонок в 390px: подпись «ассистент» упирается в край — мельче шрифт
+         и уже отступы, иначе слово обрезается на середине. */
+      .cell{height:38px;font-size:7.5px;padding:4px 5px}
+      .btn{width:100%}
+      .top .btn{width:auto;padding:10px 15px;font-size:13.5px}
+      .sticky-cta{display:block}
+      section{margin-bottom:36px}
+      /* Сравнение на телефоне: три колонки в 390px не помещаются, и «наша»
+         уезжала за горизонтальный скролл — то есть главное человек не видел.
+         Раскладываем строку в карточку: признак сверху, под ним два значения. */
+      .table-scroll{overflow-x:visible}
+      table{min-width:0}
+      thead{display:none}
+      tbody tr{display:block;padding:14px 0;border-bottom:1px solid var(--line)}
+      tbody tr:last-child{border-bottom:0}
+      tbody th{display:block;width:auto;padding:0 16px 8px;color:var(--ink);
+        font-weight:600;font-size:15.5px;border:0}
+      tbody td{display:block;border:0;padding:4px 16px;font-size:15px}
+      tbody td:before{content:attr(data-l);display:block;font-size:11px;
+        letter-spacing:.07em;text-transform:uppercase;color:var(--muted);
+        margin-bottom:2px}
+      tbody td.ours{margin:8px 12px 0;padding:10px 12px;border-radius:10px}
+      tbody td.ours:before{color:var(--green-2)}
+    }
+    @media (prefers-reduced-motion:reduce){
+      *{transition:none!important;animation:none!important}
+      html{scroll-behavior:auto}
+      .rise,.js .rise{opacity:1;transform:none}
+    }
+  </style>
+</head>
+<body>
+
+<div class="top">
+  <div class="top-in">
+    <a href="/"><img src="/static/img/logo-light.png" alt="ONCOUNT"></a>
+    <a class="btn btn-main" href="{{ hero.cta_url }}" target="_blank" rel="noopener">{{ hero.top_cta }}</a>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <header class="hero">
+    <div class="hero-grid">
+      <div>
+        <div class="kicker">{{ hero.kicker }}</div>
+        <h1>{{ hero.title }}</h1>
+        <p class="hero-lead">{{ hero.lead | replace(hero.lead_mark, '<mark>' ~ hero.lead_mark ~ '</mark>') | safe }}</p>
+        <a class="btn btn-light" href="{{ hero.cta_url }}" target="_blank" rel="noopener">{{ hero.cta }}</a>
+        <div class="btn-note" style="color:rgba(255,255,255,.6)">{{ hero.note }}</div>
+      </div>
+
+      {# Сетка типичной недели: тёмные блоки — операционка, пунктир — ваша работа.
+         При появлении на экране блоки операционки по одному уходят к ассистенту,
+         счётчик часов набегает. Разметка отрисована сервером — без JS видно
+         финальное состояние (72 ч), анимация лишь дорисовывает смысл. #}
+      <div class="week" id="week" data-moved-label="{{ week.moved_label }}">
+        <div class="week-head">
+          <div class="hours"><span id="hnum">{{ week.hours }}</span> ч</div>
+          <div class="hours-lbl">{{ week.hours_label }}</div>
+        </div>
+        <div class="days">
+          {% for dayname, cells in week.days %}
+          <div class="daycol">
+            <div class="dayname">{{ dayname }}</div>
+            {% for label, movable in cells %}
+            <div class="cell{{ ' moved' if movable else ' own' }}"{% if movable %} data-label="{{ label }}"{% endif %}>{{ week.moved_label if movable else label }}</div>
+            {% endfor %}
+          </div>
+          {% endfor %}
+        </div>
+        <div class="legend">
+          {% for kind, text in week.legend %}<span><i class="{{ kind }}"></i>{{ text }}</span>{% endfor %}
+        </div>
+        <button class="replay" id="replay" type="button">{{ week.replay }}</button>
+        <div class="week-note">{{ week.note }}</div>
+      </div>
+    </div>
+  </header>
+
+  <section class="rise">
+    <div class="kicker">{{ pain.kicker }}</div>
+    <h2>{{ pain.title }}</h2>
+    <div class="cards" style="margin-top:22px">
+      {% for item in pain['items'] %}
+      <div class="card"><span class="num">{{ '%02d' | format(loop.index) }}</span><p>{{ item }}</p></div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="rise">
+    <div class="kicker">{{ cost.kicker }}</div>
+    <h2>{{ cost.title }}</h2>
+    <p class="lead" style="margin-top:14px">{{ cost.lead }}</p>
+
+    <div class="card" style="margin-top:22px;padding:28px 26px">
+      <div class="chart">
+        {% for bar in cost.bars %}
+        <div>
+          <div class="bar-lbl">{{ bar.label }}</div>
+          <div class="bar-track">
+            <div class="bar bar-{{ bar.kind }}" data-w="{{ bar.width }}" style="width:{{ bar.width }}%"></div>
+            <div class="bar-val">{{ bar.value }}<span> {{ bar.unit }}</span></div>
+          </div>
+          <div class="bar-sub">{{ bar.sub }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="chart-note">{{ cost.note | replace(cost.note_mark, '<mark>' ~ cost.note_mark ~ '</mark>') | safe }}</div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>{{ cost.table_head[0] }}</th>
+              <th>{{ cost.table_head[1] }}</th>
+              <th class="ours">{{ cost.table_head[2] }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {# data-l дублирует заголовок колонки: на телефоне шапка скрыта, а
+               строка раскладывается в карточку с подписями над значениями. #}
+            {% for row, them, ours in cost.table %}
+            <tr>
+              <th>{{ row }}</th>
+              <td data-l="{{ cost.table_head[1] }}">{{ them }}</td>
+              <td class="ours" data-l="{{ cost.table_head[2] }}">{{ ours }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="pull rise">
+    <blockquote>{{ pull.quote | replace(pull.quote_mark, '<mark>' ~ pull.quote_mark ~ '</mark>') | safe }}</blockquote>
+    <p class="pull-sub">{{ pull.sub }}</p>
+  </section>
+
+  <section class="dark rise">
+    <div class="split">
+      <div>
+        <div class="kicker">{{ audience.kicker }}</div>
+        <h2>{{ audience.title }}</h2>
+        {% for para in audience.text %}<p style="margin-top:16px">{{ para }}</p>{% endfor %}
+      </div>
+      <div class="quote-card">
+        <div class="quote">«{{ audience.quote }}»</div>
+        <div class="quote-src">{{ audience.quote_src }}</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="rise">
+    <div class="kicker">{{ demo.kicker }}</div>
+    <h2>{{ demo.title }}</h2>
+    <p class="lead" style="margin-top:14px">{{ demo.lead }}</p>
+
+    <div class="chat">
+      <div class="chat-top">
+        <div class="ava">БА</div>
+        <div>
+          <div class="chat-name">{{ demo.chat_name }}</div>
+          <div class="chat-status">{{ demo.chat_status }}</div>
+        </div>
+      </div>
+      <div class="chat-body">
+        <div class="msg out">
+          <div class="voice">
+            <div class="play" aria-hidden="true"></div>
+            <div class="wave" aria-hidden="true">
+              {% for h in [6,12,20,14,24,9,17,22,11,26,15,8,19,23,10,16,25,13,7,18,21,12,9,15,6] %}<span style="height:{{ h }}px"></span>{% endfor %}
+            </div>
+            <span class="dur">{{ demo.voice_duration }}</span>
+          </div>
+          <div class="transcript">{{ demo.voice_text }}</div>
+          <div class="time">{{ demo.voice_time }} ✓✓</div>
+        </div>
+
+        <div class="msg in">
+          {{ demo.reply_intro }}
+          <ol>{% for step in demo.reply_steps %}<li>{{ step }}</li>{% endfor %}</ol>
+          {{ demo.reply_outro }}
+          <div class="time">{{ demo.reply_time }}</div>
+        </div>
+
+        <div class="msg in doc">
+          <div class="doc-ico" aria-hidden="true">▤</div>
+          <div>
+            <div class="doc-name">{{ demo.doc_name }}</div>
+            <div class="doc-note">{{ demo.doc_note }}</div>
+          </div>
+          <div class="time" style="margin:0 0 0 auto">{{ demo.doc_time }}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="rise">
+    <div class="kicker">{{ results.kicker }}</div>
+    <h2>{{ results.title }}</h2>
+    <div class="cards" style="margin-top:22px">
+      {% for title, text in results.big %}
+      <div class="card">
+        <span class="num">{{ '%02d' | format(loop.index) }}</span>
+        <h3>{{ title }}</h3>
+        <p style="margin-top:10px">{{ text }}</p>
+      </div>
+      {% endfor %}
+    </div>
+
+    <details class="more">
+      <summary>{{ results.more_title }}</summary>
+      <ul>{% for item in results.more %}<li>{{ item }}</li>{% endfor %}</ul>
+    </details>
+  </section>
+
+  <section class="rise">
+    <div class="kicker">{{ program.kicker }}</div>
+    <h2>{{ program.title }}</h2>
+    <div class="days-list">
+      {% for num, title, result in program.days %}
+      <div class="day">
+        <div class="d">{{ num }}</div>
+        <h3>{{ title }}</h3>
+        <div class="res">{{ result }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="rise">
+    <div class="author">
+      <figure>
+        <img src="{{ author.photo }}" alt="{{ author.name }}" loading="lazy">
+        <figcaption>{{ author.name }}<span>{{ author.role }}</span></figcaption>
+      </figure>
+      <div>
+        <div class="kicker">{{ author.kicker }}</div>
+        <h2>{{ author.title }}</h2>
+        {% for para in author.text %}<p>{{ para }}</p>{% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="rise" id="tarify">
+    <div class="kicker">{{ pricing.kicker }}</div>
+    <h2>{{ pricing.title }}</h2>
+    <p class="lead" style="margin-top:14px">{{ pricing.lead }}</p>
+    <p class="lead" style="margin-top:10px">{{ pricing.note }}</p>
+    <div class="tiers">
+      {% for tier in pricing.tiers %}
+      <div class="tier{{ ' main' if tier.main }}">
+        <span class="tag">{{ tier.tag }}</span>
+        <h3>{{ tier.title }}</h3>
+        <div class="price">{{ tier.price }}</div>
+        <div class="was">{{ tier.was }}</div>
+        <ul>{% for item in tier['items'] %}<li>{{ item }}</li>{% endfor %}</ul>
+        <a class="btn {{ 'btn-gold' if tier.main else 'btn-main' }}" href="{{ tier.cta_url }}" target="_blank" rel="noopener">{{ tier.cta }}</a>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="rise">
+    <div class="kicker">{{ next.kicker }}</div>
+    <h2>{{ next.title }}</h2>
+    <p class="lead" style="margin-top:14px">{{ next.lead }}</p>
+    <div class="cards two" style="margin-top:22px">
+      {% for tag, title, text in next['items'] %}
+      <div class="card">
+        <span class="next-tag">{{ tag }}</span>
+        <h3>{{ title }}</h3>
+        <p style="margin-top:8px">{{ text }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="next-note">
+      <strong>{{ next.note_title }}</strong>
+      <p>{{ next.note }}</p>
+    </div>
+  </section>
+
+  <section class="dark rise">
+    <div class="guar">
+      <div class="mark" aria-hidden="true">{{ guarantee.mark }}</div>
+      <div>
+        <h2>{{ guarantee.title }}</h2>
+        {% for para in guarantee.text %}<p style="margin-top:14px">{{ para }}</p>{% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="rise">
+    <div class="kicker">{{ faq.kicker }}</div>
+    <h2>{{ faq.title }}</h2>
+    <div class="faq">
+      {% for question, answer in faq['items'] %}
+      <details><summary>{{ question }}</summary><p>{{ answer }}</p></details>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="dark final rise" id="final">
+    <h2>{{ final.title }}</h2>
+    <p>{{ final.text }}</p>
+    <a class="btn btn-gold" href="{{ final.cta_url }}" target="_blank" rel="noopener">{{ final.cta }}</a>
+    <div class="btn-note">{{ final.note }}</div>
+  </section>
+
+  <footer>
+    <div>{{ contacts.address }}</div>
+    <div class="foot-row">
+      <a href="mailto:{{ contacts.email }}">{{ contacts.email }}</a>
+      <a href="{{ contacts.site }}" target="_blank" rel="noopener">oncount.com</a>
+      <a href="{{ contacts.telegram }}" target="_blank" rel="noopener">Telegram</a>
+      <a href="{{ contacts.instagram }}" target="_blank" rel="noopener">Instagram</a>
+    </div>
+    <div class="foot-row">
+      {% for label, href in legal_links %}<a href="{{ href }}">{{ label }}</a>{% endfor %}
+    </div>
+  </footer>
+
+</div>
+
+<div class="sticky-cta">
+  <a class="btn btn-main" href="{{ hero.cta_url }}" target="_blank" rel="noopener">{{ hero.cta }}</a>
+</div>
+
+<script>
+(function(){
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Сетка недели: блоки операционки по одному уходят к ассистенту, счётчик растёт.
+  var week = document.getElementById('week');
+  var hnum = document.getElementById('hnum');
+  var cells = week ? Array.prototype.slice.call(week.querySelectorAll('.cell[data-label]')) : [];
+  var movedLabel = (week && week.dataset.movedLabel) || 'ассистент';
+  var step = cells.length ? Math.round(parseInt(hnum.textContent, 10) / cells.length) : 0;
+  var timers = [];
+
+  function play(){
+    if (reduced || !cells.length) return;
+    timers.forEach(clearTimeout); timers = [];
+    cells.forEach(function(c){ c.classList.remove('moved'); c.textContent = c.dataset.label; });
+    hnum.textContent = '0';
+    cells.forEach(function(c, i){
+      timers.push(setTimeout(function(){
+        c.classList.add('moved');
+        c.textContent = movedLabel;
+        hnum.textContent = String((i + 1) * step);
+      }, 450 + i * 160));
+    });
+  }
+
+  // Полосы «цена вопроса» дорастают до своей ширины при появлении на экране.
+  function growBars(root){
+    root.querySelectorAll('.bar[data-w]').forEach(function(b){
+      var w = b.dataset.w; b.style.width = '0%';
+      requestAnimationFrame(function(){ b.style.width = w + '%'; });
+    });
+  }
+
+  if ('IntersectionObserver' in window && !reduced){
+    if (week){
+      var wo = new IntersectionObserver(function(es){
+        es.forEach(function(e){ if (e.isIntersecting){ play(); wo.disconnect(); } });
+      }, {threshold: .35});
+      wo.observe(week);
+    }
+    var so = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (!e.isIntersecting) return;
+        e.target.classList.add('in');
+        if (e.target.querySelector('.bar[data-w]')) growBars(e.target);
+        so.unobserve(e.target);
+      });
+    }, {threshold: .12});
+    document.querySelectorAll('.rise').forEach(function(s){ so.observe(s); });
+  } else {
+    document.querySelectorAll('.rise').forEach(function(s){ s.classList.add('in'); });
+  }
+
+  var replay = document.getElementById('replay');
+  if (replay) replay.addEventListener('click', play);
+
+  // Липкая кнопка на телефоне появляется только после героя — вверху она лишняя.
+  var sticky = document.querySelector('.sticky-cta');
+  var hero = document.querySelector('.hero');
+  if (sticky && hero && 'IntersectionObserver' in window){
+    sticky.style.transform = 'translateY(120%)';
+    sticky.style.transition = 'transform .25s ease';
+    new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        sticky.style.transform = e.isIntersecting ? 'translateY(120%)' : 'translateY(0)';
+      });
+    }, {threshold: .25}).observe(hero);
+  }
+})();
+</script>
+</body>
+</html>

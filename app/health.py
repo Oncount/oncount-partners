@@ -31,8 +31,10 @@ from app.models import HealthAlert, LinkClick, QuizSubmission
 
 log = logging.getLogger("oncount.health")
 
-# Публичные лендинги с формой — их пробим на доступность.
-LANDING_PATHS: tuple[str, ...] = ("/consultation", "/mk", "/guide/corp-tax", "/guide/5-mistakes")
+# Публичные лендинги — их пробим на доступность (у /assistant формы нет, но
+# упавшая страница так же стоит денег: на неё ведут ссылки из рассылок).
+LANDING_PATHS: tuple[str, ...] = ("/consultation", "/mk", "/guide/corp-tax",
+                                  "/guide/5-mistakes", "/assistant")
 
 # Правила Telegram-username (4–32 символа, буквы/цифры/подчёркивание).
 _TG_USERNAME_RE = re.compile(r"^[A-Za-z0-9_]{4,32}$")
@@ -74,7 +76,7 @@ def classify_up(status: int | None) -> bool:
 
 
 def check_landings_up(now: datetime | None = None, http_get=None) -> list[dict]:
-    """Пробит 4 лендинга через probe_base(). Проба помечена PROBE_UA (record_click
+    """Пробит лендинги из LANDING_PATHS через probe_base(). Проба помечена PROBE_UA (record_click
     её игнорирует), follow_redirects=False. http_get(url)->status инъектируется в тестах."""
     base = probe_base()
     out = []

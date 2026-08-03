@@ -1518,6 +1518,25 @@ def partners_page(request: Request) -> HTMLResponse:
     })
 
 
+@app.get("/assistant", response_class=HTMLResponse)
+def assistant_page(request: Request) -> HTMLResponse:
+    """Лендинг интенсива «Бизнес-ассистент за 5 дней» (2026-08-03). Формы нет:
+    каждая кнопка ведёт в личный Telegram Николь с готовым первым сообщением
+    (решение Николь), поэтому QuizSubmission отсюда не появляется — считаем
+    только переходы. Тексты и цены — app/assistant_config.py."""
+    from app import assistant_config as ac
+    from app import partners_config as pc
+    linkstat.record_click("assistant", "quiz",
+                          request.query_params.get("ref"), request.headers.get("user-agent"))
+    return templates.TemplateResponse("assistant.html", {
+        "request": request,
+        **ac.page(),
+        # Футер — тот же, что на /partners: один источник адреса и контактов.
+        "contacts": pc.CONTACTS,
+        "legal_links": [(label["ru"], href) for label, href in pc.LEGAL_LINKS],
+    })
+
+
 @app.get("/policy", response_class=HTMLResponse)
 def policy_page(request: Request) -> HTMLResponse:
     """Политика конфиденциальности ONCOUNT (план 2026-07-27, Фаза 2). Со старого
