@@ -632,6 +632,72 @@ PARTNER_COMMANDS_EN = [
 ]
 
 
+# ─────────────── /mk_invite — приглашение на МК (только Николь) ─────────────
+#
+# Рассылка через бота: тем, кто нажимал «Старт», Telegram доставляет бесплатно и
+# мгновенно, в отличие от WhatsApp с его лимитом 40/день на номер. Кому бот писать
+# не может (не жал «Старт») — просто пропускаем, номера не задействуются.
+# Идемпотентность через notification_attempts: повторный запуск не задваивает.
+
+
+@dp.message(Command("mk_invite"))
+async def cmd_mk_invite(msg: Message, command: CommandObject) -> None:
+    if msg.from_user.id != settings.ADMIN_TG_ID:
+        return                                    # чужим команды не существует
+    from app import mk_invite as mk
+    from app.models import NotificationAttempt
+
+    send = (command.args or "").strip().lower() == "send"
+    base = settings.WEBAPP_URL
+    with SessionLocal() as session:
+        partners = (session.query(Partner)
+                    .filter(Partner.telegram_id.isnot(None))
+                    .order_by(Partner.id).all())
+        done = {a.partner_id for a in session.query(NotificationAttempt)
+                .filter(NotificationAttempt.kind == mk.MK_KIND,
+                        NotificationAttempt.status == "sent").all()}
+        todo = [p for p in partners if p.id not in done]
+
+        if not send:
+            sample = todo[0] if todo else (partners[0] if partners else None)
+            head = (f"📋 <b>Пре-флайт /mk_invite</b>\n\n"
+                    f"Партнёров с Telegram: <b>{len(partners)}</b>\n"
+                    f"Уже получили это приглашение: {len(done)}\n"
+                    f"К отправке: <b>{len(todo)}</b>\n\n"
+                    f"Отправить: <code>/mk_invite send</code>")
+            await msg.answer(head)
+            if sample:
+                a, c = mk.build(sample, base)
+                await msg.answer("Так увидит агент:\n\n" + a)
+                await msg.answer("Вторым сообщением — текст для его клиента:\n\n" + c)
+            return
+
+        await msg.answer(f"Отправляю {len(todo)}…")
+        ok = blocked = failed = 0
+        for p in todo:
+            agent_msg, client_msg = mk.build(p, base)
+            try:
+                await bot.send_message(p.telegram_id, agent_msg)
+                await bot.send_message(p.telegram_id, client_msg,
+                                       disable_web_page_preview=False)
+                ok += 1
+                status, err = "sent", None
+            except TelegramForbiddenError:
+                blocked += 1                       # не жал «Старт» либо заблокировал бота
+                status, err = "failed", "forbidden"
+            except TelegramBadRequest as exc:
+                failed += 1
+                status, err = "failed", type(exc).__name__
+            session.add(NotificationAttempt(
+                partner_id=p.id, kind=mk.MK_KIND, channel="tg",
+                recipient=f"tg:{p.telegram_id}", body=agent_msg,
+                status=status, error_short=err))
+            session.commit()
+            await asyncio.sleep(0.4)               # мягкий троттлинг под лимиты Telegram
+        await msg.answer(f"Готово. Доставлено: <b>{ok}</b>, "
+                         f"не доступны в боте: {blocked}, ошибок: {failed}.")
+
+
 async def main() -> None:
     Base.metadata.create_all(engine)
     await bot.set_my_commands(PARTNER_COMMANDS)  # дефолт (RU)
