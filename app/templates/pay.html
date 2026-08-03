@@ -178,7 +178,9 @@
             <div class="req-row">
               <div class="req-main">
                 <div class="req-label">{{ f.label }}</div>
-                <div class="req-value" data-value="{{ f.value }}">{{ f.value }}</div>
+                {# copy_value — что кладём в буфер, если оно отличается от показанного
+                   (номер СБП копируется без пробелов: иначе банк не примет вставку). #}
+                <div class="req-value" data-value="{{ f.copy_value or f.value }}">{{ f.value }}</div>
               </div>
               {% if f.copyable %}<button type="button" class="copy">Копировать</button>{% endif %}
             </div>
