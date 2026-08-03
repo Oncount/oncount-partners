@@ -234,8 +234,8 @@ PRODUCTS = [
         "slug": "company-setup",
         "title": "Бизнес-лицензии",
         "title_en": "Business licenses",
-        "price_aed": _meta("$300", "от $2 000"),
-        "price_aed_en": _meta_en("$300", "from $2,000"),
+        "price_aed": _meta("1 000 AED", "от $2 000"),
+        "price_aed_en": _meta_en("AED 1,000", "from $2,000"),
         "summary_md": "Открытие или закрытие компании во фри-зоне или мейнленде: подбор и оформление бизнес-лицензии в ОАЭ.",
         "summary_md_en": "Opening or closing a free-zone or mainland company: selecting and obtaining a UAE business license.",
         "full_md": (
@@ -268,8 +268,8 @@ PRODUCTS = [
         "slug": "uae-visa",
         "title": "Визы резидента ОАЭ",
         "title_en": "UAE resident visas",
-        "price_aed": _meta("$300", "от $1 500"),
-        "price_aed_en": _meta_en("$300", "from $1,500"),
+        "price_aed": _meta("от 500 AED", "от $1 500"),
+        "price_aed_en": _meta_en("from AED 500", "from $1,500"),
         "summary_md": "Оформление резидентской визы ОАЭ, включая золотую визу на 10 лет.",
         "summary_md_en": "Arranging a UAE residence visa, including the 10-year Golden Visa.",
         "full_md": (
@@ -326,8 +326,8 @@ PRODUCTS = [
         "slug": "bank-account",
         "title": "Банковские счета",
         "title_en": "Bank accounts",
-        "price_aed": _meta("$500", "от $2 500"),
-        "price_aed_en": _meta_en("$500", "from $2,500"),
+        "price_aed": _meta("1 000 AED", "от $2 500"),
+        "price_aed_en": _meta_en("AED 1,000", "from $2,500"),
         "summary_md": "Открытие корпоративного или личного счёта НЕ резидента в банке ОАЭ.",
         "summary_md_en": "Opening a corporate or personal non-resident account at a UAE bank.",
         "full_md": (

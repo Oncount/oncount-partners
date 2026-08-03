@@ -208,7 +208,7 @@ SERVICES = [
         "label_en": "Company setup",
         "hint": "Мейнленд или фризона",
         "hint_en": "Mainland or free zone",
-        "commission_aed": usd_to_aed(300),
+        "commission_aed": 1000,
         "is_from": False,
     },
     {
@@ -217,7 +217,7 @@ SERVICES = [
         "label_en": "Corporate bank account",
         "hint": "NBD, Wio, FAB, ADCB",
         "hint_en": "NBD, Wio, FAB, ADCB",
-        "commission_aed": usd_to_aed(500),
+        "commission_aed": 1000,
         "is_from": False,
     },
     {
@@ -226,7 +226,7 @@ SERVICES = [
         "label_en": "Work visa",
         "hint": "Резидентская виза сотрудника или владельца",
         "hint_en": "Residence visa for an employee or owner",
-        "commission_aed": usd_to_aed(300),
+        "commission_aed": 500,
         "is_from": False,
     },
     {
@@ -235,8 +235,8 @@ SERVICES = [
         "label_en": "Property visa",
         "hint": "Золотая, серебряная, зелёная",
         "hint_en": "Golden, silver, green",
-        "commission_aed": usd_to_aed(300),
-        "is_from": False,
+        "commission_aed": 500,
+        "is_from": True,   # 500 зелёная … 1000 золотая
     },
     {
         "key": "personal_account",
@@ -244,7 +244,7 @@ SERVICES = [
         "label_en": "Personal account for non-residents",
         "hint": "NBD, без резидентства и Emirates ID",
         "hint_en": "NBD, no residency or Emirates ID required",
-        "commission_aed": usd_to_aed(500),
+        "commission_aed": 1000,
         "is_from": False,
     },
 ]
