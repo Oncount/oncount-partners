@@ -508,3 +508,54 @@ class PageView(Base):
     # "dashboard"|"leads"|"tools"|"kb"|"courses"|"transfer"|"account"|"onboarding".
     section: Mapped[str] = mapped_column(String(32), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
+class PaymentClaim(Base):
+    """Заявление об оплате со страницы /pay (план 2026-08-03).
+
+    Это НЕ платёж и не его подтверждение: платёжного слоя в ядре нет, деньги
+    собираются вне системы. Человек увидел реквизиты, перевёл и нажал «Я оплатил» —
+    здесь лежит его слово, а факт зачисления сверяет человек по выписке. Отсюда
+    `status`: заявление живёт как 'new', пока кто-то не отметит 'confirmed'/'rejected'.
+
+    Почему отдельная таблица, а не quiz_submissions: там ЛИДЫ (кто-то хочет, чтобы
+    ему позвонили), а здесь ДЕНЬГИ — другой жизненный цикл, другая срочность и
+    сверка с выпиской. Смешивать их в одной таблице значит потерять оба смысла.
+
+    Безопасность («опасная тройка»: ПД клиента + отправка наружу): `name`/`phone`/
+    `contact` — ПД, в лог идёт только маска телефона. Реквизиты плательщика (номер
+    его карты, хеш транзакции) мы НЕ спрашиваем и не храним — нам достаточно суммы
+    и времени, чтобы найти платёж в выписке. `amount_label` пишем из pay_config, а
+    не из формы: сумму в нашей записи клиент подставлять не должен.
+    """
+    __tablename__ = "payment_claims"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    # Что оплачивали — pay_config.PRODUCT["slug"] (дискриминатор потоков/продуктов).
+    product_slug: Mapped[str] = mapped_column(String(64), index=True)
+    # Способ: 'rub' | 'card' | 'crypto' — строго из pay_config.VALID_METHODS.
+    method: Mapped[str] = mapped_column(String(16), index=True)
+    # Снимок цены, которая была показана на странице для этого способа. Именно
+    # снимок: цена в конфиге завтра поменяется, а сверять выписку надо по той,
+    # что человек видел сегодня.
+    amount_label: Mapped[str | None] = mapped_column(String(64))
+    name: Mapped[str | None] = mapped_column(String(255))
+    phone: Mapped[str] = mapped_column(String(32), index=True)  # normalize_phone (digits-only)
+    # Дополнительный контакт для доступа: @telegram или email. Свободный ввод —
+    # в HTML не рендерим (анти-XSS), в Telegram уходит как текст.
+    contact: Mapped[str | None] = mapped_column(String(200))
+    # Комментарий плательщика («платил не со своей карты» и т.п.).
+    note: Mapped[str | None] = mapped_column(Text)
+    # Атрибуция агента — та же схема, что у QuizSubmission (?ref=<slug>).
+    ref_slug: Mapped[str | None] = mapped_column(String(16), index=True)
+    partner_id: Mapped[int | None] = mapped_column(ForeignKey("partners.id"), index=True)
+    utm_source: Mapped[str | None] = mapped_column(String(128))
+    utm_medium: Mapped[str | None] = mapped_column(String(128))
+    utm_campaign: Mapped[str | None] = mapped_column(String(128))
+    utm_content: Mapped[str | None] = mapped_column(String(128))
+    utm_term: Mapped[str | None] = mapped_column(String(128))
+    referrer: Mapped[str | None] = mapped_column(Text)
+    landing_url: Mapped[str | None] = mapped_column(Text)
+    # 'new' — сказал, что оплатил | 'confirmed' — нашли в выписке | 'rejected' — не нашли.
+    status: Mapped[str] = mapped_column(String(16), default="new", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)

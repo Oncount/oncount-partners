@@ -45,6 +45,7 @@ from app.models import (
     PageView,
     Partner,
     PartnerIdentity,
+    PaymentClaim,
     PhoneLoginToken,
     ProductBlock,
     QuizSubmission,
@@ -554,7 +555,7 @@ from app.leadmagnet_topics import submit_rl_paths as _lm_submit_rl_paths  # noqa
 
 _RL_PATHS = ("/auth/", "/login", "/invite/", "/consultation/submit", "/mk/submit",
              "/guide/corp-tax/submit",
-             "/guide/5-mistakes/submit") + _lm_submit_rl_paths()
+             "/guide/5-mistakes/submit", "/pay/confirm") + _lm_submit_rl_paths()
 _RL_MAX = 30            # запросов с одного IP
 _RL_WINDOW = 60         # за столько секунд
 _RL_MAX_KEYS = 50_000   # потолок отслеживаемых IP (предохранитель памяти)
@@ -1535,6 +1536,138 @@ def assistant_page(request: Request) -> HTMLResponse:
         "contacts": pc.CONTACTS,
         "legal_links": [(label["ru"], href) for label, href in pc.LEGAL_LINKS],
     })
+
+
+# ─── Оплата: три способа + заявление «я оплатил» (план 2026-08-03) ────────────
+# Платёжного слоя в ядре нет: страница показывает реквизиты, а факт зачисления
+# сверяет человек по выписке. Поэтому здесь нет ни платёжного провайдера, ни
+# вебхуков — только PaymentClaim (слово клиента) и карточка в Telegram.
+
+@app.get("/pay", response_class=HTMLResponse)
+def pay_page(request: Request) -> HTMLResponse:
+    """Страница оплаты: рубли / международная карта / крипта. Тексты, цены и
+    реквизиты — app/pay_config.py (в вёрстке их нет). Ссылку выдаёт менеджер, в
+    поиск страница не отдаётся (noindex в шаблоне)."""
+    from app import pay_config
+    linkstat.record_click("pay", "quiz",
+                          request.query_params.get("ref"), request.headers.get("user-agent"))
+    return templates.TemplateResponse("pay.html", {
+        "request": request,
+        "page_title": "ONCOUNT — оплата",
+        **pay_config.page(),
+    })
+
+
+@app.post("/pay/confirm")
+async def pay_confirm(request: Request,
+                      session: Session = Depends(get_session)) -> dict:
+    """Приём заявления об оплате → Postgres + карточка в Telegram.
+
+    Клиенту ВСЕГДА отвечаем ok: он уже перевёл деньги, и сообщение об ошибке
+    приёма здесь читается как «платёж не прошёл» — лишняя паника на ровном месте.
+    Порядок: honeypot → валидация → дедуп → запись → уведомление.
+
+    Что НЕ доверяем клиенту: сумму (берём снимок из конфига по способу) и способ
+    (только белый список pay_config.VALID_METHODS). Сырой ввод обратно не рендерим.
+    """
+    from app import pay_config
+
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    if not isinstance(data, dict):
+        data = {}
+
+    # Honeypot: поле website видно только ботам — заполнено → тихо «ok».
+    if (data.get("website") or "").strip():
+        return {"ok": True}
+
+    method = pay_config.method_by_id(data.get("method"))
+    if method is None or not pay_config.is_ready(method):
+        # Способа нет в белом списке либо по нему нельзя платить (реквизиты не
+        # заполнены) — заявления о такой оплате быть не может.
+        return {"ok": False, "error": "method"}
+
+    name = (data.get("name") or "").strip()[:200] or None
+    phone_norm = normalize_phone(data.get("phone") or "")
+    if len(phone_norm) < PHONE_MIN_DIGITS:
+        return {"ok": False, "error": "phone"}
+
+    def _s(key, n=180):
+        v = data.get(key)
+        return v.strip()[:n] if isinstance(v, str) and v.strip() else None
+
+    product_slug = str(pay_config.PRODUCT.get("slug") or "product")[:64]
+    ref_slug = _s("ref", 16)
+    # Ровно под String(128) колонок payment_claims: значение длиннее колонки
+    # роняет commit → заявление теряется целиком (тот же класс бага, что 502 по
+    # link_key=16 в истории репо).
+    utm = {k: _s(k, 128) for k in ("utm_source", "utm_medium", "utm_campaign",
+                                   "utm_content", "utm_term")}
+
+    # Дедуп: то же заявление (телефон + продукт) за 2 минуты — двойной тап по
+    # кнопке или повторная отправка, а не вторая оплата.
+    recent = (session.query(PaymentClaim)
+              .filter(PaymentClaim.phone == phone_norm,
+                      PaymentClaim.product_slug == product_slug,
+                      PaymentClaim.created_at >= datetime.utcnow() - timedelta(minutes=2))
+              .first())
+    if recent is not None:
+        return {"ok": True}
+
+    partner = None
+    if ref_slug:
+        partner = session.query(Partner).filter_by(ref_slug=ref_slug).first()
+
+    claim = PaymentClaim(
+        product_slug=product_slug,
+        method=method["id"],
+        # Снимок цены — из конфига, не из формы: сумму в нашей записи клиент
+        # подставлять не должен.
+        amount_label=(pay_config.price_of(method) or None),
+        name=name, phone=phone_norm,
+        contact=_s("contact", 200), note=_s("note", 600),
+        ref_slug=ref_slug, partner_id=partner.id if partner else None,
+        referrer=_s("referrer", 400), landing_url=_s("landing_url", 400),
+        status="new", **{k: v for k, v in utm.items()},
+    )
+    session.add(claim)
+    session.commit()
+
+    _notify_admin_payment(claim, partner)
+    log.info("payment claim product=%s method=%s phone=%s agent=%s",
+             product_slug, method["id"], _quiz_mask_phone(phone_norm),
+             partner.id if partner else "-")
+    return {"ok": True}
+
+
+def _notify_admin_payment(claim: "PaymentClaim", partner: "Partner | None") -> None:
+    """Карточка оплаты владельцу и менеджерам. Best-effort: провал уведомления не
+    влияет на приём (строка уже в БД). Телефон шлём полностью — по нему сверяют
+    платёж и открывают доступ. Комментарий клиента — сырой текст, поэтому уходит
+    только в Telegram (в HTML мы его не рендерим)."""
+    from app import pay_config
+    lines = [pay_config.NOTIFY_HEADER, ""]
+    lines.append(f"Продукт: {pay_config.PRODUCT.get('title') or claim.product_slug}")
+    lines.append(f"Способ: {pay_config.METHOD_TITLES.get(claim.method, claim.method)}")
+    lines.append(f"Сумма на странице: {claim.amount_label or '—'}")
+    lines.append("")
+    lines.append(f"Имя: {claim.name or '—'}")
+    lines.append(f"Телефон: +{claim.phone}")
+    lines.append(f"Написать: https://wa.me/{claim.phone}")
+    if claim.contact:
+        lines.append(f"Контакт: {claim.contact}")
+    if claim.note:
+        lines.append(f"Комментарий: {claim.note}")
+    lines.append("")
+    if partner:
+        lines.append(f"Агент: {partner.kommo_agent_name or partner.first_name or partner.ref_slug}")
+    elif claim.ref_slug:
+        lines.append(f"Реф-метка (агент не найден): {claim.ref_slug}")
+    lines.append("")
+    lines.append("⚠️ Это СЛОВО клиента, а не подтверждённый платёж — сверьте по выписке.")
+    _tg_send_lead("\n".join(lines))
 
 
 @app.get("/policy", response_class=HTMLResponse)

@@ -1,0 +1,423 @@
+{# Страница оплаты /pay — три способа: рубли, международная карта, крипта
+   (план plans/2026-08-03-stranica-oplaty-3-sposoba.md).
+
+   Тексты, цены и реквизиты приходят из app/pay_config.py — в вёрстке их нет
+   (правило репо №1). Стиль — тот же набор токенов, что у quiz.html: страница
+   публичная, живёт вне base.html и не тянет кабинетный CSS.
+
+   Мобильный приоритет: ссылку кидают в WhatsApp, открывают с телефона. Отсюда
+   вкладки в один ряд, крупные кнопки копирования и реквизиты, которые не
+   ломают вёрстку при длинном адресе кошелька (word-break). #}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#10463E">
+  {# Страница оплаты не для поиска: ссылку выдаёт менеджер конкретному человеку. #}
+  <meta name="robots" content="noindex, nofollow">
+  <title>{{ page_title or 'ONCOUNT — оплата' }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Raleway:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
+  <style>
+    :root{
+      --green:#10463E; --green-2:#1c6a5c; --ink:#15211e; --muted:#5d6b67;
+      --line:#e2e8e5; --bg:#f5f7f6; --card:#ffffff; --orange:#EC6442;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Raleway,system-ui,sans-serif;color:var(--ink);
+      background:var(--bg);-webkit-font-smoothing:antialiased}
+    .wrap{max-width:640px;margin:0 auto;padding:24px 18px 60px;min-height:100dvh;
+      display:flex;flex-direction:column}
+    .brand{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+    .brand img{height:40px;width:auto}
+
+    /* ── Шапка: что оплачивают и сколько ── */
+    .head-title{font-family:Outfit,sans-serif;font-size:28px;line-height:1.2;margin:0 0 6px}
+    .head-sub{font-size:15px;color:var(--muted);margin:0 0 16px}
+    .price{display:inline-block;align-self:flex-start;background:#f0f6f4;color:var(--green);
+      font-family:Outfit,sans-serif;font-weight:700;font-size:26px;padding:10px 18px;
+      border-radius:14px;margin:0 0 18px}
+    .includes{list-style:none;padding:0;margin:0 0 26px;display:flex;flex-direction:column;gap:10px}
+    .includes li{position:relative;padding-left:28px;font-size:16px;line-height:1.5}
+    .includes li::before{content:"✓";position:absolute;left:0;top:0;color:var(--green);font-weight:700}
+
+    /* ── Вкладки способов ── */
+    .tabs{display:flex;gap:8px;margin:0 0 18px}
+    .tab{flex:1;min-width:0;appearance:none;background:var(--card);border:1.5px solid var(--line);
+      border-radius:14px;padding:12px 8px;cursor:pointer;font-family:inherit;color:var(--ink);
+      display:flex;flex-direction:column;align-items:center;gap:5px;
+      transition:border-color .15s,background .15s}
+    .tab:hover{border-color:var(--green-2)}
+    .tab.sel{border-color:var(--green);background:#f0f6f4}
+    .tab-icon{font-size:20px;line-height:1}
+    .tab-label{font-weight:600;font-size:13.5px;line-height:1.25;text-align:center}
+    .tab.off{opacity:.55}
+
+    /* ── Панель способа ── */
+    .panel{display:none}
+    .panel.sel{display:block}
+    .panel-tagline{font-size:15px;color:var(--muted);margin:0 0 16px}
+    .panel-price{font-family:Outfit,sans-serif;font-weight:700;font-size:22px;margin:0 0 16px}
+    .req{background:var(--card);border:1.5px solid var(--line);border-radius:16px;
+      padding:6px 16px;margin:0 0 18px}
+    .req-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
+    .req-row:last-child{border-bottom:none}
+    .req-main{flex:1;min-width:0}
+    .req-label{font-size:12.5px;color:var(--muted);margin-bottom:3px;font-weight:500}
+    .req-value{font-size:16.5px;font-weight:600;line-height:1.35;word-break:break-all}
+    .copy{appearance:none;flex:0 0 auto;border:1.5px solid var(--line);background:#fff;
+      border-radius:10px;padding:9px 12px;cursor:pointer;font-family:inherit;font-size:13px;
+      font-weight:600;color:var(--green);transition:border-color .15s,background .15s}
+    .copy:hover{border-color:var(--green);background:#f0f6f4}
+    .copy.done{border-color:var(--green);background:var(--green);color:#fff}
+    .steps{list-style:none;counter-reset:s;padding:0;margin:0 0 16px;
+      display:flex;flex-direction:column;gap:11px}
+    .steps li{counter-increment:s;position:relative;padding-left:34px;font-size:15.5px;line-height:1.5}
+    .steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:23px;height:23px;
+      border-radius:50%;background:#f0f6f4;color:var(--green);font-weight:700;font-size:13px;
+      display:flex;align-items:center;justify-content:center}
+    .warn{background:#fdf1ee;border-left:3px solid var(--orange);border-radius:8px;
+      padding:12px 14px;font-size:14.5px;line-height:1.5;margin:0 0 22px}
+    /* Способ без реквизитов: платить нельзя, показываем честно (см. pay_config.is_ready) */
+    .not-ready{background:var(--card);border:1.5px dashed var(--line);border-radius:16px;
+      padding:22px 18px;text-align:center;color:var(--muted);font-size:15px;line-height:1.55;
+      margin:0 0 22px}
+    .link-btn{display:block;text-align:center;text-decoration:none}
+
+    /* ── Кнопки ── */
+    .btn{appearance:none;border:none;border-radius:12px;font-family:Outfit,sans-serif;
+      font-weight:600;font-size:16px;cursor:pointer;padding:15px 26px;width:100%}
+    .btn-primary{background:var(--green);color:#fff}
+    .btn-primary:disabled{opacity:.45;cursor:not-allowed}
+    .btn-outline{background:transparent;color:var(--green);border:1.5px solid var(--green)}
+    .btn-outline:hover{background:#f0f6f4}
+    .btn-back{background:transparent;color:var(--muted);border:1.5px solid var(--line);
+      width:auto;padding:11px 16px;font-size:14px;margin:0 0 18px}
+
+    /* ── Форма подтверждения ── */
+    #payForm,#payThanks{display:none}
+    #payForm.sel,#payThanks.sel{display:block}
+    .form-title{font-family:Outfit,sans-serif;font-size:24px;margin:0 0 8px}
+    .form-sub{font-size:15px;color:var(--muted);line-height:1.5;margin:0 0 8px}
+    .chosen{display:inline-block;background:#f0f6f4;color:var(--green);font-weight:600;
+      font-size:14px;padding:7px 13px;border-radius:999px;margin:0 0 20px}
+    .field{margin:0 0 16px}
+    .field label{display:block;font-size:14px;color:var(--muted);margin-bottom:6px;font-weight:500}
+    .field input,.field textarea{width:100%;padding:15px 16px;border:1.5px solid var(--line);
+      border-radius:12px;font-size:16px;font-family:inherit;background:var(--card);resize:vertical}
+    .field input:focus,.field textarea:focus{outline:none;border-color:var(--green)}
+    .err{color:#c0392b;font-size:13px;margin:-8px 0 14px;display:none}
+    .consent{font-size:12px;color:var(--muted);line-height:1.5;margin:6px 0 18px}
+    .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+
+    /* ── Спасибо ── */
+    #payThanks{text-align:center;padding-top:26px}
+    #payThanks .ok{font-size:46px;margin-bottom:8px}
+    #payThanks h1{font-family:Outfit,sans-serif;font-size:26px;margin:0 0 10px}
+    #payThanks p{color:var(--muted);line-height:1.55}
+
+    /* ── Помощь внизу ── */
+    .help{margin-top:auto;padding-top:28px;text-align:center;font-size:14px;color:var(--muted)}
+    .help a{display:inline-block;margin-top:10px;color:var(--green);font-weight:600;
+      text-decoration:none;border:1.5px solid var(--line);border-radius:10px;padding:10px 18px}
+    .help a:hover{border-color:var(--green);background:#f0f6f4}
+
+    @media (max-width:480px){
+      .wrap{padding-top:18px}
+      .head-title{font-size:24px}
+      .price{font-size:23px}
+      .tab-label{font-size:12.5px}
+      .req-value{font-size:15.5px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand"><img src="/static/img/logo-light.png" alt="ONCOUNT"></div>
+
+    <section id="payMain">
+      <h1 class="head-title">{{ product.title }}</h1>
+      {% if product.subtitle %}<p class="head-sub">{{ product.subtitle }}</p>{% endif %}
+      {# Цена в шапке следует за выбранной вкладкой (см. selectTab): показывать
+         «$375», когда человек выбрал рубли — значит назвать сумму, которую он
+         не сможет перевести. #}
+      {% if product.price %}<div class="price" id="headPrice">{{ product.price }}</div>{% endif %}
+      {% if product.includes %}
+      <ul class="includes">
+        {% for item in product.includes %}<li>{{ item }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+
+      {# Вкладки: способ выбирают до реквизитов — так человек сразу видит «мой». #}
+      <div class="tabs" role="tablist">
+        {% for m in methods %}
+        <button type="button" class="tab{% if not m.ready %} off{% endif %}" role="tab"
+                data-method="{{ m.id }}" aria-selected="false">
+          <span class="tab-icon">{{ m.icon }}</span>
+          <span class="tab-label">{{ m.label }}</span>
+        </button>
+        {% endfor %}
+      </div>
+
+      {% for m in methods %}
+      <div class="panel" data-panel="{{ m.id }}">
+        {% if m.tagline %}<p class="panel-tagline">{{ m.tagline }}</p>{% endif %}
+
+        {% if m.ready %}
+          {% if m.price_human %}<div class="panel-price">К оплате: {{ m.price_human }}</div>{% endif %}
+
+          {% if m.link %}
+          <a class="btn btn-primary link-btn" href="{{ m.link }}" target="_blank" rel="noopener"
+             style="margin-bottom:18px">{{ m.link_label or 'Оплатить' }}</a>
+          {% else %}
+          <div class="req">
+            {% for f in m.fields %}
+            <div class="req-row">
+              <div class="req-main">
+                <div class="req-label">{{ f.label }}</div>
+                <div class="req-value" data-value="{{ f.value }}">{{ f.value }}</div>
+              </div>
+              {% if f.copyable %}<button type="button" class="copy">Копировать</button>{% endif %}
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          {% if m.steps %}
+          <ol class="steps">
+            {% for s in m.steps %}<li>{{ s }}</li>{% endfor %}
+          </ol>
+          {% endif %}
+          {% if m.warning %}<div class="warn">⚠️ {{ m.warning }}</div>{% endif %}
+
+          {# Если способ ведёт на платёжную страницу, главное действие — «Оплатить»,
+             а «Я оплатил» вторично: две одинаково яркие кнопки подряд заставляют
+             выбирать там, где выбора нет — сначала платят, потом подтверждают. #}
+          <button type="button" class="btn {% if m.link %}btn-outline{% else %}btn-primary{% endif %} pay-done"
+                  data-method="{{ m.id }}">
+            {{ form.submit }}
+          </button>
+        {% else %}
+          {# Реквизиты не заполнены в pay_config — платить по этому способу нельзя.
+             Фейковых цифр не показываем: лучше честное «уточняется», чем потерянный перевод. #}
+          <div class="not-ready">
+            Реквизиты для этого способа уточняются.<br>
+            Напишите нам — пришлём и поможем оплатить.
+          </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </section>
+
+    <section id="payForm">
+      <button type="button" class="btn btn-back" id="formBack">← Назад к реквизитам</button>
+      <h1 class="form-title">{{ form.title }}</h1>
+      <p class="form-sub">{{ form.subtitle }}</p>
+      <div class="chosen" id="chosenMethod"></div>
+
+      <form id="claimForm" autocomplete="off" novalidate>
+        {# honeypot: настоящий пользователь этого поля не видит и не заполняет #}
+        <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+        <div class="field">
+          <label for="name">Ваше имя</label>
+          <input id="name" name="name" type="text" placeholder="Имя" maxlength="120">
+        </div>
+        <div class="err" id="errName">Пожалуйста, укажите имя.</div>
+
+        <div class="field">
+          <label for="phone">Телефон / WhatsApp</label>
+          {# value подставляет JS по выбранному способу (pay_config.METHODS[*].dial) #}
+          <input id="phone" name="phone" type="tel" inputmode="tel" placeholder="+971 50 000 0000">
+        </div>
+        <div class="err" id="errPhone">Пожалуйста, укажите корректный номер.</div>
+
+        <div class="field">
+          <label for="contact">Telegram или e-mail (необязательно)</label>
+          <input id="contact" name="contact" type="text" placeholder="@username или mail@example.com" maxlength="180">
+        </div>
+
+        <div class="field">
+          <label for="note">{{ form.note_label }}</label>
+          <textarea id="note" name="note" rows="3" maxlength="600"
+                    placeholder="{{ form.note_placeholder }}"></textarea>
+        </div>
+
+        <p class="consent">{{ form.consent }}</p>
+        <button type="button" class="btn btn-primary" id="claimSubmit">{{ form.submit }}</button>
+      </form>
+    </section>
+
+    <section id="payThanks">
+      <div class="ok">✅</div>
+      <h1>{{ thanks.title }}</h1>
+      <p>{{ thanks.subtitle }}</p>
+    </section>
+
+    {% if helpbox %}
+    <div class="help">
+      {{ helpbox.text }}
+      <br>
+      <a href="https://wa.me/{{ helpbox.wa_phone }}" target="_blank" rel="noopener">{{ helpbox.wa_label }}</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <script>
+  (function(){
+    var METHOD_TITLES = {{ method_titles|tojson }};
+    var METHOD_PRICES = {{ method_prices|tojson }};
+    var METHOD_DIAL   = {{ method_dial|tojson }};
+    var tabs   = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+    var panels = Array.prototype.slice.call(document.querySelectorAll('.panel'));
+    var mainEl = document.getElementById('payMain');
+    var formEl = document.getElementById('payForm');
+    var thanksEl = document.getElementById('payThanks');
+    var chosenEl = document.getElementById('chosenMethod');
+    var btnSubmit = document.getElementById('claimSubmit');
+    var chosen = null;   // id способа, с которого нажали «Я оплатил»
+
+    // ── UTM / ref из URL (в HTML не рендерим — только в JS-объект и в JSON) ──
+    var qs = new URLSearchParams(window.location.search);
+    function pick(k){ var v = qs.get(k); return v ? v.slice(0,180) : null; }
+    var tracking = {
+      ref: pick('ref') || pick('utm_content'),
+      utm_source: pick('utm_source'), utm_medium: pick('utm_medium'),
+      utm_campaign: pick('utm_campaign'), utm_content: pick('utm_content'),
+      utm_term: pick('utm_term'),
+      referrer: (document.referrer || '').slice(0,400),
+      landing_url: window.location.href.slice(0,400)
+    };
+
+    // ── Вкладки ──
+    var headPrice = document.getElementById('headPrice');
+
+    function selectTab(id){
+      tabs.forEach(function(t){
+        var on = t.getAttribute('data-method') === id;
+        t.classList.toggle('sel', on);
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      panels.forEach(function(p){ p.classList.toggle('sel', p.getAttribute('data-panel') === id); });
+      // Цена в шапке — в валюте выбранного способа. Нет цены у способа → плашку
+      // прячем: сумма в чужой валюте хуже, чем её отсутствие.
+      if (headPrice){
+        if (METHOD_PRICES[id]){
+          headPrice.textContent = METHOD_PRICES[id];
+          headPrice.style.display = '';
+        } else {
+          headPrice.style.display = 'none';
+        }
+      }
+    }
+    tabs.forEach(function(t){
+      t.addEventListener('click', function(){ selectTab(t.getAttribute('data-method')); });
+    });
+    // Открываем первый способ, у которого есть реквизиты (вкладка без .off).
+    var firstReady = tabs.filter(function(t){ return !t.classList.contains('off'); })[0] || tabs[0];
+    if (firstReady) selectTab(firstReady.getAttribute('data-method'));
+
+    // ── Копирование реквизита ──
+    // Номер карты и адрес кошелька руками не перепечатывают: там и рождаются
+    // ошибки на один символ. clipboard API есть только на https — фолбэк на
+    // execCommand, чтобы кнопка работала и в http-стенде.
+    function copyText(text){
+      if (navigator.clipboard && window.isSecureContext){
+        return navigator.clipboard.writeText(text);
+      }
+      return new Promise(function(resolve, reject){
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed'; ta.style.left = '-9999px';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy') ? resolve() : reject(); }
+        catch(e){ reject(e); }
+        finally { document.body.removeChild(ta); }
+      });
+    }
+    document.querySelectorAll('.copy').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var row = btn.closest('.req-row');
+        var val = row ? row.querySelector('.req-value') : null;
+        if (!val) return;
+        copyText(val.getAttribute('data-value') || val.textContent.trim()).then(function(){
+          var was = btn.textContent;
+          btn.textContent = 'Скопировано';
+          btn.classList.add('done');
+          setTimeout(function(){ btn.textContent = was; btn.classList.remove('done'); }, 1600);
+        }).catch(function(){
+          // Копирование запрещено политикой браузера — выделяем, человек копирует сам.
+          var r = document.createRange(); r.selectNodeContents(val);
+          var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+        });
+      });
+    });
+
+    // ── «Я оплатил» → форма ──
+    var phoneEl = document.getElementById('phone');
+    document.querySelectorAll('.pay-done').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        chosen = btn.getAttribute('data-method');
+        // Способ и сумма перед глазами: человек проверяет, что подтверждает
+        // именно тот перевод, который сделал.
+        var price = METHOD_PRICES[chosen];
+        chosenEl.textContent = (METHOD_TITLES[chosen] || chosen) + (price ? ' · ' + price : '');
+        // Код страны под способ: платящему рублями не нужно стирать «+971».
+        // Не трогаем, если человек уже начал вводить свой номер.
+        var dial = METHOD_DIAL[chosen] || '';
+        var cur = phoneEl.value.trim();
+        if (!cur || Object.keys(METHOD_DIAL).some(function(k){ return METHOD_DIAL[k].trim() === cur; })){
+          phoneEl.value = dial;
+        }
+        mainEl.style.display = 'none';
+        formEl.classList.add('sel');
+        window.scrollTo(0,0);
+      });
+    });
+    document.getElementById('formBack').addEventListener('click', function(){
+      formEl.classList.remove('sel');
+      mainEl.style.display = '';
+      window.scrollTo(0,0);
+    });
+
+    // ── Отправка заявления ──
+    btnSubmit.addEventListener('click', function(){
+      var name  = document.getElementById('name').value.trim();
+      var phone = document.getElementById('phone').value.trim();
+      var digits = phone.replace(/\D/g,'');
+      document.getElementById('errName').style.display  = name ? 'none' : 'block';
+      document.getElementById('errPhone').style.display = digits.length >= 9 ? 'none' : 'block';
+      if (!name || digits.length < 9) return;
+
+      btnSubmit.disabled = true;
+      var payload = {
+        method: chosen, name: name, phone: phone,
+        contact: document.getElementById('contact').value.trim(),
+        note: document.getElementById('note').value.trim(),
+        website: document.querySelector('input[name=website]').value, // honeypot
+        ref: tracking.ref, referrer: tracking.referrer, landing_url: tracking.landing_url,
+        utm_source: tracking.utm_source, utm_medium: tracking.utm_medium,
+        utm_campaign: tracking.utm_campaign, utm_content: tracking.utm_content,
+        utm_term: tracking.utm_term
+      };
+      fetch('/pay/confirm', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      }).then(function(r){ return r.json().catch(function(){ return {}; }); })
+        .then(showThanks)
+        .catch(showThanks);  // приём идемпотентен — человеку всегда «спасибо»
+    });
+
+    function showThanks(){
+      formEl.classList.remove('sel');
+      mainEl.style.display = 'none';
+      thanksEl.classList.add('sel');
+      window.scrollTo(0,0);
+    }
+  })();
+  </script>
+</body>
+</html>
