@@ -782,7 +782,7 @@
     {% if seller %}
     <div class="foot-seller">
       <div>{{ seller.name }}</div>
-      <div>ИНН {{ seller.inn }}</div>
+      <div>ИНН {{ seller.inn }}{% if seller.ogrnip %} · ОГРНИП {{ seller.ogrnip }}{% endif %}</div>
       <div>Место реализации услуг: {{ seller.place }}</div>
       <div><a href="{{ seller.contact_url }}" target="_blank" rel="noopener">{{ seller.contact_label }}</a></div>
     </div>
