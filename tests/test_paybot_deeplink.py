@@ -29,6 +29,7 @@ os.environ["PAY_BOT_TOKEN"] = ""
 from sqlalchemy import create_engine  # noqa: E402
 from sqlalchemy.orm import sessionmaker  # noqa: E402
 
+from app import club_config  # noqa: E402
 from app import paybot as pb  # noqa: E402
 from app import paybot_config as T  # noqa: E402
 from app.models import Base  # noqa: E402
@@ -81,7 +82,9 @@ def _kb_texts(markup):
     return [b.text for row in markup.inline_keyboard for b in row]
 
 
-MENU = [T.BTN_PAY, T.BTN_ASK]
+# Третья кнопка — платный клуб (план 2026-08-04): он продаётся тем же людям,
+# что покупают курс, поэтому живёт в общем меню, а не в отдельном боте.
+MENU = [T.BTN_PAY, T.BTN_ASK, club_config.BTN_CLUB_JOIN]
 
 
 # ─── 1. разбор payload ───────────────────────────────────────────────────────
