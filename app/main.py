@@ -1545,7 +1545,9 @@ def assistant_page(request: Request) -> HTMLResponse:
         **ac.page(),
         # Футер — тот же, что на /partners: один источник адреса и контактов.
         "contacts": pc.CONTACTS,
-        "legal_links": [(label["ru"], href) for label, href in pc.LEGAL_LINKS],
+        # Политика ПРОДАВЦА (ИП), а не ONCOUNT: покупатель интенсива заключает
+        # договор с ИП, и в подвале должен быть документ именно этого лица.
+        "legal_links": [("Политика конфиденциальности", "/assistant/policy")],
         # Реквизиты продавца рублёвых оплат: None, пока не заполнены (тогда блок
         # в подвале просто не рендерится).
         "seller": seller_config.seller(),
@@ -1696,6 +1698,24 @@ def policy_page(request: Request) -> HTMLResponse:
         "lang": lang,
         "tr": lambda value: pc.t(value, lang),
         "doc": lc.POLICY,
+        "contacts": pc.CONTACTS,
+    })
+
+
+@app.get("/assistant/policy", response_class=HTMLResponse)
+def assistant_policy_page(request: Request) -> HTMLResponse:
+    """Политика конфиденциальности ПРОДАВЦА интенсива (ИП, 152-ФЗ).
+
+    Отдельно от /policy: там политика ONCOUNT — компании в ОАЭ. Интенсив продаёт
+    ИП по российскому праву, и покупателю нельзя показывать документ чужого лица.
+    """
+    from app import legal_ip_config as lic
+    from app import partners_config as pc
+    return templates.TemplateResponse("legal.html", {
+        "request": request,
+        "lang": "ru",
+        "tr": lambda value: pc.t(value, "ru"),
+        "doc": lic.policy(),
         "contacts": pc.CONTACTS,
     })
 
