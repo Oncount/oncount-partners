@@ -288,6 +288,7 @@ async def cb_join(call: CallbackQuery) -> None:
         periods = _offer_periods(m)
         first = (m.payments_count or 0) == 0
         payments = m.payments_count or 0
+        status = m.status
 
     # Гость с бесплатных времён: он уже в канале, а платежей за ним нет. Такому
     # продавать подписку нельзя — Николь обещала им бессрочный доступ, и, купив,
@@ -316,7 +317,10 @@ async def cb_join(call: CallbackQuery) -> None:
 
     # Активный доступ — не повод отказать: продлить заранее должно быть можно,
     # иначе человек упирается в «вы уже в клубе» и уходит.
-    title = T.PERIOD_TITLE if first else T.PERIOD_TITLE_RENEW
+    if status == "removed":
+        title = T.PERIOD_TITLE_RETURN
+    else:
+        title = T.PERIOD_TITLE if first else T.PERIOD_TITLE_RENEW
     if paid_until and paid_until > datetime.utcnow():
         title = (T.ALREADY_IN.format(until=_human_date(paid_until))
                  + "\n\n" + T.PERIOD_TITLE_RENEW)
