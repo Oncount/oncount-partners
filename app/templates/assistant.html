@@ -765,13 +765,11 @@
   </section>
 
   <footer>
-    <div>{{ contacts.address }}</div>
-    <div class="foot-row">
-      <a href="mailto:{{ contacts.email }}">{{ contacts.email }}</a>
-      <a href="{{ contacts.site }}" target="_blank" rel="noopener">oncount.com</a>
-      <a href="{{ contacts.telegram }}" target="_blank" rel="noopener">Telegram</a>
-      <a href="{{ contacts.instagram }}" target="_blank" rel="noopener">Instagram</a>
-    </div>
+    {# Контакты ONCOUNT (дубайский адрес, info@, сайт, Telegram, Instagram) убраны
+       04.08.2026 по решению Николь. Причина: интенсив продаёт ИП в Москве, и
+       адрес компании в ОАЭ рядом со строкой «Место реализации услуг: Москва»
+       противоречил сам себе — в том числе для проверяющего из Продамуса.
+       Контакт для покупателя остался один и однозначный: Telegram продавца ниже. #}
     <div class="foot-row">
       {% for label, href in legal_links %}<a href="{{ href }}">{{ label }}</a>{% endfor %}
     </div>
