@@ -392,6 +392,15 @@ async def cmd_id(msg: Message) -> None:
     await msg.answer(f"chat_id: <code>{msg.chat.id}</code>")
 
 
+@dp.message(Command("channelstatus"))
+async def cmd_channel_status(msg: Message) -> None:
+    """Проверка «канал частный и бот там админ» — одной командой, по данным
+    Telegram. Только для Николь: остальным знать id канала незачем."""
+    if not settings.ADMIN_TG_ID or msg.from_user.id != settings.ADMIN_TG_ID:
+        return
+    await msg.answer(await channel_gate.channel_status(msg.bot))
+
+
 @dp.message(Command("channel"))
 async def cmd_channel(msg: Message) -> None:
     """Вход в закрытый канал: тот же вопрос про 18+, что и по ссылке.

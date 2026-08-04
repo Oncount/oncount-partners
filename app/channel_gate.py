@@ -27,6 +27,7 @@ from aiogram.types import (
     ChatMemberUpdated,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
+    Message,
 )
 from sqlalchemy.exc import IntegrityError
 
@@ -191,6 +192,60 @@ async def on_added_to_channel(ev: ChatMemberUpdated, bot: Bot) -> None:
         title=ev.chat.title or "без названия", channel_id=ev.chat.id,
         rights=rights)
         + (T.CHANNEL_REPLACED.format(old=replaced) if replaced else ""))
+
+
+@router.channel_post()
+async def on_channel_post(msg: Message, bot: Bot) -> None:
+    """Пост в канале — второй способ узнать канал, и он важнее, чем кажется.
+
+    `my_chat_member` приходит ОДИН раз, в момент назначения админом. Если права
+    боту выдали до релиза привратника, событие ушло в никуда, и канал остался бы
+    неизвестным навсегда: снаружи всё выглядит настроенным, а доступ не выдаётся.
+    Любой пост в канале это чинит — бот админ, значит посты он видит.
+    """
+    if channel_id():
+        return
+    try:
+        me = await bot.get_me()
+        member = await bot.get_chat_member(chat_id=msg.chat.id, user_id=me.id)
+    except Exception as exc:  # noqa: BLE001 — нет ответа, попробуем на следующем посте
+        log.warning("channel_post: не смог проверить права (%s)", type(exc).__name__)
+        return
+    can_invite = bool(getattr(member, "can_invite_users", False))
+    saved, _ = _remember_channel(msg.chat.id, can_invite)
+    if not saved:
+        return
+    log.info("канал определён по посту: %s, can_invite=%s", msg.chat.id, can_invite)
+    rights = (T.CHANNEL_RIGHTS_OK.format(bot_username=me.username or "bot")
+              if can_invite else T.CHANNEL_RIGHTS_MISSING)
+    await _notify_admin(bot, T.CHANNEL_LINKED_ADMIN.format(
+        title=msg.chat.title or "без названия", channel_id=msg.chat.id, rights=rights))
+
+
+async def channel_status(bot: Bot) -> str:
+    """Что бот на самом деле знает о канале — для команды /channelstatus.
+
+    Отвечает на три вопроса разом: какой канал считается рабочим, частный он или
+    публичный, и хватает ли боту прав. Спрашиваем Telegram, а не свою базу:
+    права могли снять уже после того, как бот их запомнил.
+    """
+    cid = channel_id()
+    if not cid:
+        return T.STATUS_NO_CHANNEL
+    try:
+        chat = await bot.get_chat(cid)
+        me = await bot.get_me()
+        member = await bot.get_chat_member(chat_id=cid, user_id=me.id)
+    except Exception as exc:  # noqa: BLE001 — бота могли выгнать из канала
+        return T.STATUS_ERROR.format(channel_id=cid, error=type(exc).__name__)
+    can_invite = bool(getattr(member, "can_invite_users", False))
+    return T.STATUS_OK.format(
+        title=chat.title or "без названия",
+        channel_id=cid,
+        privacy=(T.STATUS_PUBLIC.format(username=chat.username) if chat.username
+                 else T.STATUS_PRIVATE),
+        role=member.status,
+        rights=T.STATUS_RIGHTS_OK if can_invite else T.STATUS_RIGHTS_MISSING)
 
 
 # ─── заявка на вступление в канал ────────────────────────────────────────────
