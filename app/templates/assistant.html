@@ -387,6 +387,8 @@
     footer{border-top:1px solid var(--line);padding:26px 0 90px;font-size:14px;
       color:var(--muted)}
     footer a{color:var(--muted)}
+    .foot-seller{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);
+      line-height:1.7;font-size:13px;color:var(--muted)}
     .foot-row{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:12px}
 
     /* липкая кнопка на телефоне: экран длинный, кнопка не должна теряться */
@@ -773,6 +775,18 @@
     <div class="foot-row">
       {% for label, href in legal_links %}<a href="{{ href }}">{{ label }}</a>{% endfor %}
     </div>
+    {# Реквизиты продавца рублёвых оплат — требование Продамуса (#424-287299):
+       без ФИО, ИНН, места реализации и контакта смену вида деятельности не
+       согласуют. Продавец интенсива (ИП) и ONCOUNT (компания в ОАЭ) — разные
+       субъекты, поэтому блок отдельный, а не подмена контактов выше. #}
+    {% if seller %}
+    <div class="foot-seller">
+      <div>{{ seller.name }}</div>
+      <div>ИНН {{ seller.inn }}</div>
+      <div>Место реализации услуг: {{ seller.place }}</div>
+      <div><a href="{{ seller.contact_url }}" target="_blank" rel="noopener">{{ seller.contact_label }}</a></div>
+    </div>
+    {% endif %}
   </footer>
 
 </div>

@@ -1537,6 +1537,7 @@ def assistant_page(request: Request) -> HTMLResponse:
     только переходы. Тексты и цены — app/assistant_config.py."""
     from app import assistant_config as ac
     from app import partners_config as pc
+    from app import seller_config
     linkstat.record_click("assistant", "quiz",
                           request.query_params.get("ref"), request.headers.get("user-agent"))
     return templates.TemplateResponse("assistant.html", {
@@ -1545,6 +1546,9 @@ def assistant_page(request: Request) -> HTMLResponse:
         # Футер — тот же, что на /partners: один источник адреса и контактов.
         "contacts": pc.CONTACTS,
         "legal_links": [(label["ru"], href) for label, href in pc.LEGAL_LINKS],
+        # Реквизиты продавца рублёвых оплат: None, пока не заполнены (тогда блок
+        # в подвале просто не рендерится).
+        "seller": seller_config.seller(),
     })
 
 
