@@ -582,6 +582,9 @@ class IntensiveLead(Base):
     # Путь: new → invoiced (счёт выставлен) → paid (Lava подтвердила) →
     # in_chat (инвайт выдан). refused — сказал «не буду».
     status: Mapped[str] = mapped_column(String(16), default="new", index=True)
+    # Что именно покупают: 'first_day' (первый день) или 'intensive' (весь курс).
+    # См. lava.PRODUCTS. NULL у старых строк — считаем интенсивом.
+    product_code: Mapped[str | None] = mapped_column(String(16))
     # Счёт в Lava: id и ссылка. По contractId сверяем оплату через /api/v1/sales.
     lava_invoice_id: Mapped[str | None] = mapped_column(String(64), index=True)
     lava_invoice_url: Mapped[str | None] = mapped_column(Text)
@@ -589,6 +592,9 @@ class IntensiveLead(Base):
     # Email для счёта Lava (обязателен в их API). Спрашиваем у человека.
     email: Mapped[str | None] = mapped_column(String(255))
     paid_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Когда выдали промокод на бесплатный месяц клуба (только покупателям
+    # полного интенсива). NULL — ещё не выдавали; защищает от повторной выдачи.
+    club_promo_sent_at: Mapped[datetime | None] = mapped_column(DateTime)
     # Одноразовая инвайт-ссылка в чат участников — выдана этому человеку.
     invite_link: Mapped[str | None] = mapped_column(Text)
     invited_at: Mapped[datetime | None] = mapped_column(DateTime)

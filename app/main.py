@@ -728,6 +728,9 @@ async def on_startup() -> None:
         # Аддитивно и идемпотентно: одна nullable-колонка, без DB-default —
         # дефолт «в расчёте» выводит payout_label. Существующие строки/колонки
         # не трогаются. create_all не делает ALTER, а leads уже есть в проде.
+        # Бот оплат: что купили — первый день или весь интенсив (04.08.2026).
+        conn.execute(text("ALTER TABLE intensive_leads ADD COLUMN IF NOT EXISTS product_code VARCHAR(16)"))
+        conn.execute(text("ALTER TABLE intensive_leads ADD COLUMN IF NOT EXISTS club_promo_sent_at TIMESTAMP"))
         conn.execute(text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS payout_state VARCHAR(16)"))
         # Сумма комиссии партнёра по сделке (решение Николь 2026-07-21). Аддитивно
         # и идемпотентно: nullable, без DB-default — NULL значит «не посчитана»

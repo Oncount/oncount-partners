@@ -31,9 +31,23 @@ log = logging.getLogger("oncount.lava")
 
 BASE_URL = "https://gate.lava.top"
 
-# Оффер тарифа «Интенсив» (не «Под ключ» — тот стоит в шесть с лишним раз больше).
-# Правило репо №1: id живёт здесь, не в вёрстке и не в хендлерах бота.
-OFFER_INTENSIVE = "85dc8277-8980-4cb1-9fd1-ab4ed12215fb"
+# Офферы в кассе. Правило репо №1: id живут здесь, не в хендлерах бота.
+#
+# ⚠️ ГРАБЛЯ 04.08.2026: id `85dc8277…` раньше был «Интенсив» за $375, а Николь
+# ПЕРЕИМЕНОВАЛА его в «Первый день» и поставила $20 — id при этом не изменился.
+# Бот продолжал считать его интенсивом и сутки выставлял счета на $20 вместо
+# полной программы. Отсюда правило: после любых правок в кассе сверять НЕ ТОЛЬКО
+# цену, но и то, что id по-прежнему указывает на нужный оффер (`check_offers`).
+OFFER_FIRST_DAY = "85dc8277-8980-4cb1-9fd1-ab4ed12215fb"   # «Первый день», $20
+OFFER_INTENSIVE = "2449b65d-b100-4d76-8d0b-c0dd4882e53e"   # «Интенсив», $1000
+OFFER_DFY = "effe38ce-e866-46d0-89ab-5397e94f66ec"         # «Под ключ», $2500
+
+# Что бот предлагает купить: код → (id оффера, как назвать человеку).
+# «Под ключ» здесь намеренно нет: он продаётся в личном разговоре, а не кнопкой.
+PRODUCTS: dict[str, tuple[str, str]] = {
+    "first_day": (OFFER_FIRST_DAY, "Первый день — соберём вам ассистента"),
+    "intensive": (OFFER_INTENSIVE, "Весь интенсив, 5 дней"),
+}
 
 # Валюты, которые Lava принимает для этого оффера. RUB и EUR видны на витрине,
 # USD есть только через API — в боте предлагаем все три.
@@ -63,8 +77,8 @@ def is_configured() -> bool:
     return bool(_key())
 
 
-def offer_prices() -> dict[str, float]:
-    """Актуальные цены оффера «Интенсив» из Lava: {'RUB': 29711.66, ...}.
+def offer_prices(offer_id: str = OFFER_INTENSIVE) -> dict[str, float]:
+    """Актуальные цены оффера из Lava: {'RUB': 80400.0, ...}.
 
     Тянем из API, а не храним у себя: цену меняют в кассе, и расхождение между
     тем, что человек видит в боте, и тем, что просит касса, — прямой путь к
@@ -80,16 +94,17 @@ def offer_prices() -> dict[str, float]:
             return {}
         for product in r.json().get("items", []):
             for offer in product.get("offers", []):
-                if offer.get("id") == OFFER_INTENSIVE:
+                if offer.get("id") == offer_id:
                     return {p["currency"]: float(p["amount"])
                             for p in offer.get("prices", []) if p.get("currency")}
-        log.warning("lava: оффер %s не найден (проверьте feedVisibility)", OFFER_INTENSIVE)
+        log.warning("lava: оффер %s не найден (проверьте feedVisibility)", offer_id)
     except Exception as exc:  # сеть/формат — не валим бота
         log.warning("lava products error: %s", type(exc).__name__)
     return {}
 
 
-def create_invoice(email: str, currency: str = "RUB") -> dict | None:
+def create_invoice(email: str, currency: str = "RUB",
+                   offer_id: str = OFFER_INTENSIVE) -> dict | None:
     """Выставить счёт на тариф «Интенсив» конкретному человеку.
 
     Возвращает {'id': ..., 'url': ...} либо None. email обязателен на стороне
@@ -102,7 +117,7 @@ def create_invoice(email: str, currency: str = "RUB") -> dict | None:
         currency = "RUB"
     payload = {
         "email": email,
-        "offerId": OFFER_INTENSIVE,
+        "offerId": offer_id,
         "currency": currency,
         "paymentMethod": CURRENCY_METHOD[currency],
         "periodicity": "ONE_TIME",   # интенсив — разовая покупка, не подписка
@@ -161,3 +176,33 @@ def invoice_paid(invoice_id: str) -> bool:
     except Exception as exc:
         log.warning("lava sales error: %s", type(exc).__name__)
     return False
+
+
+def check_offers() -> list[str]:
+    """Сверить, что зашитые id указывают на те офферы, за которые мы их держим.
+
+    Появилась после 04.08.2026: в кассе переименовали оффер, не меняя id, и бот
+    сутки продавал интенсив по цене первого дня. Возвращает список расхождений
+    (пустой — всё в порядке); вызывается при старте бота.
+    """
+    if not is_configured():
+        return []
+    expect = {OFFER_FIRST_DAY: "перв", OFFER_INTENSIVE: "интенсив", OFFER_DFY: "ключ"}
+    problems: list[str] = []
+    try:
+        r = httpx.get(f"{BASE_URL}/api/v2/products", headers=_headers(),
+                      params={"feedVisibility": "ALL"}, timeout=_TIMEOUT)
+        if r.status_code != 200:
+            return [f"касса недоступна (http {r.status_code})"]
+        found = {o["id"]: o.get("name", "") for p in r.json().get("items", [])
+                 for o in p.get("offers", [])}
+        for oid, marker in expect.items():
+            name = found.get(oid)
+            if name is None:
+                problems.append(f"оффер {oid[:8]}… пропал из кассы")
+            elif marker not in name.lower():
+                problems.append(f"оффер {oid[:8]}… теперь называется {name!r} — "
+                                f"ожидали «{marker}»")
+    except Exception as exc:  # noqa: BLE001
+        return [f"сверка офферов не удалась: {type(exc).__name__}"]
+    return problems

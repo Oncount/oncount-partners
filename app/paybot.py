@@ -158,8 +158,39 @@ async def start(msg: Message) -> None:
 
 @dp.callback_query(F.data == "pay:start")
 async def cb_pay(call) -> None:
-    """Показываем валюты с ЖИВЫМИ ценами из Lava, а не из нашего конфига."""
-    prices = lava.offer_prices()
+    """Сначала ЧТО покупаем: первый день или весь интенсив. Цены — живые из кассы."""
+    rows = []
+    for code, (offer_id, label) in lava.PRODUCTS.items():
+        prices = await asyncio.to_thread(lava.offer_prices, offer_id)
+        if not prices:
+            continue
+        usd = prices.get("USD")
+        price = f" — {_fmt_amount('USD', usd)}" if usd else ""
+        rows.append([InlineKeyboardButton(text=f"{label}{price}",
+                                          callback_data=f"pay:prod:{code}")])
+    if not rows:
+        await call.message.answer(
+            "Не могу получить цены от кассы. Напишите Николь — поможем оплатить.")
+        await call.answer()
+        return
+    await call.message.answer(T.PRODUCT_TITLE,
+                              reply_markup=InlineKeyboardMarkup(inline_keyboard=rows))
+    await call.answer()
+
+
+@dp.callback_query(F.data.startswith("pay:prod:"))
+async def cb_product(call) -> None:
+    """Выбрали продукт → показываем валюты с ценами ИМЕННО этого оффера."""
+    code = call.data.rsplit(":", 1)[-1]
+    if code not in lava.PRODUCTS:
+        await call.answer()
+        return
+    offer_id, label = lava.PRODUCTS[code]
+    with SessionLocal() as s:
+        lead = _lead(s, call.from_user)
+        lead.product_code = code
+        s.commit()
+    prices = await asyncio.to_thread(lava.offer_prices, offer_id)
     if not prices:
         await call.message.answer(
             "Не могу получить цену от кассы. Напишите Николь — поможем оплатить.")
@@ -169,7 +200,7 @@ async def cb_pay(call) -> None:
         text=f"{lava.CURRENCY_LABELS.get(c, c)} — {_fmt_amount(c, prices[c])}",
         callback_data=f"pay:cur:{c}")]
         for c in lava.CURRENCIES if c in prices]
-    await call.message.answer(T.CURRENCY_TITLE,
+    await call.message.answer(label + "\n\n" + T.CURRENCY_TITLE,
                               reply_markup=InlineKeyboardMarkup(inline_keyboard=rows))
     await call.answer()
 
@@ -220,15 +251,17 @@ async def on_text(msg: Message) -> None:
         with SessionLocal() as s:
             lead = _lead(s, msg.from_user)
             currency = lead.lava_currency or "RUB"
+            product_code = lead.product_code or "intensive"
             lead.email = email
             s.commit()
-        inv = await asyncio.to_thread(lava.create_invoice, email, currency)
+        offer_id = lava.PRODUCTS.get(product_code, (lava.OFFER_INTENSIVE, ""))[0]
+        inv = await asyncio.to_thread(lava.create_invoice, email, currency, offer_id)
         if not inv:
             await msg.answer("Не удалось выставить счёт. Напишите Николь — "
                              "поможем оплатить вручную.")
             await _notify_admin(f"⚠️ Не выставился счёт Lava для {msg.from_user.id}")
             return
-        prices = lava.offer_prices()
+        prices = await asyncio.to_thread(lava.offer_prices, offer_id)
         amount = _fmt_amount(currency, prices.get(currency, 0)) if prices else currency
         with SessionLocal() as s:
             lead = _lead(s, msg.from_user)
@@ -318,7 +351,11 @@ async def try_grant_access(telegram_id: int) -> bool:
             if lead.status not in ("paid", "in_chat"):
                 lead.status, lead.paid_at = "paid", datetime.utcnow()
                 s.commit()
-        prices = lava.offer_prices()
+        with SessionLocal() as s2:
+            _l = s2.query(IntensiveLead).filter_by(telegram_id=telegram_id).first()
+            offer_id = lava.PRODUCTS.get(_l.product_code or "intensive",
+                                         (lava.OFFER_INTENSIVE, ""))[0]
+        prices = await asyncio.to_thread(lava.offer_prices, offer_id)
         who = f"id{telegram_id}"
         with SessionLocal() as s:
             lead = s.query(IntensiveLead).filter_by(telegram_id=telegram_id).first()
@@ -345,6 +382,7 @@ async def try_grant_access(telegram_id: int) -> bool:
             lead.status = "in_chat"
             s.commit()
         await bot.send_message(telegram_id, T.PAID_OK.format(link=link.invite_link))
+        await _send_club_promo(telegram_id)
         return True
     except Exception as exc:
         log.error("paybot invite failed: %s", type(exc).__name__)
@@ -352,6 +390,34 @@ async def try_grant_access(telegram_id: int) -> bool:
         await _notify_admin(f"⚠️ Не удалось создать инвайт: {type(exc).__name__}. "
                             "Проверьте, что бот админ и может приглашать.")
         return True
+
+
+async def _send_club_promo(telegram_id: int) -> None:
+    """Промокод на бесплатный первый месяц клуба — покупателям ПОЛНОГО интенсива.
+
+    Решение Николь 04.08.2026. Тем, кто взял только первый день за $20, промокод
+    не полагается. Отметка `club_promo_sent_at` защищает от повторной выдачи:
+    проверка оплат крутится каждую минуту, и без неё человек получал бы промокод
+    снова и снова.
+    """
+    with SessionLocal() as s:
+        lead = s.query(IntensiveLead).filter_by(telegram_id=telegram_id).first()
+        if lead is None or lead.club_promo_sent_at:
+            return
+        if (lead.product_code or "intensive") != "intensive":
+            return
+    try:
+        await bot.send_message(telegram_id, T.CLUB_PROMO_TEXT,
+                               disable_web_page_preview=True)
+    except Exception as exc:  # noqa: BLE001 — доступ уже выдан, промокод вторичен
+        log.warning("paybot club promo failed: %s", type(exc).__name__)
+        return
+    with SessionLocal() as s:
+        lead = s.query(IntensiveLead).filter_by(telegram_id=telegram_id).first()
+        if lead is not None:
+            lead.club_promo_sent_at = datetime.utcnow()
+            s.commit()
+    log.info("paybot: промокод клуба выдан %s", telegram_id)
 
 
 async def poll_payments_once() -> int:
@@ -416,6 +482,14 @@ async def main() -> None:
     # my_chat_member), свои тексты. Хендлеры самого dp разбираются раньше, так
     # что поток интенсива остаётся нетронутым.
     dp.include_router(channel_gate.router)
+    problems = await asyncio.to_thread(lava.check_offers)
+    for p in problems:
+        log.error("ВНИМАНИЕ, касса: %s", p)
+    if problems:
+        await _notify_admin(
+            "⚠️ Касса Lava разошлась с ботом:\n\n"
+            + "\n".join(f"• {p}" for p in problems)
+            + "\n\nПока не поправить, бот может продавать не то.")
     me = await bot.get_me()
     log.info("Paybot polling start, bot=@%s, lava=%s, chat=%s, channel=%s",
              me.username, lava.is_configured(), chat_id() or "не подключён",
