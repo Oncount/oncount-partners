@@ -1718,7 +1718,6 @@ def assistant_policy_page(request: Request) -> HTMLResponse:
         "lang": "ru",
         "tr": lambda value: pc.t(value, "ru"),
         "doc": lic.policy(),
-        "contacts": pc.CONTACTS,
     })
 
 
@@ -1730,7 +1729,7 @@ def assistant_offer_page(request: Request) -> HTMLResponse:
     return templates.TemplateResponse("legal.html", {
         "request": request, "lang": "ru",
         "tr": lambda value: pc.t(value, "ru"),
-        "doc": loc.OFFER, "contacts": pc.CONTACTS,
+        "doc": loc.OFFER,
     })
 
 
@@ -1742,7 +1741,7 @@ def assistant_refund_page(request: Request) -> HTMLResponse:
     return templates.TemplateResponse("legal.html", {
         "request": request, "lang": "ru",
         "tr": lambda value: pc.t(value, "ru"),
-        "doc": loc.REFUND, "contacts": pc.CONTACTS,
+        "doc": loc.REFUND,
     })
 
 

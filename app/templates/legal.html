@@ -32,10 +32,16 @@
 </head>
 <body>
 <div class="wrap">
+  {# Шапка и подвал ONCOUNT — только у документов ONCOUNT (/policy). У документов
+     продавца-ИП (оферта, возврат, политика интенсива) их быть не должно: там
+     другое лицо, и дубайский адрес рядом с реквизитами ИП вводит в заблуждение.
+     Признак — переданы contacts (см. роуты в app/main.py). #}
+  {% if contacts %}
   <div class="top">
     <a href="/partners"><img src="/static/img/logo-light.png" alt="ONCOUNT"></a>
     <a href="/partners">{{ 'Partner program' if lang == 'en' else 'Партнёрская программа' }}</a>
   </div>
+  {% endif %}
 
   <h1>{{ tr(doc.title) }}</h1>
   <div class="upd">{{ tr(doc.updated) }}</div>
@@ -46,7 +52,7 @@
   <ul>{% for line in tr(sec.p) %}<li>{{ line }}</li>{% endfor %}</ul>
   {% endfor %}
 
-  <footer>{{ contacts.address }} · <a href="mailto:{{ contacts.email }}">{{ contacts.email }}</a></footer>
+  {% if contacts %}<footer>{{ contacts.address }} · <a href="mailto:{{ contacts.email }}">{{ contacts.email }}</a></footer>{% endif %}
 </div>
 </body>
 </html>
