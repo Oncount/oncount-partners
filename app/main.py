@@ -1547,7 +1547,9 @@ def assistant_page(request: Request) -> HTMLResponse:
         "contacts": pc.CONTACTS,
         # Политика ПРОДАВЦА (ИП), а не ONCOUNT: покупатель интенсива заключает
         # договор с ИП, и в подвале должен быть документ именно этого лица.
-        "legal_links": [("Политика конфиденциальности", "/assistant/policy")],
+        "legal_links": [("Оферта", "/assistant/offer"),
+                        ("Условия возврата", "/assistant/refund"),
+                        ("Политика конфиденциальности", "/assistant/policy")],
         # Реквизиты продавца рублёвых оплат: None, пока не заполнены (тогда блок
         # в подвале просто не рендерится).
         "seller": seller_config.seller(),
@@ -1717,6 +1719,30 @@ def assistant_policy_page(request: Request) -> HTMLResponse:
         "tr": lambda value: pc.t(value, "ru"),
         "doc": lic.policy(),
         "contacts": pc.CONTACTS,
+    })
+
+
+@app.get("/assistant/offer", response_class=HTMLResponse)
+def assistant_offer_page(request: Request) -> HTMLResponse:
+    """Договор публичной оферты на интенсив (ИП, право РФ)."""
+    from app import legal_offer_config as loc
+    from app import partners_config as pc
+    return templates.TemplateResponse("legal.html", {
+        "request": request, "lang": "ru",
+        "tr": lambda value: pc.t(value, "ru"),
+        "doc": loc.OFFER, "contacts": pc.CONTACTS,
+    })
+
+
+@app.get("/assistant/refund", response_class=HTMLResponse)
+def assistant_refund_page(request: Request) -> HTMLResponse:
+    """Условия возврата — неотъемлемая часть оферты."""
+    from app import legal_offer_config as loc
+    from app import partners_config as pc
+    return templates.TemplateResponse("legal.html", {
+        "request": request, "lang": "ru",
+        "tr": lambda value: pc.t(value, "ru"),
+        "doc": loc.REFUND, "contacts": pc.CONTACTS,
     })
 
 
