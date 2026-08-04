@@ -1,4 +1,4 @@
-{# Лендинг интенсива «Бизнес-ассистент за 5 дней» (/assistant).
+{# Лендинг курса «Три AI-сотрудника за 4 недели» (/assistant).
    Standalone, как partners.html и quiz.html: свои стили, без сайдбара кабинета и
    без oncount.css — тот красит h1/h2 под кабинет и здесь только мешал бы.
    Весь текст, цены и даты приходят из app/assistant_config.py (правило репо №1).
@@ -130,6 +130,57 @@
     .card p{color:var(--muted);font-size:15.5px}
     .num{font-family:Outfit,sans-serif;font-weight:700;font-size:15px;
       color:var(--green-3);letter-spacing:.06em;display:block;margin-bottom:10px}
+
+    /* ─── кого вы соберёте ───────────────────────────────────────────────── */
+    /* Первый сотрудник — крупной тёмной карточкой: он одинаковый у всех и
+       держит на себе весь оффер. Остальные девять — ровной сеткой выбора. */
+    .hire{background:var(--green);color:#fff;border-radius:var(--radius);
+      padding:32px 34px;margin-top:24px;
+      background-image:radial-gradient(circle at 92% 6%,rgba(47,139,120,.45),transparent 55%)}
+    .hire h3{color:#fff;font-size:clamp(22px,2.6vw,30px);font-weight:700}
+    .hire .tag{font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+      color:var(--gold);font-weight:600;display:block;margin-bottom:12px}
+    .hire p{color:rgba(255,255,255,.86);margin-top:14px;max-width:62ch}
+    .hire-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
+      margin-top:24px;padding-top:22px;border-top:1px solid rgba(255,255,255,.16)}
+    .hire-meta b{display:block;font-family:Outfit,sans-serif;font-weight:700;
+      font-size:20px;color:var(--gold);letter-spacing:-.02em}
+    .hire-meta span{display:block;font-size:13px;color:rgba(255,255,255,.65);
+      margin-top:5px;line-height:1.35}
+    .pick-head{margin-top:38px}
+    .pick-head h3{font-size:22px}
+    .picks{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+      gap:12px;margin-top:18px}
+    .pick{background:var(--card);border:1.5px solid var(--line);border-radius:14px;
+      padding:18px 20px}
+    .pick h4{margin:0;font-family:Outfit,sans-serif;font-weight:600;font-size:16.5px;
+      letter-spacing:-.01em;line-height:1.25;padding-left:26px;position:relative}
+    /* Номер-кружок вместо буллита: на выбор «двух из девяти» глаз должен
+       цепляться за порядок, а не за одинаковые заголовки. */
+    .pick h4:before{content:counter(pick);counter-increment:pick;position:absolute;
+      left:0;top:1px;width:19px;height:19px;border-radius:50%;background:var(--tint);
+      color:var(--green-2);font-size:11px;font-weight:700;display:flex;
+      align-items:center;justify-content:center}
+    .picks{counter-reset:pick}
+    .pick p{color:var(--muted);font-size:14.5px;margin-top:9px}
+    .pick-cta{margin-top:22px}
+
+    /* ─── уровни: джун / мидл / хед ──────────────────────────────────────── */
+    .levels{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:24px}
+    .level{background:var(--card);border:1.5px solid var(--line);border-radius:16px;
+      padding:24px 22px;display:flex;flex-direction:column}
+    .level.main{background:var(--green);border-color:var(--green);color:#fff;
+      background-image:radial-gradient(circle at 90% 0,rgba(47,139,120,.5),transparent 60%)}
+    .level .tag{font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+      color:var(--green-3);font-weight:600;display:block;margin-bottom:10px}
+    .level.main .tag{color:var(--gold)}
+    .level.main h3{color:#fff}
+    .level p{color:var(--muted);font-size:15px;margin-top:12px}
+    .level.main p{color:rgba(255,255,255,.85)}
+    .verdict{margin-top:auto;padding-top:18px;font-size:13.5px;font-weight:600;
+      color:var(--green-2)}
+    .level.main .verdict{color:var(--gold)}
+    .levels-note{margin-top:18px;font-size:15.5px;color:var(--muted);max-width:74ch}
 
     /* ─── цена вопроса ───────────────────────────────────────────────────── */
     .chart{display:grid;gap:26px;margin-top:24px}
@@ -318,6 +369,8 @@
     .day .d{font-family:Outfit,sans-serif;font-weight:700;font-size:26px;
       color:var(--green-3);letter-spacing:-.02em}
     .day .res{color:var(--muted);font-size:15.5px}
+    .day .out{display:block;margin-top:10px;font-size:14px;font-weight:600;
+      color:var(--green-2)}
 
     /* ─── автор ──────────────────────────────────────────────────────────── */
     .author{display:grid;grid-template-columns:290px 1fr;gap:44px;align-items:center;
@@ -367,9 +420,11 @@
 
     /* ─── гарантия ───────────────────────────────────────────────────────── */
     .guar{display:grid;grid-template-columns:auto 1fr;gap:38px;align-items:center}
+    /* В марке теперь «100%», а не один знак: при прежних 120px четыре символа
+       вылезали за экран телефона. Держим по ширине, а не по высоте. */
     .guar .mark{font-family:Outfit,sans-serif;font-weight:800;
-      font-size:clamp(60px,10vw,120px);line-height:.85;color:var(--gold);
-      letter-spacing:-.05em}
+      font-size:clamp(46px,8vw,88px);line-height:.85;color:var(--gold);
+      letter-spacing:-.05em;white-space:nowrap}
     .guar p+p{margin-top:12px}
 
     /* ─── вопросы ────────────────────────────────────────────────────────── */
@@ -406,7 +461,7 @@
 
     @media (max-width:900px){
       .hero-grid,.split,.author{grid-template-columns:1fr;gap:30px}
-      .tiers{grid-template-columns:1fr}
+      .tiers,.levels{grid-template-columns:1fr}
       .author{padding:24px 22px}
       .author figure{max-width:230px}
       details.more ul{columns:1}
@@ -416,10 +471,18 @@
     }
     @media (max-width:640px){
       .hero{padding:32px 22px;margin-top:12px}
-      .dark{padding:28px 22px}
+      .dark,.hire{padding:28px 22px}
+      /* Три цифры рынка в 390px не помещаются в ряд — в столбик, иначе
+         «от $1 500» переносится по слову и читается как две разные цены. */
+      .hire-meta{grid-template-columns:1fr;gap:16px}
       /* 5 колонок в 390px: подпись «ассистент» упирается в край — мельче шрифт
          и уже отступы, иначе слово обрезается на середине. */
       .cell{height:38px;font-size:7.5px;padding:4px 5px}
+      /* Полоса 88% + цена в одну строку не помещаются в 390px: страница
+         получала горизонтальный скролл, а сумма уезжала за край. Ставим цену
+         над полосой — пропорция полос сохраняется, ширина берётся от контейнера. */
+      .bar-track{flex-direction:column;align-items:flex-start;gap:9px}
+      .bar-val{order:-1}
       .btn{width:100%}
       .top .btn{width:auto;padding:10px 15px;font-size:13.5px}
       .sticky-cta{display:block}
@@ -505,6 +568,58 @@
       <div class="card"><span class="num">{{ '%02d' | format(loop.index) }}</span><p>{{ item }}</p></div>
       {% endfor %}
     </div>
+  </section>
+
+  {# Ядро оффера: один сотрудник у всех + двое на выбор. Стоит сразу после боли,
+     до цены: сначала человек должен понять, ЧТО он получит, и только потом
+     сравнивать это с зарплатами. #}
+  <section class="rise" id="komanda">
+    <div class="kicker">{{ team.kicker }}</div>
+    <h2>{{ team.title }}</h2>
+    <p class="lead" style="margin-top:14px">{{ team.lead }}</p>
+
+    <div class="hire">
+      <span class="tag">{{ team.core.tag }}</span>
+      <h3>{{ team.core.title }}</h3>
+      <p>{{ team.core.text }}</p>
+      <div class="hire-meta">
+        {% for value, label in team.core.meta %}
+        <div><b>{{ value }}</b><span>{{ label }}</span></div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="pick-head">
+      <h3>{{ team.pick_title }}</h3>
+      <p class="lead" style="margin-top:10px">{{ team.pick_lead }}</p>
+    </div>
+    <div class="picks">
+      {% for title, text in team.picks %}
+      <div class="pick"><h4>{{ title }}</h4><p>{{ text }}</p></div>
+      {% endfor %}
+    </div>
+    <div class="pick-cta">
+      <a class="btn btn-main" href="{{ team.cta_url }}" target="_blank" rel="noopener">{{ team.cta }}</a>
+    </div>
+  </section>
+
+  {# Уровень. Блок написан ради среднего столбца, но живёт он за счёт крайних:
+     пока не названо, чего НЕ будет (хед), обещание «мидл» ничего не значит. #}
+  <section class="rise">
+    <div class="kicker">{{ levels.kicker }}</div>
+    <h2>{{ levels.title }}</h2>
+    <p class="lead" style="margin-top:14px">{{ levels.lead }}</p>
+    <div class="levels">
+      {% for level in levels['items'] %}
+      <div class="level{{ ' main' if level.main }}">
+        <span class="tag">{{ level.tag }}</span>
+        <h3>{{ level.title }}</h3>
+        <p>{{ level.text }}</p>
+        <div class="verdict">{{ level.verdict }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <p class="levels-note">{{ levels.note }}</p>
   </section>
 
   <section class="rise">
@@ -655,6 +770,7 @@
   <section class="rise">
     <div class="kicker">{{ results.kicker }}</div>
     <h2>{{ results.title }}</h2>
+    <p class="lead" style="margin-top:14px">{{ results.lead }}</p>
     <div class="cards" style="margin-top:22px">
       {% for title, text in results.big %}
       <div class="card">
@@ -669,17 +785,23 @@
       <summary>{{ results.more_title }}</summary>
       <ul>{% for item in results.more %}<li>{{ item }}</li>{% endfor %}</ul>
     </details>
+    {# Ассистент умеет посты, рассылки и лендинги — и это сразу рождает вопрос
+       «зачем тогда SMM-щик и копирайтер». Отвечаем здесь же, а не в FAQ. #}
+    <p class="lead" style="margin-top:16px">{{ results.note }}</p>
   </section>
 
   <section class="rise">
     <div class="kicker">{{ program.kicker }}</div>
     <h2>{{ program.title }}</h2>
+    <p class="lead" style="margin-top:14px">{{ program.lead }}</p>
     <div class="days-list">
-      {% for num, title, result in program.days %}
+      {# Четвёртый элемент строки — результат недели. Он вынесен отдельной
+         строкой, а не дописан в текст: продаётся именно он. #}
+      {% for num, title, text, outcome in program.weeks %}
       <div class="day">
         <div class="d">{{ num }}</div>
         <h3>{{ title }}</h3>
-        <div class="res">{{ result }}</div>
+        <div class="res">{{ text }}<span class="out">{{ outcome }}</span></div>
       </div>
       {% endfor %}
     </div>
@@ -710,7 +832,7 @@
         <span class="tag">{{ tier.tag }}</span>
         <h3>{{ tier.title }}</h3>
         <div class="price">{{ tier.price }}</div>
-        {% if tier.was %}<div class="was">{{ tier.was }}</div>{% endif %}
+        <div class="was">{{ tier.was }}</div>
         <ul>{% for item in tier['items'] %}<li>{{ item }}</li>{% endfor %}</ul>
         <a class="btn {{ 'btn-gold' if tier.main else 'btn-main' }}" href="{{ tier.cta_url }}" target="_blank" rel="noopener">{{ tier.cta }}</a>
       </div>
