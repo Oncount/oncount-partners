@@ -710,7 +710,7 @@
         <span class="tag">{{ tier.tag }}</span>
         <h3>{{ tier.title }}</h3>
         <div class="price">{{ tier.price }}</div>
-        <div class="was">{{ tier.was }}</div>
+        {% if tier.was %}<div class="was">{{ tier.was }}</div>{% endif %}
         <ul>{% for item in tier['items'] %}<li>{{ item }}</li>{% endfor %}</ul>
         <a class="btn {{ 'btn-gold' if tier.main else 'btn-main' }}" href="{{ tier.cta_url }}" target="_blank" rel="noopener">{{ tier.cta }}</a>
       </div>
