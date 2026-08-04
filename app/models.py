@@ -658,3 +658,79 @@ class BotSetting(Base):
     key: Mapped[str] = mapped_column(String(64), primary_key=True)
     value: Mapped[str | None] = mapped_column(Text)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class ClubMember(Base):
+    """Участник платного клуба (план 2026-08-04).
+
+    Клуб — отдельный продукт: своя подписка в Lava (`MONTHLY` / 90 / 180 дней),
+    свой канал, свой учёт. Оплата интенсива доступа в клуб не даёт — поэтому
+    таблица отдельная от `IntensiveLead`, а не пара полей в ней.
+
+    ⚠️ ГЛАВНОЕ ПРАВИЛО ЭТОЙ ТАБЛИЦЫ: бот удаляет из канала ТОЛЬКО тех, кто здесь
+    есть. Кто пришёл в канал до запуска платной модели (решение Николь 04.08.2026:
+    «оставить бесплатно навсегда»), в таблицу не попадает — и удалить его цикл
+    физически не может. Это сильнее любого флага: список на удаление собирается
+    из строк таблицы, а не из состава канала.
+
+    Безопасность: `telegram_id`, username, имя и email — ПД. В лог уходит только
+    id, инвайт одноразовый и персональный.
+    """
+    __tablename__ = "club_members"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
+    username: Mapped[str | None] = mapped_column(String(64))
+    first_name: Mapped[str | None] = mapped_column(String(128))
+    # new → invoiced (счёт выставлен) → active (оплачено, в канале) →
+    # expiring (идёт цепочка напоминаний) → asked (задан вопрос в день окончания) →
+    # removed (удалён из канала). free — гость Николь, цепочка его не трогает.
+    status: Mapped[str] = mapped_column(String(16), default="new", index=True)
+    email: Mapped[str | None] = mapped_column(String(255))
+    # Счёт в Lava и период, на который он выставлен: MONTHLY | PERIOD_90_DAYS |
+    # PERIOD_180_DAYS. По периоду считается, докуда оплачено.
+    lava_invoice_id: Mapped[str | None] = mapped_column(String(64), index=True)
+    lava_invoice_url: Mapped[str | None] = mapped_column(Text)
+    # Когда выставили счёт. По нему фоновая проверка отбирает СВЕЖИЕ счета:
+    # брошенный счёт полугодовой давности иначе опрашивался бы у кассы каждую
+    # минуту вечно.
+    invoiced_at: Mapped[datetime | None] = mapped_column(DateTime)
+    lava_currency: Mapped[str | None] = mapped_column(String(8))
+    lava_periodicity: Mapped[str | None] = mapped_column(String(24))
+    # Id подписки в Lava, если он появится в /api/v1/subscriptions: на первой
+    # живой подписке формат ответа будет виден, до тех пор поле пустует.
+    lava_subscription_id: Mapped[str | None] = mapped_column(String(64), index=True)
+    # Счёт, который УЖЕ зачтён. Без этого поля один оплаченный счёт продлевал
+    # доступ сколько угодно раз: кнопка «Проверить оплату» живёт в чате вечно,
+    # и каждое нажатие добавляло бы новый период.
+    paid_invoice_id: Mapped[str | None] = mapped_column(String(64))
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Когда человеку дали отсрочку по кнопке «Оплачу». Одна на период: иначе
+    # нажатие продлевает доступ на три дня бесконечно, без единой оплаты.
+    grace_given_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Когда последний раз не удалось выдать инвайт (нет канала, нет прав).
+    # Защищает от письма человеку и Николь каждую минуту.
+    invite_failed_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Докуда оплачено. Единственное поле, по которому строится вся цепочка.
+    paid_until: Mapped[datetime | None] = mapped_column(DateTime, index=True)
+    # Сколько раз человек уже платил. 0 → первый вход, ему показываем месяц;
+    # ≥1 → в напоминаниях предлагаем ТОЛЬКО квартал и полгода (решение Николь).
+    payments_count: Mapped[int] = mapped_column(Integer, default=0)
+    invite_link: Mapped[str | None] = mapped_column(Text)
+    invited_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Цепочка удержания: докуда дошли (0 — не начиналась) и когда касались.
+    # Шаг растёт только вперёд, поэтому повторный прогон не шлёт то же дважды.
+    reminder_step: Mapped[int] = mapped_column(Integer, default=0)
+    last_touch_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Когда человеку РЕАЛЬНО доставлено последнее письмо цепочки (вопрос в день
+    # окончания). Отдельно от `reminder_step`: шаг растёт и при неудачной
+    # отправке, а «предупреждён» должно значить «сообщение дошло». Иначе тот,
+    # кто заблокировал бота, считался бы предупреждённым и вылетал бы на третий
+    # день просрочки вместо четырнадцатого.
+    warned_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Ответ на вопрос «что было полезным» — причина оттока и материал для контента.
+    feedback: Mapped[str | None] = mapped_column(Text)
+    removed_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Человек попросил не писать — цепочка останавливается (уважаем отказ).
+    unsubscribed: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)

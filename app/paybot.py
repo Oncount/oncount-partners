@@ -37,7 +37,7 @@ from aiogram.types import (
     Message,
 )
 
-from app import channel_gate, lava, paybot_config as T
+from app import channel_gate, club, club_config, lava, paybot_config as T
 from app.config import settings
 from app.db import SessionLocal
 from app.models import BotSetting, IntensiveLead, Partner
@@ -106,6 +106,8 @@ def _menu() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=T.BTN_PAY, callback_data="pay:start")],
         [InlineKeyboardButton(text=T.BTN_ASK, callback_data="pay:ask")],
+        [InlineKeyboardButton(text=club_config.BTN_CLUB_JOIN,
+                              callback_data="club:join")],
     ])
 
 
@@ -182,11 +184,17 @@ async def start_deep(msg: Message, command: CommandObject) -> None:
         # интенсива ему сейчас не нужен. Вопрос про 18+ задаёт привратник.
         await channel_gate.ask_age(msg.bot, msg.chat.id, msg.from_user, "deeplink")
         return
+    if payload == "club":
+        # Третий поток: платный клуб. Оффер интенсива здесь тоже не нужен —
+        # человек пришёл по клубной ссылке.
+        await club.show_intro(msg.bot, msg.chat.id, msg.from_user)
+        return
     to_pay, ref = parse_payload(payload)
     # Новый заход = чистый лист. Иначе человек, который вчера бросил оплату на
     # шаге «напишите e-mail», сегодня приходит с сайта, пишет вопрос — и слышит
-    # «это не похоже на e-mail».
+    # «это не похоже на e-mail». Клубное ожидание сбрасываем по той же причине.
     _awaiting.pop(msg.from_user.id, None)
+    club.forget(msg.from_user.id)
     with SessionLocal() as s:
         lead = _lead(s, msg.from_user)
         if ref and not lead.ref_slug:
@@ -290,6 +298,16 @@ async def cb_check(call) -> None:
 @dp.message(F.text & ~F.text.startswith("/"))
 async def on_text(msg: Message) -> None:
     mode = _awaiting.get(msg.from_user.id)
+
+    # Клуб спрашивает свой e-mail и свой отзыв. В aiogram хендлеры самого
+    # диспетчера разбираются раньше роутеров, поэтому клубный текст надо отдать
+    # явно — иначе он уйдёт в поток интенсива и станет «вопросом Николь».
+    #
+    # Приоритет у интенсива намеренно: если человек прямо сейчас пишет e-mail
+    # для счёта на интенсив, а ему в это же время пришло клубное напоминание с
+    # вопросом «что было полезным», адрес должен уйти в счёт, а не в отзыв.
+    if mode != "email" and await club.handle_text(msg):
+        return
 
     if mode == "email":
         email = (msg.text or "").strip()
@@ -499,6 +517,10 @@ async def _payment_loop() -> None:
             n = await poll_payments_once()
             if n:
                 log.info("paybot: выдан доступ %s людям", n)
+            # Клубные счета проверяются тем же тактом: у них своя таблица и свой
+            # канал, но ждать доступ человек не должен дольше минуты ни там, ни там.
+            if await club.poll_payments_once(bot):
+                log.info("club: доступ выдан по оплате подписки")
         except asyncio.CancelledError:
             raise
         except Exception as exc:
@@ -520,6 +542,12 @@ async def cmd_channel_status(msg: Message) -> None:
     await msg.answer(await channel_gate.channel_status(msg.bot))
 
 
+@dp.message(Command("club"))
+async def cmd_club(msg: Message) -> None:
+    """Вход в платный клуб: что это и кнопка вступления."""
+    await club.show_intro(msg.bot, msg.chat.id, msg.from_user)
+
+
 @dp.message(Command("channel"))
 async def cmd_channel(msg: Message) -> None:
     """Вход в закрытый канал: тот же вопрос про 18+, что и по ссылке.
@@ -535,6 +563,10 @@ async def main() -> None:
     # my_chat_member), свои тексты. Хендлеры самого dp разбираются раньше, так
     # что поток интенсива остаётся нетронутым.
     dp.include_router(channel_gate.router)
+    # Клуб — третий поток в том же боте. Роутер отдельный: свои callback'и
+    # (club:*), своя таблица, свой канал. Пересечься с интенсивом он может
+    # только на тексте — там передача явная, см. on_text.
+    dp.include_router(club.router)
     problems = await asyncio.to_thread(lava.check_offers)
     for p in problems:
         log.error("ВНИМАНИЕ, касса: %s", p)
@@ -548,6 +580,7 @@ async def main() -> None:
              me.username, lava.is_configured(), chat_id() or "не подключён",
              channel_gate.channel_id() or "не подключён")
     asyncio.create_task(_payment_loop())
+    asyncio.create_task(club.loop(bot))
     try:
         await dp.start_polling(bot)
     finally:

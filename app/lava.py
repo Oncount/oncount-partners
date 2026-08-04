@@ -42,6 +42,32 @@ OFFER_FIRST_DAY = "85dc8277-8980-4cb1-9fd1-ab4ed12215fb"   # «Первый де
 OFFER_INTENSIVE = "2449b65d-b100-4d76-8d0b-c0dd4882e53e"   # «Интенсив», $1000
 OFFER_DFY = "effe38ce-e866-46d0-89ab-5397e94f66ec"         # «Под ключ», $2500
 
+# Подписка на клуб — ОТДЕЛЬНЫЙ продукт (`Subscription nikol_hillton`), не оффер
+# внутри интенсива. Тип SUBSCRIPTION: счёт создаётся с периодичностью, дальше
+# Lava списывает сама.
+OFFER_CLUB = "ff7ec308-8ec2-44df-a3f5-41ce5a23b799"
+
+# Периоды подписки: код → (значение для API, сколько дней даём доступ).
+#
+# ⚠️ ГЛАВНАЯ ГРАБЛЯ КЛУБА (проверено 04.08.2026): `GET /api/v2/products` отдаёт
+# у этого оффера ТОЛЬКО цену MONTHLY, и по одному этому ответу кажется, что
+# квартала и полугодия нет. Они есть: счёт с PERIOD_90_DAYS / PERIOD_180_DAYS
+# создаётся на тот же offerId и возвращает верную сумму. Заводить отдельные
+# офферы не нужно — и не надо, увидев один MONTHLY, «чинить» это в кассе.
+#
+# Дней даём чуть больше календарного периода (31/92/183): человек платит утром,
+# а списание проходит вечером — сутки запаса дешевле, чем выгнать платящего.
+CLUB_PERIODS: dict[str, tuple[str, int]] = {
+    "month": ("MONTHLY", 31),
+    "quarter": ("PERIOD_90_DAYS", 92),
+    "half": ("PERIOD_180_DAYS", 183),
+    "year": ("PERIOD_YEAR", 366),
+}
+
+# Допустимые значения periodicity — из ответа самой Lava на неверное значение:
+# ONE_TIME, MONTHLY, PERIOD_90_DAYS, PERIOD_180_DAYS, PERIOD_YEAR.
+PERIODICITY_ONE_TIME = "ONE_TIME"
+
 # Что бот предлагает купить: код → (id оффера, как назвать человеку).
 # «Под ключ» здесь намеренно нет: он продаётся в личном разговоре, а не кнопкой.
 PRODUCTS: dict[str, tuple[str, str]] = {
@@ -107,12 +133,18 @@ def offer_prices(offer_id: str = OFFER_INTENSIVE) -> dict[str, float]:
 
 
 def create_invoice(email: str, currency: str = "RUB",
-                   offer_id: str = OFFER_INTENSIVE) -> dict | None:
-    """Выставить счёт на тариф «Интенсив» конкретному человеку.
+                   offer_id: str = OFFER_INTENSIVE,
+                   periodicity: str = PERIODICITY_ONE_TIME) -> dict | None:
+    """Выставить счёт конкретному человеку.
 
-    Возвращает {'id': ..., 'url': ...} либо None. email обязателен на стороне
-    Lava — это же адрес, на который придёт чек, поэтому спрашиваем его у человека,
-    а не подставляем служебный.
+    Возвращает {'id': ..., 'url': ..., 'amount': ..., 'currency': ...} либо None.
+    email обязателен на стороне Lava — это же адрес, на который придёт чек,
+    поэтому спрашиваем его у человека, а не подставляем служебный.
+
+    `periodicity`: ONE_TIME для разовых покупок (интенсив), MONTHLY /
+    PERIOD_90_DAYS / PERIOD_180_DAYS для подписки на клуб. Сумму Lava считает
+    сама и возвращает в ответе — её и показываем человеку, чтобы бот и касса не
+    разошлись в цене.
     """
     if not is_configured():
         return None
@@ -123,7 +155,7 @@ def create_invoice(email: str, currency: str = "RUB",
         "offerId": offer_id,
         "currency": currency,
         "paymentMethod": CURRENCY_METHOD[currency],
-        "periodicity": "ONE_TIME",   # интенсив — разовая покупка, не подписка
+        "periodicity": periodicity,
         "buyerLanguage": "RU",
     }
     try:
@@ -140,7 +172,14 @@ def create_invoice(email: str, currency: str = "RUB",
         if not (inv_id and url):
             log.error("lava invoice: в ответе нет id/url, ключи=%s", list(data)[:8])
             return None
-        return {"id": str(inv_id), "url": url}
+        # Сумма, которую касса реально попросит. Для подписки это единственный
+        # способ узнать цену периода: в /products лежит только MONTHLY.
+        total = data.get("amountTotal") or {}
+        amount = total.get("amount") if isinstance(total, dict) else None
+        return {"id": str(inv_id), "url": url,
+                "amount": float(amount) if amount is not None else None,
+                "currency": (total.get("currency") if isinstance(total, dict)
+                             else None) or currency}
     except Exception as exc:
         log.error("lava invoice error: %s", type(exc).__name__)
         return None
@@ -175,10 +214,66 @@ def invoice_paid(invoice_id: str) -> bool:
                 ident = str(item.get("id") or item.get("invoiceId") or "")
                 if ident == str(invoice_id):
                     status = str(item.get("status", "")).lower()
-                    return (not status) or status in paid_states
+                    if not status:
+                        # Раньше здесь стояло «нет статуса — считаем оплаченным».
+                        # Это выдача доступа по молчанию кассы: любой ответ
+                        # неожиданного формата открывал бы платный продукт. Не
+                        # знаем — значит не оплачено, разберём руками.
+                        log.warning("lava sales: у счёта нет статуса — "
+                                    "оплаченным не считаю")
+                        return False
+                    return status in paid_states
     except Exception as exc:
         log.warning("lava sales error: %s", type(exc).__name__)
     return False
+
+
+def subscriptions() -> list[dict] | None:
+    """Активные подписки из кассы — источник правды по продлениям клуба.
+
+    None означает «Lava не ответила» и это НЕ то же самое, что пустой список:
+    молчание кассы никогда не должно приводить к удалению из канала (план
+    2026-08-04, принцип 4). Пустой список — «подписок действительно нет».
+
+    ⚠️ Формат ответа на 04.08.2026 не проверен на живых данных: подписок в кассе
+    ещё не было (`total: 0`). Поэтому при первой же записи логируем НАБОР КЛЮЧЕЙ
+    (не значения — там ПД покупателя), чтобы разбор поля «оплачено до» не
+    пришлось угадывать.
+    """
+    if not is_configured():
+        return None
+    collected: list[dict] = []
+    try:
+        page, total = 1, None
+        while True:
+            r = httpx.get(f"{BASE_URL}/api/v1/subscriptions", headers=_headers(),
+                          params={"size": 100, "page": page}, timeout=_TIMEOUT)
+            if r.status_code != 200:
+                log.warning("lava subscriptions http=%s", r.status_code)
+                return None
+            data = r.json()
+            items = data.get("items", [])
+            collected.extend(items)
+            total = data.get("total", total)
+            if page == 1 and items and isinstance(items[0], dict):
+                log.info("lava subscriptions: total=%s, ключи записи=%s",
+                         total, sorted(items[0].keys())[:20])
+            # Страницы обходим до конца. Со 101-го подписчика «первая страница»
+            # означала бы, что все остальные для бота не существуют — то есть
+            # платящих начали бы выгонять из канала.
+            if not items or (total is not None and len(collected) >= int(total)) \
+                    or page >= 20:
+                break
+            page += 1
+        if total is not None and len(collected) < int(total):
+            # Не собрали всё — работать с обрывком опаснее, чем не работать.
+            log.warning("lava subscriptions: собрано %s из %s — считаю ответ "
+                        "недостоверным", len(collected), total)
+            return None
+        return collected
+    except Exception as exc:  # noqa: BLE001 — сеть/формат: молчание, не пустота
+        log.warning("lava subscriptions error: %s", type(exc).__name__)
+        return None
 
 
 def check_offers() -> list[str]:
@@ -190,7 +285,8 @@ def check_offers() -> list[str]:
     """
     if not is_configured():
         return []
-    expect = {OFFER_FIRST_DAY: "перв", OFFER_INTENSIVE: "интенсив", OFFER_DFY: "ключ"}
+    expect = {OFFER_FIRST_DAY: "перв", OFFER_INTENSIVE: "интенсив", OFFER_DFY: "ключ",
+              OFFER_CLUB: "клуб"}
     problems: list[str] = []
     try:
         r = httpx.get(f"{BASE_URL}/api/v2/products", headers=_headers(),

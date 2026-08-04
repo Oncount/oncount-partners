@@ -21,6 +21,7 @@ import logging
 from datetime import datetime, timedelta
 
 from aiogram import Bot, F, Router
+from aiogram.dispatcher.event.bases import SkipHandler
 from aiogram.types import (
     CallbackQuery,
     ChatJoinRequest,
@@ -171,6 +172,11 @@ async def ask_age(bot: Bot, chat_id_: int, user, source: str) -> None:
 async def on_added_to_channel(ev: ChatMemberUpdated, bot: Bot) -> None:
     """Канал нельзя подключить из кода — админа назначает человек. Но когда
     назначит, Telegram присылает это событие: ловим id и проверяем права."""
+    # У бота теперь ДВА канала: этот (18+) и клубный. Событие одно на оба, а
+    # роутер привратника подключён первым — без явной передачи он записал бы
+    # клубный канал как свой и увёл бы выдачу доступа 18+ в клуб.
+    if settings.CLUB_CHANNEL_ID and str(ev.chat.id) == str(settings.CLUB_CHANNEL_ID):
+        raise SkipHandler
     status = ev.new_chat_member.status
     if status in ("left", "kicked"):
         log.info("бот удалён из канала %s", ev.chat.id)
@@ -202,7 +208,12 @@ async def on_channel_post(msg: Message, bot: Bot) -> None:
     боту выдали до релиза привратника, событие ушло в никуда, и канал остался бы
     неизвестным навсегда: снаружи всё выглядит настроенным, а доступ не выдаётся.
     Любой пост в канале это чинит — бот админ, значит посты он видит.
+
+    ⚠️ Клубный канал сюда попадать не должен: иначе первый же пост Николь в
+    клубе записал бы его как канал 18+ и увёл туда выдачу доступа.
     """
+    if settings.CLUB_CHANNEL_ID and str(msg.chat.id) == str(settings.CLUB_CHANNEL_ID):
+        return
     if channel_id():
         return
     try:
@@ -254,6 +265,11 @@ async def channel_status(bot: Bot) -> str:
 async def on_join_request(ev: ChatJoinRequest, bot: Bot) -> None:
     """Заявка → вопрос в личку. Фильтр по типу чата намеренный: заявки в группу
     (чат участников интенсива) этот привратник не трогает."""
+    # Клубный канал — не наш: если запомнить его здесь, привратник 18+ начнёт
+    # раздавать доступ в платный клуб всем, кто подтвердил возраст.
+    if settings.CLUB_CHANNEL_ID and str(ev.chat.id) == str(settings.CLUB_CHANNEL_ID):
+        log.info("заявка в клубный канал — не мой поток")
+        return
     known = channel_id()
     if known and str(ev.chat.id) != str(known):
         log.info("заявка в чужой канал %s — игнорирую", ev.chat.id)
@@ -348,7 +364,9 @@ async def on_channel_member(ev: ChatMemberUpdated) -> None:
     """
     known = channel_id()
     if known and str(ev.chat.id) != str(known):
-        return
+        # Не «не наш канал, забыли», а «не наш — отдай следующему»: входы и
+        # выходы в клубном канале ждёт club.on_channel_member.
+        raise SkipHandler
     status = ev.new_chat_member.status
     with SessionLocal() as s:
         sub = (s.query(ChannelSubscriber)
