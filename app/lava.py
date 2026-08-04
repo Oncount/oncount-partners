@@ -46,7 +46,7 @@ OFFER_DFY = "effe38ce-e866-46d0-89ab-5397e94f66ec"         # «Под ключ»
 # «Под ключ» здесь намеренно нет: он продаётся в личном разговоре, а не кнопкой.
 PRODUCTS: dict[str, tuple[str, str]] = {
     "first_day": (OFFER_FIRST_DAY, "Первый день — соберём вам ассистента"),
-    "intensive": (OFFER_INTENSIVE, "Весь интенсив, 5 дней"),
+    "intensive": (OFFER_INTENSIVE, "Весь интенсив — 12 встреч"),
 }
 
 # Валюты, которые Lava принимает для этого оффера. RUB и EUR видны на витрине,

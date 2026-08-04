@@ -17,17 +17,17 @@
 try:
     from app import assistant_config as _ac
     START_HUMAN = getattr(_ac, "START_HUMAN", "13 августа")
-    FORMAT_HUMAN = getattr(_ac, "FORMAT_HUMAN", "5 дней по 2 часа")
+    FORMAT_HUMAN = getattr(_ac, "FORMAT_HUMAN", "12 встреч по 1-2 часа")
 except Exception:  # noqa: BLE001 — конфиг лендинга необязателен для приёма оплат
     import logging
     logging.getLogger("oncount.paybot").warning(
         "assistant_config недоступен — даты в боте берутся по умолчанию")
-    START_HUMAN, FORMAT_HUMAN = "13 августа", "5 дней по 2 часа"
+    START_HUMAN, FORMAT_HUMAN = "13 августа", "12 встреч по 1-2 часа"
 
 GREETING = (
-    "Здравствуйте! Это бот интенсива «Бизнес-ассистент за 5 дней».\n\n"
+    "Здравствуйте! Это бот интенсива «AI Бизнес-ассистент».\n\n"
     f"Старт {START_HUMAN}, формат: {FORMAT_HUMAN}.\n"
-    "За 5 дней вы соберёте ассистента под свой бизнес и вернёте себе "
+    "За месяц вы соберёте ассистента под свой бизнес и вернёте себе "
     "72 часа в месяц.\n\n"
     "Здесь можно оплатить участие и задать вопрос."
 )
