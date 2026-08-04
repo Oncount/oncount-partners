@@ -128,9 +128,53 @@ async def _notify_admin(text: str) -> None:
 
 # ─── старт и меню ────────────────────────────────────────────────────────────
 
+def parse_payload(payload: str) -> tuple[bool, str | None]:
+    """Разбирает payload диплинка → (сразу к оплате?, ref-слаг агента).
+
+    Понимаем три формы, потому что ссылка собирается в разных местах:
+    `pay` (кнопка «купить» на лендинге), `ref_<slug>` (ссылка агента) и
+    `pay_ref_<slug>` (кнопка агента, ведущая сразу к оплате). Слаг режем до 16
+    символов — ровно как колонка `intensive_leads.ref_slug`, чтобы длинный
+    мусор из ссылки не ронял вставку в базу.
+    """
+    payload = (payload or "").strip()
+    to_pay = payload == "pay" or payload.startswith("pay_")
+    rest = payload[len("pay_"):] if payload.startswith("pay_") else payload
+    ref = rest[len("ref_"):][:16] if rest.startswith("ref_") else None
+    return to_pay, (ref or None)
+
+
+async def _products_kb() -> InlineKeyboardMarkup | None:
+    """Тарифы кнопками с ЖИВЫМИ ценами из кассы. None — касса не ответила.
+
+    Цену не кэшируем и не дублируем в конфиге намеренно: 04.08.2026 оффер в
+    Lava переименовали и переоценили, не меняя id, — любая наша копия цены в
+    такой момент начинает врать человеку, у которого уже открыт кошелёк.
+    """
+    # Оба тарифа спрашиваем у кассы ОДНОВРЕМЕННО: по очереди это до двух её
+    # таймаутов подряд (25 с каждый), а человек в это время смотрит на пустой
+    # чат сразу после нажатия кнопки на сайте.
+    items = list(lava.PRODUCTS.items())
+    answers = await asyncio.gather(
+        *(asyncio.to_thread(lava.offer_prices, offer_id) for _, (offer_id, _l) in items),
+        return_exceptions=True,
+    )
+    rows = []
+    for (code, (_offer_id, label)), prices in zip(items, answers):
+        if isinstance(prices, BaseException) or not prices:
+            log.warning("paybot: касса не дала цену для %s", code)
+            continue
+        usd = prices.get("USD")
+        price = f" — {_fmt_amount('USD', usd)}" if usd else ""
+        rows.append([InlineKeyboardButton(text=f"{label}{price}",
+                                          callback_data=f"pay:prod:{code}")])
+    return InlineKeyboardMarkup(inline_keyboard=rows) if rows else None
+
+
 @dp.message(CommandStart(deep_link=True))
 async def start_deep(msg: Message, command: CommandObject) -> None:
-    """/start ref_<slug> — приход по ссылке агента, атрибуция как на /pay.
+    """/start pay — пришёл с кнопки «купить» на лендинге, сразу тарифы.
+    /start ref_<slug> — приход по ссылке агента, атрибуция как на /pay.
     /start channel — вход в закрытый канал Николь (план 2026-08-03)."""
     payload = (command.args or "").strip()
     if payload == "channel":
@@ -138,7 +182,11 @@ async def start_deep(msg: Message, command: CommandObject) -> None:
         # интенсива ему сейчас не нужен. Вопрос про 18+ задаёт привратник.
         await channel_gate.ask_age(msg.bot, msg.chat.id, msg.from_user, "deeplink")
         return
-    ref = payload[4:][:16] if payload.startswith("ref_") else None
+    to_pay, ref = parse_payload(payload)
+    # Новый заход = чистый лист. Иначе человек, который вчера бросил оплату на
+    # шаге «напишите e-mail», сегодня приходит с сайта, пишет вопрос — и слышит
+    # «это не похоже на e-mail».
+    _awaiting.pop(msg.from_user.id, None)
     with SessionLocal() as s:
         lead = _lead(s, msg.from_user)
         if ref and not lead.ref_slug:
@@ -146,11 +194,23 @@ async def start_deep(msg: Message, command: CommandObject) -> None:
             partner = s.query(Partner).filter_by(ref_slug=ref).first()
             lead.partner_id = partner.id if partner else None
             s.commit()
-    await msg.answer(T.GREETING, reply_markup=_menu())
+    if not to_pay:
+        await msg.answer(T.GREETING, reply_markup=_menu())
+        return
+    # Пришёл с кнопки «купить»: здороваемся сразу, не дожидаясь кассы (запрос
+    # цен — это сеть), и следом показываем тарифы. Если касса молчит — человек
+    # всё равно остаётся с кнопками, а не в тупике.
+    await msg.answer(T.GREETING)
+    kb = await _products_kb()
+    if kb is None:
+        await msg.answer(T.PRICES_UNAVAILABLE, reply_markup=_menu())
+        return
+    await msg.answer(T.PRODUCT_TITLE, reply_markup=kb)
 
 
 @dp.message(CommandStart())
 async def start(msg: Message) -> None:
+    _awaiting.pop(msg.from_user.id, None)   # см. комментарий в start_deep
     with SessionLocal() as s:
         _lead(s, msg.from_user)
     await msg.answer(T.GREETING, reply_markup=_menu())
@@ -158,23 +218,13 @@ async def start(msg: Message) -> None:
 
 @dp.callback_query(F.data == "pay:start")
 async def cb_pay(call) -> None:
-    """Сначала ЧТО покупаем: первый день или весь интенсив. Цены — живые из кассы."""
-    rows = []
-    for code, (offer_id, label) in lava.PRODUCTS.items():
-        prices = await asyncio.to_thread(lava.offer_prices, offer_id)
-        if not prices:
-            continue
-        usd = prices.get("USD")
-        price = f" — {_fmt_amount('USD', usd)}" if usd else ""
-        rows.append([InlineKeyboardButton(text=f"{label}{price}",
-                                          callback_data=f"pay:prod:{code}")])
-    if not rows:
-        await call.message.answer(
-            "Не могу получить цены от кассы. Напишите Николь — поможем оплатить.")
+    """Сначала ЧТО покупаем: первый день или весь курс. Цены — живые из кассы."""
+    kb = await _products_kb()
+    if kb is None:
+        await call.message.answer(T.PRICES_UNAVAILABLE, reply_markup=_menu())
         await call.answer()
         return
-    await call.message.answer(T.PRODUCT_TITLE,
-                              reply_markup=InlineKeyboardMarkup(inline_keyboard=rows))
+    await call.message.answer(T.PRODUCT_TITLE, reply_markup=kb)
     await call.answer()
 
 
@@ -192,8 +242,7 @@ async def cb_product(call) -> None:
         s.commit()
     prices = await asyncio.to_thread(lava.offer_prices, offer_id)
     if not prices:
-        await call.message.answer(
-            "Не могу получить цену от кассы. Напишите Николь — поможем оплатить.")
+        await call.message.answer(T.PRICES_UNAVAILABLE, reply_markup=_menu())
         await call.answer()
         return
     rows = [[InlineKeyboardButton(
@@ -257,8 +306,7 @@ async def on_text(msg: Message) -> None:
         offer_id = lava.PRODUCTS.get(product_code, (lava.OFFER_INTENSIVE, ""))[0]
         inv = await asyncio.to_thread(lava.create_invoice, email, currency, offer_id)
         if not inv:
-            await msg.answer("Не удалось выставить счёт. Напишите Николь — "
-                             "поможем оплатить вручную.")
+            await msg.answer(T.INVOICE_FAILED, reply_markup=_menu())
             await _notify_admin(f"⚠️ Не выставился счёт Lava для {msg.from_user.id}")
             return
         prices = await asyncio.to_thread(lava.offer_prices, offer_id)
@@ -276,12 +324,17 @@ async def on_text(msg: Message) -> None:
         return
 
     # Вопрос (или просто текст) — пересылаем Николь. Чужой текст не исполняем.
+    #
+    # Клавиатуру возвращаем ВСЕГДА. Со страницы /pay в бота ведёт ссылка с уже
+    # подставленным текстом вопроса: человек отправляет его первым же действием
+    # и до 04.08.2026 оставался с ответом без единой кнопки — оплатить было
+    # неоткуда. Ответ бота никогда не должен быть тупиком.
     _awaiting.pop(msg.from_user.id, None)
     with SessionLocal() as s:
         _lead(s, msg.from_user)
     who = f"@{msg.from_user.username}" if msg.from_user.username else f"id{msg.from_user.id}"
     await _notify_admin(f"💬 Вопрос в боте оплат от {who}:\n\n{(msg.text or '')[:1500]}")
-    await msg.answer(T.ASK_RECEIVED)
+    await msg.answer(T.ASK_RECEIVED, reply_markup=_menu())
 
 
 # ─── бота добавили в группу: узнаём chat_id сам ──────────────────────────────
