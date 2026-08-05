@@ -18,17 +18,26 @@ try:
     from app import assistant_config as _ac
     START_HUMAN = getattr(_ac, "START_HUMAN", "13 августа")
     FORMAT_HUMAN = getattr(_ac, "FORMAT_HUMAN", "12 встреч по 1-2 часа")
+    MEETINGS = getattr(_ac, "MEETINGS", 12)
+    TASKS_MID = getattr(_ac, "TASKS", 16)
 except Exception:  # noqa: BLE001 — конфиг лендинга необязателен для приёма оплат
     import logging
     logging.getLogger("oncount.paybot").warning(
         "assistant_config недоступен — даты в боте берутся по умолчанию")
     START_HUMAN, FORMAT_HUMAN = "13 августа", "12 встреч по 1-2 часа"
+    MEETINGS, TASKS_MID = 12, 16
+
+# Джун и мидл названы прямо, как на лендинге: человек должен понимать, что за
+# $20 он уходит с помощником начального уровня, а мидла собирает на курсе.
+TASKS_JUNIOR = 3
 
 GREETING = (
-    "Здравствуйте! Это бот курса «AI Бизнес-ассистент».\n\n"
-    f"Старт {START_HUMAN}, формат: {FORMAT_HUMAN}.\n"
-    "Вы соберёте себе бизнес-ассистента, а на полном курсе — ещё двух "
-    "AI-сотрудников на выбор.\n\n"
+    "Здравствуйте! Это бот Nikole Hillton.\n\n"
+    f"Старт курса «AI Бизнес-ассистент» — {START_HUMAN}, формат: "
+    f"{MEETINGS} встреч по 1–2 часа.\n\n"
+    f"На первом дне вы соберёте себе бизнес-ассистента уровня джуниор: он решает "
+    f"{TASKS_JUNIOR} задачи. На полном курсе доведёте его до мидла — "
+    f"{TASKS_MID} задач — и соберёте ещё двух AI-сотрудников на выбор.\n\n"
     "Здесь можно оплатить участие и задать вопрос."
 )
 
