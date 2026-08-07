@@ -67,6 +67,25 @@ PHONE_CODE_MAX_ATTEMPTS = 5  # неверных вводов кода до бл�
 PHONE_RATE_LIMIT = 3         # запросов кода на один номер за окно PHONE_CODE_TTL
 PHONE_MIN_DIGITS = 9         # короче — заведомо мусор, код не шлём
 
+# Самостоятельная регистрация по WhatsApp (план 2026-08-07, решение Николь).
+# Раньше код уходил только известному агенту; теперь неизвестный номер тоже может
+# завести кабинет. Плата за это — мы соглашаемся отправить WhatsApp-сообщение по
+# чужому желанию, а шлём с рабочего номера, который обслуживает клиентов. Поэтому
+# два потолка: сколько кодов уходит незнакомцам за сутки со всей платформы и сколько
+# запросов на НЕИЗВЕСТНЫЕ номера приходит с одного IP. Исчерпан любой из них —
+# ведём себя как до фичи: кода нет, страница отвечает ровно то же самое.
+WA_SELFREG_DAILY_LIMIT = 30      # кодов на неизвестные номера за сутки (вся платформа)
+WA_SELFREG_IP_DAILY_LIMIT = 3    # запросов кода на неизвестный номер с одного IP за сутки
+_wa_selfreg_ip_hits: dict[str, list[datetime]] = {}  # ip → времена запросов, живёт в процессе
+_wa_selfreg_day: list[datetime] = []                 # времена всех выдач незнакомцам за сутки
+# ⚠️ Считаем СВОИ выдачи в памяти, а не строки в БД. Первый вариант счётчика брал
+# «партнёры без telegram_id, но с телефоном, созданные за сутки» — и ловил агентов,
+# которых бэкфилл заводит из комиссионного Excel: чужие записи съедали бы лимит и
+# глушили регистрацию на ровном месте. Отдельного поля-источника у Partner нет
+# (`segment` занят квизом), заводить колонку ради счётчика — лишняя миграция.
+# Плата за память: рестарт процесса обнуляет счётчик. Это осознанно — потолок нужен
+# как аварийный тормоз против шквала в моменте, а не как бухгалтерия за месяц.
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "app" / "templates"))
 
@@ -2472,6 +2491,37 @@ def auth_email_callback(token: str, session: Session = Depends(get_session)):
     return response
 
 
+def _wa_selfreg_allowed(request: Request) -> bool:
+    """Можно ли сейчас отправить код на НЕИЗВЕСТНЫЙ номер (план 2026-08-07).
+
+    Два независимых потолка, оба обязаны выполниться:
+    · за сутки со всей платформы ушло меньше WA_SELFREG_DAILY_LIMIT кодов на
+      неизвестные номера;
+    · с этого IP за сутки было меньше WA_SELFREG_IP_DAILY_LIMIT таких запросов.
+
+    Оба счётчика живут в памяти процесса: переживать рестарт им незачем — они режут
+    массовую отправку в моменте, а не ведут учёт. Партнёрская платформа крутится
+    одним процессом, так что общего хранилища для этого не нужно.
+    """
+    day_ago = datetime.utcnow() - timedelta(days=1)
+
+    _wa_selfreg_day[:] = [t for t in _wa_selfreg_day if t >= day_ago]
+    if len(_wa_selfreg_day) >= WA_SELFREG_DAILY_LIMIT:
+        return False
+
+    ip = (request.client.host if request.client else "") or "unknown"
+    hits = [t for t in _wa_selfreg_ip_hits.get(ip, []) if t >= day_ago]
+    if len(hits) >= WA_SELFREG_IP_DAILY_LIMIT:
+        _wa_selfreg_ip_hits[ip] = hits
+        return False
+
+    now = datetime.utcnow()
+    hits.append(now)
+    _wa_selfreg_ip_hits[ip] = hits
+    _wa_selfreg_day.append(now)
+    return True
+
+
 @app.post("/auth/phone/request", response_class=HTMLResponse)
 def auth_phone_request(
     request: Request,
@@ -2499,10 +2549,13 @@ def auth_phone_request(
             .count()
         )
         if recent < PHONE_RATE_LIMIT:
-            # Пускаем только известных агентов: номер должен быть привязан к кабинету
-            # (PartnerIdentity kind='phone' или Partner.phone). Неизвестный → код не шлём.
+            # С 07.08.2026 (план 2026-08-07) код уходит и на НЕИЗВЕСТНЫЙ номер — так
+            # работает самостоятельная регистрация партнёра по WhatsApp. Кабинет здесь
+            # НЕ создаём: иначе каждый ввод случайного номера плодил бы мусорные Partner,
+            # его заводит verify после подтверждения кода. Незнакомцу код уходит только
+            # в пределах лимитов (_wa_selfreg_allowed).
             partner = find_partner_by_phone(session, norm)
-            if partner is not None:
+            if partner is not None or _wa_selfreg_allowed(request):
                 code = f"{secrets.randbelow(900_000) + 100_000}"  # 6 цифр, 100000–999999
                 session.add(PhoneLoginToken(phone=norm, code_hash=hash_login_code(code)))
                 session.commit()
@@ -2562,9 +2615,22 @@ def auth_phone_verify(
 
     partner = find_partner_by_phone(session, norm)
     if partner is None:
-        # Код выдаётся только известному агенту; partner=None здесь означает, что
-        # агента/привязку удалили между request и verify — трактуем как просроченный.
-        return reject()
+        # Самостоятельная регистрация по WhatsApp (план 2026-08-07): код подтверждён,
+        # значит номер принадлежит тому, кто его ввёл, — заводим кабинет здесь, а не
+        # на шаге request, чтобы мусорные номера не оседали в базе. Статус active —
+        # как у регистрации через бота (решение Николь 07.08): человек сразу видит
+        # кабинет, а не заглушку «ждите подтверждения».
+        partner = Partner(
+            phone=norm,
+            ref_slug=generate_ref_slug(),
+            status="active",
+            lang=_lang(request),
+        )
+        session.add(partner)
+        session.commit()
+        session.refresh(partner)
+        session.add(PartnerIdentity(partner_id=partner.id, kind="phone", value=norm))
+        session.commit()
 
     # Объединение каналов: телефон-Partner каноничен. Если у того же Kommo-агента
     # есть «осиротевшие» Partner из других каналов (бот/почта) — помечаем merged,

@@ -23,7 +23,12 @@
   </button>
   <img class="mobile-topbar-logo" src="/static/img/logo.png" alt="ONCOUNT">
   <div class="user-pill user-pill-mobile">
-    {% if partner.first_name %}{{ partner.first_name }}{% else %}@{{ partner.username or partner.telegram_id }}{% endif %}
+    {# Партнёр, зарегистрированный по WhatsApp (план 2026-08-07), приходит без имени,
+       username и telegram_id — без последней ветки в шапке светилось бы «@None». #}
+    {% if partner.first_name %}{{ partner.first_name }}
+    {%- elif partner.username or partner.telegram_id %}@{{ partner.username or partner.telegram_id }}
+    {%- elif partner.phone %}···{{ partner.phone[-4:] }}
+    {%- else %}{{ 'Partner' if lang == 'en' else 'Партнёр' }}{% endif %}
   </div>
   <a class="lang-toggle lang-toggle-mobile" href="?lang={{ 'ru' if lang == 'en' else 'en' }}"
      title="{{ 'Switch language' if lang == 'en' else 'Сменить язык' }}"
@@ -67,7 +72,12 @@
            title="{{ 'Switch language' if lang == 'en' else 'Сменить язык' }}"
            aria-label="{{ 'Switch language' if lang == 'en' else 'Сменить язык' }}">{{ 'EN' if lang == 'en' else 'RU' }}</a>
         <div class="user-pill user-pill-desktop">
-          {% if partner.first_name %}{{ partner.first_name }}{% else %}@{{ partner.username or partner.telegram_id }}{% endif %}
+          {# Партнёр, зарегистрированный по WhatsApp (план 2026-08-07), приходит без имени,
+       username и telegram_id — без последней ветки в шапке светилось бы «@None». #}
+    {% if partner.first_name %}{{ partner.first_name }}
+    {%- elif partner.username or partner.telegram_id %}@{{ partner.username or partner.telegram_id }}
+    {%- elif partner.phone %}···{{ partner.phone[-4:] }}
+    {%- else %}{{ 'Partner' if lang == 'en' else 'Партнёр' }}{% endif %}
         </div>
       </div>
     </header>
