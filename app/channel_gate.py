@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from datetime import datetime, timedelta
 
 from aiogram import Bot, F, Router
@@ -45,8 +46,25 @@ IN_CHANNEL_STATUSES = ("member", "administrator", "creator")
 
 router = Router(name="channel_gate")
 
+_TAG_RE = re.compile(r"[A-Za-z0-9]+")
+
 
 # ─── вспомогательное ─────────────────────────────────────────────────────────
+
+def clean_tag(raw: str | None) -> str:
+    """Метка источника: из deep-link (`?start=channel-kommo11`) или из имени
+    пригласительной ссылки, которой помечен сегмент рассылки.
+
+    Режем жёстко: `ChannelSubscriber.source` — String(16), и туда ещё уходит
+    префикс `dl:` / `jr:`. Метка длиннее 10 символов поле не переживёт, а
+    молчаливая обрезка на стороне Postgres — это 502 на ровном месте.
+    Кириллица в имени ссылки метки не даёт: имена сегментов только латиницей.
+    """
+    if not raw:
+        return ""
+    found = _TAG_RE.search(raw)
+    return found.group(0).lower()[:10] if found else ""
+
 
 def channel_id() -> str | None:
     """Id канала: переменная окружения важнее (ручное переопределение), иначе —
@@ -279,9 +297,20 @@ async def on_join_request(ev: ChatJoinRequest, bot: Bot) -> None:
         # придёт никогда. Заявка сама подсказывает, что за канал.
         _remember_channel(ev.chat.id)
 
+    # Откуда человек: Telegram кладёт в заявку ту самую пригласительную ссылку,
+    # по которой он пришёл. Каждому сегменту рассылки — своя ссылка с именем
+    # (`kommo1`, `kommo11`, `agents`), и источник считается сам, без utm.
+    tag = clean_tag(getattr(ev.invite_link, "name", None) if ev.invite_link else None)
+    source = f"jr:{tag}" if tag else "join_request"
+
     with SessionLocal() as s:
         sub = _sub(s, ev.from_user)
         sub.pending_request = True
+        # Источник пишем и здесь: у подтвердивших возраст ask_age не вызовется,
+        # а знать, из какой рассылки пришёл человек, надо всё равно. Метку
+        # сегмента, если она уже стоит, не перетираем безымянной.
+        if not sub.source or sub.source in ("join_request", "deeplink"):
+            sub.source = source
         already_confirmed = sub.age_confirmed_at is not None
         s.commit()
 
@@ -292,7 +321,7 @@ async def on_join_request(ev: ChatJoinRequest, bot: Bot) -> None:
         return
 
     try:
-        await ask_age(bot, ev.user_chat_id, ev.from_user, "join_request")
+        await ask_age(bot, ev.user_chat_id, ev.from_user, source)
     except Exception as exc:  # noqa: BLE001 — человек мог заблокировать бота
         log.warning("join request %s: вопрос не доставлен (%s)",
                     ev.from_user.id, type(exc).__name__)

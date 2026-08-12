@@ -179,10 +179,15 @@ async def start_deep(msg: Message, command: CommandObject) -> None:
     /start ref_<slug> — приход по ссылке агента, атрибуция как на /pay.
     /start channel — вход в закрытый канал Николь (план 2026-08-03)."""
     payload = (command.args or "").strip()
-    if payload == "channel":
+    if payload == "channel" or payload.startswith("channel-"):
         # Другая аудитория и другой поток: человек пришёл за каналом, оффер
         # интенсива ему сейчас не нужен. Вопрос про 18+ задаёт привратник.
-        await channel_gate.ask_age(msg.bot, msg.chat.id, msg.from_user, "deeplink")
+        # Хвост после «channel-» — метка рассылки (`channel-kommo11`): по ней
+        # видно, из какой воронки Kommo пришёл человек. Сравнение было ТОЧНЫМ,
+        # и любая метка молча роняла человека в оффер интенсива.
+        tag = channel_gate.clean_tag(payload[len("channel-"):])
+        await channel_gate.ask_age(msg.bot, msg.chat.id, msg.from_user,
+                                   f"dl:{tag}" if tag else "deeplink")
         return
     if payload == "club":
         # Третий поток: платный клуб. Оффер интенсива здесь тоже не нужен —
