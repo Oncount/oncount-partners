@@ -10,7 +10,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 import httpx
-from fastapi import Depends, FastAPI, Form, HTTPException, Request, status
+from fastapi import Depends, FastAPI, Form, HTTPException, Query, Request, status
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -54,7 +54,10 @@ from app.models import (
 )
 from app.refgen import generate_ref_slug
 from app.seed import seed_if_empty
-from app.usage import classify_path, flush_page_views, record_view
+from app.usage import (
+    PAGE_VIEW_PATHS_MAX, classify_path, flush_page_views, normalize_view_path,
+    page_view_counts, record_view,
+)
 from app import linkstat
 
 LOGIN_SESSION_TTL = timedelta(minutes=10)
@@ -1439,12 +1442,20 @@ CHANNEL_TAG_PREFIX_MAX = 32
 _NO_STORE = {"Cache-Control": "no-store"}
 # Те же заголовки, что у ответа с цифрами: короткий HEAD не повод их терять.
 # Одинаковость обеих пар стережёт test_head_and_get_answer_with_the_same_headers.
-_CHANNEL_TAGS_HEADERS = {**_NO_STORE, "X-Content-Type-Options": "nosniff"}
+# nosniff: в ответах эхом лежит то, что прислал вызывающий (`prefix`, `path`,
+# `since`). Тип ответа — application/json, как HTML это не читается, но
+# угадывание типа браузером — целый класс отказа, и закрыть его стоит один
+# заголовок. Одна пара на все машинные адреса /admin/api/*.
+_ADMIN_API_HEADERS = {**_NO_STORE, "X-Content-Type-Options": "nosniff"}
 
 
-def _channel_tags_token_ok(request: Request) -> bool:
+def _admin_api_token_ok(request: Request, name: str) -> bool:
     """Вторая дверь к счётчикам: заголовок `X-Api-Token`. Нужна машине ARDORIUM —
     у неё нет браузера и cookie владельца, а забирает она цифры по расписанию.
+
+    Ключ один на все машинные адреса (`CHANNEL_TAGS_TOKEN`): читает их один и
+    тот же сервис, и второй секрет в Railway ничего не добавил бы, кроме второго
+    места, где он может протечь. `name` — только для строки в журнале.
 
     Пустая настройка = двери НЕТ: иначе незаполненная переменная в Railway
     открыла бы адрес любому, кто пришлёт пустой заголовок. Сравнение постоянного
@@ -1461,8 +1472,51 @@ def _channel_tags_token_ok(request: Request) -> bool:
         # забирает цифры» и «ARDORIUM ходит не с тем ключом» выглядят одинаково —
         # тишиной, и разбирать это будет некому и нечем. Сам ключ в журнал не
         # пишем: в лог уходит только факт и длина присланного.
-        log.warning("channel-tags: ключ не подошёл (прислали %d знаков)", len(given))
+        log.warning("%s: ключ не подошёл (прислали %d знаков)", name, len(given))
     return ok
+
+
+def _admin_api_gate(request: Request, session: Session, name: str) -> None:
+    """Общая дверь машинных адресов `/admin/api/*`: метод, потом право.
+
+    Порядок и форма отказа одинаковы у всех трёх адресов и заданы в докстроке
+    `admin_api_channel_tags`: чужой метод — голый 404 ДО проверки права (иначе
+    разница ответов подтверждала бы адрес тому, кто ключ подобрал); без права
+    (ни токен, ни кука владельца) — тот же голый 404, без единого своего
+    заголовка. Любое отличие от ответа несуществующего адреса — подтверждение.
+    """
+    if request.method not in ("GET", "HEAD"):
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    try:
+        if not _admin_api_token_ok(request, name):
+            require_admin(request, session)     # чужой/аноним → 404 внутри
+    except HTTPException:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+
+
+def _admin_api_head():
+    """Короткий ответ на HEAD: признак жизни адреса, без базы и без журнала."""
+    from starlette.responses import Response   # локально: ради одной ветки
+    return Response(status_code=status.HTTP_200_OK, headers=_ADMIN_API_HEADERS)
+
+
+def _admin_api_since(since: str | None, name: str) -> datetime | None:
+    """`since=YYYY-MM-DD` → datetime начала дня; пусто → None (без среза).
+
+    Кривая дата — голый 404, как отказ (ТЗ 07.09): адрес не раскрывает себя ни
+    на одном ответе, кроме успеха. Право у спрашивающего к этому моменту есть,
+    и подсказку он получает не в теле, а строкой в журнале: молча игнорировать
+    дату нельзя — расписание годами тянуло бы полную выборку и не знало бы.
+    """
+    if not since:
+        return None
+    try:
+        return datetime.strptime(since.strip(), "%Y-%m-%d")
+    except ValueError:
+        # %r: значение из query-строки, перевод строки в нём — чужая запись в
+        # журнале; repr его экранирует.
+        log.info("%s: since не разобран (%r), отвечаю 404", name, since[:32])
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
 
 
 # include_in_schema=False: /openapi.json и /docs открыты анониму, и адрес,
@@ -1526,23 +1580,12 @@ def admin_api_channel_tags(request: Request,
     выдаёт. Закрыть можно только middleware на всё приложение — это отдельное
     решение, не правка одного маршрута.
     """
-    if request.method not in ("GET", "HEAD"):
-        # ПЕРЕД проверкой права: чужой метод не должен даже отличаться по
-        # поведению для того, у кого право есть, — иначе разница ответов и
-        # становится подтверждением. Голый 404, без единого заголовка.
-        raise HTTPException(status.HTTP_404_NOT_FOUND)
-    try:
-        if not _channel_tags_token_ok(request):
-            require_admin(request, session)     # чужой/аноним → 404 внутри
-    except HTTPException:
-        # Ровно тот же 404, что отдаёт любой несуществующий адрес: своих
-        # заголовков не добавляем НИ ОДНОГО. Любое отличие — подтверждение.
-        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    # Метод ПЕРЕД проверкой права, отказ — голый 404 без единого своего
+    # заголовка: ровно тот же ответ, что у несуществующего адреса. Общая дверь
+    # с page-views и intensive-leads, см. _admin_api_gate.
+    _admin_api_gate(request, session, "channel-tags")
     if request.method == "HEAD":
-        # Локальный импорт — чтобы не трогать шапку модуля ради одной ветки.
-        from starlette.responses import Response
-        return Response(status_code=status.HTTP_200_OK,
-                        headers=_CHANNEL_TAGS_HEADERS)
+        return _admin_api_head()
     since_dt = None
     if since:
         try:
@@ -1577,10 +1620,90 @@ def admin_api_channel_tags(request: Request,
          "prefix": tag_prefix,
          "since": since_dt.date().isoformat() if since_dt else None,
          "rows": rows},
-        # nosniff: в ответе эхом лежит то, что прислал вызывающий (`prefix`).
-        # Тип ответа — application/json, как HTML это не читается, но угадывание
-        # типа браузером — целый класс отказа, и закрыть его стоит один заголовок.
-        headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"},
+        headers=_ADMIN_API_HEADERS,
+    )
+
+
+# Два соседа channel-tags по ТЗ маркетолога 07.09.2026 (задачи 2 и 3). Дверь,
+# форма отказа, HEAD, заголовки успеха и каталог — те же, что у него, и
+# описаны в его докстроке; ниже только то, чем адреса отличаются.
+
+@app.api_route("/admin/api/page-views",
+               methods=["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+               include_in_schema=False)
+def admin_api_page_views(request: Request,
+                         since: str | None = None,
+                         path: list[str] = Query(default=[]),
+                         session: Session = Depends(get_session)) -> JSONResponse:
+    """Просмотры страниц по таблице `page_views`: views, unique, by_day.
+
+    `path` повторяемый: `?path=/dashboard&path=/tools` — строка на каждый
+    запрошенный путь в том же порядке, повторы схлопнуты, путь без заходов
+    отдаёт нули. Без единого `path` — пустой `rows`: списка всех путей наружу
+    не отдаём, снаружи видны только числа и то, что спросили. Путей за раз не
+    больше PAGE_VIEW_PATHS_MAX — сверх потолка тот же голый 404, что и на
+    кривой `since`: адрес себя не раскрывает ни на одном ответе, кроме успеха.
+
+    Путь эхом возвращается НОРМАЛИЗОВАННЫМ — той же classify_path, что и при
+    записи: что запишется, то и найдётся, а страница вроде `/courses/x/day/2`
+    ищется как `/courses/:slug/day/:day`.
+
+    ⚠️ Что в этой таблице есть, а чего нет: middleware track_page_view пишет
+    заход только на страницу кабинета из белого списка (usage.classify_path) и
+    только у вошедшего агента. Публичные лид-магниты (`/cheklist/ai-sotrudnik`
+    и прочие) сюда НЕ попадают — их переходы лежат в `link_clicks`
+    (linkstat.record_click). Этот адрес отвечает ровно то, что в `page_views`.
+    `unique` — разные partner_id за период; наружу сами id не уезжают.
+    """
+    _admin_api_gate(request, session, "page-views")
+    if request.method == "HEAD":
+        return _admin_api_head()
+    since_dt = _admin_api_since(since, "page-views")
+    paths = list(dict.fromkeys(p for p in map(normalize_view_path, path) if p))
+    if len(paths) > PAGE_VIEW_PATHS_MAX:
+        log.info("page-views: путей %d, потолок %d, отвечаю 404",
+                 len(paths), PAGE_VIEW_PATHS_MAX)
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    rows = page_view_counts(session, paths, since=since_dt)
+    # Признак жизни: цифры кто-то забрал. Сами пути в журнал не пишем — они
+    # из query-строки, а числа и без них видно, что выгрузка идёт.
+    log.info("page-views: отдал %d путей (since=%s)",
+             len(rows), since_dt.date().isoformat() if since_dt else "-")
+    return JSONResponse(
+        {"generated_at": datetime.utcnow().isoformat(),
+         "since": since_dt.date().isoformat() if since_dt else None,
+         "rows": rows},
+        headers=_ADMIN_API_HEADERS,
+    )
+
+
+@app.api_route("/admin/api/intensive-leads",
+               methods=["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+               include_in_schema=False)
+def admin_api_intensive_leads(request: Request,
+                              since: str | None = None,
+                              session: Session = Depends(get_session)) -> JSONResponse:
+    """Заявки на интенсив по `intensive_leads`: total, by_source, by_day.
+
+    Заявка — строка с `applied_at`; срез `since` и дни идут по ней же, а не по
+    `created_at` (тот значит «впервые у бота»). Наружу только числа и метки
+    источника (`cheklist`, `statya`, `post`, …): ни имени, ни telegram_id, ни
+    email — см. intensive_stats.applied_counts.
+    """
+    _admin_api_gate(request, session, "intensive-leads")
+    if request.method == "HEAD":
+        return _admin_api_head()
+    since_dt = _admin_api_since(since, "intensive-leads")
+    from app.intensive_stats import applied_counts   # локально, как соседи
+    counts = applied_counts(session, since=since_dt)
+    log.info("intensive-leads: отдал %d заявок по %d источникам (since=%s)",
+             counts["total"], len(counts["by_source"]),
+             since_dt.date().isoformat() if since_dt else "-")
+    return JSONResponse(
+        {"generated_at": datetime.utcnow().isoformat(),
+         "since": since_dt.date().isoformat() if since_dt else None,
+         **counts},
+        headers=_ADMIN_API_HEADERS,
     )
 
 

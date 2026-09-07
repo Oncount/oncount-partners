@@ -152,3 +152,72 @@ def flush_page_views() -> int:
         return 0
     finally:
         s.close()
+
+
+# ── Просмотры наружу (ТЗ маркетолога 2026-09-07, задача 2) ──────────────────
+# Читающая часть той же таблицы: маршрут /admin/api/page-views отдаёт ARDORIUM
+# только числа по запрошенным путям. Считается здесь, а не в main.py, чтобы
+# форму ответа проверял тест без веб-стенда, а запись и чтение жили рядом:
+# путь нормализует одна и та же classify_path, и что записано, то и найдётся.
+
+# Сколько путей можно спросить одним запросом. Двадцать значений в IN — ещё
+# запрос; тысяча — уже нагрузка, а открывает адрес статический токен.
+PAGE_VIEW_PATHS_MAX = 20
+# Путь длиннее столбца (PageView.path — String(128)) не совпадёт ни с чем;
+# режем, чтобы не гонять километровый IN.
+PAGE_VIEW_PATH_MAX = 128
+
+
+def normalize_view_path(raw: str | None) -> str | None:
+    """Путь из query-строки → вид, в котором он лежит в page_views; None, если
+    пусто. Известные страницы кабинета проходят через classify_path, как при
+    записи (`/courses/ai-setup/day/2` → `/courses/:slug/day/:day`, хвостовой
+    «/» снимается); незнакомый путь остаётся как есть — в таблице его нет, и
+    строка с нулями честно это покажет."""
+    p = (raw or "").strip()[:PAGE_VIEW_PATH_MAX]
+    if not p:
+        return None
+    hit = classify_path(p)
+    if hit:
+        return hit[0]
+    return p.rstrip("/") or "/"
+
+
+def day_iso(value) -> str:
+    """Ключ дня из func.date(): SQLite (стенд) отдаёт строку 'YYYY-MM-DD',
+    Postgres (бой) — date. Десять знаков одинаковы у обоих."""
+    return str(value)[:10]
+
+
+def page_view_counts(session, paths: list[str],
+                     since: datetime | None = None) -> list[dict]:
+    """Просмотры по каждому из `paths`: views, unique (разных partner_id), by_day.
+
+    Строка на каждый запрошенный путь и в том же порядке, повторы схлопнуты:
+    путь без единого захода даёт нули, а не пропадает — иначе читающая сторона
+    не отличит «никто не открывал» от «не спросили». Два запроса на весь список,
+    а не два на путь: `unique` за период не складывается из дневных, поэтому
+    итог и дни считаются раздельно.
+
+    Наружу — только путь и числа: ни partner_id, ни секции. Только чтение.
+    """
+    from sqlalchemy import distinct, func, select
+    from app.models import PageView
+    wanted = list(dict.fromkeys(paths))
+    rows = {p: {"path": p, "views": 0, "unique": 0, "by_day": {}} for p in wanted}
+    if not wanted:
+        return []
+    pv = PageView
+    day = func.date(pv.created_at)
+    totals = (select(pv.path, func.count(pv.id), func.count(distinct(pv.partner_id)))
+              .where(pv.path.in_(wanted)).group_by(pv.path))
+    days = (select(pv.path, day, func.count(pv.id))
+            .where(pv.path.in_(wanted)).group_by(pv.path, day).order_by(pv.path, day))
+    if since is not None:
+        totals = totals.where(pv.created_at >= since)
+        days = days.where(pv.created_at >= since)
+    for path, views, unique in session.execute(totals):
+        rows[path]["views"], rows[path]["unique"] = int(views), int(unique)
+    for path, d, views in session.execute(days):
+        rows[path]["by_day"][day_iso(d)] = int(views)
+    return [rows[p] for p in wanted]
