@@ -145,6 +145,38 @@ def test_since_broken_and_too_many_paths_are_bare_404():
         assert r.status_code == 200 and len(r.json()["rows"]) == 1
 
 
+def test_control_chars_in_path_are_dropped_and_all_dropped_is_bare_404():
+    # Приёмка 07.09 (пункт 1): путь с управляющим символом (NUL, \n, \t, DEL)
+    # не попадает в IN-список; если годных путей не осталось — тот же голый
+    # 404, что и на отказ, байт в байт. Годный сосед при этом отвечает как ни
+    # в чём не бывало, и кривого пути в его ответе нет.
+    with stand(_view(A, "/ok"), _view(B, "/a\x00b")) as (client, _):
+        etalon = fingerprint(client.get(MISSING))
+        for bad in ("/a\x00b", "/a\nb", "/a\tb", "/a\x7fb", "\x00", ""):
+            r = client.get(URL, params={"path": bad}, headers={"X-Api-Token": TOKEN})
+            assert fingerprint(r) == etalon, f"path={bad!r} выдаёт адрес"
+        r = client.get(URL, params={"path": ["/ok", "/a\x00b"]},
+                       headers={"X-Api-Token": TOKEN})
+        assert r.status_code == 200, r.text
+        assert [row["path"] for row in r.json()["rows"]] == ["/ok"]
+        assert r.json()["rows"][0]["views"] == 1
+        assert "\\u0000" not in r.text and "\x00" not in r.text
+        # Без единого path — по-прежнему 200 с пустым rows, не 404.
+        assert client.get(URL, headers={"X-Api-Token": TOKEN}).json()["rows"] == []
+
+
+def test_since_of_spaces_means_no_cut():
+    # Приёмка 07.09 (пункт 2): `since=%20%20` — «без среза», как пусто, а не
+    # кривая дата: 200, since=null, и цифры полные, как без since.
+    with stand(_view(A, "/dashboard", days_ago=10), _view(B, "/dashboard")) as (client, _):
+        body = client.get(URL, params={"path": "/dashboard", "since": "  "},
+                          headers={"X-Api-Token": TOKEN})
+        assert body.status_code == 200, body.text
+        assert body.json()["since"] is None
+        assert body.json()["rows"][0]["views"] == 2
+        assert body.json()["rows"] == _get(client, path="/dashboard")["rows"]
+
+
 # ─── (в) право и неотличимость отказа ────────────────────────────────────────
 
 def test_refusal_is_indistinguishable_from_a_missing_address():

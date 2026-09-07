@@ -104,6 +104,14 @@ def test_function_and_route_give_the_same_numbers():
         assert {k: body[k] for k in direct} == direct
 
 
+def test_since_of_spaces_means_no_cut():
+    # Приёмка 07.09 (пункт 2): пробелы в since — «без среза», а не кривая дата.
+    with stand(_lead(101, applied_days_ago=0), _lead(102, applied_days_ago=5)) as (client, _):
+        body = client.get(URL, params={"since": "  "}, headers={"X-Api-Token": TOKEN})
+        assert body.status_code == 200, body.text
+        assert body.json()["since"] is None and body.json()["total"] == 2
+
+
 # ─── (б) кривой since = отказ ────────────────────────────────────────────────
 
 def test_since_broken_is_bare_404():

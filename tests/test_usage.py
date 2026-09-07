@@ -8,7 +8,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.usage import classify_path, SECTION_LABELS
+from app.usage import classify_path, normalize_view_path, SECTION_LABELS
 
 
 def test_tracked_static_pages():
@@ -75,3 +75,13 @@ if __name__ == "__main__":
         fn()
         print(f"  ok  {fn.__name__}")
     print(f"\n{len(fns)} тестов пройдено.")
+
+
+def test_normalize_view_path_drops_control_chars():
+    # Приёмка 07.09 (пункт 1): любой символ < 0x20 или DEL — путь отброшен как
+    # пустой. Проверка по сырому значению, до strip: «/a\n» не станет «/a».
+    for bad in ("/a\x00b", "\x00", "/a\nb", "/a\n", "\t/a", "/a\x7fb", "/a\x1f"):
+        assert normalize_view_path(bad) is None, repr(bad)
+    assert normalize_view_path("  /ok  ") == "/ok"
+    assert normalize_view_path("/courses/ai-setup/day/2") == "/courses/:slug/day/:day"
+    assert normalize_view_path("   ") is None and normalize_view_path(None) is None

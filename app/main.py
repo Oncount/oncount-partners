@@ -1508,10 +1508,14 @@ def _admin_api_since(since: str | None, name: str) -> datetime | None:
     и подсказку он получает не в теле, а строкой в журнале: молча игнорировать
     дату нельзя — расписание годами тянуло бы полную выборку и не знало бы.
     """
+    # strip ДО проверки на пустоту: `since=%20%20` — это «без среза», а не
+    # кривая дата (приёмка 07.09); расписанию проще прислать пробелы, чем
+    # ничего, и 404 на них читался бы как «адрес пропал».
+    since = (since or "").strip()
     if not since:
         return None
     try:
-        return datetime.strptime(since.strip(), "%Y-%m-%d")
+        return datetime.strptime(since, "%Y-%m-%d")
     except ValueError:
         # %r: значение из query-строки, перевод строки в нём — чужая запись в
         # журнале; repr его экранирует.
@@ -1660,6 +1664,13 @@ def admin_api_page_views(request: Request,
         return _admin_api_head()
     since_dt = _admin_api_since(since, "page-views")
     paths = list(dict.fromkeys(p for p in map(normalize_view_path, path) if p))
+    # `path` спросили, а после нормализации не осталось ни одного (пустые,
+    # с управляющими символами) — тот же голый 404, что на кривой `since`:
+    # запрос кривой, и адрес себя на нём не раскрывает. Без единого `path`
+    # вовсе — по-прежнему 200 с пустым `rows`, см. докстроку выше.
+    if path and not paths:
+        log.info("page-views: из %d путей ни одного годного, отвечаю 404", len(path))
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
     if len(paths) > PAGE_VIEW_PATHS_MAX:
         log.info("page-views: путей %d, потолок %d, отвечаю 404",
                  len(paths), PAGE_VIEW_PATHS_MAX)

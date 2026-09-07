@@ -168,13 +168,28 @@ PAGE_VIEW_PATHS_MAX = 20
 PAGE_VIEW_PATH_MAX = 128
 
 
+def _has_control_chars(text: str) -> bool:
+    """Любой символ ниже пробела (NUL, перевод строки, табуляция) или DEL (0x7f)."""
+    return any(ord(ch) < 0x20 or ord(ch) == 0x7F for ch in text)
+
+
 def normalize_view_path(raw: str | None) -> str | None:
     """Путь из query-строки → вид, в котором он лежит в page_views; None, если
     пусто. Известные страницы кабинета проходят через classify_path, как при
     записи (`/courses/ai-setup/day/2` → `/courses/:slug/day/:day`, хвостовой
     «/» снимается); незнакомый путь остаётся как есть — в таблице его нет, и
-    строка с нулями честно это покажет."""
-    p = (raw or "").strip()[:PAGE_VIEW_PATH_MAX]
+    строка с нулями честно это покажет.
+
+    Путь с управляющими символами (NUL, перевод строки, табуляция, DEL) —
+    тоже None, как пустой (приёмка 07.09): в таблице такого пути быть не
+    может (браузер его не пришлёт), в IN-списке ему делать нечего, а NUL в
+    строке — это ещё и повод для отказа драйвера Postgres. Проверка идёт по
+    сырому значению, ДО strip: иначе «/a» с переводом строки на конце прошёл
+    бы как «/a»."""
+    raw = raw or ""
+    if _has_control_chars(raw):
+        return None
+    p = raw.strip()[:PAGE_VIEW_PATH_MAX]
     if not p:
         return None
     hit = classify_path(p)

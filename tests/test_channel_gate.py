@@ -579,6 +579,44 @@ def test_startup_check_notices_bot_is_not_admin():
                    for r in records)
 
 
+def test_startup_check_prints_role_as_value_for_real_chat_member():
+    # Приёмка 07.09 (пункт 3): у настоящего ChatMemberMember status — str-Enum,
+    # и f-строка в 3.11 даёт «ChatMemberStatus.MEMBER»; в журнале нужно «member».
+    from aiogram.types import ChatMemberMember, User
+    with _stand():
+        bot = FakeBot(member=ChatMemberMember(user=User(id=42, is_bot=True, first_name="b")))
+        with _log() as records:
+            reason = asyncio.run(channel_gate.startup_check(bot))
+        assert reason and "(роль member)" in reason, reason
+        assert "ChatMemberStatus" not in reason
+        assert any("(роль member)" in r.getMessage() for r in records)
+
+
+def test_err_hides_bot_token_from_url_in_exception_text():
+    # Приёмка 07.09 (пункт 4): сетевые ошибки несут полный URL запроса, а в нём
+    # токен `/bot<id>:<секрет>/`. В строке для журнала его быть не должно.
+    url = "https://api.telegram.org/bot123:ABC/sendMessage"
+    line = channel_gate._err(RuntimeError(f"Cannot connect to {url}: timeout"))
+    assert "123:ABC" not in line and "ABC" not in line, line
+    assert "/bot<скрыто>/sendMessage" in line and line.startswith("RuntimeError: ")
+    # Реальный вид токена (цифры:буквы_-), без хвостового слэша — тоже вырезан.
+    real = "https://api.telegram.org/bot7012345678:AAH-x_Y9zQ"
+    assert "7012345678:AAH" not in channel_gate._err(ValueError(real))
+    # Текст без токена не тронут.
+    exc = _forbidden()
+    assert channel_gate._err(exc) == f"TelegramForbiddenError: {exc}"
+    assert FORBIDDEN_TEXT in channel_gate._err(exc)
+    # Сквозь startup_check: get_chat_member упал с URL в тексте — в журнале и в
+    # причине токена нет, канал и текст есть.
+    with _stand():
+        bot = FakeBot(member=RuntimeError(f"Cannot connect to {url}"))
+        with _log() as records:
+            reason = asyncio.run(channel_gate.startup_check(bot))
+        assert reason and "123:ABC" not in reason and CHANNEL in reason
+        assert not any("123:ABC" in r.getMessage() for r in records), "токен утёк в лог"
+        assert any("/bot<скрыто>/" in r.getMessage() for r in records)
+
+
 def test_startup_check_is_quiet_when_rights_are_fine():
     with _stand():
         bot = FakeBot(member=FakeChatMember("administrator", FakeUser(42),

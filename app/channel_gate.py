@@ -158,15 +158,23 @@ def _mark_invited(telegram_id: int, link: str) -> None:
         s.commit()
 
 
+# Токен бота внутри URL Telegram: `/bot<id>:<секрет>/метод`. Сетевые ошибки
+# (aiohttp, `TelegramNetworkError`) вставляют в текст полный адрес запроса, и
+# без вырезки токен уехал бы в журнал Railway и в письмо Николь.
+_BOT_TOKEN_IN_URL = re.compile(r"/bot\d+:[A-Za-z0-9_-]+")
+
+
 def _err(exc: BaseException) -> str:
     """Имя класса И текст ответа Telegram — то, чего не хватало в логах 05-07.09.
 
     `TelegramForbiddenError` — это любой HTTP 403, и по одному имени класса
     отказ sendMessage («bot can't initiate conversation with a user») читался
-    как отказ approve. Токена в строке нет: aiogram кладёт туда только свою
-    подпись и текст сервера. Имён и username здесь тоже нет.
+    как отказ approve. Имён и username здесь нет. Токена тоже: ответы API
+    aiogram отдаёт без него, а в тексте сетевых ошибок он бывает как часть
+    URL — такой кусок заменяем на `/bot<скрыто>` (приёмка 07.09).
     """
-    return f"{type(exc).__name__}: {exc}"
+    text = _BOT_TOKEN_IN_URL.sub("/bot<скрыто>", str(exc))
+    return f"{type(exc).__name__}: {text}"
 
 
 def _set_source(sub: ChannelSubscriber, new_source: str) -> None:
@@ -429,7 +437,11 @@ async def startup_check(bot: Bot) -> str | None:
         return reason
     status = getattr(member, "status", None)
     if status != "administrator":
-        reason = f"канал {cid}: бот не администратор (роль {status})"
+        # Значением, а не именем члена перечисления: у aiogram status —
+        # `ChatMemberStatus` (str-Enum), и f-строка в Python 3.11 печатает его
+        # как «ChatMemberStatus.MEMBER», а в журнале нужно «member».
+        role = getattr(status, "value", status)
+        reason = f"канал {cid}: бот не администратор (роль {role})"
     elif not getattr(member, "can_invite_users", False):
         reason = f"канал {cid}: у бота нет права «Пригласительные ссылки»"
     else:
