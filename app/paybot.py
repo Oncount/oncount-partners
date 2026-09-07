@@ -714,6 +714,9 @@ async def main() -> None:
     log.info("Paybot polling start, bot=@%s, lava=%s, chat=%s, channel=%s",
              me.username, lava.is_configured(), chat_id() or "не подключён",
              channel_gate.channel_id() or "не подключён")
+    # Права привратника проверяем сразу, а не после первого человека, которому
+    # он не выдал доступ: одна строка в лог, при беде — сообщение Николь.
+    await channel_gate.startup_check(bot)
     asyncio.create_task(_payment_loop())
     asyncio.create_task(club.loop(bot))
     try:

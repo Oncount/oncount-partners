@@ -20,6 +20,7 @@ Telegram здесь — четыре простых класса, бот соб�
 """
 import ast
 import asyncio
+import logging
 import os
 import sys
 from contextlib import contextmanager
@@ -33,6 +34,7 @@ os.environ.setdefault("DATABASE_URL", "postgresql+psycopg2://t:t@localhost:5432/
 os.environ["PAY_BOT_TOKEN"] = ""
 
 from aiogram.dispatcher.event.bases import SkipHandler  # noqa: E402
+from aiogram.exceptions import TelegramForbiddenError  # noqa: E402
 from sqlalchemy import create_engine  # noqa: E402
 from sqlalchemy.orm import sessionmaker  # noqa: E402
 
@@ -106,14 +108,6 @@ class FakeChat:
         self.id, self.type = id, type
 
 
-class FakeChatMember:
-    """`ChatMemberMember` / `ChatMemberLeft` / `ChatMemberBanned`: у всех троих
-    есть и `status`, и `user` — сам человек, чьё членство изменилось."""
-
-    def __init__(self, status, user):
-        self.status, self.user = status, user
-
-
 class FakeChatMemberUpdated:
     def __init__(self, chat, from_user, new_chat_member):
         self.chat, self.from_user = chat, from_user
@@ -131,19 +125,111 @@ class FakeChatJoinRequest:
         self.user_chat_id, self.invite_link = user_chat_id, invite_link
 
 
+# Тот самый 403, что стоял во всех логах 05-07.09.2026. Один текст на всех:
+# по Bot API писать автору заявки можно «5 минут и до обработки заявки», а
+# кто не нажимал Start у бота, после обработки не получает ничего.
+FORBIDDEN_TEXT = "Forbidden: bot can't initiate conversation with a user"
+
+
+def _forbidden(text=FORBIDDEN_TEXT):
+    return TelegramForbiddenError(method=None, message=text)
+
+
+class FakeChatMember:
+    """`ChatMemberMember` / `ChatMemberLeft` / `ChatMemberBanned`: у всех троих
+    есть и `status`, и `user` — сам человек, чьё членство изменилось.
+    `can_invite_users` — у `ChatMemberAdministrator`, его ждёт startup_check."""
+
+    def __init__(self, status, user, can_invite_users=False):
+        self.status, self.user = status, user
+        self.can_invite_users = can_invite_users
+
+
 class FakeBot:
-    def __init__(self):
-        self.sent, self.approved = [], []
+    """Telegram на стенде — с тем правилом, из-за которого всё и сломалось.
+
+    `window_open` — окно `user_chat_id`: пока оно открыто, писать человеку
+    можно; approve и decline его ЗАКРЫВАЮТ (заявка обработана). Нажимал ли
+    человек Start у бота — `started`: если да, письма проходят всегда. Так
+    порядок «письмо → approve» проверяется поведением, а не подглядыванием.
+
+    `member` — что ответит get_chat_member (объект) либо исключение, которое
+    он бросит. `approve_error` — исключение вместо одобрения заявки.
+    """
+
+    def __init__(self, *, window_open=True, started=False, member=None,
+                 approve_error=None, me_id=42):
+        self.sent, self.approved, self.declined, self.links = [], [], [], []
+        self.calls = []
+        self.window_open, self.started = window_open, started
+        self.member, self.approve_error, self.me_id = member, approve_error, me_id
 
     async def send_message(self, *a, **kw):
+        self.calls.append("send")
+        if not (self.started or self.window_open):
+            raise _forbidden()
         self.sent.append((a, kw))
 
     async def approve_chat_join_request(self, **kw):
+        self.calls.append("approve")
+        if self.approve_error is not None:
+            raise self.approve_error
+        self.window_open = False
         self.approved.append(kw)
+
+    async def decline_chat_join_request(self, **kw):
+        self.calls.append("decline")
+        self.window_open = False
+        self.declined.append(kw)
+
+    async def get_chat_member(self, **kw):
+        self.calls.append("get_chat_member")
+        if isinstance(self.member, BaseException):
+            raise self.member
+        return self.member or FakeChatMember("left", FakeUser(kw.get("user_id")))
+
+    async def create_chat_invite_link(self, **kw):
+        self.calls.append("create_link")
+        link = type("Link", (), {"invite_link": f"https://t.me/+{kw.get('name')}"})()
+        self.links.append(kw)
+        return link
+
+    async def get_me(self):
+        return FakeUser(self.me_id, username="stend_bot")
+
+
+class FakeMessage:
+    async def edit_reply_markup(self, **kw):
+        pass
+
+
+class FakeCallbackQuery:
+    def __init__(self, user):
+        self.from_user, self.message, self.answered = user, FakeMessage(), False
+
+    async def answer(self, *a, **kw):
+        self.answered = True
 
 
 def _texts(bot):
     return [a[1] if len(a) > 1 else kw.get("text") for a, kw in bot.sent]
+
+
+@contextmanager
+def _log():
+    """Записи логгера привратника — руками, без caplog: файл обязан работать
+    и без pytest (см. test_foreign_channel_is_passed_on)."""
+    records = []
+    handler = logging.Handler()
+    handler.emit = records.append
+    saved = channel_gate.log.level
+    channel_gate.log.addHandler(handler)
+    channel_gate.log.setLevel(logging.DEBUG)
+    try:
+        yield records
+    finally:
+        channel_gate.log.removeHandler(handler)
+        channel_gate.log.setLevel(saved)
 
 
 def _member_event(status, *, who_id, by_id, chat_id=CHANNEL):
@@ -349,6 +435,158 @@ def test_join_request_of_a_confirmed_person_keeps_the_tag():
         assert row.source == КОД, "именная ссылка затёрла метку рассылки"
         assert row.status == "in_channel", "заявку не одобрили"
         assert [kw["user_id"] for kw in bot.approved] == [777]
+
+
+# ─── (в) окно user_chat_id: письмо до approve, 403 не рвёт выдачу ────────────
+
+def test_greeting_goes_before_approve_and_status_is_in_channel():
+    # Бой 05-07.09: 40 из 40 вошли в канал, ни один не получил приветствия.
+    # Человек Start не нажимал, approve закрывает окно — значит, дойдёт только
+    # то, что отправлено ДО approve. И статус — in_channel, а не invited.
+    with _stand(_sub(777, source=КОД, status="confirmed", confirmed=True,
+                     pending=True)) as maker:
+        bot = FakeBot()
+        asyncio.run(channel_gate.grant_access(bot, 777))
+        assert T.ACCESS_APPROVED in _texts(bot), "приветствие не дошло"
+        assert bot.calls == ["send", "approve"], f"порядок вызовов: {bot.calls}"
+        row = _row(maker, 777)
+        assert row.status == "in_channel", "одобренный числится не в канале"
+        assert row.pending_request is False
+        assert bot.links == [], "ссылку создали тому, кто уже внутри"
+        assert row.invite_link is None
+
+
+def test_yes_button_is_answered_even_when_nothing_can_be_sent():
+    # Кнопка «Да» нажата позже 5 минут, окно закрыто, Start не нажат: письма не
+    # доходят, но заявка одобряется, статус in_channel, часики с кнопки сняты,
+    # обработчик не падает трейсбеком в aiogram.
+    with _stand(_sub(777, source=КОД, pending=True)) as maker:
+        bot, call = FakeBot(window_open=False), FakeCallbackQuery(FakeUser(777))
+        asyncio.run(channel_gate.cb_age_yes(call, bot))
+        assert call.answered, "кнопка осталась висеть"
+        assert bot.approved and bot.approved[0]["user_id"] == 777
+        assert _row(maker, 777).status == "in_channel"
+        assert _row(maker, 777).age_confirmed_at is not None
+
+
+def test_forbidden_on_approve_and_member_is_logged_with_text_and_channel():
+    # Защита (а): 403 на approve и на get_chat_member — в лог уходят ТЕКСТ
+    # ответа Telegram и id канала. По одному имени класса 05-07.09 отказ
+    # sendMessage читался как отказ approve. Токена и имён в записях нет.
+    with _stand(_sub(777, source=КОД, status="confirmed", confirmed=True,
+                     pending=True)) as maker:
+        err = _forbidden("Forbidden: bot is not a member of the channel chat")
+        bot = FakeBot(approve_error=err, member=_forbidden())
+        with _log() as records:
+            asyncio.run(channel_gate.grant_access(bot, 777))
+        lines = [r.getMessage() for r in records]
+        approve_line = [l for l in lines if l.startswith("approve 777")]
+        member_line = [l for l in lines if l.startswith("get_chat_member 777")]
+        assert approve_line and "not a member of the channel chat" in approve_line[0]
+        assert CHANNEL in approve_line[0], "в строке approve нет id канала"
+        assert member_line and FORBIDDEN_TEXT in member_line[0]
+        assert CHANNEL in member_line[0], "в строке get_chat_member нет id канала"
+        assert not any("user777" in l for l in lines), "username утёк в лог"
+        # Запасной путь: заявка не одобрилась → выдана ссылка, статус invited.
+        assert bot.links and bot.links[0]["name"] == "age18-777"
+        assert _row(maker, 777).status == "invited"
+        assert any(t.startswith("Спасибо. Вот ваша персональная ссылка")
+                   for t in _texts(bot)), "ссылку не отправили"
+        assert _row(maker, 777).pending_request is False
+
+
+def test_member_answer_sets_in_channel_even_if_letter_is_lost():
+    # Telegram ответил member, а письмо «вы уже подписаны» получило 403:
+    # статус ставится по ответу Telegram, ссылка не создаётся, обработчик жив.
+    with _stand(_sub(777, source=КОД, status="confirmed", confirmed=True)) as maker:
+        bot = FakeBot(window_open=False, member=FakeChatMember("member", FakeUser(777)))
+        with _log() as records:
+            asyncio.run(channel_gate.grant_access(bot, 777))
+        assert _row(maker, 777).status == "in_channel"
+        assert bot.links == []
+        lost = [r for r in records if "не доставлено" in r.getMessage()]
+        assert lost and FORBIDDEN_TEXT in lost[0].getMessage()
+        assert CHANNEL in lost[0].getMessage()
+
+
+def test_invited_does_not_downgrade_in_channel():
+    # Гонка: событие chat_member об одобрении уже поставило in_channel, а
+    # выдача ссылки дописывает invited. Раньше затирала — теперь нет.
+    with _stand(_sub(777, source=КОД, status="in_channel", confirmed=True)) as maker:
+        bot = FakeBot(started=True, member=_forbidden())
+        asyncio.run(channel_gate.grant_access(bot, 777))
+        row = _row(maker, 777)
+        assert row.status == "in_channel", "invited понизил in_channel"
+        assert row.invite_link, "ссылка не записана"
+    # А обычному confirmed ссылка ставит invited, как и прежде.
+    with _stand(_sub(778, source=КОД, status="confirmed", confirmed=True)) as maker:
+        asyncio.run(channel_gate.grant_access(FakeBot(started=True), 778))
+        assert _row(maker, 778).status == "invited"
+
+
+def test_no_button_sends_reply_before_decline_and_survives_403():
+    # «Нет»: письмо ДО decline (decline закрывает окно), заявка отклонена,
+    # кнопка отвечена. То же самое, когда окно уже закрыто: 403 на письме не
+    # мешает отклонить заявку и не роняет обработчик.
+    with _stand(_sub(777, source=КОД, pending=True)) as maker:
+        bot, call = FakeBot(), FakeCallbackQuery(FakeUser(777))
+        asyncio.run(channel_gate.cb_age_no(call, bot))
+        assert T.AGE_NO in _texts(bot), "«нет так нет» не дошло"
+        assert bot.calls == ["send", "decline"], f"порядок вызовов: {bot.calls}"
+        assert bot.declined[0]["user_id"] == 777
+        assert call.answered
+        assert _row(maker, 777).status == "declined"
+        assert _row(maker, 777).pending_request is False
+    with _stand(_sub(778, source=КОД, pending=True)) as maker:
+        bot, call = FakeBot(window_open=False), FakeCallbackQuery(FakeUser(778))
+        with _log() as records:
+            asyncio.run(channel_gate.cb_age_no(call, bot))
+        assert bot.declined and bot.declined[0]["user_id"] == 778
+        assert call.answered
+        assert _row(maker, 778).status == "declined"
+        assert any(FORBIDDEN_TEXT in r.getMessage() for r in records)
+
+
+# ─── (б) проверка прав при старте ────────────────────────────────────────────
+
+def test_startup_check_notices_missing_invite_right():
+    with _stand():
+        bot = FakeBot(member=FakeChatMember("administrator", FakeUser(42),
+                                            can_invite_users=False))
+        with _log() as records:
+            reason = asyncio.run(channel_gate.startup_check(bot))
+        assert reason and "Пригласительные ссылки" in reason
+        errors = [r for r in records if r.levelno >= logging.ERROR]
+        assert len(errors) == 1, "ожидалась ровно одна строка ошибки"
+        assert CHANNEL in errors[0].getMessage()
+        assert "Пригласительные ссылки" in errors[0].getMessage()
+
+
+def test_startup_check_notices_bot_is_not_admin():
+    with _stand():
+        bot = FakeBot(member=FakeChatMember("member", FakeUser(42)))
+        with _log() as records:
+            reason = asyncio.run(channel_gate.startup_check(bot))
+        assert reason and "не администратор" in reason
+        assert [r for r in records if r.levelno >= logging.ERROR]
+    # Telegram не ответил (бота выгнали): строка с текстом ответа, без падения.
+    with _stand():
+        bot = FakeBot(member=_forbidden("Forbidden: bot is not a member of the channel chat"))
+        with _log() as records:
+            reason = asyncio.run(channel_gate.startup_check(bot))
+        assert reason and "not a member" in reason
+        assert any(CHANNEL in r.getMessage() and "not a member" in r.getMessage()
+                   for r in records)
+
+
+def test_startup_check_is_quiet_when_rights_are_fine():
+    with _stand():
+        bot = FakeBot(member=FakeChatMember("administrator", FakeUser(42),
+                                            can_invite_users=True))
+        with _log() as records:
+            assert asyncio.run(channel_gate.startup_check(bot)) is None
+        assert not [r for r in records if r.levelno >= logging.WARNING]
+        assert bot.sent == [], "при исправных правах Николь писать незачем"
 
 
 if __name__ == "__main__":

@@ -141,6 +141,34 @@ def _mark(telegram_id: int, **fields) -> None:
         s.commit()
 
 
+def _mark_invited(telegram_id: int, link: str) -> None:
+    """Ссылка выдана: пишем её и `invited`, но НЕ поверх `in_channel`.
+
+    Событие `chat_member` об одобрении заявки может прийти раньше этой строки,
+    и факт «уже внутри» важнее намерения «ссылку выдали». До 07.09.2026 тут
+    стоял безусловный `status="invited"`, и он затирал `in_channel` всем, кому
+    выдача ссылки досталась по ошибке (см. `grant_access`)."""
+    with SessionLocal() as s:
+        sub = s.query(ChannelSubscriber).filter_by(telegram_id=telegram_id).first()
+        if sub is None:
+            return
+        sub.invite_link, sub.invited_at = link, datetime.utcnow()
+        if sub.status != "in_channel":
+            sub.status = "invited"
+        s.commit()
+
+
+def _err(exc: BaseException) -> str:
+    """Имя класса И текст ответа Telegram — то, чего не хватало в логах 05-07.09.
+
+    `TelegramForbiddenError` — это любой HTTP 403, и по одному имени класса
+    отказ sendMessage («bot can't initiate conversation with a user») читался
+    как отказ approve. Токена в строке нет: aiogram кладёт туда только свою
+    подпись и текст сервера. Имён и username здесь тоже нет.
+    """
+    return f"{type(exc).__name__}: {exc}"
+
+
 def _set_source(sub: ChannelSubscriber, new_source: str) -> None:
     """Записать метку источника, не затирая уже известную. Побеждает ПЕРВОЕ
     касание, а не последнее.
@@ -223,7 +251,34 @@ async def _notify_admin(bot: Bot, text: str) -> None:
         await bot.send_message(settings.ADMIN_TG_ID, text,
                                disable_web_page_preview=True)
     except Exception as exc:  # noqa: BLE001
-        log.warning("channel admin notify failed: %s", type(exc).__name__)
+        log.warning("channel admin notify failed: %s", _err(exc))
+
+
+async def _send(bot: Bot, telegram_id: int, text: str, *, cid: str | None,
+                what: str, level: int = logging.INFO, **kw) -> bool:
+    """Письмо человеку, которое не должно ронять выдачу доступа.
+
+    403 «bot can't initiate conversation with a user» тут штатный случай:
+    окно `user_chat_id` закрыто (заявка уже обработана либо «Да» нажато позже
+    5 минут), а Start у бота человек не нажимал. В лог — что именно не дошло,
+    ответ Telegram и канал. Возвращает, дошло ли.
+    """
+    try:
+        await bot.send_message(telegram_id, text, **kw)
+        return True
+    except Exception as exc:  # noqa: BLE001 — не дошло, но доступ это не отменяет
+        log.log(level, "%s для %s (канал %s) не доставлено: %s",
+                what, telegram_id, cid, _err(exc))
+        return False
+
+
+async def _answer(call: CallbackQuery) -> None:
+    """Снять «часики» с кнопки. Первым делом и best-effort: пока это стояло
+    после выдачи доступа, любое исключение по дороге оставляло кнопку висеть."""
+    try:
+        await call.answer()
+    except Exception as exc:  # noqa: BLE001 — запрос старый, Telegram его уже не ждёт
+        log.debug("call.answer: %s", _err(exc))
 
 
 async def _bot_username(bot: Bot) -> str:
@@ -310,7 +365,8 @@ async def on_channel_post(msg: Message, bot: Bot) -> None:
         me = await bot.get_me()
         member = await bot.get_chat_member(chat_id=msg.chat.id, user_id=me.id)
     except Exception as exc:  # noqa: BLE001 — нет ответа, попробуем на следующем посте
-        log.warning("channel_post: не смог проверить права (%s)", type(exc).__name__)
+        log.warning("channel_post: не смог проверить права в канале %s (%s)",
+                    msg.chat.id, _err(exc))
         return
     can_invite = bool(getattr(member, "can_invite_users", False))
     saved, _ = _remember_channel(msg.chat.id, can_invite)
@@ -338,7 +394,7 @@ async def channel_status(bot: Bot) -> str:
         me = await bot.get_me()
         member = await bot.get_chat_member(chat_id=cid, user_id=me.id)
     except Exception as exc:  # noqa: BLE001 — бота могли выгнать из канала
-        return T.STATUS_ERROR.format(channel_id=cid, error=type(exc).__name__)
+        return T.STATUS_ERROR.format(channel_id=cid, error=_err(exc))
     can_invite = bool(getattr(member, "can_invite_users", False))
     return T.STATUS_OK.format(
         title=chat.title or "без названия",
@@ -347,6 +403,42 @@ async def channel_status(bot: Bot) -> str:
                  else T.STATUS_PRIVATE),
         role=member.status,
         rights=T.STATUS_RIGHTS_OK if can_invite else T.STATUS_RIGHTS_MISSING)
+
+
+async def startup_check(bot: Bot) -> str | None:
+    """Проверка при старте бота: канал известен, бот в нём администратор и
+    может приглашать. Только чтение Telegram (`getMe`, `getChatMember`).
+
+    Возвращает причину одной строкой (None — всё в порядке) и её же пишет в
+    лог: по журналу Railway должно быть видно сразу после выкатки, выдаст ли
+    привратник доступ вообще, а не после первого человека, которому не выдал.
+    Сеть при старте может и не ответить — тогда это запись в лог, а не
+    остановка бота и не сообщение Николь.
+    """
+    cid = channel_id()
+    if not cid:
+        reason = "канал не подключён: NIKOL_CHANNEL_ID пуст и в bot_settings записи нет"
+        log.warning("привратник при старте: %s", reason)
+        return reason
+    try:
+        me = await bot.get_me()
+        member = await bot.get_chat_member(chat_id=cid, user_id=me.id)
+    except Exception as exc:  # noqa: BLE001 — бота выгнали или сеть не ответила
+        reason = f"канал {cid}: не смог прочитать свои права ({_err(exc)})"
+        log.error("привратник при старте: %s", reason)
+        return reason
+    status = getattr(member, "status", None)
+    if status != "administrator":
+        reason = f"канал {cid}: бот не администратор (роль {status})"
+    elif not getattr(member, "can_invite_users", False):
+        reason = f"канал {cid}: у бота нет права «Пригласительные ссылки»"
+    else:
+        log.info("привратник при старте: канал %s, бот администратор, "
+                 "право приглашать есть", cid)
+        return None
+    log.error("привратник при старте: %s — заявки не одобрю и ссылки не выдам", reason)
+    await _notify_admin(bot, T.ADMIN_STARTUP_RIGHTS.format(reason=reason))
+    return reason
 
 
 # ─── заявка на вступление в канал ────────────────────────────────────────────
@@ -394,12 +486,12 @@ async def on_join_request(ev: ChatJoinRequest, bot: Bot) -> None:
     try:
         await ask_age(bot, ev.user_chat_id, ev.from_user, source)
     except Exception as exc:  # noqa: BLE001 — человек мог заблокировать бота
-        log.warning("join request %s: вопрос не доставлен (%s)",
-                    ev.from_user.id, type(exc).__name__)
+        log.warning("join request %s (канал %s): вопрос не доставлен (%s)",
+                    ev.from_user.id, ev.chat.id, _err(exc))
         who = (f"@{ev.from_user.username}" if ev.from_user.username
                else f"id{ev.from_user.id}")
         await _notify_admin(bot, T.ADMIN_ASK_FAILED.format(
-            who=who, error=type(exc).__name__))
+            who=who, error=_err(exc)))
 
 
 # ─── ответ на вопрос ─────────────────────────────────────────────────────────
@@ -410,13 +502,14 @@ async def _drop_buttons(call: CallbackQuery) -> None:
     try:
         await call.message.edit_reply_markup(reply_markup=None)
     except Exception as exc:  # noqa: BLE001 — сообщение старое или уже правлено
-        log.debug("edit_reply_markup: %s", type(exc).__name__)
+        log.debug("edit_reply_markup: %s", _err(exc))
 
 
 @router.callback_query(F.data == "age:no")
 async def cb_age_no(call: CallbackQuery, bot: Bot) -> None:
     """«Нет» — доступ не даём и висящую заявку отклоняем. Отказ не пожизненный:
     ошибиться кнопкой легко, повторный /channel снова задаст вопрос."""
+    await _answer(call)
     await _drop_buttons(call)
     with SessionLocal() as s:
         sub = _sub(s, call.from_user)
@@ -426,20 +519,22 @@ async def cb_age_no(call: CallbackQuery, bot: Bot) -> None:
         s.commit()
 
     cid = channel_id()
+    # Сначала письмо, потом отклонение заявки: decline закрывает окно
+    # `user_chat_id`, и «нет так нет», отправленное после него, получало 403 и
+    # роняло обработчик. Пишем напрямую, а не через call.message: у старого
+    # сообщения ответить может быть уже нельзя.
+    await _send(bot, call.from_user.id, T.AGE_NO, cid=cid, what="ответ на «нет»")
     if pending and cid:
         try:
             await bot.decline_chat_join_request(chat_id=cid,
                                                 user_id=call.from_user.id)
         except Exception as exc:  # noqa: BLE001 — заявку могли уже обработать
-            log.warning("decline %s: %s", call.from_user.id, type(exc).__name__)
-    # Пишем человеку напрямую, а не через call.message: у старого сообщения
-    # ответить может быть уже нельзя, а сказать «нет так нет» мы обязаны.
-    await bot.send_message(call.from_user.id, T.AGE_NO)
-    await call.answer()
+            log.warning("decline %s в канале %s: %s", call.from_user.id, cid, _err(exc))
 
 
 @router.callback_query(F.data == "age:yes")
 async def cb_age_yes(call: CallbackQuery, bot: Bot) -> None:
+    await _answer(call)
     await _drop_buttons(call)
     with SessionLocal() as s:
         sub = _sub(s, call.from_user)
@@ -451,7 +546,6 @@ async def cb_age_yes(call: CallbackQuery, bot: Bot) -> None:
             sub.status = "confirmed"
         s.commit()
     await grant_access(bot, call.from_user.id)
-    await call.answer()
 
 
 @router.chat_member(F.chat.type == "channel")
@@ -502,10 +596,20 @@ async def grant_access(bot: Bot, telegram_id: int) -> None:
     Порядок важен: сначала пробуем одобрить висящую заявку (человек уже стоит в
     очереди — ссылка ему не нужна), и только потом выдаём персональную ссылку.
     Идемпотентно: свежая ссылка переиспользуется, вторую не плодим.
+
+    Почему приветствие стоит ДО approve (разбор 07.09.2026). Писать автору
+    заявки Telegram разрешает «5 минут и до обработки заявки», и обработка —
+    это сам approve. С 05 по 07.09 40 человек вошли в канал по approve, а
+    приветствие, отправленное после него, у всех получило 403 «bot can't
+    initiate conversation with a user». Один try на approve и send печатал это
+    как «approve не прошёл», код шёл дальше, создавал ненужную ссылку и затирал
+    `in_channel` на `invited`. Поэтому теперь: письмо первым, каждый вызов
+    Telegram в своём try, статус в базе — по ответу Telegram, а не по судьбе
+    письма.
     """
     cid = channel_id()
     if not cid:
-        await bot.send_message(telegram_id, T.NO_CHANNEL_YET)
+        await _send(bot, telegram_id, T.NO_CHANNEL_YET, cid=cid, what="«канал позже»")
         await _notify_admin(bot, T.ADMIN_NO_CHANNEL.format(
             bot_username=await _bot_username(bot)))
         return
@@ -520,29 +624,35 @@ async def grant_access(bot: Bot, telegram_id: int) -> None:
 
     # Висит заявка — одобряем её: это дешевле ссылки и не оставляет хвостов.
     if pending:
+        # Не дошло — штатно (нажал «Да» позже 5 минут или заблокировал бота):
+        # в канал человек всё равно попадёт.
+        await _send(bot, telegram_id, T.ACCESS_APPROVED, cid=cid, what="приветствие")
         try:
             await bot.approve_chat_join_request(chat_id=cid, user_id=telegram_id)
-            _mark(telegram_id, pending_request=False, status="in_channel")
-            await bot.send_message(telegram_id, T.ACCESS_APPROVED)
-            return
-        except Exception as exc:  # noqa: BLE001 — заявка протухла или уже в канале
-            log.info("approve %s не прошёл (%s) → выдам ссылку",
-                     telegram_id, type(exc).__name__)
+        except Exception as exc:  # noqa: BLE001 — заявка протухла или уже обработана
+            log.info("approve %s в канале %s не прошёл (%s) → проверю членство",
+                     telegram_id, cid, _err(exc))
             _mark(telegram_id, pending_request=False)
+        else:
+            _mark(telegram_id, pending_request=False, status="in_channel")
+            return
 
-    # Уже подписан — ссылку не тратим.
+    # Уже подписан — ссылку не тратим. Статус ставим по ответу Telegram, письмо
+    # отдельно: недоставленное «вы уже подписаны» членства не отменяет.
     try:
         member = await bot.get_chat_member(chat_id=cid, user_id=telegram_id)
-        if member.status in IN_CHANNEL_STATUSES:
-            _mark(telegram_id, status="in_channel")
-            await bot.send_message(telegram_id, T.ALREADY_IN)
-            return
     except Exception as exc:  # noqa: BLE001 — нет ответа → считаем, что не в канале
-        log.info("get_chat_member %s: %s", telegram_id, type(exc).__name__)
+        log.info("get_chat_member %s в канале %s: %s", telegram_id, cid, _err(exc))
+        member = None
+    if member is not None and member.status in IN_CHANNEL_STATUSES:
+        _mark(telegram_id, status="in_channel")
+        await _send(bot, telegram_id, T.ALREADY_IN, cid=cid, what="«уже подписаны»")
+        return
 
     if fresh_link:
-        await bot.send_message(telegram_id, T.ACCESS_LINK.format(link=fresh_link),
-                               disable_web_page_preview=True)
+        await _send(bot, telegram_id, T.ACCESS_LINK.format(link=fresh_link),
+                    cid=cid, what="ссылка", level=logging.WARNING,
+                    disable_web_page_preview=True)
         return
 
     try:
@@ -553,17 +663,19 @@ async def grant_access(bot: Bot, telegram_id: int) -> None:
             chat_id=cid, member_limit=1, name=f"age18-{telegram_id}",
             expire_date=timedelta(hours=LINK_TTL_HOURS))
     except Exception as exc:  # noqa: BLE001 — нет прав или Telegram ответил ошибкой
-        log.error("invite в канал для %s: %s", telegram_id, type(exc).__name__)
-        await bot.send_message(telegram_id, T.LINK_FAILED)
-        await _notify_admin(bot, T.ADMIN_LINK_FAILED.format(error=type(exc).__name__))
+        log.error("invite в канал %s для %s: %s", cid, telegram_id, _err(exc))
+        await _send(bot, telegram_id, T.LINK_FAILED, cid=cid, what="«ссылка не вышла»")
+        await _notify_admin(bot, T.ADMIN_LINK_FAILED.format(error=_err(exc)))
         return
 
     # Именно `invited`, а не `in_channel`: ссылку выдали — вошёл ли человек, мы
-    # ещё не знаем. Отметку о входе поставит событие chat_member.
-    _mark(telegram_id, invite_link=link.invite_link,
-          invited_at=datetime.utcnow(), status="invited")
-    await bot.send_message(telegram_id, T.ACCESS_LINK.format(link=link.invite_link),
-                           disable_web_page_preview=True)
+    # ещё не знаем. Отметку о входе поставит событие chat_member (а если оно
+    # уже пришло, `_mark_invited` его не затрёт).
+    _mark_invited(telegram_id, link.invite_link)
+    # Ссылка — единственная дорога в канал, поэтому её недоставка — warning.
+    await _send(bot, telegram_id, T.ACCESS_LINK.format(link=link.invite_link),
+                cid=cid, what="ссылка", level=logging.WARNING,
+                disable_web_page_preview=True)
 
 
 # ─── счётчики по меткам рассылки: наружу уезжают только цифры ────────────────
