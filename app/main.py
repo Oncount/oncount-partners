@@ -1718,6 +1718,39 @@ def admin_api_intensive_leads(request: Request,
     )
 
 
+@app.api_route("/admin/api/channel-stats",
+               methods=["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+               include_in_schema=False)
+def admin_api_channel_stats(request: Request,
+                            since: str | None = None,
+                            session: Session = Depends(get_session)) -> JSONResponse:
+    """Привратник канала по `channel_subscribers`: total, by_status, by_day.
+
+    Заявка — строка с `created_at` («впервые у бота»); срез `since` и дни идут
+    по ней. Состояние — текущее (asked / confirmed / invited / in_channel /
+    left / declined), истории таблица не хранит. В каждом дне и в `by_status`
+    все шесть ключей, нули там, где никого. Наружу только числа и имена
+    состояний: ни имени, ни telegram_id, ни username — см.
+    channel_stats.subscriber_counts. Третий сосед channel-tags: дверь, отказ,
+    HEAD и заголовки — те же, что описаны в его докстроке.
+    """
+    _admin_api_gate(request, session, "channel-stats")
+    if request.method == "HEAD":
+        return _admin_api_head()
+    since_dt = _admin_api_since(since, "channel-stats")
+    from app.channel_stats import subscriber_counts   # локально, как соседи
+    counts = subscriber_counts(session, since=since_dt)
+    log.info("channel-stats: отдал %d заявок за %d дней (since=%s)",
+             counts["total"], len(counts["by_day"]),
+             since_dt.date().isoformat() if since_dt else "-")
+    return JSONResponse(
+        {"generated_at": datetime.utcnow().isoformat(),
+         "since": since_dt.date().isoformat() if since_dt else None,
+         **counts},
+        headers=_ADMIN_API_HEADERS,
+    )
+
+
 @app.post("/admin/payouts/{lead_id}")
 def admin_payout_save(
     lead_id: int,

@@ -35,6 +35,7 @@ from sqlalchemy import case, func, select
 from sqlalchemy.exc import IntegrityError
 
 from app import channel_config as T
+from app.channel_stats import STATUSES
 from app.config import settings
 from app.db import SessionLocal
 from app.models import BotSetting, ChannelSubscriber
@@ -694,8 +695,10 @@ async def grant_access(bot: Bot, telegram_id: int) -> None:
 
 # Все статусы, которые ставит привратник (`asked` → `confirmed` → `invited` →
 # `in_channel` / `left`, плюс `declined`). Человек всегда ровно в одном из них,
-# поэтому сумма шести чисел — это все, кто пришёл с меткой.
-TAG_STATUSES = ("asked", "confirmed", "invited", "in_channel", "left", "declined")
+# поэтому сумма шести чисел — это все, кто пришёл с меткой. Кортеж живёт в
+# channel_stats (веб без aiogram), здесь — то же имя, что и раньше: один
+# список на channel-tags и channel-stats, чтобы они не разошлись.
+TAG_STATUSES = STATUSES
 
 
 def iso_utc(moment: datetime | None) -> str | None:
