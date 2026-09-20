@@ -10,7 +10,8 @@ from pathlib import Path
 from urllib.parse import quote
 
 import httpx
-from fastapi import Depends, FastAPI, Form, HTTPException, Query, Request, status
+from fastapi import (BackgroundTasks, Depends, FastAPI, Form, HTTPException,
+                     Query, Request, status)
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -1775,6 +1776,7 @@ def admin_api_channel_stats(request: Request,
                methods=["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
                include_in_schema=False)
 def admin_api_nudge_run(request: Request,
+                        background: BackgroundTasks,
                         live: str | None = None,
                         session: Session = Depends(get_session)) -> JSONResponse:
     """Прогнать сторожа зависших заявок руками, не дожидаясь ночного джоба.
@@ -1791,12 +1793,22 @@ def admin_api_nudge_run(request: Request,
     if request.method == "HEAD":
         return _admin_api_head()
     dry = live not in ("1", "true", "yes")
-    from app.channel_nudge import run_once as _nudge
+    from app.channel_nudge import run_once as _nudge, stale_requests
     from app.health import alert_admin
-    stats = _nudge(notify=alert_admin, dry=dry)
-    log.info("nudge-run: %s прогон, найдено %d, написал %d",
-             "сухой" if dry else "живой", stats["found"], stats["sent"])
-    return JSONResponse({"dry": dry, "enabled": settings.NUDGE_ENABLED, **stats},
+    if dry:
+        stats = _nudge(notify=alert_admin, dry=True)
+        log.info("nudge-run: сухой прогон, найдено %d", stats["found"])
+        return JSONResponse({"dry": True, "enabled": settings.NUDGE_ENABLED, **stats},
+                            headers=_ADMIN_API_HEADERS)
+    # Живой прогон уходит в фон: между письмами пауза в две с половиной минуты,
+    # два десятка человек это почти час. Держать на этом HTTP-запрос нельзя —
+    # он оборвётся по таймауту на середине, и останется гадать, кому написали.
+    # Результат Николь всё равно получит: отчёт шлёт сам прогон.
+    queued = len(stale_requests())
+    background.add_task(_nudge, notify=alert_admin, dry=False)
+    log.info("nudge-run: живой прогон поставлен в фон, в очереди %d", queued)
+    return JSONResponse({"dry": False, "enabled": settings.NUDGE_ENABLED,
+                         "queued": queued, "started": True},
                         headers=_ADMIN_API_HEADERS)
 
 
