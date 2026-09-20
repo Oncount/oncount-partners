@@ -15,7 +15,7 @@ username, ни пригласительной ссылки. Только чте�
 """
 from datetime import datetime
 
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 
 from app.models import ChannelSubscriber
 from app.usage import day_iso
@@ -50,19 +50,30 @@ def subscriber_counts(session, since: datetime | None = None) -> dict:
     """
     sub = ChannelSubscriber
     day = func.date(sub.created_at)
-    stmt = (select(day, sub.status, func.count(sub.id))
+    # Переходы считаем В ТОМ ЖЕ запросе (20.09.2026), а не вторым: на этой
+    # дороге держится правило «маршрут только читает, одним запросом», и второй
+    # SELECT ради одного числа ломал бы его без нужды. Группы не пересекаются,
+    # поэтому сумма по строкам и есть общее число открывших бота.
+    opened = func.count(case((sub.bot_opened_at.isnot(None), sub.id)))
+    stmt = (select(day, sub.status, func.count(sub.id), opened)
             .group_by(day, sub.status))
     if since is not None:
         stmt = stmt.where(sub.created_at >= since)
     by_status = _zeros()
     by_day: dict[str, dict[str, int]] = {}
-    for d, st, n in session.execute(stmt):
+    bot_opened = 0
+    for d, st, n, op in session.execute(stmt):
         key, n = (st or UNKNOWN_STATUS), int(n)
         by_status[key] = by_status.get(key, 0) + n
         row = by_day.setdefault(day_iso(d), _zeros())
         row[key] = row.get(key, 0) + n
+        bot_opened += int(op)
     return {
         "total": sum(by_status.values()),
+        # Не состояние, а факт перехода: пересекается с любым из шести и в их
+        # сумму не входит. Отвечает на вопрос «сколько нажало ссылку», тогда
+        # как by_status говорит только «сколько дошло».
+        "bot_opened": bot_opened,
         "by_status": by_status,
         "by_day": dict(sorted(by_day.items())),
     }

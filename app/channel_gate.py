@@ -300,7 +300,8 @@ async def _bot_username(bot: Bot) -> str:
         return "bot"
 
 
-async def ask_age(bot: Bot, chat_id_: int, user, source: str) -> None:
+async def ask_age(bot: Bot, chat_id_: int, user, source: str,
+                  opened_bot: bool = False) -> None:
     """Задать вопрос про 18+. Вызывается и из deep-link, и из заявки.
 
     Для заявки chat_id_ — это `user_chat_id` из события: личный чат с человеком,
@@ -309,11 +310,20 @@ async def ask_age(bot: Bot, chat_id_: int, user, source: str) -> None:
     Источник пишем через `_set_source`, а не прямо: сюда приходят и общие метки
     (`/channel` всегда шлёт `deeplink`), а они не должны стирать метку рассылки
     у того, кто однажды пришёл по ссылке из письма.
+
+    `opened_bot` — человек пришёл САМ: нажал START по ссылке или отправил
+    /channel. Отмечаем это отдельной датой, потому что статус движется только
+    по нажатию кнопки, и без отметки «открыл бота и ушёл» неотличимо от «не
+    открывал вовсе». Заявка в канал сюда приходит с False: там пишет бот, а не
+    человек приходит. Дату ставим один раз, первую: интересен момент прихода,
+    а не последнее касание.
     """
     with SessionLocal() as s:
         sub = _sub(s, user)
         sub.username, sub.first_name = user.username, user.first_name
         _set_source(sub, source)
+        if opened_bot and sub.bot_opened_at is None:
+            sub.bot_opened_at = datetime.utcnow()
         # Статус движется только вперёд: повторный вопрос не должен стирать
         # факт, что человек уже подтвердил возраст и получил ссылку.
         if sub.status in ("declined", "left"):
@@ -725,9 +735,13 @@ def tag_counts(session, *, prefix: str = "dl:",
     Одним запросом с группировкой: строк в таблице столько, сколько людей прошло
     привратника, и тянуть их в память ради шести счётчиков незачем.
 
-    Ключи строки — ровно девять и в этом порядке: `tag`, шесть статусов,
-    `first_seen`, `last_seen`. Отдельного `total` нет намеренно: статусов ровно
-    шесть, столбец `status` один, и сумма шести — это все строки метки.
+    Ключи строки — десять и в этом порядке: `tag`, шесть статусов,
+    `bot_opened`, `first_seen`, `last_seen`. Отдельного `total` нет намеренно:
+    статусов ровно шесть, столбец `status` один, и сумма шести — это все строки
+    метки. `bot_opened` в эту сумму НЕ входит и складывать его с ней нельзя:
+    это отдельный срез (человек сам открыл бота), который пересекается с любым
+    статусом. Смысл его: «сколько перешло по ссылке», тогда как статусы говорят
+    только «сколько дошло до конца».
 
     ⚠️ Обе даты и `since` висят на `created_at`, а он значит «впервые у бота», а
     НЕ «пришёл по этой метке»: строка заводится один раз на `telegram_id`
@@ -744,10 +758,15 @@ def tag_counts(session, *, prefix: str = "dl:",
     started = func.min(sub.created_at)
     moved = func.max(func.coalesce(sub.invited_at, sub.age_confirmed_at,
                                    sub.created_at))
+    # Десятый ключ, добавлен 20.09.2026 по вопросу Николь «сколько перешло?».
+    # Статусы отвечают только «сколько дошло»: человек, который открыл бота и
+    # ушёл, неотличим от того, кто ссылку не нажимал. `bot_opened` считает
+    # именно переход, и он НЕ статус: он пересекается с любым из шести.
+    opened = func.count(case((sub.bot_opened_at.isnot(None), sub.id)))
     stmt = (
         select(sub.source,
                *[func.count(case((sub.status == st, sub.id))) for st in TAG_STATUSES],
-               started, moved)
+               opened, started, moved)
         # autoescape: префикс приходит снаружи, а `%` и `_` в LIKE —
         # подстановочные знаки. Без экранирования `prefix=%` вернул бы заодно
         # заявки из канала (`jr:`), то есть не то, что просили.
@@ -761,6 +780,8 @@ def tag_counts(session, *, prefix: str = "dl:",
         stmt = stmt.where(sub.created_at >= since)
     return [
         {"tag": source, **dict(zip(TAG_STATUSES, counts)),
+         "bot_opened": bot_opened,
          "first_seen": iso_utc(first_seen), "last_seen": iso_utc(last_seen)}
-        for source, *counts, first_seen, last_seen in session.execute(stmt)
+        for source, *counts, bot_opened, first_seen, last_seen
+        in session.execute(stmt)
     ]

@@ -654,6 +654,12 @@ class ChannelSubscriber(Base):
     # Ровно одно письмо за жизнь заявки: непустое поле закрывает человека
     # навсегда. Второе письмо — уже назойливость, а не помощь.
     nudged_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Когда человек САМ открыл бота (нажал START по ссылке или отправил
+    # /channel). Вопрос Николь 20.09.2026: «сколько перешло?» — до этого поля
+    # ответа не было. Статус движется только по нажатию кнопки, поэтому «открыл
+    # и ушёл» выглядело в точности как «не открывал». Заявка, по которой бот
+    # написал человеку сам, сюда НЕ попадает: это не его приход.
+    bot_opened_at: Mapped[datetime | None] = mapped_column(DateTime)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
 

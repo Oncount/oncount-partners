@@ -58,7 +58,8 @@ def test_total_by_status_by_day():
         _sub(107, "left", days_ago=2), _sub(108, "declined", days_ago=2),
     ) as (client, _):
         body = _get(client)
-        assert list(body) == ["generated_at", "since", "total", "by_status", "by_day"]
+        assert list(body) == ["generated_at", "since", "total", "bot_opened",
+                              "by_status", "by_day"]
         assert body["since"] is None
         assert body["total"] == 8
         assert body["by_status"] == {"asked": 2, "confirmed": 1, "invited": 1,
@@ -123,7 +124,7 @@ def test_function_and_route_give_the_same_numbers():
     with stand(_sub(501, "asked"), _sub(502, "in_channel", days_ago=1)) as (client, session):
         direct = channel_stats.subscriber_counts(session)
         body = _get(client)
-        assert list(direct) == ["total", "by_status", "by_day"]
+        assert list(direct) == ["total", "bot_opened", "by_status", "by_day"]
         assert {k: body[k] for k in direct} == direct
 
 

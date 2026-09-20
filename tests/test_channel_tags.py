@@ -146,13 +146,17 @@ def test_counts_by_tag():
 
 
 def test_row_keys_exactly_as_agreed():
-    # Форма строки задана поимённо и по порядку: девять ключей, ничего сверх.
+    # Форма строки задана поимённо и по порядку: десять ключей, ничего сверх.
     # Читающая сторона сверяет карточку по именам, и лишний ключ здесь — это
     # разговор с ARDORIUM, а не мелочь.
+    # `bot_opened` добавлен 20.09.2026 (вопрос Николь «сколько перешло?»): он
+    # стоит ПОСЛЕ шести статусов и перед датами, и он не статус — в их сумму
+    # не входит, см. докстроку tag_counts.
     with _stand(_sub(801, "dl:aaa1111", "asked", confirmed=True)) as (client, session):
         row = _rows(client)["dl:aaa1111"]
         assert list(row) == ["tag", "asked", "confirmed", "invited", "in_channel",
-                             "left", "declined", "first_seen", "last_seen"]
+                             "left", "declined", "bot_opened",
+                             "first_seen", "last_seen"]
         assert list(channel_gate.tag_counts(session)[0]) == list(row), \
             "функция и маршрут обязаны отдавать одну и ту же форму"
 
@@ -408,7 +412,7 @@ def test_no_personal_data_in_body():
         # И то же самое на уровне функции: лишних ключей нет.
         with _stand(_sub(701, "dl:aaa1111", "asked")) as (_, session):
             row = channel_gate.tag_counts(session)[0]
-            assert set(row) == {"tag", "first_seen", "last_seen",
+            assert set(row) == {"tag", "bot_opened", "first_seen", "last_seen",
                                 *channel_gate.TAG_STATUSES}
         # Вложенный стенд не должен уносить с собой подмену сессии внешнего:
         # без этого запрос уходил в боевой SessionLocal и лез по сети в Postgres.

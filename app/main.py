@@ -721,6 +721,9 @@ async def on_startup() -> None:
         # Таблица уже есть в проде, create_all колонку не добавит.
         conn.execute(text("ALTER TABLE channel_subscribers "
                           "ADD COLUMN IF NOT EXISTS nudged_at TIMESTAMP"))
+        # Переход по ссылке (2026-09-20): когда человек сам открыл бота.
+        conn.execute(text("ALTER TABLE channel_subscribers "
+                          "ADD COLUMN IF NOT EXISTS bot_opened_at TIMESTAMP"))
         # EN-колонки контент-таблиц (план 2026-05-22). create_all не делает ALTER,
         # а таблицы уже существуют в проде — добавляем идемпотентно.
         en_cols = {

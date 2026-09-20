@@ -253,8 +253,12 @@ async def start_deep(msg: Message, command: CommandObject) -> None:
         # видно, из какой воронки Kommo пришёл человек. Сравнение было ТОЧНЫМ,
         # и любая метка молча роняла человека в оффер интенсива.
         tag = channel_gate.clean_tag(payload[len("channel-"):])
+        # opened_bot=True: человек пришёл сам, нажал START. Это единственное
+        # место, где видно переход по ссылке, — статус меняется только позже,
+        # по кнопке «Вступить».
         await channel_gate.ask_age(msg.bot, msg.chat.id, msg.from_user,
-                                   f"dl:{tag}" if tag else "deeplink")
+                                   f"dl:{tag}" if tag else "deeplink",
+                                   opened_bot=True)
         return
     if payload == "club":
         # Третий поток: платный клуб. Оффер интенсива здесь тоже не нужен —
@@ -687,7 +691,8 @@ async def cmd_club(msg: Message) -> None:
 async def cmd_channel(msg: Message) -> None:
     """Вход в закрытый канал: тот же вопрос про 18+, что и по ссылке.
     Нужен, чтобы человеку было куда вернуться, когда персональная ссылка истечёт."""
-    await channel_gate.ask_age(msg.bot, msg.chat.id, msg.from_user, "deeplink")
+    await channel_gate.ask_age(msg.bot, msg.chat.id, msg.from_user, "deeplink",
+                               opened_bot=True)
 
 
 async def main() -> None:
