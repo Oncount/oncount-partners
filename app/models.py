@@ -650,6 +650,10 @@ class ChannelSubscriber(Base):
     pending_request: Mapped[bool] = mapped_column(Boolean, default=False)
     invite_link: Mapped[str | None] = mapped_column(Text)
     invited_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Когда сторож зависших заявок написал человеку (решение Николь 20.09.2026).
+    # Ровно одно письмо за жизнь заявки: непустое поле закрывает человека
+    # навсегда. Второе письмо — уже назойливость, а не помощь.
+    nudged_at: Mapped[datetime | None] = mapped_column(DateTime)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
 

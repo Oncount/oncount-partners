@@ -192,3 +192,46 @@ def send_wa_text(phone: str, text: str, channel_id: str | None = None) -> bool:
     # без него — сервисный канал кодов входа (WAZZUP_CHANNEL_ID). Если канал лежит,
     # _send сам уйдёт на резервный из WAZZUP_FALLBACK_CHANNEL_IDS.
     return _send(norm, text, channel_id or settings.WAZZUP_CHANNEL_ID, "текст")
+
+
+def send_tg_text(telegram_id: int, text: str) -> bool:
+    """Написать человеку в Telegram от рабочего аккаунта ONCOUNT (не от бота).
+
+    Зачем отдельная дверь. Бот не может написать первым тому, кто не нажимал у
+    него START: именно поэтому в сентябре 20 человек с висящими заявками не
+    получили ни одного сообщения. Аккаунт, с которым у человека уже есть
+    переписка, написать может — этим и пользуется сторож заявок.
+
+    Адресуем ЧИСЛОВОЙ telegram_id, а не username: по нику Wazzup заводит
+    отдельный чат, и сообщение уходит в пустоту (грабля рассылки 06.09.2026).
+
+    Резервной цепочки здесь нет намеренно: телеграм-канал в Wazzup один, и
+    отправлять личное сообщение Николь с чужого номера нельзя.
+
+    ⚠️ Доставка не гарантирована для того, с кем переписки нет: Telegram примет
+    сообщение, а человек увидит одну галочку и тишину. Сторож пишет только тем,
+    кто нам когда-то отвечал, но проверить это до отправки нельзя.
+    """
+    if not settings.WAZZUP_API_KEY or not settings.WAZZUP_TG_CHANNEL_ID:
+        log.warning("WAZZUP telegram не настроен → сообщение не отправлено (dev)")
+        return False
+    try:
+        resp = httpx.post(
+            WAZZUP_ENDPOINT,
+            headers={"Authorization": f"Bearer {settings.WAZZUP_API_KEY}"},
+            json={
+                "channelId": settings.WAZZUP_TG_CHANNEL_ID,
+                "chatType": "telegram",
+                "chatId": str(telegram_id),
+                "text": text,
+            },
+            timeout=10.0,
+        )
+    except httpx.HTTPError as exc:
+        log.error("Wazzup telegram недоступен для %s: %s", telegram_id, exc)
+        return False
+    if resp.status_code < 400:
+        return True
+    log.error("Wazzup telegram вернул %s для %s: %s",
+              resp.status_code, telegram_id, resp.text[:300])
+    return False

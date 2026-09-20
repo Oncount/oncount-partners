@@ -716,6 +716,10 @@ async def on_startup() -> None:
         conn.execute(text("CREATE INDEX IF NOT EXISTS ix_partners_kommo_agent_enum_id ON partners (kommo_agent_enum_id)"))
         conn.execute(text("ALTER TABLE login_sessions ADD COLUMN IF NOT EXISTS ref_slug VARCHAR(16)"))
         conn.execute(text("ALTER TABLE email_login_tokens ADD COLUMN IF NOT EXISTS ref_slug VARCHAR(16)"))
+        # Сторож зависших заявок (2026-09-20): когда он написал человеку.
+        # Таблица уже есть в проде, create_all колонку не добавит.
+        conn.execute(text("ALTER TABLE channel_subscribers "
+                          "ADD COLUMN IF NOT EXISTS nudged_at TIMESTAMP"))
         # EN-колонки контент-таблиц (план 2026-05-22). create_all не делает ALTER,
         # а таблицы уже существуют в проде — добавляем идемпотентно.
         en_cols = {
@@ -879,6 +883,22 @@ async def on_startup() -> None:
         from app.notifications import digest_job
         sched.add_job(digest_job, "cron", hour=12, minute=0,
                       id="weekly_digest", max_instances=1, coalesce=True)
+    # Сторож зависших заявок (решение Николь 20.09.2026) — раз в сутки в 09:00 UTC
+    # (13:00 по Дубаю: человек получит письмо днём, а не ночью). Джоб заводится
+    # ВСЕГДА, а отправку держит NUDGE_ENABLED: выключенный сторож считает
+    # очередь и докладывает Николь, но в сеть не ходит.
+    from app.channel_nudge import run_once as nudge_run
+    from app.health import alert_admin
+
+    def nudge_job() -> None:
+        try:
+            nudge_run(notify=alert_admin)
+        except Exception as exc:  # noqa: BLE001 — падение сторожа не валит сервис
+            log.error("сторож заявок упал: %s: %s", type(exc).__name__, exc)
+            alert_admin(f"⚠️ Сторож заявок упал: {type(exc).__name__}")
+
+    sched.add_job(nudge_job, "cron", hour=9, minute=0,
+                  id="channel_nudge", max_instances=1, coalesce=True)
     sched.start()
     app.state.scheduler = sched
     log.info("scheduler started: link_health 6h + kommo_sync/digest=%s"
@@ -1749,6 +1769,35 @@ def admin_api_channel_stats(request: Request,
          **counts},
         headers=_ADMIN_API_HEADERS,
     )
+
+
+@app.api_route("/admin/api/nudge-run",
+               methods=["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+               include_in_schema=False)
+def admin_api_nudge_run(request: Request,
+                        live: str | None = None,
+                        session: Session = Depends(get_session)) -> JSONResponse:
+    """Прогнать сторожа зависших заявок руками, не дожидаясь ночного джоба.
+
+    По умолчанию СУХОЙ прогон: считает очередь и докладывает Николь, но людям
+    не пишет. Живая отправка — только с `?live=1`, и только когда включён
+    `NUDGE_ENABLED`: одной галочки в адресной строке мало, чтобы система
+    написала двадцати живым людям.
+
+    Дверь та же, что у channel-tags и channel-stats: ключ `CHANNEL_TAGS_TOKEN`
+    в заголовке, чужой метод — голый 404 до проверки права.
+    """
+    _admin_api_gate(request, session, "nudge-run")
+    if request.method == "HEAD":
+        return _admin_api_head()
+    dry = live not in ("1", "true", "yes")
+    from app.channel_nudge import run_once as _nudge
+    from app.health import alert_admin
+    stats = _nudge(notify=alert_admin, dry=dry)
+    log.info("nudge-run: %s прогон, найдено %d, написал %d",
+             "сухой" if dry else "живой", stats["found"], stats["sent"])
+    return JSONResponse({"dry": dry, "enabled": settings.NUDGE_ENABLED, **stats},
+                        headers=_ADMIN_API_HEADERS)
 
 
 @app.post("/admin/payouts/{lead_id}")
