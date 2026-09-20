@@ -246,9 +246,11 @@ def _set_source(sub: ChannelSubscriber, new_source: str) -> None:
 
 
 def _age_kb() -> InlineKeyboardMarkup:
+    # Кнопка одна (решение Николь 20.09.2026): «Позже» уводила людей в тупик —
+    # шестеро нажали её и не вернулись. Обработчик `age:no` не удалён: старые
+    # сообщения с этой кнопкой висят у людей в переписке и должны отвечать.
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=T.BTN_AGE_YES, callback_data="age:yes")],
-        [InlineKeyboardButton(text=T.BTN_AGE_NO, callback_data="age:no")],
     ])
 
 
