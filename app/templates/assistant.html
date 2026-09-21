@@ -113,6 +113,31 @@
     .num{font-family:Outfit,sans-serif;font-weight:700;font-size:15px;
       color:var(--green-3);letter-spacing:.06em;display:block;margin-bottom:10px}
 
+    /* ─── кейсы ──────────────────────────────────────────────────────────── */
+    /* Карточка кейса — та же .card, плюс шапка с ролью и меткой состояния.
+       Метка нужна, чтобы «работает» и «собираем» не читались одинаково. */
+    .case{display:flex;flex-direction:column;gap:14px}
+    /* Кейсов нечётное число: последний тянется на оба столбца, иначе в
+       ряду остаётся дыра шириной в карточку. */
+    @media (min-width:900px){
+      .cards.two .case:last-child:nth-child(odd){grid-column:1/-1}
+    }
+    .case-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+    .case-place{color:var(--muted);font-size:13.5px;margin-top:4px}
+    .case-badge{flex:none;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;
+      font-weight:600;padding:6px 11px;border-radius:999px;white-space:nowrap}
+    .case-badge.live{background:var(--tint);color:var(--green-2);border:1px solid #cfe3dd}
+    .case-badge.wip{background:#fdf6e6;color:#8a6b1f;border:1px solid #efe0bc}
+    .case-lbl{display:block;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;
+      font-weight:600;color:var(--green-2);margin-bottom:6px}
+    .case-row p{font-size:15.5px}
+    .case-quote{margin-top:auto;padding:14px 16px;background:var(--tint);
+      border-radius:12px;font-size:15.5px;line-height:1.5}
+    .case-audio-head{display:flex;align-items:baseline;justify-content:space-between;
+      gap:12px;flex-wrap:wrap;margin-bottom:12px}
+    .case-audio audio{width:100%;display:block}
+    .case-audio-note{color:var(--muted);font-size:13.5px;margin-top:10px}
+
     /* ─── кого вы соберёте ───────────────────────────────────────────────── */
     /* Первый сотрудник — крупной тёмной карточкой: он одинаковый у всех и
        держит на себе весь оффер. Остальные девять — ровной сеткой выбора. */
@@ -678,6 +703,73 @@
     {# Ассистент умеет посты, рассылки и лендинги — и это сразу рождает вопрос
        «зачем тогда SMM-щик и копирайтер». Отвечаем здесь же, а не в FAQ. #}
     <p class="lead" style="margin-top:16px">{{ results.note }}</p>
+  </section>
+
+
+  {# Кейсы (21.09.2026). Место выбрано так: человек уже увидел, что умеет
+     сотрудник, но ещё не видел цену — между этими двумя экранами живые бизнесы
+     работают лучше всего. Имён и названий нет намеренно (решение Николь
+     20.09.2026): роль и город узнаются, согласия на публикацию не требуют. #}
+  <section class="rise" id="kejsy">
+    <div class="kicker">{{ cases.kicker }}</div>
+    <h2>{{ cases.title }}</h2>
+    <p class="lead" style="margin-top:14px">{{ cases.lead }}</p>
+
+    <div class="cards two" style="margin-top:22px">
+      {% for c in cases['items'] %}
+      <div class="card case">
+        <div class="case-head">
+          <div>
+            <h3>{{ c.role }}</h3>
+            <div class="case-place">{{ c.place }}</div>
+          </div>
+          <span class="case-badge {{ 'live' if c.live else 'wip' }}">
+            {{ cases.status_live if c.live else cases.status_wip }}
+          </span>
+        </div>
+
+        {% if c.pain %}
+        <div class="case-row">
+          <span class="case-lbl">Пришли с этим</span>
+          <p>{{ c.pain }}</p>
+        </div>
+        {% endif %}
+
+        {% if c.done %}
+        <div class="case-row">
+          <span class="case-lbl">Что работает сейчас</span>
+          <p>{{ c.done }}</p>
+        </div>
+        {% endif %}
+
+        {% if c.next %}
+        <div class="case-row">
+          <span class="case-lbl">{{ 'Дальше' if c.live else 'Что собираем' }}</span>
+          <p>{{ c.next }}</p>
+        </div>
+        {% endif %}
+
+        {% if c.quote %}
+        <div class="case-quote">«{{ c.quote }}»</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    {# Голосовой отзыв: рендерится только когда файл реально лежит в static.
+       Пустое поле в конфиге = блока на странице нет. #}
+    {% if cases.audio and cases.audio.file %}
+    <div class="card case-audio" style="margin-top:14px">
+      <div class="case-audio-head">
+        <span class="case-lbl">{{ cases.audio.title }}</span>
+        <span class="case-place">{{ cases.audio.src_label }}</span>
+      </div>
+      <audio controls preload="none" src="{{ cases.audio.file }}">
+        Ваш браузер не проигрывает аудио — откройте файл по ссылке.
+      </audio>
+      {% if cases.audio.note %}<p class="case-audio-note">{{ cases.audio.note }}</p>{% endif %}
+    </div>
+    {% endif %}
   </section>
 
   {# Цена вопроса опущена ниже демо и списка задач: сравнивать с зарплатами есть
