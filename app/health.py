@@ -44,6 +44,30 @@ LAST_RUN: dict = {}
 
 
 # ─── Транспорт алерта (внутренний канал Николь) ──────────────────────────────
+def alert_stasya(text: str) -> bool:
+    """Отчёт Николь в пульт AI-Стаси (@SalesAR_bot), а не в общий бот ONCOUNT.
+
+    Решение Николь 21.09.2026: всё, что касается переписок с людьми, живёт у
+    Стаси — в том числе отчёты сторожа заявок, чьи письма и есть переписка.
+    Нет токена или бот не ответил — отдаём в старый канал, alert_admin:
+    отчёт важнее, чем то, в какой чат он пришёл.
+    """
+    if settings.STASYA_BOT_TOKEN:
+        try:
+            r = httpx.post(
+                f"https://api.telegram.org/bot{settings.STASYA_BOT_TOKEN}/sendMessage",
+                json={"chat_id": settings.ADMIN_TG_ID, "text": text},
+                timeout=10,
+            )
+            if r.status_code < 400:
+                return True
+            log.warning("alert_stasya: бот Стаси ответил %s, шлю через ONCOUNT",
+                        r.status_code)
+        except Exception as exc:  # noqa: BLE001 — сеть, не валим джоб
+            log.warning("alert_stasya: %s, шлю через ONCOUNT", type(exc).__name__)
+    return alert_admin(text)
+
+
 def alert_admin(text: str) -> bool:
     """Отправить алерт Николь в её Telegram через бота. best-effort, возвращает успех."""
     if not settings.BOT_TOKEN:

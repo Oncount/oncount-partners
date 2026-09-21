@@ -892,14 +892,16 @@ async def on_startup() -> None:
     # ВСЕГДА, а отправку держит NUDGE_ENABLED: выключенный сторож считает
     # очередь и докладывает Николь, но в сеть не ходит.
     from app.channel_nudge import run_once as nudge_run
-    from app.health import alert_admin
+    # Отчёты сторожа — в пульт AI-Стаси (решение Николь 21.09.2026): письма
+    # сторожа это переписка, а переписки ведёт она. Без её токена — бот ONCOUNT.
+    from app.health import alert_stasya
 
     def nudge_job() -> None:
         try:
-            nudge_run(notify=alert_admin)
+            nudge_run(notify=alert_stasya)
         except Exception as exc:  # noqa: BLE001 — падение сторожа не валит сервис
             log.error("сторож заявок упал: %s: %s", type(exc).__name__, exc)
-            alert_admin(f"⚠️ Сторож заявок упал: {type(exc).__name__}")
+            alert_stasya(f"⚠️ Сторож заявок упал: {type(exc).__name__}")
 
     sched.add_job(nudge_job, "cron", hour=9, minute=0,
                   id="channel_nudge", max_instances=1, coalesce=True)
@@ -1797,9 +1799,9 @@ def admin_api_nudge_run(request: Request,
         return _admin_api_head()
     dry = live not in ("1", "true", "yes")
     from app.channel_nudge import run_once as _nudge, stale_requests
-    from app.health import alert_admin
+    from app.health import alert_stasya
     if dry:
-        stats = _nudge(notify=alert_admin, dry=True)
+        stats = _nudge(notify=alert_stasya, dry=True)
         log.info("nudge-run: сухой прогон, найдено %d", stats["found"])
         return JSONResponse({"dry": True, "enabled": settings.NUDGE_ENABLED, **stats},
                             headers=_ADMIN_API_HEADERS)
@@ -1808,7 +1810,7 @@ def admin_api_nudge_run(request: Request,
     # он оборвётся по таймауту на середине, и останется гадать, кому написали.
     # Результат Николь всё равно получит: отчёт шлёт сам прогон.
     queued = len(stale_requests())
-    background.add_task(_nudge, notify=alert_admin, dry=False)
+    background.add_task(_nudge, notify=alert_stasya, dry=False)
     log.info("nudge-run: живой прогон поставлен в фон, в очереди %d", queued)
     return JSONResponse({"dry": False, "enabled": settings.NUDGE_ENABLED,
                          "queued": queued, "started": True},

@@ -206,9 +206,62 @@ def test_obschaya_metka_daet_ssylku_bez_hvosta():
     assert "channel-" not in sender.sent[0][1]
 
 
+def test_otchyot_poimyonnyy():
+    """Отчёт уходит в пульт Стаси и называет людей: ник и код, чтобы ответы
+    этих людей в переписке было с чем сверить."""
+    with TestSession() as s:
+        s.add(ChannelSubscriber(
+            telegram_id=1666, first_name="Антон", username="visausa24",
+            status="asked", pending_request=True, source="jr:pc7dpkk",
+            created_at=datetime.utcnow() - timedelta(hours=48)))
+        s.commit()
+    notes = []
+    run(FakeSender(), notify_box=notes)
+    assert "Антон @visausa24 (pc7dpkk)" in notes[0]
+    assert "1666" not in notes[0], "telegram_id в отчёт не пишем"
+
+
+def test_nedoshedshih_v_spiske_net():
+    """В список «кому написал» попадают только доставленные."""
+    add(1777, name="Пётр")
+    notes = []
+    run(FakeSender(ok=False), notify_box=notes)
+    assert "Пётр" not in notes[0]
+
+
+def test_otchyot_ukhodit_cherez_stasyu_i_ne_teryaetsya():
+    """Нет токена Стаси или бот не ответил — отчёт уходит старым путём."""
+    from app import health
+    calls = []
+    old_admin, old_post = health.alert_admin, health.httpx.post
+    health.alert_admin = lambda text: calls.append(("oncount", text)) or True
+
+    class Resp:
+        def __init__(self, code): self.status_code = code
+
+    try:
+        settings.STASYA_BOT_TOKEN = ""
+        assert health.alert_stasya("x")
+        assert calls == [("oncount", "x")], "без токена — через бот ONCOUNT"
+
+        calls.clear()
+        settings.STASYA_BOT_TOKEN = "tok"
+        health.httpx.post = lambda *a, **k: Resp(200)
+        assert health.alert_stasya("y")
+        assert calls == [], "бот Стаси ответил — второй раз не шлём"
+
+        health.httpx.post = lambda *a, **k: Resp(403)
+        assert health.alert_stasya("z")
+        assert calls == [("oncount", "z")], "бот Стаси отказал — страхует ONCOUNT"
+    finally:
+        health.alert_admin, health.httpx.post = old_admin, old_post
+        settings.STASYA_BOT_TOKEN = ""
+
+
 def test_teksty_bez_dlinnyh_tire():
     """Правило Николь 24.08.2026: длинных тире в текстах для людей нет."""
-    for t in (T.NUDGE_WITH_NAME, T.NUDGE_NO_NAME, T.NUDGE_REPORT, T.NUDGE_OFF):
+    for t in (T.NUDGE_WITH_NAME, T.NUDGE_NO_NAME, T.NUDGE_REPORT,
+              T.NUDGE_REPORT_NAMES, T.NUDGE_OFF):
         assert "—" not in t
 
 

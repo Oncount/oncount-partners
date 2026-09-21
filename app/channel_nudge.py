@@ -142,6 +142,7 @@ def run_once(bot_username: str = "Nikol_hilton_bot",
 
     batch = found[:settings.NUDGE_MAX_PER_RUN]
     stats["left"] = len(found) - len(batch)
+    written = []   # кому ушло: для отчёта в пульт Стаси
 
     for i, sub in enumerate(batch):
         ok = wazzup.send_tg_text(sub.telegram_id, _text_for(sub, bot_username))
@@ -149,6 +150,7 @@ def run_once(bot_username: str = "Nikol_hilton_bot",
             # Метку ставим и при успехе только: не дошло — попробуем завтра.
             _mark_nudged(sub.telegram_id)
             stats["sent"] += 1
+            written.append(_who(sub))
         else:
             stats["failed"] += 1
         log.info("сторож заявок: %s → %s", sub.telegram_id,
@@ -159,5 +161,17 @@ def run_once(bot_username: str = "Nikol_hilton_bot",
     log.info("сторож заявок: найдено %(found)d, написал %(sent)d, "
              "не дошло %(failed)d, осталось %(left)d", stats)
     if notify:
-        notify(T.NUDGE_REPORT.format(**stats))
+        names = (T.NUDGE_REPORT_NAMES.format(rows="\n".join(written))
+                 if written else "")
+        notify(T.NUDGE_REPORT.format(names=names, **stats))
     return stats
+
+
+def _who(sub: ChannelSubscriber) -> str:
+    """Строка отчёта: имя, @ник и код рассылки. По коду человек находится в
+    списках рассылки, по нику — в переписке у Стаси. telegram_id в отчёт не
+    пишем: читать его человеку незачем, а для поиска хватает ника и кода."""
+    name = (sub.first_name or "").strip() or "без имени"
+    nick = f" @{sub.username}" if sub.username else ""
+    code = sub.source.split(":", 1)[1] if sub.source and ":" in sub.source else ""
+    return f"• {name}{nick}" + (f" ({code})" if code else "")
