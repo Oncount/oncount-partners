@@ -93,6 +93,75 @@ def stale_requests(limit: int | None = None) -> list[ChannelSubscriber]:
     return rows[:limit] if limit else rows
 
 
+RUN_HOUR_UTC = 9          # когда ходит сторож: 09:00 UTC = 13:00 по Дубаю
+RECENT_DAYS = 7           # сколько дней назад смотреть «кому уже написано»
+
+
+def next_run(now: datetime | None = None) -> datetime:
+    """Ближайший прогон сторожа. Сегодня в 09:00 UTC, если ещё не прошло,
+    иначе завтра. Держится рядом с расписанием в main.py — поменяешь час там,
+    поменяй и здесь."""
+    now = now or datetime.utcnow()
+    run = now.replace(hour=RUN_HOUR_UTC, minute=0, second=0, microsecond=0)
+    return run if run > now else run + timedelta(days=1)
+
+
+def queue_snapshot(now: datetime | None = None) -> dict:
+    """Что сторож сделает и что уже сделал — для AI-Стаси, только чтение.
+
+    `queue` — кому сторож напишет в ближайший прогон: заявка к тому часу будет
+    старше суток. Это шире, чем `stale_requests()` сейчас: Стасе важно знать
+    заранее, от кого завтра ждать ответов.
+
+    `recent` — кому сторож уже написал за последние дни, и что с человеком
+    сейчас: вошёл ли, открывал ли бота. Вошедшего не надо уговаривать, а тот,
+    кто открыл бота и не нажал, — самый тёплый для короткого вопроса.
+
+    Наружу имя, @ник и код рассылки. telegram_id не отдаём: Стасе он не нужен,
+    переписку она ищет по нику.
+    """
+    now = now or datetime.utcnow()
+    run = next_run(now)
+    edge = run - timedelta(hours=STALE_AFTER_HOURS)
+    since = now - timedelta(days=RECENT_DAYS)
+    with SessionLocal() as s:
+        queue = list(s.scalars(
+            select(ChannelSubscriber)
+            .where(ChannelSubscriber.status == "asked",
+                   ChannelSubscriber.pending_request.is_(True),
+                   ChannelSubscriber.nudged_at.is_(None),
+                   ChannelSubscriber.created_at < edge)
+            .order_by(ChannelSubscriber.created_at)))
+        recent = list(s.scalars(
+            select(ChannelSubscriber)
+            .where(ChannelSubscriber.nudged_at.isnot(None),
+                   ChannelSubscriber.nudged_at >= since)
+            .order_by(ChannelSubscriber.nudged_at.desc())))
+
+        def person(sub):
+            code = (sub.source.split(":", 1)[1]
+                    if sub.source and ":" in sub.source else "")
+            return {"name": (sub.first_name or "").strip() or None,
+                    "username": sub.username or None,
+                    "code": code or None}
+
+        return {
+            "generated_at": now.isoformat(timespec="seconds"),
+            "enabled": settings.NUDGE_ENABLED,
+            "next_run_utc": run.isoformat(timespec="minutes"),
+            "limit_per_run": settings.NUDGE_MAX_PER_RUN,
+            "queue": [{**person(x),
+                       "waiting_hours": int((now - x.created_at).total_seconds() // 3600)}
+                      for x in queue],
+            "recent": [{**person(x),
+                        "nudged_at": x.nudged_at.isoformat(timespec="minutes"),
+                        "status": x.status,
+                        "in_channel": x.status == "in_channel",
+                        "opened_bot": x.bot_opened_at is not None}
+                       for x in recent],
+        }
+
+
 def _mark_nudged(telegram_id: int) -> None:
     """Отметить, что письмо ушло. Пишем сразу после успешной отправки, а не
     пачкой в конце: упадёт прогон на середине — никто не получит второе письмо.

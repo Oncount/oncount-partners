@@ -1817,6 +1817,39 @@ def admin_api_nudge_run(request: Request,
                         headers=_ADMIN_API_HEADERS)
 
 
+@app.api_route("/admin/api/nudge-queue",
+               methods=["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+               include_in_schema=False)
+def admin_api_nudge_queue(request: Request,
+                          session: Session = Depends(get_session)) -> JSONResponse:
+    """Очередь сторожа заявок для AI-Стаси: кому он напишет и кому уже написал.
+
+    Решение Николь 21.09.2026: Стасе можно СМОТРЕТЬ очередь, но не управлять
+    сторожем. Поэтому своя дверь: ключ NUDGE_QUEUE_TOKEN открывает только этот
+    адрес. Общий CHANNEL_TAGS_TOKEN и кука владельца тоже подходят, но сервер
+    Стаси получает именно узкий ключ: утечёт — прочтут очередь, а живой запуск
+    (`nudge-run?live=1`) этим ключом не открыть.
+
+    Метод чужой — голый 404 ДО проверки ключа, как у соседей: разница ответов
+    подтверждала бы адрес тому, кто его перебирает. Только чтение.
+    """
+    if request.method not in ("GET", "HEAD"):
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    expected = settings.NUDGE_QUEUE_TOKEN
+    given = request.headers.get("X-Api-Token") or ""
+    narrow_ok = bool(expected) and hmac.compare_digest(
+        given.encode("utf-8"), expected.encode("utf-8"))
+    if not narrow_ok:
+        _admin_api_gate(request, session, "nudge-queue")
+    if request.method == "HEAD":
+        return _admin_api_head()
+    from app.channel_nudge import queue_snapshot
+    snap = queue_snapshot()
+    log.info("nudge-queue: в очереди %d, написано за неделю %d",
+             len(snap["queue"]), len(snap["recent"]))
+    return JSONResponse(snap, headers=_ADMIN_API_HEADERS)
+
+
 @app.post("/admin/payouts/{lead_id}")
 def admin_payout_save(
     lead_id: int,
