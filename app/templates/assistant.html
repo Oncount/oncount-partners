@@ -17,7 +17,7 @@
   <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Raleway:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
   <style>
     :root{
@@ -25,23 +25,24 @@
       --green-2:#1c6a5c;
       --green-3:#2f8b78;
       --gold:#E9C46A;       /* акцент только на тёмном: цифры, маркер, кнопка тарифа */
-      --ink:#15211e;
-      --muted:#5d6b67;
-      --line:#e2e8e5;
-      --bg:#f5f7f6;
-      --tint:#eef4f2;       /* мягкая зелёная подложка «нашей» колонки и полос */
+      --ink:#141f1c;
+      --muted:#5f6a63;
+      --line:#e6ded1;
+      --bg:#f7f3ec;
+      --tint:#ecf2ef;       /* мягкая зелёная подложка «нашей» колонки и полос */
       --card:#fff;
       --radius:20px;
     }
     *{box-sizing:border-box}
     html{scroll-behavior:smooth}
-    body{margin:0;font-family:Raleway,system-ui,sans-serif;color:var(--ink);
+    body{margin:0;font-family:Onest,system-ui,sans-serif;color:var(--ink);
       background:var(--bg);-webkit-font-smoothing:antialiased;line-height:1.55;
       font-size:16.5px}
     .wrap{max-width:1060px;margin:0 auto;padding:0 18px}
-    h1,h2,h3{font-family:Outfit,sans-serif;margin:0;color:var(--ink);
+    h1,h2,h3{font-family:Onest,sans-serif;margin:0;color:var(--ink);
       letter-spacing:-.02em;line-height:1.12}
-    h1{font-size:clamp(30px,4.6vw,50px);font-weight:700}
+    h1{font-family:Unbounded,sans-serif;font-size:clamp(28px,4.3vw,46px);
+      font-weight:600;letter-spacing:-.03em;line-height:1.08}
     h2{font-size:clamp(24px,3vw,34px);font-weight:700}
     h3{font-size:19px;font-weight:600;letter-spacing:-.01em;line-height:1.25}
     p{margin:0}
@@ -57,7 +58,7 @@
     .btn{display:inline-block;text-decoration:none;font-weight:600;font-size:16px;
       padding:15px 28px;border-radius:999px;transition:transform .15s ease,
       box-shadow .15s ease,background .15s ease;border:0;cursor:pointer;
-      font-family:Raleway,sans-serif;text-align:center}
+      font-family:Onest,sans-serif;text-align:center}
     .btn-main{background:var(--green);color:#fff;box-shadow:0 6px 18px rgba(16,70,62,.22)}
     .btn-main:hover{background:var(--green-2);transform:translateY(-2px)}
     .btn-light{background:#fff;color:var(--green)}
@@ -93,7 +94,7 @@
        строкой (сокращение 05.08.2026). */
     .hours-card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);
       border-radius:16px;padding:28px 26px}
-    .hours{font-family:Outfit,sans-serif;font-weight:700;line-height:.95;
+    .hours{font-family:Unbounded,sans-serif;font-weight:700;line-height:.95;
       font-size:clamp(56px,9vw,88px);color:var(--gold);letter-spacing:-.04em}
     .hours u{text-decoration:none;font-size:.4em;font-weight:600;margin-left:10px;
       letter-spacing:-.02em}
@@ -110,13 +111,23 @@
     .card{background:var(--card);border:1.5px solid var(--line);border-radius:16px;
       padding:22px 24px}
     .card p{color:var(--muted);font-size:15.5px}
-    .num{font-family:Outfit,sans-serif;font-weight:700;font-size:15px;
+    .num{font-family:Unbounded,sans-serif;font-weight:700;font-size:15px;
       color:var(--green-3);letter-spacing:.06em;display:block;margin-bottom:10px}
 
     /* ─── кейсы ──────────────────────────────────────────────────────────── */
     /* Карточка кейса — та же .card, плюс шапка с ролью и меткой состояния.
        Метка нужна, чтобы «работает» и «собираем» не читались одинаково. */
-    .case{display:flex;flex-direction:column;gap:14px}
+    .case{display:flex;flex-direction:column;gap:14px;overflow:hidden;
+      transition:transform .18s ease,box-shadow .18s ease}
+    .case:hover{transform:translateY(-3px);box-shadow:0 14px 34px rgba(16,70,62,.10)}
+    /* Иллюстрация тянется на всю ширину карточки: у .card свои поля 22/24,
+       поэтому картинка выходит за них отрицательными отступами. */
+    .case-img{display:block;width:calc(100% + 48px);height:auto;
+      margin:-22px -24px 4px;border-bottom:1px solid var(--line)}
+    /* На широком экране последняя карточка тянется на два столбца, и полоса 8:3
+       вырастает вдвое — там высоту подрезаем. На телефоне пропорция сохраняется:
+       обрезка на узкой ширине увеличивает картинку и съедает сюжет. */
+    @media (min-width:900px){ .case-img{max-height:236px;object-fit:cover} }
     /* Кейсов нечётное число: последний тянется на оба столбца, иначе в
        ряду остаётся дыра шириной в карточку. */
     @media (min-width:900px){
@@ -150,7 +161,7 @@
     .hire p{color:rgba(255,255,255,.86);margin-top:14px;max-width:62ch}
     .hire-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
       margin-top:24px;padding-top:22px;border-top:1px solid rgba(255,255,255,.16)}
-    .hire-meta b{display:block;font-family:Outfit,sans-serif;font-weight:700;
+    .hire-meta b{display:block;font-family:Unbounded,sans-serif;font-weight:700;
       font-size:20px;color:var(--gold);letter-spacing:-.02em}
     .hire-meta span{display:block;font-size:13px;color:rgba(255,255,255,.65);
       margin-top:5px;line-height:1.35}
@@ -162,7 +173,7 @@
     .groups{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
     .group{background:var(--card);border:1.5px solid var(--line);border-radius:14px;
       padding:20px 22px}
-    .group h4{margin:0;font-family:Outfit,sans-serif;font-weight:600;font-size:17px;
+    .group h4{margin:0;font-family:Onest,sans-serif;font-weight:600;font-size:17px;
       letter-spacing:-.01em;line-height:1.25}
     .group .roles{color:var(--ink);font-size:15px;margin-top:10px}
     .group p{color:var(--muted);font-size:14.5px;margin-top:8px}
@@ -178,9 +189,9 @@
       transition:width .9s cubic-bezier(.22,.9,.3,1)}
     .bar-them{background:linear-gradient(90deg,#31423e,#4a5f59)}
     .bar-us{background:linear-gradient(90deg,var(--green),var(--green-3))}
-    .bar-val{font-family:Outfit,sans-serif;font-weight:700;
+    .bar-val{font-family:Unbounded,sans-serif;font-weight:700;
       font-size:clamp(21px,2.6vw,29px);letter-spacing:-.02em;white-space:nowrap}
-    .bar-val span{font-size:13px;font-weight:500;color:var(--muted);font-family:Raleway,sans-serif}
+    .bar-val span{font-size:13px;font-weight:500;color:var(--muted);font-family:Onest,sans-serif}
     .bar-sub{font-size:13.5px;color:var(--muted);margin-top:8px}
     .chart-note{margin-top:26px;padding-top:20px;border-top:1px solid var(--line);
       font-size:16.5px;max-width:66ch}
@@ -211,7 +222,7 @@
     .split{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
     .quote-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);
       border-radius:16px;padding:26px 28px}
-    .quote{font-family:Outfit,sans-serif;font-weight:500;
+    .quote{font-family:Onest,sans-serif;font-weight:500;
       font-size:clamp(18px,2vw,22px);line-height:1.35;color:#fff}
     .quote-src{font-size:13px;color:rgba(255,255,255,.6);margin-top:16px;
       letter-spacing:.04em}
@@ -231,7 +242,7 @@
       border-bottom:1px solid var(--line);background:#fafcfb}
     .ava{width:38px;height:38px;flex:none;border-radius:50%;background:var(--green);
       color:#fff;display:flex;align-items:center;justify-content:center;
-      font-family:Outfit,sans-serif;font-weight:600;font-size:13px}
+      font-family:Onest,sans-serif;font-weight:600;font-size:13px}
     .chat-name{font-weight:600;font-size:15px}
     .chat-status{font-size:12.5px;color:var(--green-3)}
     .chat-body{padding:18px 14px;display:flex;flex-direction:column;gap:12px;
@@ -338,7 +349,7 @@
     /* ─── ещё 13 задач ───────────────────────────────────────────────────── */
     details.more{background:var(--card);border:1.5px solid var(--line);
       border-radius:16px;padding:18px 24px;margin-top:14px}
-    details.more>summary,.faq details>summary{font-family:Outfit,sans-serif;
+    details.more>summary,.faq details>summary{font-family:Onest,sans-serif;
       font-weight:600;font-size:17px;cursor:pointer;list-style:none;display:flex;
       justify-content:space-between;gap:20px;align-items:center}
     summary::-webkit-details-marker{display:none}
@@ -358,7 +369,7 @@
     .day{display:grid;grid-template-columns:60px 1fr 1.2fr;gap:22px;
       padding:22px 24px;border-bottom:1px solid var(--line);align-items:baseline}
     .day:last-child{border-bottom:0}
-    .day .d{font-family:Outfit,sans-serif;font-weight:700;font-size:26px;
+    .day .d{font-family:Unbounded,sans-serif;font-weight:700;font-size:26px;
       color:var(--green-3);letter-spacing:-.02em}
     .day .res{color:var(--muted);font-size:15.5px}
     .day .out{display:block;margin-top:10px;font-size:14px;font-weight:600;
@@ -371,9 +382,9 @@
     .author figure{margin:0}
     .author img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:14px;
       display:block}
-    .author figcaption{margin-top:12px;font-family:Outfit,sans-serif;font-weight:600;
+    .author figcaption{margin-top:12px;font-family:Onest,sans-serif;font-weight:600;
       font-size:16px}
-    .author figcaption span{display:block;font-family:Raleway,sans-serif;font-size:12px;
+    .author figcaption span{display:block;font-family:Onest,sans-serif;font-size:12px;
       font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
       margin-top:3px}
     .author p{color:var(--muted);font-size:16px;margin-top:14px}
@@ -390,7 +401,7 @@
       color:var(--green-3);font-weight:600;margin-bottom:12px;display:block}
     .tier.main .tag{color:var(--gold)}
     .tier.main h3{color:#fff}
-    .price{font-family:Outfit,sans-serif;font-weight:700;font-size:38px;
+    .price{font-family:Unbounded,sans-serif;font-weight:700;font-size:38px;
       letter-spacing:-.03em;margin:14px 0 4px}
     .tier.main .price{color:#fff}
     .was{font-size:13px;color:var(--muted);margin-bottom:18px}
@@ -413,7 +424,7 @@
     .guar{display:grid;grid-template-columns:auto 1fr;gap:38px;align-items:center}
     /* В марке теперь «100%», а не один знак: при прежних 120px четыре символа
        вылезали за экран телефона. Держим по ширине, а не по высоте. */
-    .guar .mark{font-family:Outfit,sans-serif;font-weight:800;
+    .guar .mark{font-family:Unbounded,sans-serif;font-weight:800;
       font-size:clamp(46px,8vw,88px);line-height:.85;color:var(--gold);
       letter-spacing:-.05em;white-space:nowrap}
     .guar p+p{margin-top:12px}
@@ -718,6 +729,10 @@
     <div class="cards two" style="margin-top:22px">
       {% for c in cases['items'] %}
       <div class="card case">
+        {% if c.img %}
+        <img class="case-img" src="{{ c.img }}" alt="{{ c.alt }}"
+             width="1200" height="450" loading="lazy" decoding="async">
+        {% endif %}
         <div class="case-head">
           <div>
             <h3>{{ c.role }}</h3>

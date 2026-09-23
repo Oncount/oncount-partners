@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 450" width="1200" height="450" role="img" aria-label="Бухгалтер наговаривает задачу в телефон, отчёт собирается сам">
+  <defs>
+    <linearGradient id="bgB" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F1F7F5"/><stop offset="1" stop-color="#DBE9E4"/>
+    </linearGradient>
+    <clipPath id="deskClip"><rect x="0" y="0" width="1200" height="348"/></clipPath>
+  </defs>
+  <rect width="1200" height="450" fill="url(#bgB)"/>
+  <circle cx="1046" cy="72" r="196" fill="#2F8B78" opacity=".09"/>
+
+  <!-- фигура: голова, шея, торс; обрезана столешницей -->
+  <g clip-path="url(#deskClip)">
+    <circle cx="286" cy="152" r="46" fill="#10463E"/>
+    <rect x="272" y="192" width="28" height="26" fill="#10463E"/>
+    <path d="M286 214c-62 0-100 40-104 134h208c-4-94-42-134-104-134z" fill="#1C6A5C"/>
+    <!-- рука к телефону -->
+    <path d="M368 300c40-6 66-34 78-78" stroke="#1C6A5C" stroke-width="20" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- столешница -->
+  <rect x="96" y="340" width="600" height="16" rx="8" fill="#10463E"/>
+  <rect x="96" y="356" width="600" height="8" rx="4" fill="#10463E" opacity=".35"/>
+
+  <!-- стопка бумаг на столе -->
+  <g>
+    <rect x="150" y="306" width="150" height="34" rx="6" fill="#fff"/>
+    <rect x="164" y="292" width="150" height="34" rx="6" fill="#fff" opacity=".9"/>
+    <rect x="178" y="278" width="150" height="34" rx="6" fill="#fff" opacity=".75"/>
+  </g>
+
+  <!-- телефон в руке -->
+  <g transform="rotate(-8 470 224)">
+    <rect x="444" y="182" width="52" height="88" rx="13" fill="#E9C46A"/>
+    <rect x="455" y="196" width="30" height="58" rx="6" fill="#10463E" opacity=".22"/>
+  </g>
+
+  <!-- голос -->
+  <g stroke="#2F8B78" stroke-width="10" stroke-linecap="round">
+    <path d="M540 226h16"/><path d="M584 206v40"/><path d="M626 188v76"/><path d="M668 206v40"/>
+  </g>
+
+  <!-- готовый отчёт -->
+  <g>
+    <rect x="740" y="112" width="312" height="262" rx="20" fill="#fff"/>
+    <path d="M740 132a20 20 0 0 1 20-20h272a20 20 0 0 1 20 20v44H740z" fill="#2F8B78"/>
+    <g fill="#10463E" opacity=".2">
+      <rect x="778" y="212" width="204" height="16" rx="8"/>
+      <rect x="778" y="250" width="236" height="16" rx="8"/>
+      <rect x="778" y="288" width="156" height="16" rx="8"/>
+    </g>
+    <circle cx="1026" cy="330" r="36" fill="#E9C46A"/>
+    <path d="M1009 330l11 13 23-26" stroke="#10463E" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+</svg>

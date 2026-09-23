@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 450" width="1200" height="450" role="img" aria-label="Ипотечный брокер: отчёт собирается за минуты">
+  <defs>
+    <linearGradient id="bgR" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F1F7F5"/><stop offset="1" stop-color="#DBE9E4"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="450" fill="url(#bgR)"/>
+  <path d="M0 450V300c180-64 300 40 470-18S840 150 1200 214v236z" fill="#2F8B78" opacity=".10"/>
+
+  <!-- дом-ключ: ипотека -->
+  <g opacity=".9">
+    <path d="M154 244l128-104 128 104v154a16 16 0 0 1-16 16H170a16 16 0 0 1-16-16z" fill="#10463E"/>
+    <rect x="240" y="300" width="84" height="114" rx="8" fill="#E9C46A"/>
+    <circle cx="306" cy="358" r="7" fill="#10463E"/>
+  </g>
+
+  <!-- фигура рядом с домом -->
+  <g>
+    <circle cx="520" cy="188" r="44" fill="#10463E"/>
+    <rect x="507" y="226" width="26" height="24" fill="#10463E"/>
+    <path d="M520 246c-58 0-94 38-98 168h196c-4-130-40-168-98-168z" fill="#1C6A5C"/>
+    <path d="M598 330c44-4 74-22 96-56" stroke="#1C6A5C" stroke-width="19" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- таблица отчёта -->
+  <g>
+    <rect x="700" y="96" width="330" height="270" rx="20" fill="#fff"/>
+    <rect x="700" y="96" width="330" height="52" rx="20" fill="#10463E"/>
+    <rect x="700" y="128" width="330" height="20" fill="#10463E"/>
+    <g fill="#10463E" opacity=".18">
+      <rect x="732" y="182" width="120" height="14" rx="7"/><rect x="884" y="182" width="112" height="14" rx="7"/>
+      <rect x="732" y="222" width="150" height="14" rx="7"/><rect x="908" y="222" width="88" height="14" rx="7"/>
+      <rect x="732" y="262" width="104" height="14" rx="7"/><rect x="866" y="262" width="130" height="14" rx="7"/>
+      <rect x="732" y="302" width="134" height="14" rx="7"/><rect x="898" y="302" width="98" height="14" rx="7"/>
+    </g>
+  </g>
+
+  <!-- часы: 5–7 минут -->
+  <g transform="translate(1004,300)">
+    <circle r="62" fill="#E9C46A"/>
+    <circle r="48" fill="#fff" opacity=".35"/>
+    <path d="M0-34V4l26 16" stroke="#10463E" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+</svg>
