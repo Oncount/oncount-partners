@@ -641,7 +641,9 @@
 .zapis input::placeholder{color:rgba(255,255,255,.62)}
 .zapis .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
 .zapis-tel{position:relative}
-.zapis-plus{position:absolute;left:15px;top:50%;transform:translateY(-54%);font-family:'Outfit',sans-serif;font-size:28px;font-weight:500;line-height:1;pointer-events:none}
+.zapis-plus{position:absolute;left:16px;top:50%;transform:translateY(-52%);font-family:inherit;font-size:25px;font-weight:400;line-height:1;pointer-events:none;color:inherit}
+/* «+» тем же шрифтом и цветом, что слово «Телефон», пока поле пустое; с первой цифрой — цветом набранного (слово Николь 25.09) */
+.zapis-tel:has(input:placeholder-shown) .zapis-plus{color:rgba(255,255,255,.62)}
 .zapis .zapis-tel input[type=tel]{padding-left:38px}
 .zapis-soglasie{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.5;opacity:.88;text-align:left}
 .zapis-soglasie input{width:20px;height:20px;flex:0 0 20px;margin:2px 0 0;accent-color:#EF6A45}
