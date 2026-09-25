@@ -28,7 +28,7 @@ def check(cond, what):
 check(r.status_code == 200, "страница отдаётся")
 t = r.text
 check("AI-сотрудник" in t, "заголовок на месте")
-check(t.count("https://ardorium.eu/ru/pay/intensive/") == 5, "пять кнопок ведут на форму оплаты интенсива ARDORIUM (слово Николь 25.09)")
+check(t.count("start=zayavka-cheklist") == 5, "пять кнопок ведут в бота заявкой, а не на /assistant")
 check("oncount.co/assistant?utm_source=cheklist" not in t, "старых ссылок на лендинг не осталось")
 check("Даша" in t and "Сергей" in t, "оба отзыва на месте")
 check("20 €" in t, "цена интенсива в евро")
