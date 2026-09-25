@@ -29,7 +29,7 @@ check(r.status_code == 200, "страница отдаётся")
 t = r.text
 check("AI-сотрудник" in t, "заголовок на месте")
 check(t.count('href="#zapis"') == 4, "четыре кнопки «Собрать своего» ведут к форме внизу страницы")
-check('id="zapis-forma"' in t and "Записаться и оплатить" in t, "форма записи внизу страницы (слово Николь 25.09)")
+check('id="zapis-forma"' in t and ">Записаться</button>" in t and "100% возврат" in t and "Нужны компьютер" not in t, "форма записи внизу страницы (слово Николь 25.09)")
 check(t.count("start=zayavka-cheklist") == 1, "после отправки формы человек уходит в бота заявкой")
 check(all(f'name="{n}"' in t for n in ("name", "email", "phone", "consent", "website")), "поля формы и ловушка для роботов")
 check("ardorium.eu/ru/legal/privacy/" in t and "ardorium.eu/ru/legal/offer/" in t, "ссылки на политику и оферту")

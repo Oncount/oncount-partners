@@ -617,25 +617,29 @@
 </div>
 
 <p class="note"><strong>Здесь заканчивается то, что делается за вечер.</strong> Дальше начинается сборка под ваш бизнес: навыки под ваши процессы, ваши правила, ваши границы и записанные грабли. Это и есть разница между «у меня стоит Claude» и «у меня работает AI-сотрудник».</p>
-<div class="cta" id="zapis">
+<div class="cta zapis-blok" id="zapis">
 <h2>Соберём вашего AI-сотрудника за три дня</h2>
 <p>По два часа в день, на ваших документах и ваших правилах. Вы получите одного работающего AI-сотрудника уровня мидл, а не набор промптов.</p>
-<p class="zapis-cena">20 € · 2 000 ₽</p>
-<p class="zapis-data">29 сентября – 1 октября · 19:00 по Дубаю (18:00 по Москве) · онлайн</p>
+<p class="zapis-posle">После оплаты сразу придёт письмо с доступом.</p>
+<p class="zapis-cena">20 €</p>
+<p class="zapis-rub">или 2 000 ₽</p>
+<p class="zapis-data">29 сентября – 1 октября · 19:00 по Дубаю (18:00 по Москве) · Онлайн</p>
+<p class="zapis-garantiya"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 12l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>Гарантия: <strong>100% возврат до окончания интенсива</strong>, без вопросов · <a href="https://ardorium.eu/ru/legal/offer/" target="_blank" rel="noopener">условия</a></span></p>
 <form class="zapis" id="zapis-forma" novalidate>
 <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
 <input name="name" type="text" placeholder="Имя" maxlength="120" autocomplete="name" required>
 <input name="email" type="email" placeholder="Email" maxlength="200" autocomplete="email" inputmode="email" required>
 <input name="phone" type="tel" placeholder="+971 50 000 0000" value="+" maxlength="25" inputmode="tel" autocomplete="tel" required>
 <label class="zapis-soglasie"><input type="checkbox" name="consent" required><span>Я даю согласие на обработку персональных данных в соответствии с <a href="https://ardorium.eu/ru/legal/privacy/" target="_blank" rel="noopener">Политикой конфиденциальности</a> и принимаю условия <a href="https://ardorium.eu/ru/legal/offer/" target="_blank" rel="noopener">Договора оферты</a></span></label>
-<button class="btn zapis-knopka" type="submit">Записаться и оплатить&nbsp;→</button>
+<button class="btn zapis-knopka" type="submit">Записаться</button>
 <p class="zapis-sposoby">Apple Pay · Visa · Mastercard · МИР · СБП</p>
 <p class="zapis-oshibka" role="alert" hidden></p>
 </form>
-<p class="small">Нужны компьютер и одна задача, которая повторяется хотя бы раз в неделю.</p>
 </div>
 <style>
-.zapis{max-width:460px;margin:18px 0 0;display:grid;gap:12px}
+.zapis-blok{text-align:center}
+.zapis-blok h2,.zapis-blok p{margin-left:auto;margin-right:auto}
+.zapis{max-width:460px;margin:18px auto 0;display:grid;gap:12px}
 .zapis input[type=text],.zapis input[type=email],.zapis input[type=tel]{width:100%;box-sizing:border-box;padding:14px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);color:inherit;font:inherit;font-size:16px}
 .zapis input::placeholder{color:rgba(255,255,255,.62)}
 .zapis .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
@@ -646,7 +650,12 @@
 .zapis-knopka[disabled]{opacity:.6;cursor:default}
 .zapis-oshibka{margin:0;color:#FFD2C4;font-size:14px}
 .zapis-sposoby{margin:0;text-align:center;font-size:14px;opacity:.7;letter-spacing:.02em}
-.zapis-cena{font-size:34px;font-weight:700;margin:14px 0 0;line-height:1.2}
+.zapis-cena{font-size:64px;font-weight:700;margin:14px 0 0;line-height:1.05;color:#EF6A45}
+.zapis-rub{margin:4px 0 0;font-size:16px;opacity:.8}
+.zapis-posle{margin:10px 0 0;opacity:.9}
+.zapis-garantiya{display:flex;gap:10px;align-items:flex-start;justify-content:center;max-width:460px;margin:16px auto 0;font-size:15px;line-height:1.5;text-align:left}
+.zapis-garantiya svg{flex:0 0 22px;margin-top:1px;color:#EF6A45}
+.zapis-garantiya a{color:inherit;text-decoration:underline}
 .zapis-data{margin:6px 0 0;opacity:.85}
 </style>
 <script>
