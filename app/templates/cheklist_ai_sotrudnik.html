@@ -648,6 +648,13 @@
 .zapis-knopka[disabled]{opacity:.6;cursor:default}
 .zapis-oshibka{margin:0;color:#FFD2C4;font-size:14px}
 .zapis-sposoby{margin:0;text-align:center;font-size:14px;opacity:.7;letter-spacing:.02em}
+/* Общее правило .cta p сильнее одиночного класса — поэтому через .zapis-blok p.<класс> (25.09) */
+.zapis-blok p.zapis-cena{font-size:96px;font-weight:700;line-height:1;margin:18px 0 0;color:#EF6A45;letter-spacing:-.02em}
+.zapis-blok p.zapis-rub{font-size:14px;line-height:1.4;margin:8px 0 0;opacity:.7}
+.zapis-blok p.zapis-data{font-size:16px;margin:14px auto 0}
+.zapis-blok p.zapis-garantiya{display:block;max-width:600px;margin:14px auto 0;font-size:15px;line-height:1.6;text-align:center}
+.zapis-blok p.zapis-garantiya strong{color:inherit;background:none;font-weight:700}
+@media (max-width:480px){.zapis-blok p.zapis-cena{font-size:72px}}
 .zapis-cena{font-size:64px;font-weight:700;margin:14px 0 0;line-height:1.05;color:#EF6A45}
 .zapis-rub{margin:4px 0 0;font-size:16px;opacity:.8}
 .zapis-posle{margin:10px 0 0;opacity:.9}
