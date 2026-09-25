@@ -2049,6 +2049,41 @@ def cheklist_ai_sotrudnik(request: Request) -> HTMLResponse:
                                       {"request": request})
 
 
+# Заявка на интенсив «AI-сотрудник» с формы внизу чек-листа (слово Николь 25.09.2026, по образцу формы практикума
+# Смыслокода): имя, почта, телефон, галочка согласия → лид тем же ядром, что у лид-магнитов (база, Kommo под гардом,
+# карточка в Telegram). Сообщений в WhatsApp не шлём. После ответа ok страница уводит человека в бота
+# @Nikol_hilton_bot с меткой zayavka-cheklist: там старт потока, выбор валюты и ссылка на оплату.
+CHEKLIST_EMAIL_RE = re.compile(r"[^@\s<>]+@[^@\s<>]+\.[^@\s<>]+")
+
+
+@app.post("/cheklist/ai-sotrudnik/submit")
+async def cheklist_ai_sotrudnik_submit(request: Request,
+                                       session: Session = Depends(get_session)) -> dict:
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    if not isinstance(data, dict):
+        data = {}
+    # Согласие проверяется и здесь: галочка в разметке `required`, но форма, собранная руками, её обойдёт.
+    if data.get("consent") is not True and not (data.get("website") or "").strip():
+        return {"ok": False, "error": "consent"}
+    raw = data.get("email")
+    email = raw.strip()[:200] if isinstance(raw, str) else ""
+    if email and not CHEKLIST_EMAIL_RE.fullmatch(email):
+        return {"ok": False, "error": "email"}
+    return await _handle_quiz_submit(
+        request, session,
+        valid_options={}, question_titles={},
+        event_slug=None,
+        notify_header="📥 Заявка на интенсив «AI-сотрудник» с формы чек-листа",
+        lead_prefix="Интенсив AI-сотрудник: чек-лист",
+        lead_tag="intensiv-ai-cheklist",
+        note_intro=("Заявка на интенсив «AI-сотрудник» с формы внизу чек-листа, дальше человек ушёл в бота "
+                    "выбирать валюту оплаты. " + (f"Почта: {email}." if email else "Почту не указал.")),
+    )
+
+
 @app.get("/pay", response_class=HTMLResponse)
 def pay_page(request: Request) -> HTMLResponse:
     """Страница оплаты: рубли / международная карта / крипта. Тексты, цены и
