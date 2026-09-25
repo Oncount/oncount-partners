@@ -620,15 +620,15 @@
 <div class="cta zapis-blok" id="zapis">
 <h2>Интенсив сборки вашего<br><span class="zapis-podzag">ai-сотрудника за 3 дня!</span></h2>
 <p class="zapis-cena">20<span class="zapis-evro">€</span></p>
-<p class="zapis-rub"><span>2 000 ₽</span></p>
+<p class="zapis-rub"><span>2 000 <span class="zapis-rubl">₽</span></span></p>
 <p class="zapis-data">29.09–1.10 в 19:00 по Дубаю (18:00 МСК) · Онлайн</p>
 <p class="zapis-garantiya"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 12l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>Гарантия: <strong>100% возврат до окончания интенсива</strong> · <a href="https://ardorium.eu/ru/legal/offer/" target="_blank" rel="noopener">условия</a></span></p>
 <form class="zapis" id="zapis-forma" novalidate>
 <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
 <input name="email" type="email" placeholder="Email" maxlength="200" autocomplete="email" inputmode="email" required>
-<input name="phone" type="tel" placeholder="+971 50 000 0000" value="+" maxlength="25" inputmode="tel" autocomplete="tel" required>
+<div class="zapis-tel"><span class="zapis-plus" aria-hidden="true">+</span><input name="phone" type="tel" placeholder="Телефон" aria-label="Телефон с кодом страны" maxlength="25" inputmode="tel" autocomplete="tel" required></div>
 <label class="zapis-soglasie"><input type="checkbox" name="consent" required><span>Я даю согласие на обработку персональных данных в соответствии с <a href="https://ardorium.eu/ru/legal/privacy/" target="_blank" rel="noopener">Политикой конфиденциальности</a> и принимаю условия <a href="https://ardorium.eu/ru/legal/offer/" target="_blank" rel="noopener">Договора оферты</a></span></label>
-<button class="btn zapis-knopka" type="submit">Записаться</button>
+<button class="btn zapis-knopka" type="submit" disabled>Записаться</button>
 <p class="zapis-sposoby">Apple Pay · Visa · Mastercard · МИР · СБП</p>
 <p class="zapis-oshibka" role="alert" hidden></p>
 </form>
@@ -640,19 +640,26 @@
 .zapis input[type=text],.zapis input[type=email],.zapis input[type=tel]{width:100%;box-sizing:border-box;padding:14px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);color:inherit;font:inherit;font-size:16px}
 .zapis input::placeholder{color:rgba(255,255,255,.62)}
 .zapis .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.zapis-tel{position:relative}
+.zapis-plus{position:absolute;left:15px;top:50%;transform:translateY(-54%);font-family:'Outfit',sans-serif;font-size:28px;font-weight:500;line-height:1;pointer-events:none}
+.zapis .zapis-tel input[type=tel]{padding-left:38px}
 .zapis-soglasie{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.5;opacity:.88;text-align:left}
 .zapis-soglasie input{width:20px;height:20px;flex:0 0 20px;margin:2px 0 0;accent-color:#EF6A45}
 .zapis-soglasie a{color:inherit;text-decoration:underline}
 .zapis-knopka{width:100%;border:0;cursor:pointer;font-size:18px;margin:4px 0 0}
-.zapis-knopka[disabled]{opacity:.6;cursor:default}
+.zapis-knopka[disabled]{opacity:.45;cursor:default}
 .zapis-oshibka{margin:0;color:#FFD2C4;font-size:14px}
 .zapis-sposoby{margin:0;text-align:center;font-size:14px;opacity:.7;letter-spacing:.02em}
 /* Общее правило .cta p сильнее одиночного класса — поэтому через .zapis-blok p.<класс> (25.09) */
 .zapis-blok p.zapis-cena{font-size:96px;font-weight:700;line-height:1;margin:18px auto 0;max-width:none;width:100%;text-align:center;color:#EF6A45;letter-spacing:-.02em}
 .zapis-blok h2 .zapis-podzag{display:inline;font-size:1em;font-weight:inherit}
 .zapis-blok p.zapis-cena .zapis-evro{font-size:.7em;margin-left:.04em;font-family:inherit;font-weight:inherit;line-height:inherit;vertical-align:baseline}
-.cta.zapis-blok{max-width:760px;margin-left:auto;margin-right:auto;box-sizing:border-box}
+/* Зелёное только вокруг формы, по рамке Николь (25.09): 525 px, строка гарантии влезает в одну строку */
+.cta.zapis-blok{max-width:525px;padding-left:32px;padding-right:32px;margin-left:auto;margin-right:auto;box-sizing:border-box}
+@media (max-width:720px){.cta.zapis-blok{padding-left:24px;padding-right:24px}}
 .zapis-blok p.zapis-rub span{display:inline-block;font-weight:400}
+/* «₽» высотой с нули: цифры Raleway 0,84 высоты знака (замер в Chromium и WebKit, 25.09) */
+.zapis-blok p.zapis-rub span.zapis-rubl{display:inline;font-size:.84em}
 .zapis-blok p.zapis-rub{font-size:14px;line-height:1;white-space:nowrap;margin:-4px auto 0;max-width:none;width:100%;text-align:center;opacity:.7}
 .zapis-blok p.zapis-data{font-size:16px;margin:14px auto 0}
 .zapis-blok p.zapis-garantiya{display:block;max-width:600px;margin:14px auto 0;font-size:15px;line-height:1.6;text-align:center}
@@ -680,10 +687,21 @@
   var el = f.elements, oshibka = f.querySelector('.zapis-oshibka'), knopka = f.querySelector('button');
   function pick(k) { try { return new URLSearchParams(window.location.search).get(k) || ''; } catch (e) { return ''; } }
   function skazat(t) { oshibka.textContent = t; oshibka.hidden = false; }
+  // Кнопка бледная, пока не заполнены почта, телефон и галочка (слово Николь 25.09). «+» стоит в поле знаком,
+  // поэтому свой плюс человека, вставленный или из автозаполнения, снимается, чтобы не вышло «+ +7…».
+  var otpravka = false;
+  function proverit() {
+    var tel = el['phone'];
+    if (/^\s*\+/.test(tel.value)) tel.value = tel.value.replace(/^\s*\+[\s+]*/, '');
+    if (!otpravka) knopka.disabled = !(el['email'].value.trim() && /\d/.test(tel.value) && el['consent'].checked);
+  }
+  f.addEventListener('input', proverit); f.addEventListener('change', proverit);
+  window.addEventListener('pageshow', function () { otpravka = false; proverit(); });
+  proverit();
   f.addEventListener('submit', function (e) {
     e.preventDefault(); oshibka.hidden = true;
     var d = {
-      email: el['email'].value.trim(), phone: el['phone'].value.trim(),
+      email: el['email'].value.trim(), phone: '+' + el['phone'].value.trim().replace(/^\+[\s+]*/, ''),
       consent: el['consent'].checked, website: el['website'].value,
       ref: pick('ref') || pick('utm_content'), utm_source: pick('utm_source'), utm_medium: pick('utm_medium'),
       utm_campaign: pick('utm_campaign'), utm_content: pick('utm_content'), utm_term: pick('utm_term'),
@@ -692,15 +710,15 @@
     if (!/^[^@\s<>]+@[^@\s<>]+\.[^@\s<>]+$/.test(d.email)) { skazat('Проверьте адрес почты.'); return; }
     if (d.phone.replace(/\D/g, '').length < 9) { skazat('Проверьте номер телефона: нужен номер с кодом страны.'); return; }
     if (!d.consent) { skazat('Поставьте галочку согласия.'); return; }
-    knopka.disabled = true;
+    otpravka = true; knopka.disabled = true;
     fetch('/cheklist/ai-sotrudnik/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) })
       .then(function (r) { return r.json(); })
       .then(function (j) {
         if (j && j.ok) { window.location.href = 'https://t.me/Nikol_hilton_bot?start=zayavka-cheklist'; return; }
-        knopka.disabled = false;
+        otpravka = false; proverit();
         skazat(j && j.error === 'email' ? 'Проверьте адрес почты.' : j && j.error === 'phone' ? 'Проверьте номер телефона.' : 'Не получилось отправить. Попробуйте ещё раз.');
       })
-      .catch(function () { knopka.disabled = false; skazat('Не получилось отправить. Попробуйте ещё раз.'); });
+      .catch(function () { otpravka = false; proverit(); skazat('Не получилось отправить. Попробуйте ещё раз.'); });
   });
 })();
 </script>
