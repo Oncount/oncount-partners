@@ -35,7 +35,7 @@ check(all(f'name="{n}"' in t for n in ("email", "phone", "consent", "website")) 
 check("ardorium.eu/ru/legal/privacy/" in t and "ardorium.eu/ru/legal/offer/" in t, "ссылки на политику и оферту")
 check("oncount.co/assistant?utm_source=cheklist" not in t, "старых ссылок на лендинг не осталось")
 check("Даша" in t and "Сергей" in t, "оба отзыва на месте")
-check("20 €" in t, "цена интенсива в евро")
+check("20 €" in t or "20<span class=\"zapis-evro\">€</span>" in t, "цена интенсива в евро")
 check(len(записано) == 1, "переход записан один раз")
 
 # Приёмник формы: отказы до записи в базу (запись и Kommo здесь не проверяются — их ядро общее с лид-магнитами).
