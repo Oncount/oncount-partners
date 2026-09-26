@@ -2075,7 +2075,7 @@ def cheklist_ai_sotrudnik(request: Request) -> HTMLResponse:
 
 @app.get("/cheklist/ai-sotrudnik/oplata", response_class=HTMLResponse)
 def cheklist_ai_sotrudnik_oplata(request: Request) -> HTMLResponse:
-    """Страница оплаты интенсива после «Записаться» (слово Николь 26.09): пять способов, без второй формы."""
+    """Страница оплаты интенсива «ai-сотрудник» после «Записаться» (слово Николь 26.09): пять способов, без второй формы."""
     linkstat.record_click("cheklist_ai_sotrudnik_oplata", "quiz",
                           request.query_params.get("ref"), request.headers.get("user-agent"))
     return templates.TemplateResponse("cheklist_oplata.html", {"request": request, "o": CHEKLIST_OPLATA})
@@ -2103,7 +2103,7 @@ async def cheklist_ai_sotrudnik_schet(request: Request, session: Session = Depen
         request, session,
         valid_options={}, question_titles={},
         event_slug="ai-schet-kompanii",
-        notify_header="🧾 Запрос счёта для компании: интенсив «AI-сотрудник»",
+        notify_header="🧾 Запрос счёта для компании: интенсив «ai-сотрудник»",
         lead_prefix="Интенсив AI-сотрудник: счёт компании",
         lead_tag="intensiv-ai-schet",
         note_intro=f"Запрос счёта для компании со страницы оплаты. Почта: {email}. Реквизиты: {rekv}",
