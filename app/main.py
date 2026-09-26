@@ -2025,14 +2025,27 @@ def assistant_page(request: Request) -> HTMLResponse:
 # сверяет человек по выписке. Поэтому здесь нет ни платёжного провайдера, ни
 # вебхуков — только PaymentClaim (слово клиента) и карточка в Telegram.
 
-# Кнопки оплаты после записи на чек-листе — готовые ссылки кассы, заведённые Николь 25.09: lava рублями (тариф интенсива
-# 2 000 ₽) и Mamo другой валютой (20 €). Слово Николь 26.09: вторая форма не нужна, человек всё заполнил здесь.
-# Ссылки — из окружения Railway, в коде только запасное значение, чтобы смена тарифа не была выкладкой.
-CHEKLIST_PAY_RUB_URL = os.environ.get(
-    "CHEKLIST_PAY_RUB_URL",
-    "https://app.lava.top/products/7e079d84-3640-4acf-b43c-ab4bd6a21cf4/85dc8277-8980-4cb1-9fd1-ab4ed12215fb?currency=RUB")
-CHEKLIST_PAY_CARD_URL = os.environ.get(
-    "CHEKLIST_PAY_CARD_URL", "https://business.mamopay.com/pay/ardoriummanagementco-79384d2f6a61")
+# Страница оплаты после «Записаться» на чек-листе (слово Николь 26.09): рубли — ссылка тарифа интенсива в lava
+# (СБП, МИР), любая валюта — ссылка Mamo (Apple Pay, карта), PayPal Николь (дубайский, её слово 26.09), USDT TRC-20,
+# счёт компании. Суммы, ссылки и реквизиты — из окружения Railway; в коде запасные значения, заведённые Николь
+# 20-25.09 (stasya/OPLATA.md), чтобы смена тарифа или кошелька не была выкладкой.
+CHEKLIST_OPLATA = {
+    "rub_url": os.environ.get(
+        "CHEKLIST_PAY_RUB_URL",
+        "https://app.lava.top/products/7e079d84-3640-4acf-b43c-ab4bd6a21cf4/85dc8277-8980-4cb1-9fd1-ab4ed12215fb?currency=RUB"),
+    "rub_cena": os.environ.get("CHEKLIST_PAY_RUB_CENA", "2 000 ₽"),
+    "card_url": os.environ.get(
+        "CHEKLIST_PAY_CARD_URL", "https://business.mamopay.com/pay/ardoriummanagementco-79384d2f6a61"),
+    "card_cena": os.environ.get("CHEKLIST_PAY_CARD_CENA", "20 €"),
+    "paypal": os.environ.get("CHEKLIST_PAY_PAYPAL", "nikol.hillton@gmail.com"),
+    "paypal_cena": os.environ.get("CHEKLIST_PAY_PAYPAL_CENA", "20 €"),
+    "usdt": os.environ.get("CHEKLIST_PAY_USDT_TRC20", "TV3ynyGs1fP8CjyQ5NSc4HHSHysFJwfdsi"),
+    "usdt_cena": os.environ.get("CHEKLIST_PAY_USDT_CENA", "23 USDT"),
+    "pochta": os.environ.get("CHEKLIST_PAY_POCHTA", "hello@ardorium.eu"),
+    "data": os.environ.get("CHEKLIST_PAY_DATA", "29.09–1.10 в 19:00 по Дубаю (18:00 МСК) · Онлайн"),
+    "vozvrat_url": os.environ.get("CHEKLIST_PAY_VOZVRAT_URL", "https://ardorium.eu/ru/legal/refund/"),
+    "oferta_url": os.environ.get("CHEKLIST_PAY_OFERTA_URL", "https://ardorium.eu/ru/legal/offer/"),
+}
 
 
 @app.get("/cheklist/ai-sotrudnik", response_class=HTMLResponse)
@@ -2057,9 +2070,44 @@ def cheklist_ai_sotrudnik(request: Request) -> HTMLResponse:
                           request.query_params.get("ref"),
                           request.headers.get("user-agent"))
     return templates.TemplateResponse("cheklist_ai_sotrudnik.html",
-                                      {"request": request,
-                                       "pay_rub_url": CHEKLIST_PAY_RUB_URL,
-                                       "pay_card_url": CHEKLIST_PAY_CARD_URL})
+                                      {"request": request})
+
+
+@app.get("/cheklist/ai-sotrudnik/oplata", response_class=HTMLResponse)
+def cheklist_ai_sotrudnik_oplata(request: Request) -> HTMLResponse:
+    """Страница оплаты интенсива после «Записаться» (слово Николь 26.09): пять способов, без второй формы."""
+    linkstat.record_click("cheklist_ai_sotrudnik_oplata", "quiz",
+                          request.query_params.get("ref"), request.headers.get("user-agent"))
+    return templates.TemplateResponse("cheklist_oplata.html", {"request": request, "o": CHEKLIST_OPLATA})
+
+
+@app.post("/cheklist/ai-sotrudnik/schet")
+async def cheklist_ai_sotrudnik_schet(request: Request, session: Session = Depends(get_session)) -> dict:
+    """Запрос счёта для компании со страницы оплаты: реквизиты, почта, телефон → лид тем же ядром (Kommo под гардом,
+    карточка в Telegram Николь). Реквизиты кладутся в заметку лида; обратно на страницу ничего не рендерится."""
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    if not isinstance(data, dict):
+        data = {}
+    raw = data.get("rekvizity")
+    rekv = raw.strip()[:3000] if isinstance(raw, str) else ""
+    if not rekv and not (data.get("website") or "").strip():
+        return {"ok": False, "error": "rekvizity"}
+    raw_e = data.get("email")
+    email = raw_e.strip()[:200] if isinstance(raw_e, str) else ""
+    if not CHEKLIST_EMAIL_RE.fullmatch(email) and not (data.get("website") or "").strip():
+        return {"ok": False, "error": "email"}
+    return await _handle_quiz_submit(
+        request, session,
+        valid_options={}, question_titles={},
+        event_slug="ai-schet-kompanii",
+        notify_header="🧾 Запрос счёта для компании: интенсив «AI-сотрудник»",
+        lead_prefix="Интенсив AI-сотрудник: счёт компании",
+        lead_tag="intensiv-ai-schet",
+        note_intro=f"Запрос счёта для компании со страницы оплаты. Почта: {email}. Реквизиты: {rekv}",
+    )
 
 
 # Заявка на интенсив «AI-сотрудник» с формы внизу чек-листа (слово Николь 25.09.2026, по образцу формы практикума

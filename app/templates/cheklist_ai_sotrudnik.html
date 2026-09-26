@@ -632,11 +632,6 @@
 <p class="zapis-sposoby">Apple Pay · Visa · Mastercard · МИР · СБП</p>
 <p class="zapis-oshibka" role="alert" hidden></p>
 </form>
-<div class="zapis-oplata" id="zapis-oplata" hidden>
-<p class="zapis-oplata-zag"><strong>Заявка принята.</strong> Оплатите интенсив:</p>
-<a class="btn zapis-knopka" href="{{ pay_rub_url }}">Рублями · 2 000 ₽</a>
-<a class="btn zapis-knopka" href="{{ pay_card_url }}">Другой валютой · 20 €</a>
-</div>
 </div>
 <style>
 .zapis-blok{text-align:center}
@@ -655,8 +650,6 @@
 .zapis-soglasie a{color:inherit;text-decoration:underline}
 .zapis-knopka{width:100%;border:0;cursor:pointer;font-size:18px;margin:4px 0 0}
 .zapis-knopka[disabled]{opacity:.45;cursor:default}
-.zapis-oplata{max-width:460px;margin:18px auto 0;display:grid;gap:12px}
-.zapis-oplata a.zapis-knopka{display:block;text-decoration:none;box-sizing:border-box}
 .zapis-oshibka{margin:0;color:#FFD2C4;font-size:14px}
 .zapis-sposoby{margin:0;text-align:center;font-size:14px;opacity:.7;letter-spacing:.02em}
 /* Общее правило .cta p сильнее одиночного класса — поэтому через .zapis-blok p.<класс> (25.09) */
@@ -723,9 +716,9 @@
     fetch('/cheklist/ai-sotrudnik/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) })
       .then(function (r) { return r.json(); })
       .then(function (j) {
-        // Заявка записана — сразу две кнопки оплаты на готовые ссылки кассы (слово Николь 26.09: lava рублями,
-        // Mamo другой валютой; вторую форму не показываем — человек уже всё заполнил здесь).
-        if (j && j.ok) { f.hidden = true; var o = document.getElementById('zapis-oplata'); o.hidden = false; o.scrollIntoView({ block: 'center' }); return; }
+        // Заявка записана — сразу страница оплаты со всеми способами (слово Николь 26.09). Почта и телефон — в память
+        // вкладки: страница оплаты подставит их в запрос счёта, второй раз вписывать не нужно.
+        if (j && j.ok) { try { sessionStorage.setItem('cheklist.email', d.email); sessionStorage.setItem('cheklist.phone', d.phone); } catch (e) {} window.location.href = '/cheklist/ai-sotrudnik/oplata'; return; }
         otpravka = false; proverit();
         skazat(j && j.error === 'email' ? 'Проверьте адрес почты.' : j && j.error === 'phone' ? 'Проверьте номер телефона.' : 'Не получилось отправить. Попробуйте ещё раз.');
       })
