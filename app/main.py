@@ -1,6 +1,7 @@
 import asyncio
 import hmac
 import logging
+import os
 import re
 import secrets
 import time
@@ -2024,6 +2025,16 @@ def assistant_page(request: Request) -> HTMLResponse:
 # сверяет человек по выписке. Поэтому здесь нет ни платёжного провайдера, ни
 # вебхуков — только PaymentClaim (слово клиента) и карточка в Telegram.
 
+# Кнопки оплаты после записи на чек-листе — готовые ссылки кассы, заведённые Николь 25.09: lava рублями (тариф интенсива
+# 2 000 ₽) и Mamo другой валютой (20 €). Слово Николь 26.09: вторая форма не нужна, человек всё заполнил здесь.
+# Ссылки — из окружения Railway, в коде только запасное значение, чтобы смена тарифа не была выкладкой.
+CHEKLIST_PAY_RUB_URL = os.environ.get(
+    "CHEKLIST_PAY_RUB_URL",
+    "https://app.lava.top/products/7e079d84-3640-4acf-b43c-ab4bd6a21cf4/85dc8277-8980-4cb1-9fd1-ab4ed12215fb?currency=RUB")
+CHEKLIST_PAY_CARD_URL = os.environ.get(
+    "CHEKLIST_PAY_CARD_URL", "https://business.mamopay.com/pay/ardoriummanagementco-79384d2f6a61")
+
+
 @app.get("/cheklist/ai-sotrudnik", response_class=HTMLResponse)
 def cheklist_ai_sotrudnik(request: Request) -> HTMLResponse:
     """Чек-лист «AI-сотрудник вместо AI-чата» страницей, а не файлом
@@ -2046,7 +2057,9 @@ def cheklist_ai_sotrudnik(request: Request) -> HTMLResponse:
                           request.query_params.get("ref"),
                           request.headers.get("user-agent"))
     return templates.TemplateResponse("cheklist_ai_sotrudnik.html",
-                                      {"request": request})
+                                      {"request": request,
+                                       "pay_rub_url": CHEKLIST_PAY_RUB_URL,
+                                       "pay_card_url": CHEKLIST_PAY_CARD_URL})
 
 
 # Заявка на интенсив «AI-сотрудник» с формы внизу чек-листа (слово Николь 25.09.2026, по образцу формы практикума
