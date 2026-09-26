@@ -716,9 +716,7 @@
     fetch('/cheklist/ai-sotrudnik/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) })
       .then(function (r) { return r.json(); })
       .then(function (j) {
-        // Заявка записана — сразу окно оплаты ARDORIUM со всеми способами, почта уже вписана (слово Николь 25.09).
-        // Почта едет в хвосте адреса (#): он не уходит на сервер и не пишется в журналы.
-        if (j && j.ok) { window.location.href = 'https://ardorium.eu/ru/pay/intensive/#' + new URLSearchParams({ email: d.email }).toString(); return; }
+        if (j && j.ok) { window.location.href = 'https://t.me/Nikol_hilton_bot?start=zayavka-cheklist'; return; }
         otpravka = false; proverit();
         skazat(j && j.error === 'email' ? 'Проверьте адрес почты.' : j && j.error === 'phone' ? 'Проверьте номер телефона.' : 'Не получилось отправить. Попробуйте ещё раз.');
       })

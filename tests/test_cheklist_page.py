@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Страница чек-листа: отдаётся, кнопки ведут к форме записи, форма уводит в окно оплаты ARDORIUM, счёт перехода пишется."""
+"""Страница чек-листа: отдаётся, кнопки ведут к форме записи, форма уводит в бота, счёт перехода пишется."""
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault("JWT_SECRET", "test-secret-not-the-default-value-000")
@@ -30,7 +30,7 @@ t = r.text
 check("AI-сотрудник" in t, "заголовок на месте")
 check(t.count('href="#zapis"') == 4, "четыре кнопки «Собрать своего» ведут к форме внизу страницы")
 check('id="zapis-forma"' in t and ">Записаться</button>" in t and "100% возврат" in t and "Нужны компьютер" not in t, "форма записи внизу страницы (слово Николь 25.09)")
-check("ardorium.eu/ru/pay/intensive/#" in t and "start=zayavka-cheklist" not in t, "после отправки формы человек уходит в окно оплаты ARDORIUM с почтой в хвосте адреса (слово Николь 25.09)")
+check(t.count("start=zayavka-cheklist") == 1, "после отправки формы человек уходит в бота заявкой")
 check(all(f'name="{n}"' in t for n in ("email", "phone", "consent", "website")) and 'name="name"' not in t, "поля формы: почта и телефон, без имени; ловушка для роботов")
 check("ardorium.eu/ru/legal/privacy/" in t and "ardorium.eu/ru/legal/offer/" in t, "ссылки на политику и оферту")
 check("oncount.co/assistant?utm_source=cheklist" not in t, "старых ссылок на лендинг не осталось")
