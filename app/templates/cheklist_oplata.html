@@ -20,7 +20,7 @@
   .shapka{border-bottom:1px solid var(--linia)}
   .shapka__ryad{max-width:540px;margin:0 auto;padding:14px 18px;display:flex;justify-content:space-between;align-items:center}
   .znak{font-family:'Lora',Georgia,serif;font-size:19px;letter-spacing:.14em;color:#e9dec9}
-  .bezop{font-size:14px;color:var(--tusk)}
+  .bezop{font-size:14px;color:var(--tusk);display:inline-flex;align-items:center;gap:6px}
   h1{font-family:'Lora',Georgia,serif;font-size:32px;line-height:1.2;margin:0 0 6px;font-weight:500}
   .cena{font-family:'Lora',Georgia,serif;font-size:64px;line-height:1.05;color:var(--akcent);margin:0 0 6px;font-weight:500}
   .cena small{font-size:26px;color:var(--tusk);margin-left:10px}
@@ -59,7 +59,7 @@
   @media (max-width:520px){.cena{font-size:52px}summary{grid-template-columns:32px 1fr 24px;padding:18px 16px}
     .srok{grid-column:2;grid-row:3;text-align:left}.krug{grid-column:3;grid-row:1}.telo{padding:0 16px 18px}}
 </style></head><body>
-<header class="shapka"><div class="shapka__ryad"><span class="znak">ARDORIUM</span><span class="bezop">🔒 Безопасная оплата</span></div></header>
+<header class="shapka"><div class="shapka__ryad"><span class="znak">ARDORIUM</span><span class="bezop"><svg width="13" height="15" viewBox="0 0 13 15" fill="none" aria-hidden="true"><rect x="1" y="6.5" width="11" height="7.5" rx="1.6" fill="#f5f1ea"/><path d="M3.5 6.5V4.6a3 3 0 0 1 6 0v1.9" stroke="#f5f1ea" stroke-width="1.5"/></svg> Безопасная оплата</span></div></header>
 <main class="wrap">
 <h1>Интенсив «ai‑сотрудник»</h1>
 <p class="cena">{{ o.card_cena }}<small>или {{ o.rub_cena }}</small></p>

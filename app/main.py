@@ -2033,12 +2033,12 @@ CHEKLIST_OPLATA = {
     "rub_url": os.environ.get(
         "CHEKLIST_PAY_RUB_URL",
         "https://app.lava.top/products/7e079d84-3640-4acf-b43c-ab4bd6a21cf4/85dc8277-8980-4cb1-9fd1-ab4ed12215fb?currency=RUB"),
-    "rub_cena": os.environ.get("CHEKLIST_PAY_RUB_CENA", "2 000 ₽"),
+    "rub_cena": os.environ.get("CHEKLIST_PAY_RUB_CENA", "2.000₽"),
     "card_url": os.environ.get(
         "CHEKLIST_PAY_CARD_URL", "https://business.mamopay.com/pay/ardoriummanagementco-79384d2f6a61"),
-    "card_cena": os.environ.get("CHEKLIST_PAY_CARD_CENA", "20 €"),
+    "card_cena": os.environ.get("CHEKLIST_PAY_CARD_CENA", "€20"),
     "paypal": os.environ.get("CHEKLIST_PAY_PAYPAL", "nikol.hillton@gmail.com"),
-    "paypal_cena": os.environ.get("CHEKLIST_PAY_PAYPAL_CENA", "20 €"),
+    "paypal_cena": os.environ.get("CHEKLIST_PAY_PAYPAL_CENA", "€20"),
     "usdt": os.environ.get("CHEKLIST_PAY_USDT_TRC20", "TV3ynyGs1fP8CjyQ5NSc4HHSHysFJwfdsi"),
     "usdt_cena": os.environ.get("CHEKLIST_PAY_USDT_CENA", "23 USDT"),
     "pochta": os.environ.get("CHEKLIST_PAY_POCHTA", "hello@ardorium.eu"),

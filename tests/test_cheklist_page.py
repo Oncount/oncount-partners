@@ -30,12 +30,12 @@ t = r.text
 check("AI-сотрудник" in t, "заголовок на месте")
 check(t.count('href="#zapis"') == 4, "четыре кнопки «Собрать своего» ведут к форме внизу страницы")
 check('id="zapis-forma"' in t and ">Записаться</button>" in t and "100% возврат" in t and "Нужны компьютер" not in t, "форма записи внизу страницы (слово Николь 25.09)")
-check("/cheklist/ai-sotrudnik/oplata" in t and "start=zayavka-cheklist" not in t, "после записи человек уходит на страницу оплаты (слово Николь 26.09)")
+check("/cheklist/ai-sotrudnik/oplata" in t and "sendBeacon" in t and "start=zayavka-cheklist" not in t, "после записи человек уходит на страницу оплаты (слово Николь 26.09)")
 ro = c.get("/cheklist/ai-sotrudnik/oplata")
 to = ro.text
 check(ro.status_code == 200 and "noindex" in to, "страница оплаты отдаётся и закрыта от поиска")
 check(all(s in to for s in ("Оплатить рублями", "СБП, картой МИР", "Оплатить любой валютой", "Apple Pay, Visa, Mastercard", "Безопасная оплата", "Старт 29.09 по 1.10", "PayPal", "Криптокошелёк", "TRC-20", "Оплатить по счёту с компании", "Реквизиты вашей компании", "1-3 раб. дня")), "пять способов на странице оплаты словами Николь")
-check("app.lava.top/products/" in to and "business.mamopay.com/pay/" in to and "2 000 ₽" in to and "20 €" in to, "кнопки рублей и валюты ведут на ссылки кассы с ценой")
+check("app.lava.top/products/" in to and "business.mamopay.com/pay/" in to and "2.000₽" in to and "€20" in to, "кнопки рублей и валюты ведут на ссылки кассы с ценой")
 check("TV3ynyGs1fP8CjyQ5NSc4HHSHysFJwfdsi" in to and "nikol.hillton@gmail.com" in to, "кошелёк TRC-20 и PayPal на месте")
 check(to.count("t.me/Nikol_hilton_bot") == 2 and "скриншот в бот" in to, "после PayPal и крипты — кнопка «Отправить скриншот в бот» (слово Николь 26.09)")
 check(to.count('t.me/Nikol_hilton_bot" target="_blank"') == 2, "кнопка в бот открывается в новом окне (слово Николь 26.09)")
@@ -49,7 +49,7 @@ check(all(f'name="{n}"' in t for n in ("email", "phone", "consent", "website")) 
 check("ardorium.eu/ru/legal/privacy/" in t and "ardorium.eu/ru/legal/offer/" in t, "ссылки на политику и оферту")
 check("oncount.co/assistant?utm_source=cheklist" not in t, "старых ссылок на лендинг не осталось")
 check("Даша" in t and "Сергей" in t, "оба отзыва на месте")
-check("20 €" in t or "20<span class=\"zapis-evro\">€</span>" in t, "цена интенсива в евро")
+check("<span class=\"zapis-evro\">€</span>20" in t and "2.000<span class=\"zapis-rubl\">₽</span>" in t, "цена интенсива: €20 и 2.000₽ (слово Николь 26.09)")
 check(sum(1 for x in записано if x[0] == "cheklist_ai_sotrudnik") == 1, "переход на чек-лист записан один раз")
 
 # Приёмник формы: отказы до записи в базу (запись и Kommo здесь не проверяются — их ядро общее с лид-магнитами).

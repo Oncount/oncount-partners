@@ -619,8 +619,8 @@
 <p class="note"><strong>Здесь заканчивается то, что делается за вечер.</strong> Дальше начинается сборка под ваш бизнес: навыки под ваши процессы, ваши правила, ваши границы и записанные грабли. Это и есть разница между «у меня стоит Claude» и «у меня работает AI-сотрудник».</p>
 <div class="cta zapis-blok" id="zapis">
 <h2>Интенсив сборки вашего<br><span class="zapis-podzag">ai-сотрудника за 3 дня!</span></h2>
-<p class="zapis-cena">20<span class="zapis-evro">€</span></p>
-<p class="zapis-rub"><span>2 000 <span class="zapis-rubl">₽</span></span></p>
+<p class="zapis-cena"><span class="zapis-evro">€</span>20</p>
+<p class="zapis-rub"><span>2.000<span class="zapis-rubl">₽</span></span></p>
 <p class="zapis-data">29.09–1.10 в 19:00 по Дубаю (18:00 МСК) · Онлайн</p>
 <p class="zapis-garantiya"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 12l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>Гарантия: <strong>100% возврат до окончания интенсива</strong> · <a href="https://ardorium.eu/ru/legal/refund/" target="_blank" rel="noopener">условия</a></span></p>
 <form class="zapis" id="zapis-forma" novalidate>
@@ -655,7 +655,7 @@
 /* Общее правило .cta p сильнее одиночного класса — поэтому через .zapis-blok p.<класс> (25.09) */
 .zapis-blok p.zapis-cena{font-size:96px;font-weight:700;line-height:1;margin:18px auto 0;max-width:none;width:100%;text-align:center;color:#EF6A45;letter-spacing:-.02em}
 .zapis-blok h2 .zapis-podzag{display:inline;font-size:1em;font-weight:inherit}
-.zapis-blok p.zapis-cena .zapis-evro{font-size:.7em;margin-left:.04em;font-family:inherit;font-weight:inherit;line-height:inherit;vertical-align:baseline}
+.zapis-blok p.zapis-cena .zapis-evro{font-size:.7em;margin-right:.02em;font-family:inherit;font-weight:inherit;line-height:inherit;vertical-align:baseline}
 /* Зелёное только вокруг формы, по рамке Николь (25.09): 525 px, строка гарантии влезает в одну строку */
 .cta.zapis-blok{max-width:525px;padding-left:32px;padding-right:32px;margin-left:auto;margin-right:auto;box-sizing:border-box}
 @media (max-width:720px){.cta.zapis-blok{padding-left:24px;padding-right:24px}}
@@ -713,16 +713,15 @@
     if (d.phone.replace(/\D/g, '').length < 9) { skazat('Проверьте номер телефона: нужен номер с кодом страны.'); return; }
     if (!d.consent) { skazat('Поставьте галочку согласия.'); return; }
     otpravka = true; knopka.disabled = true;
-    fetch('/cheklist/ai-sotrudnik/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) })
-      .then(function (r) { return r.json(); })
-      .then(function (j) {
-        // Заявка записана — сразу страница оплаты со всеми способами (слово Николь 26.09). Почта и телефон — в память
-        // вкладки: страница оплаты подставит их в запрос счёта, второй раз вписывать не нужно.
-        if (j && j.ok) { try { sessionStorage.setItem('cheklist.email', d.email); sessionStorage.setItem('cheklist.phone', d.phone); } catch (e) {} window.location.href = '/cheklist/ai-sotrudnik/oplata'; return; }
-        otpravka = false; proverit();
-        skazat(j && j.error === 'email' ? 'Проверьте адрес почты.' : j && j.error === 'phone' ? 'Проверьте номер телефона.' : 'Не получилось отправить. Попробуйте ещё раз.');
-      })
-      .catch(function () { otpravka = false; proverit(); skazat('Не получилось отправить. Попробуйте ещё раз.'); });
+    // Страница оплаты открывается СРАЗУ, не дожидаясь ответа (слово Николь 26.09: «долго открывается»): приём заявки
+    // ждёт Kommo и карточку в Telegram, это секунды. Заявка уходит фоном — sendBeacon переживает переход на другую
+    // страницу; нет его — fetch с keepalive. Почта, телефон и галочка уже проверены выше теми же правилами, что на сервере.
+    var telo = JSON.stringify(d), ushla = false;
+    try { ushla = !!(navigator.sendBeacon && navigator.sendBeacon('/cheklist/ai-sotrudnik/submit', new Blob([telo], { type: 'application/json' }))); } catch (e) {}
+    if (!ushla) { try { fetch('/cheklist/ai-sotrudnik/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: telo, keepalive: true }); } catch (e) {} }
+    // Почта и телефон — в память вкладки: страница оплаты покажет почту и подставит их в запрос счёта.
+    try { sessionStorage.setItem('cheklist.email', d.email); sessionStorage.setItem('cheklist.phone', d.phone); } catch (e) {}
+    window.location.href = '/cheklist/ai-sotrudnik/oplata';
   });
 })();
 </script>
