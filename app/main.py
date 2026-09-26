@@ -2074,12 +2074,12 @@ def cheklist_ai_sotrudnik(request: Request) -> HTMLResponse:
                                       {"request": request})
 
 
-@app.get("/cheklist/ai-sotrudnik/oplata", response_class=HTMLResponse)
-def cheklist_ai_sotrudnik_oplata(request: Request) -> HTMLResponse:
+@app.get("/cheklist/ai-sotrudnik/oplata")
+def cheklist_ai_sotrudnik_oplata(request: Request) -> RedirectResponse:
     """Страница оплаты интенсива «ai-сотрудник» после «Записаться» (слово Николь 26.09): пять способов, без второй формы."""
-    linkstat.record_click("cheklist_ai_sotrudnik_oplata", "quiz",
-                          request.query_params.get("ref"), request.headers.get("user-agent"))
-    return templates.TemplateResponse("cheklist_oplata.html", {"request": request, "o": CHEKLIST_OPLATA})
+    # С 26.09 страница оплаты живёт на портале ARDORIUM (слово Николь «перенеси на страницу ARDORIUM»): старый адрес
+    # уводит туда, чтобы ссылки, уже разосланные или открытые во вкладках, не вели в пустоту.
+    return RedirectResponse(url="https://ardorium.eu/ru/oplata/", status_code=302)
 
 
 @app.post("/cheklist/ai-sotrudnik/schet")

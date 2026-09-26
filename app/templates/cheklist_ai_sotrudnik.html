@@ -721,7 +721,9 @@
     if (!ushla) { try { fetch('/cheklist/ai-sotrudnik/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: telo, keepalive: true }); } catch (e) {} }
     // Почта и телефон — в память вкладки: страница оплаты покажет почту и подставит их в запрос счёта.
     try { sessionStorage.setItem('cheklist.email', d.email); sessionStorage.setItem('cheklist.phone', d.phone); } catch (e) {}
-    window.location.href = '/cheklist/ai-sotrudnik/oplata';
+    // Страница оплаты — на портале ARDORIUM (слово Николь 26.09: «перенеси на страницу ARDORIUM»); почта и телефон едут
+    // хвостом адреса (#): на сервер не уходят, страница показывает почту и подставляет их в запрос счёта.
+    window.location.href = 'https://ardorium.eu/ru/oplata/#' + new URLSearchParams({ email: d.email, phone: d.phone }).toString();
   });
 })();
 </script>
