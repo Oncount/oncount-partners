@@ -16,7 +16,11 @@
   html,body{margin:0;padding:0}
   body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--fon);color:var(--tekst);
        font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:720px;margin:0 auto;padding:36px 18px 40px}
+  .wrap{max-width:720px;margin:0 auto;padding:28px 18px 40px}
+  .shapka{border-bottom:1px solid var(--linia)}
+  .shapka__ryad{max-width:720px;margin:0 auto;padding:14px 18px;display:flex;justify-content:space-between;align-items:center}
+  .znak{font-family:'Lora',Georgia,serif;font-size:19px;letter-spacing:.14em;color:#e9dec9}
+  .bezop{font-size:14px;color:var(--tusk)}
   h1{font-family:'Lora',Georgia,serif;font-size:32px;line-height:1.2;margin:0 0 6px;font-weight:500}
   .cena{font-family:'Lora',Georgia,serif;font-size:64px;line-height:1.05;color:var(--akcent);margin:0 0 6px;font-weight:500}
   .cena small{font-size:26px;color:var(--tusk);margin-left:10px}
@@ -55,9 +59,10 @@
   @media (max-width:520px){.cena{font-size:52px}summary{grid-template-columns:32px 1fr 24px;padding:18px 16px}
     .srok{grid-column:2;grid-row:3;text-align:left}.krug{grid-column:3;grid-row:1}.telo{padding:0 16px 18px}}
 </style></head><body>
+<header class="shapka"><div class="shapka__ryad"><span class="znak">ARDORIUM</span><span class="bezop">🔒 Безопасная оплата</span></div></header>
 <main class="wrap">
 <h1>Интенсив «ai‑сотрудник»</h1>
-<p class="cena">{{ o.rub_cena }}<small>или {{ o.card_cena }}</small></p>
+<p class="cena">{{ o.card_cena }}<small>или {{ o.rub_cena }}</small></p>
 <p class="pod">{{ o.data }}<span id="pochta-verh" hidden> · <span id="pochta-tekst"></span></span></p>
 
 <details name="sposob" open>
@@ -69,7 +74,7 @@
 </details>
 
 <details name="sposob">
-  <summary><span class="ikon" aria-hidden="true">🌍</span><span class="nazv">Оплатить любой валютой</span><span class="srok">мгновенно</span><span class="krug" aria-hidden="true"></span><span class="opis">Apple Pay, картой</span></summary>
+  <summary><span class="ikon" aria-hidden="true">🌍</span><span class="nazv">Оплатить любой валютой</span><span class="srok">мгновенно</span><span class="krug" aria-hidden="true"></span><span class="opis">Apple Pay, Visa, Mastercard</span></summary>
   <div class="telo">
     <a class="btn" href="{{ o.card_url }}">Оплатить {{ o.card_cena }} →</a>
     <p class="metki"><span>Apple Pay</span><span>Visa</span><span>Mastercard</span></p>

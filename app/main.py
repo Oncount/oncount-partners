@@ -2043,7 +2043,7 @@ CHEKLIST_OPLATA = {
     "usdt_cena": os.environ.get("CHEKLIST_PAY_USDT_CENA", "23 USDT"),
     "pochta": os.environ.get("CHEKLIST_PAY_POCHTA", "hello@ardorium.eu"),
     "bot_url": os.environ.get("CHEKLIST_PAY_BOT_URL", "https://t.me/Nikol_hilton_bot"),
-    "data": os.environ.get("CHEKLIST_PAY_DATA", "29.09–1.10 в 19:00 по Дубаю (18:00 МСК) · Онлайн"),
+    "data": os.environ.get("CHEKLIST_PAY_DATA", "Старт 29.09 по 1.10 · 19:00 по Дубаю (18:00 МСК) · Онлайн"),
     "vozvrat_url": os.environ.get("CHEKLIST_PAY_VOZVRAT_URL", "https://ardorium.eu/ru/legal/refund/"),
     "oferta_url": os.environ.get("CHEKLIST_PAY_OFERTA_URL", "https://ardorium.eu/ru/legal/offer/"),
 }

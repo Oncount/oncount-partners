@@ -34,7 +34,7 @@ check("/cheklist/ai-sotrudnik/oplata" in t and "start=zayavka-cheklist" not in t
 ro = c.get("/cheklist/ai-sotrudnik/oplata")
 to = ro.text
 check(ro.status_code == 200 and "noindex" in to, "страница оплаты отдаётся и закрыта от поиска")
-check(all(s in to for s in ("Оплатить рублями", "СБП, картой МИР", "Оплатить любой валютой", "Apple Pay, картой", "PayPal", "Криптокошелёк", "TRC-20", "Оплатить по счёту с компании", "Реквизиты вашей компании", "Зачисление — 3 дня")), "пять способов на странице оплаты словами Николь")
+check(all(s in to for s in ("Оплатить рублями", "СБП, картой МИР", "Оплатить любой валютой", "Apple Pay, Visa, Mastercard", "Безопасная оплата", "Старт 29.09 по 1.10", "PayPal", "Криптокошелёк", "TRC-20", "Оплатить по счёту с компании", "Реквизиты вашей компании", "Зачисление — 3 дня")), "пять способов на странице оплаты словами Николь")
 check("app.lava.top/products/" in to and "business.mamopay.com/pay/" in to and "2 000 ₽" in to and "20 €" in to, "кнопки рублей и валюты ведут на ссылки кассы с ценой")
 check("TV3ynyGs1fP8CjyQ5NSc4HHSHysFJwfdsi" in to and "nikol.hillton@gmail.com" in to, "кошелёк TRC-20 и PayPal на месте")
 check(to.count("t.me/Nikol_hilton_bot") == 2 and "скриншот в бот" in to, "после PayPal и крипты — кнопка «Отправить скриншот в бот» (слово Николь 26.09)")
