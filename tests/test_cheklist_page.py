@@ -37,6 +37,7 @@ check(ro.status_code == 200 and "noindex" in to, "страница оплаты 
 check(all(s in to for s in ("Оплатить рублями", "СБП, картой МИР", "Оплатить любой валютой", "Apple Pay, картой", "PayPal", "Криптокошелёк", "TRC-20", "Оплатить по счёту с компании", "Реквизиты вашей компании", "Зачисление — 3 дня")), "пять способов на странице оплаты словами Николь")
 check("app.lava.top/products/" in to and "business.mamopay.com/pay/" in to and "2 000 ₽" in to and "20 €" in to, "кнопки рублей и валюты ведут на ссылки кассы с ценой")
 check("TV3ynyGs1fP8CjyQ5NSc4HHSHysFJwfdsi" in to and "nikol.hillton@gmail.com" in to, "кошелёк TRC-20 и PayPal на месте")
+check(to.count("t.me/Nikol_hilton_bot") == 2 and "скриншот в бот" in to, "после PayPal и крипты — кнопка «Отправить скриншот в бот» (слово Николь 26.09)")
 check("100% возврат" in to and "ardorium.eu/ru/legal/refund/" in to and "ardorium.eu/ru/legal/offer/" in to, "внизу возврат 100% и оферта")
 check(to.count('<details name="sposob"') == 5 and to.count("<details name=\"sposob\" open>") == 1, "пять карточек, открыта одна")
 rs = c.post("/cheklist/ai-sotrudnik/schet", json={"rekvizity": "", "email": "a@b.cd", "phone": "+971501234567"})
