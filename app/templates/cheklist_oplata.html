@@ -11,7 +11,7 @@
    или реквизитом; внизу возврат 100 % и оферта. Карточки — родные <details name="sposob">: одна открыта, без скрипта
    работают все. Суммы, ссылки и реквизиты приходят из маршрута (`CHEKLIST_OPLATA` в app/main.py). #}
 <style>
-  :root{--fon:#0f1e38;--karta:#16284a;--linia:#2c3f63;--tekst:#f5f1ea;--tusk:#b9b3a8;--akcent:#f97068;--knopka:#a61c3c}
+  :root{--fon:#0f1e38;--karta:#16284a;--linia:#2c3f63;--tekst:#f5f1ea;--tusk:#9aa1b0;--akcent:#f97068;--knopka:#a61c3c}
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
   body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--fon);color:var(--tekst);
@@ -42,19 +42,19 @@
   .btn{display:block;width:100%;text-align:center;background:var(--knopka);color:#f5f1ea;font-family:'Inter',sans-serif;
        font-weight:700;font-size:19px;padding:16px 20px;border-radius:12px;border:0;text-decoration:none;cursor:pointer}
   .btn--bot{margin:12px 0 0;background:transparent;border:1px solid var(--akcent);color:var(--tekst);font-size:17px}
-  .metki{display:flex;justify-content:center;gap:22px;margin:14px 0 0;color:#8f96a6;font-size:14px}
+  .metki{display:flex;justify-content:center;gap:22px;margin:14px 0 0;color:var(--tusk);font-size:14px}
   .rekv{display:flex;gap:10px;align-items:center;background:#0f1e38;border:1px solid var(--linia);border-radius:10px;
         padding:12px 14px;word-break:break-all}
   .rekv code{flex:1;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px;color:#f5f1ea}
-  .kopir{flex:none;background:#22365c;color:#e9dec9;border:1px solid #3a5078;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:inherit}
+  .kopir{flex:none;background:#22365c;color:var(--tusk);border:1px solid #3a5078;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:inherit}
   .kopir.gotovo{background:var(--knopka);border-color:var(--knopka);color:#f5f1ea}
   .strok{margin:10px 0 0;color:var(--tusk);font-size:15px}
   textarea,input{width:100%;padding:13px 15px;border-radius:10px;border:1px solid var(--linia);background:#0f1e38;color:#f5f1ea;
                  font:inherit;font-size:16px;margin:0 0 10px}
   textarea{min-height:120px;resize:vertical}
-  textarea::placeholder,input::placeholder{color:#8f96a6}
+  textarea::placeholder,input::placeholder{color:var(--tusk)}
   .otvet{margin:10px 0 0;font-size:15px}
-  .niz{text-align:center;color:#9aa1b0;font-size:14px;margin:26px 0 0}
+  .niz{text-align:center;color:var(--tusk);font-size:14px;margin:26px 0 0}
   .niz p{margin:0 0 10px}
   .niz a{color:inherit;text-decoration:underline}
   @media (max-width:520px){.cena{font-size:52px}summary{grid-template-columns:36px 1fr 24px;padding:18px 16px}.ikon{width:36px}
